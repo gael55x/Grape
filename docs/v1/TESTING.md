@@ -4,22 +4,9 @@
 
 Define required test categories and fixture rules before implementation starts.
 
-## Required Contents
+## Source Of Truth
 
-- unit test rules
-- integration test rules
-- state transition tests
-- migration tests
-- trust safety tests
-- compression safety tests
-- artifact golden tests
-- MCP contract tests
-- CLI snapshot tests
-- fixture repository rules
-
-## Readers
-
-All implementers and reviewers.
+Testing requirements enforce `docs/v1/SPEC.md`, `docs/v1/STATE_MACHINE.md`, and `docs/v1/INVARIANTS.md`.
 
 ## Update Triggers
 
@@ -30,7 +17,83 @@ All implementers and reviewers.
 
 ## Agent Checks
 
-Before editing code, agents must identify the required test category for the change.
+Before editing code, agents must identify:
+
+- touched invariants,
+- touched state transitions,
+- required unit/integration/golden/contract tests,
+- required fixtures,
+- required benchmark updates, if any.
+
+No production behavior is complete without tests for the related state transition or invariant.
+
+## Test Categories
+
+| Category | Purpose | Required for |
+|---|---|---|
+| Unit tests | Validate pure state, trust, scope, validation, path, hash, redaction, and policy functions. | every module with deterministic logic |
+| State transition tests | Validate `from`, `to`, trigger, validation, side effects, persistence, invalidation. | every state/event change |
+| Integration tests | Exercise multi-module workflows through application services. | repo sync, trust promotion, compile, diff, restore |
+| Storage migration tests | Apply migrations from empty and previous schemas. | every schema change |
+| Trust safety tests | Prevent fake memory, bad proofs, stale proofs, scope leaks. | trust/proofs/claims/retrieval |
+| Compression safety tests | Prove compression cannot become truth and invalidates on input changes. | compression/compiler/diff |
+| Artifact golden tests | Validate stable JSON and Markdown rendering. | compiler/MCP/CLI contract changes |
+| Context diff tests | Validate session ledgers, pinned resend, omission, invalidation, restore. | diff/sessions |
+| MCP contract tests | Validate request/response schemas and write boundaries. | MCP tool changes |
+| CLI snapshot tests | Validate human output and exit codes. | CLI command changes |
+| Security/redaction tests | Validate ignored files, approvals, secret blocking, logs. | security/evidence/compiler/storage |
+| Cross-platform path tests | Validate path normalization and case behavior. | git/storage/indexing/security |
+| Benchmark tests | Validate benchmark harness determinism and thresholds. | benchmark changes |
+
+## Required Named Tests
+
+Trust and scope:
+
+- `no_proof_rejects_durable_claim`
+- `summary_as_proof_rejected`
+- `partially_verified_not_current_valid_by_default`
+- `scope_resolution_precedes_current_valid_filter`
+- `branch_invalid_claim_excluded`
+- `dirty_worktree_claim_not_branch_global`
+- `repo_file_claim_does_not_overclaim_runtime_behavior`
+
+Artifact and diff:
+
+- `context_artifact_requires_dependency_manifest`
+- `context_section_requires_content_hash`
+- `artifact_hash_is_deterministic`
+- `diff_is_session_scoped`
+- `unknown_session_forces_full_resend`
+- `pinned_context_is_resent`
+- `omit_unchanged_requires_restore_or_safe_reason`
+- `restore_token_rejects_stale_dependency`
+
+Compression:
+
+- `compression_artifact_requires_input_hashes`
+- `compression_artifact_never_valid_proof`
+- `high_risk_overlay_forbids_summary_replacement`
+- `stale_compression_emits_invalidated_previous_when_sent`
+
+MCP and CLI:
+
+- `mcp_get_context_returns_structured_items`
+- `mcp_write_tool_cannot_promote_claim`
+- `agent_reported_test_result_is_temporary`
+- `user_decision_requires_direct_confirmation_hashes`
+- `cli_json_matches_schema`
+- `cli_doctor_privacy_redacts_secrets`
+
+Storage and security:
+
+- `migration_applies_from_empty_database`
+- `migration_checksums_are_recorded`
+- `wal_mode_and_busy_timeout_configured`
+- `session_lock_survives_process_boundary`
+- `ignored_file_not_indexed_without_approval`
+- `raw_env_value_not_in_artifact`
+- `redacted_display_hash_not_used_as_proof`
+- `path_normalization_handles_windows_separators`
 
 ## Required Fixture Repositories
 
@@ -46,3 +109,24 @@ Before editing code, agents must identify the required test category for the cha
 - `compression-invalidation-fixture`
 - `session-reset-fixture`
 - `parallel-agents-fixture`
+
+## Fixture Mapping
+
+| Fixture | Must exercise |
+|---|---|
+| `clean-typescript-app` | clean snapshot, symbol index, first artifact, no-change diff |
+| `dirty-worktree-repo` | dirty scope, worktree-local claims, partial warnings |
+| `branch-switch-repo` | branch-invalid claims and sent item invalidation |
+| `stale-proof-repo` | proof hash mismatch invalidates claims/artifacts |
+| `ignored-files-secrets-repo` | ignored files, `.env`, redaction/blocking, approval flow |
+| `no-tests-repo` | missing verification warnings without false certainty |
+| `dynamic-imports-repo` | partial graph coverage and blind spots |
+| `monorepo-lite-repo` | package boundaries and path normalization |
+| `auth-security-fixture` | high-risk exact context and pinned rules |
+| `compression-invalidation-fixture` | input hash changes and `INVALIDATE_PREVIOUS` |
+| `session-reset-fixture` | full resend after reset/unknown session |
+| `parallel-agents-fixture` | session isolation and lock conflicts |
+
+## Review Rule
+
+Any test that asserts "should include useful context" is too vague. It must assert concrete IDs, states, hashes, warnings, omissions, invalidations, or schema fields.

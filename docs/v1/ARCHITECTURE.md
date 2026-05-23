@@ -4,43 +4,27 @@
 
 Define the system layers, module boundaries, and dependency direction for Grape V1.
 
-## Required Contents
+## Source Of Truth
 
-- high-level architecture diagram
-- source tree ownership
-- dependency direction rules
-- module responsibilities
-- forbidden dependencies
-- mapping from modules to V1 docs
-
-## Readers
-
-Human engineers and AI agents implementing or reviewing source structure.
+This document explains how to implement the architecture in `docs/v1/SPEC.md`. If this document and `SPEC.md` disagree, stop and update the docs before coding.
 
 ## Update Triggers
 
-- a new module is added
-- a dependency direction changes
+- a module is added, renamed, or removed
 - orchestration moves between layers
+- dependency direction changes
 - storage, trust, compiler, compression, diff, MCP, or CLI responsibilities change
-
-## Agent Checks
-
-Before editing architecture-related code, agents must verify:
-
-- the module owns the behavior being changed
-- core modules do not import CLI or MCP
-- storage does not contain business logic
-- compression cannot promote claims
-- compiler cannot bypass current-valid filtering
+- a new cross-cutting policy is introduced
 
 ## High-Level Architecture
 
 ```mermaid
 flowchart LR
-  Agent[AI Agent / CLI] --> App[Application Services]
-  App --> Preflight[Repo Preflight]
-  Preflight --> Evidence[Evidence Store]
+  Agent[AI Agent / CLI] --> Adapter[CLI or MCP Adapter]
+  Adapter --> App[Application Services]
+  App --> State[State Machine]
+  App --> Repo[Repo Snapshot]
+  Repo --> Evidence[Evidence Store]
   Evidence --> Trust[Trust Kernel]
   Trust --> Scope[Scope Engine]
   Scope --> Current[Current-Valid Retrieval]
@@ -50,15 +34,110 @@ flowchart LR
   Artifact --> Diff[Context Diff]
   Sessions[Session Locks] --> Diff
   Diff --> Pack[Context Pack]
-  Pack --> Agent
+  Pack --> Adapter
+  Storage[(SQLite Repositories)] --> Evidence
+  Storage --> Trust
+  Storage --> Current
+  Storage --> Compiler
+  Storage --> Diff
 ```
 
-## Dependency Rule
+## Layer Responsibilities
 
-Dependencies flow inward:
+| Layer | Owns | Must not own |
+|---|---|---|
+| CLI adapter | Argument parsing, terminal output, exit codes, local debug workflows. | Trust decisions, state transitions, storage SQL, compiler policy. |
+| MCP adapter | Tool schemas, transport, request/response mapping, contract validation. | Durable truth promotion, direct SQLite writes, secret scanning logic. |
+| Application services | End-to-end orchestration, transaction boundaries, state transition calls. | Low-level SQL, proof validation details, compression algorithms. |
+| Core state | Explicit state/event definitions and transition validation. | Storage schema, adapter behavior, relevance ranking. |
+| Core evidence | Source ingestion, source classification, evidence records. | Claim promotion, current-valid filtering, artifact rendering. |
+| Core trust/proofs/claims | Proof validation, claim candidate evaluation, durable claim promotion. | MCP authority, compression, context omission. |
+| Core scope/retrieval | Scope matching, current-valid filtering, safe retrieval sets. | Ranking stale facts, source ingestion, artifact rendering. |
+| Core compiler | Task policy application, artifact sections, dependency manifests. | Proof promotion, storage SQL, session ledger ownership. |
+| Core compression | Deterministic derived cache and invalidation. | Proof generation, claim promotion, authoritative summaries. |
+| Core diff/sessions | Session locks, sent-item ledger, omitted-item restore, context pack deltas. | Trust decisions, source classification, compression truth. |
+| Core security | Ignore policy, redaction, secret scan contracts, path privacy rules. | Product workflow orchestration. |
+| Storage repositories | SQLite access, migrations, transactions, indexes. | Business policy, trust promotion, compiler decisions. |
+| Shared | Types, schemas, constants, errors, path utilities. | Behavior that belongs to a domain module. |
 
-```text
-CLI/MCP -> app services -> core modules -> storage interfaces/shared types
+## Proposed Source Tree
+
+| Directory | Responsibility | Allowed dependencies | Forbidden dependencies | Related docs |
+|---|---|---|---|---|
+| `src/cli/` | CLI commands and rendering. | `src/app/`, `src/shared/`. | `src/core/storage/sqlite` internals, trust internals. | `CLI.md` |
+| `src/mcp/` | MCP server, tool schemas, adapter validation. | `src/app/`, `src/shared/`. | direct storage writes, compiler internals. | `MCP_TOOLS.md` |
+| `src/app/` | Use-case orchestration and transaction boundaries. | `src/core/*`, `src/shared/`. | CLI or MCP rendering. | `ARCHITECTURE.md`, `STATE_MACHINE.md` |
+| `src/core/state/` | State names, events, transition guards. | `src/shared/`. | storage SQL, CLI/MCP. | `STATE_MACHINE.md` |
+| `src/core/evidence/` | Sources, evidence records, source classification. | `state`, `security`, storage interfaces, shared types. | claim promotion. | `TRUST_MODEL.md` |
+| `src/core/trust/` | Belief gates and promotion policy. | `claims`, `proofs`, `scope`, shared types. | compression, CLI/MCP. | `TRUST_MODEL.md` |
+| `src/core/claims/` | Claim types, claim edges, lifecycle. | `proofs`, `scope`, shared types. | adapters. | `TRUST_MODEL.md` |
+| `src/core/proofs/` | Proof validators and proof hash checks. | `evidence`, `security`, shared types. | compression. | `TRUST_MODEL.md`, `SECURITY.md` |
+| `src/core/scope/` | Branch/worktree/env/feature scope matching. | `git`, shared types. | ranking and artifact rendering. | `TRUST_MODEL.md` |
+| `src/core/retrieval/` | Current-valid filtering and retrieval assembly. | `claims`, `scope`, `indexing`, shared types. | trust promotion. | `TRUST_MODEL.md` |
+| `src/core/compiler/` | Context artifact assembly and task policies. | `retrieval`, `compression`, `security`, shared types. | proof validation bypasses, direct SQL. | `CONTEXT_ARTIFACT.md` |
+| `src/core/compression/` | Compression artifact creation and invalidation. | `security`, storage interfaces, shared types. | trust, proofs, claim promotion. | `COMPRESSION.md` |
+| `src/core/diff/` | Diff states and context pack item generation. | `sessions`, `compiler`, shared types. | retrieval mutation. | `CONTEXT_DIFF.md` |
+| `src/core/sessions/` | Session identity, locks, sent ledgers. | storage interfaces, shared types. | compiler policy. | `CONTEXT_DIFF.md` |
+| `src/core/storage/` | Repositories, migrations, SQLite connection policy. | `src/shared/`. | CLI/MCP, compiler policy, trust decisions. | `STORAGE.md` |
+| `src/core/git/` | Git state, branch, commit, dirty tree, ignore inputs. | shared types. | storage SQL. | `STORAGE.md`, `SECURITY.md` |
+| `src/core/indexing/` | File/symbol/FTS indexing. | `git`, `security`, storage interfaces. | trust promotion. | `STORAGE.md` |
+| `src/core/security/` | Redaction, ignored-file approval, artifact scans. | shared types. | adapter transport. | `SECURITY.md` |
+| `src/shared/` | Shared types, schemas, errors, constants, path utilities. | none or platform libraries. | domain workflows. | all docs |
+| `tests/` | Test helpers and fixtures. | production public APIs. | production import of test helpers. | `TESTING.md` |
+
+## Dependency Direction
+
+```mermaid
+flowchart TD
+  CLI[src/cli] --> APP[src/app]
+  MCP[src/mcp] --> APP
+  APP --> STATE[src/core/state]
+  APP --> EVIDENCE[src/core/evidence]
+  APP --> TRUST[src/core/trust]
+  APP --> RETRIEVAL[src/core/retrieval]
+  APP --> COMPILER[src/core/compiler]
+  APP --> DIFF[src/core/diff]
+  APP --> SESSIONS[src/core/sessions]
+  APP --> STORAGEIF[storage interfaces]
+  EVIDENCE --> SECURITY[src/core/security]
+  TRUST --> CLAIMS[src/core/claims]
+  TRUST --> PROOFS[src/core/proofs]
+  TRUST --> SCOPE[src/core/scope]
+  RETRIEVAL --> SCOPE
+  RETRIEVAL --> INDEXING[src/core/indexing]
+  COMPILER --> RETRIEVAL
+  COMPILER --> COMPRESSION[src/core/compression]
+  COMPILER --> SECURITY
+  DIFF --> SESSIONS
+  STORAGEIF --> SQLITE[src/core/storage]
+  SHARED[src/shared] --> CLI
+  SHARED --> MCP
+  SHARED --> APP
+  SHARED --> STATE
 ```
 
-Core modules must not depend on CLI, MCP, test helpers, benchmark helpers, or implementation-specific SQLite details.
+## Hard Dependency Rules
+
+- CLI and MCP are adapters. They call application services and render results.
+- Application services orchestrate workflows and call state transitions explicitly.
+- Core trust logic must not import CLI, MCP, compression, benchmark helpers, or test helpers.
+- Compression may be read by the compiler but cannot import trust promotion or proof validators in a way that lets summaries become proof.
+- Storage repositories expose typed methods. No module outside storage repositories writes SQL directly.
+- Storage must not contain business logic. It persists validated objects and returns typed rows.
+- Production code must not import from `tests/`, benchmark harnesses, or fixture helpers.
+- Shared utilities must stay narrow. If a utility needs domain vocabulary, it belongs in that domain module.
+
+## Naming And Simplicity Standards
+
+- Use lowercase kebab-case for docs and fixture names.
+- Use PascalCase for TypeScript types, interfaces, classes, schemas, and error classes.
+- Use camelCase for functions and fields.
+- Use snake_case for state names, event names, database tables, and serialized enum values that are stored or sent across MCP.
+- Name state events as `verb_object`, for example `validate_proof` or `compile_context_artifact`.
+- Keep modules small enough that a future agent can read the whole module before editing it.
+- Do not create generic `utils` folders for domain behavior. Prefer `path-normalization.ts`, `redaction.ts`, or `claim-scope.ts` with a single owner.
+- Centralize shared enums and serialized schemas in `src/shared/` only after two domain modules need the same contract.
+
+## Quality Gate
+
+Any pull request that changes architecture must update this file, `docs/v1/SPEC_CHANGELOG.md`, and an ADR when the dependency direction, source tree, or ownership model changes.

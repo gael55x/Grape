@@ -12,6 +12,20 @@ Grape is in V1 implementation-preparation mode.
 
 The public documentation architecture is being established before production code begins. The project is not ready for production use yet.
 
+What exists today:
+
+- committed V1 implementation contract in `docs/v1/SPEC.md`
+- documentation architecture and implementation guardrails
+- state machine, trust, artifact, diff, compression, storage, security, test, and benchmark standards
+
+What does not exist yet:
+
+- published package
+- working CLI
+- MCP server
+- production storage schema
+- benchmark harness
+
 ## Why Grape
 
 AI coding agents repeatedly spend context window and tool calls rediscovering:
@@ -87,7 +101,7 @@ flowchart LR
 
 ## Planned Quick Start
 
-The intended V1 setup is:
+The intended V1 setup is provisional:
 
 ```bash
 npm install -g grape-context

@@ -9,3 +9,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 ### Added
 
 - Initial public documentation architecture for V1 implementation preparation.
+- Committed V1 implementation contract and Phase 0 documentation hardening standards.
