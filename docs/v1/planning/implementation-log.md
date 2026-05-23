@@ -63,3 +63,10 @@ Keep entries simple:
 - Summary: added evidence, proof validation, claim candidate, and durable claim shapes with a guard that durable claims require non-empty proof refs and matched scope.
 - Checks run: `npm run check`.
 - Risks/follow-ups: actual proof validation and persistence are not implemented yet.
+
+### 2026-05-23 - Phase 0B Current-Valid Skeleton
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added the current-valid filtering skeleton and consolidated Phase 0B smoke checks into one script to avoid a custom test framework.
+- Checks run: `npm run check`.
+- Risks/follow-ups: this is still a smoke harness; real unit tests should replace source-text checks when the test runner is introduced.

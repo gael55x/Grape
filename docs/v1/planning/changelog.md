@@ -19,3 +19,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added shared contract and state-machine skeleton validation scripts.
 - Added repo snapshot shape and clean fixture snapshot smoke check.
 - Added evidence, proof, and durable claim shapes with trust-shape validation.
+- Added current-valid filtering skeleton and consolidated Phase 0B smoke checks.

@@ -16,3 +16,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added validation scripts for shared contracts and state-machine skeleton.
 - Added repo snapshot shape and alpha snapshot smoke check.
 - Added evidence, proof, and durable claim interface baseline.
+- Added current-valid filtering skeleton and consolidated Phase 0B smoke harness.
