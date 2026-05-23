@@ -1,19 +1,22 @@
 import type { ScopeMatchResult, VerificationStatus } from "../../shared/index.js";
+import type { NonEmptyArray } from "../trust/index.js";
 
 export interface CurrentValidCandidate {
   id: string;
   text: string;
   sourceRefs: string[];
-  proofRefs: string[];
+  proofRefs: NonEmptyArray<string>;
   verificationStatus: VerificationStatus;
   scopeResult: ScopeMatchResult;
 }
 
 export type CurrentValidRejectionReason =
   | "not_verified"
+  | "missing_proof"
   | "scope_mismatch"
   | "scope_partial"
-  | "scope_unknown";
+  | "scope_unknown"
+  | "scope_invalid";
 
 export interface CurrentValidRejectedCandidate {
   candidate: CurrentValidCandidate;
@@ -39,6 +42,16 @@ export function resolveCurrentValidCandidates(
       continue;
     }
 
+    if (candidate.proofRefs.length === 0) {
+      rejected.push({ candidate, reason: "missing_proof" });
+      continue;
+    }
+
+    if (candidate.scopeResult === "match") {
+      active.push(candidate);
+      continue;
+    }
+
     if (candidate.scopeResult === "mismatch") {
       rejected.push({ candidate, reason: "scope_mismatch" });
       continue;
@@ -56,7 +69,7 @@ export function resolveCurrentValidCandidates(
       continue;
     }
 
-    active.push(candidate);
+    rejected.push({ candidate, reason: "scope_invalid" });
   }
 
   return { active, rejected, warnings };

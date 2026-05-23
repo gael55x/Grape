@@ -141,7 +141,10 @@ function checkCurrentValid() {
   const source = read("src/core/retrieval/current-valid.ts");
 
   for (const required of [
+    "proofRefs: NonEmptyArray<string>",
     'candidate.verificationStatus !== "verified"',
+    "candidate.proofRefs.length === 0",
+    'candidate.scopeResult === "match"',
     'candidate.scopeResult === "mismatch"',
     'candidate.scopeResult === "partial"',
     'candidate.scopeResult === "unknown"',
@@ -154,6 +157,25 @@ function checkCurrentValid() {
 
   if (source.includes(".sort(") || source.includes("rank")) {
     errors.push("Current-valid skeleton must not rank candidates");
+  }
+}
+
+function checkRepoSnapshotShape() {
+  const source = read("src/core/git/repo-snapshot.ts");
+
+  for (const required of [
+    "worktreeHash: string;",
+    "createdAt: string;",
+    "worktreeHash: input.worktreeHash",
+    "createdAt: input.createdAt"
+  ]) {
+    if (!source.includes(required)) {
+      errors.push(`Missing repo snapshot shape guard: ${required}`);
+    }
+  }
+
+  if (source.includes('worktreeHash: ""') || source.includes('createdAt: ""')) {
+    errors.push("RepoSnapshot shape must not create placeholder hashes or timestamps");
   }
 }
 
@@ -183,6 +205,7 @@ checkSharedContracts();
 checkStateMachine();
 checkTrustShapes();
 checkCurrentValid();
+checkRepoSnapshotShape();
 checkAlphaSnapshot();
 
 if (errors.length > 0) {
