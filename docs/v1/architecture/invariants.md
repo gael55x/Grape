@@ -52,4 +52,4 @@ Before editing code, agents must identify which invariants the change touches.
 
 ## Enforcement Rule
 
-If a change touches an invariant but does not update the relevant tests, the change is incomplete. If an invariant needs to be weakened, create an ADR and update `docs/v1/SPEC_CHANGELOG.md` before implementation.
+If a change touches an invariant but does not update the relevant tests, the change is incomplete. If an invariant needs to be weakened, create an ADR and update `../planning/spec-changelog.md` before implementation.

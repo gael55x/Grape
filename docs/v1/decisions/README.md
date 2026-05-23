@@ -6,16 +6,17 @@ This folder contains Architecture Decision Records for V1.
 
 | ADR | Status | Decision |
 |---|---|---|
-| `ADR-0001-documentation-architecture.md` | Accepted | Create the V1 documentation architecture before production code. |
-| `ADR-0002-canonical-spec-and-phase-0.md` | Accepted | Publish `docs/v1/SPEC.md` and split Phase 0 into documentation hardening and alpha vertical slice. |
+| `adr-0001-documentation-architecture.md` | Accepted | Create the V1 documentation architecture before production code. |
+| `adr-0002-canonical-spec-and-phase-0.md` | Accepted | Publish `docs/v1/SPEC.md` and split Phase 0 into documentation hardening and alpha vertical slice. |
+| `adr-0003-documentation-structure.md` | Accepted | Keep `SPEC.md` at the V1 root and group supporting docs by purpose. |
 
 ## Naming
 
 Use:
 
 ```text
-ADR-0001-title.md
-ADR-0002-title.md
+adr-0001-title.md
+adr-0002-title.md
 ```
 
 ## Required Sections

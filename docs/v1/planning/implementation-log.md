@@ -23,7 +23,7 @@ Each entry should include:
 ### 2026-05-23 - Phase 0A Canonical Spec Publication
 
 - Author/agent: Codex
-- Files changed: `docs/v1/SPEC.md`, `docs/v1/README.md`, `AGENTS.md`, `docs/v1/IMPLEMENTATION_PHASES.md`, `docs/v1/SPEC_CHANGELOG.md`, `docs/v1/DECISIONS/ADR-0002-canonical-spec-and-phase-0.md`.
+- Files changed: `docs/v1/SPEC.md`, `docs/v1/README.md`, `AGENTS.md`, `docs/v1/planning/implementation-phases.md`, `docs/v1/planning/spec-changelog.md`, `docs/v1/decisions/adr-0002-canonical-spec-and-phase-0.md`.
 - Checks run: staged file review and git status checks.
 - Risks/follow-ups: supporting domain docs must remain aligned with `docs/v1/SPEC.md`.
 
@@ -33,3 +33,10 @@ Each entry should include:
 - Files changed: architecture, state machine, trust, context artifact, context diff, compression, MCP, CLI, storage, testing, benchmarks, security, invariants, fixtures, examples, contribution, and agent docs.
 - Checks run: read-only grep checks for stale placeholder language and source-of-truth references.
 - Risks/follow-ups: actual test runner, linting, fixtures, and benchmark harness are intentionally not implemented yet.
+
+### 2026-05-23 - Phase 0A Documentation Structure Cleanup
+
+- Author/agent: Codex
+- Files changed: `docs/README.md`, `docs/v1/README.md`, V1 supporting docs moved into purpose-based folders, ADR-0003.
+- Checks run: path/reference grep checks and git status checks.
+- Risks/follow-ups: future docs must use the folder map instead of adding new topic files directly under `docs/v1/`.

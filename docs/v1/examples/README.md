@@ -34,4 +34,4 @@ Agents must update examples when serialized output contracts change.
 - Examples must not contain raw secrets.
 - JSON examples must validate against documented schemas.
 - Markdown examples are renderings, not canonical contracts.
-- Any serialized field rename updates examples, golden tests, and `SPEC_CHANGELOG.md`.
+- Any serialized field rename updates examples, golden tests, and `../planning/spec-changelog.md`.

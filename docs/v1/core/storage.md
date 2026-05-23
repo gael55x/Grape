@@ -78,7 +78,7 @@ The V1 schema must define at least these tables or explicitly defer a table with
 
 - Migration filenames use `NNNN_short_description.sql`.
 - Migrations are append-only after merge.
-- Every schema change updates this file, `docs/v1/SPEC_CHANGELOG.md`, and migration tests.
+- Every schema change updates this file, `../planning/spec-changelog.md`, and migration tests.
 - Every migration stores checksum and applied timestamp in `schema_migrations`.
 - Destructive migrations require an ADR before implementation.
 

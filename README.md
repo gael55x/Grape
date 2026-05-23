@@ -154,21 +154,22 @@ V1 does not aim to be:
 
 ## Documentation
 
+- [Documentation Index](docs/README.md)
 - [V1 Documentation Index](docs/v1/README.md)
-- [Architecture](docs/v1/ARCHITECTURE.md)
-- [State Machine](docs/v1/STATE_MACHINE.md)
-- [Trust Model](docs/v1/TRUST_MODEL.md)
-- [Context Artifact](docs/v1/CONTEXT_ARTIFACT.md)
-- [Context Diff](docs/v1/CONTEXT_DIFF.md)
-- [Compression](docs/v1/COMPRESSION.md)
-- [MCP Tools](docs/v1/MCP_TOOLS.md)
-- [CLI](docs/v1/CLI.md)
-- [Storage](docs/v1/STORAGE.md)
-- [Testing](docs/v1/TESTING.md)
-- [Benchmarks](docs/v1/BENCHMARKS.md)
-- [Security](docs/v1/SECURITY.md)
-- [Invariants](docs/v1/INVARIANTS.md)
-- [Implementation Phases](docs/v1/IMPLEMENTATION_PHASES.md)
+- [Architecture](docs/v1/architecture/overview.md)
+- [State Machine](docs/v1/architecture/state-machine.md)
+- [Trust Model](docs/v1/core/trust-model.md)
+- [Context Artifact](docs/v1/contracts/context-artifact.md)
+- [Context Diff](docs/v1/contracts/context-diff.md)
+- [Compression](docs/v1/core/compression.md)
+- [MCP Tools](docs/v1/interfaces/mcp-tools.md)
+- [CLI](docs/v1/interfaces/cli.md)
+- [Storage](docs/v1/core/storage.md)
+- [Testing](docs/v1/quality/testing.md)
+- [Benchmarks](docs/v1/quality/benchmarks.md)
+- [Security](docs/v1/core/security.md)
+- [Invariants](docs/v1/architecture/invariants.md)
+- [Implementation Phases](docs/v1/planning/implementation-phases.md)
 - [Agent Operating Rules](AGENTS.md)
 
 ## Engineering Principles
@@ -189,8 +190,8 @@ Before contributing, read:
 
 - [Contributing Guide](CONTRIBUTING.md)
 - [Agent Operating Rules](AGENTS.md)
-- [V1 Invariants](docs/v1/INVARIANTS.md)
-- [V1 Implementation Phases](docs/v1/IMPLEMENTATION_PHASES.md)
+- [V1 Invariants](docs/v1/architecture/invariants.md)
+- [V1 Implementation Phases](docs/v1/planning/implementation-phases.md)
 
 ## License
 
