@@ -51,3 +51,10 @@ Implementation work from Phase 0B onward should use `Gaille Amolong / Codex` as 
 - Files changed: `docs/v1/planning/phase-0b-alpha-slice.md`, `docs/v1/planning/implementation-phases.md`, planning changelogs.
 - Checks run: git status and docs path checks.
 - Risks/follow-ups: implementation must stay inside the alpha slice; MCP transport, compression, and broad indexing remain out of scope.
+
+### 2026-05-23 - Phase 0B Minimal Skeleton And Shared Contracts
+
+- Author/agent: Gaille Amolong / Codex
+- Files changed: `package.json`, `tsconfig.json`, `scripts/check-docs-structure.mjs`, `src/index.ts`, `src/shared/index.ts`, `src/shared/contracts.ts`, planning changelog/log.
+- Checks run: `npm run docs:check`.
+- Risks/follow-ups: TypeScript compiler dependency is not installed yet; shared contracts are type-only and contain no product logic.

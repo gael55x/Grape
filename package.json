@@ -1,0 +1,14 @@
+{
+  "name": "grape",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Local-first incremental context compiler for AI coding agents.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "docs:check": "node scripts/check-docs-structure.mjs",
+    "check": "npm run docs:check"
+  }
+}
