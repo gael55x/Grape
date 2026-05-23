@@ -70,3 +70,10 @@ Keep entries simple:
 - Summary: added the current-valid filtering skeleton and consolidated Phase 0B smoke checks into one script to avoid a custom test framework.
 - Checks run: `npm run check`.
 - Risks/follow-ups: this is still a smoke harness; real unit tests should replace source-text checks when the test runner is introduced.
+
+### 2026-05-23 - Phase 0B Shape Tightening
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: removed placeholder snapshot values, required non-empty proof refs for current-valid candidates, and clarified shared dependency direction in architecture docs.
+- Checks run: `npm run check`.
+- Risks/follow-ups: current-valid still needs stale hash, contradiction, privacy, and dirty-worktree gates before artifact compilation can depend on it.

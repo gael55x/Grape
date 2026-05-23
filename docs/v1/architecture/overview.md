@@ -110,10 +110,10 @@ flowchart TD
   COMPILER --> SECURITY
   DIFF --> SESSIONS
   STORAGEIF --> SQLITE[src/core/storage]
-  SHARED[src/shared] --> CLI
-  SHARED --> MCP
-  SHARED --> APP
-  SHARED --> STATE
+  CLI --> SHARED[src/shared]
+  MCP --> SHARED
+  APP --> SHARED
+  STATE --> SHARED
 ```
 
 ## Hard Dependency Rules

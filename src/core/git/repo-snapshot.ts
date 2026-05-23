@@ -25,7 +25,9 @@ export interface RepoSnapshotInput {
   branch: string;
   commit: string;
   worktreeStatus: WorktreeStatus;
+  worktreeHash: string;
   files: SnapshotFileHash[];
+  createdAt: string;
 }
 
 export function createRepoSnapshotShape(input: RepoSnapshotInput): RepoSnapshot {
@@ -36,9 +38,9 @@ export function createRepoSnapshotShape(input: RepoSnapshotInput): RepoSnapshot 
     branch: input.branch,
     commit: input.commit,
     worktreeStatus: input.worktreeStatus,
-    worktreeHash: "",
+    worktreeHash: input.worktreeHash,
     files: input.files,
     hashAlgorithm: "sha256",
-    createdAt: ""
+    createdAt: input.createdAt
   };
 }
