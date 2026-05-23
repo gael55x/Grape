@@ -14,3 +14,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added initial project skeleton and shared V1 contract types.
 - Added first Phase 0B fixture with metadata validation.
 - Added validation scripts for shared contracts and state-machine skeleton.
+- Added repo snapshot shape and alpha snapshot smoke check.

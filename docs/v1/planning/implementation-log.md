@@ -49,3 +49,10 @@ Keep entries simple:
 - Summary: added shared contract validation and the first state/event transition skeleton for the alpha path.
 - Checks run: `npm run check`.
 - Risks/follow-ups: TypeScript compiler is still not installed; checker scripts validate structure and canonical values until the test toolchain is introduced.
+
+### 2026-05-23 - Phase 0B Repo Snapshot Shape
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added the repo snapshot TypeScript shape and a fixture-based clean snapshot smoke check.
+- Checks run: `npm run check`.
+- Risks/follow-ups: real Git inspection and persisted snapshots are still out of scope until later Phase 0B/Phase 2 work.

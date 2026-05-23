@@ -17,3 +17,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added minimal project skeleton with package metadata, TypeScript config, docs structure guard, and shared canonical contract types.
 - Added `clean-typescript-app` fixture with metadata hash validation.
 - Added shared contract and state-machine skeleton validation scripts.
+- Added repo snapshot shape and clean fixture snapshot smoke check.
