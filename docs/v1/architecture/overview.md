@@ -64,26 +64,26 @@ flowchart LR
 
 | Directory | Responsibility | Allowed dependencies | Forbidden dependencies | Related docs |
 |---|---|---|---|---|
-| `src/cli/` | CLI commands and rendering. | `src/app/`, `src/shared/`. | `src/core/storage/sqlite` internals, trust internals. | `CLI.md` |
-| `src/mcp/` | MCP server, tool schemas, adapter validation. | `src/app/`, `src/shared/`. | direct storage writes, compiler internals. | `MCP_TOOLS.md` |
-| `src/app/` | Use-case orchestration and transaction boundaries. | `src/core/*`, `src/shared/`. | CLI or MCP rendering. | `ARCHITECTURE.md`, `STATE_MACHINE.md` |
-| `src/core/state/` | State names, events, transition guards. | `src/shared/`. | storage SQL, CLI/MCP. | `STATE_MACHINE.md` |
-| `src/core/evidence/` | Sources, evidence records, source classification. | `state`, `security`, storage interfaces, shared types. | claim promotion. | `TRUST_MODEL.md` |
-| `src/core/trust/` | Belief gates and promotion policy. | `claims`, `proofs`, `scope`, shared types. | compression, CLI/MCP. | `TRUST_MODEL.md` |
-| `src/core/claims/` | Claim types, claim edges, lifecycle. | `proofs`, `scope`, shared types. | adapters. | `TRUST_MODEL.md` |
-| `src/core/proofs/` | Proof validators and proof hash checks. | `evidence`, `security`, shared types. | compression. | `TRUST_MODEL.md`, `SECURITY.md` |
-| `src/core/scope/` | Branch/worktree/env/feature scope matching. | `git`, shared types. | ranking and artifact rendering. | `TRUST_MODEL.md` |
-| `src/core/retrieval/` | Current-valid filtering and retrieval assembly. | `claims`, `scope`, `indexing`, shared types. | trust promotion. | `TRUST_MODEL.md` |
-| `src/core/compiler/` | Context artifact assembly and task policies. | `retrieval`, `compression`, `security`, shared types. | proof validation bypasses, direct SQL. | `CONTEXT_ARTIFACT.md` |
-| `src/core/compression/` | Compression artifact creation and invalidation. | `security`, storage interfaces, shared types. | trust, proofs, claim promotion. | `COMPRESSION.md` |
-| `src/core/diff/` | Diff states and context pack item generation. | `sessions`, `compiler`, shared types. | retrieval mutation. | `CONTEXT_DIFF.md` |
-| `src/core/sessions/` | Session identity, locks, sent ledgers. | storage interfaces, shared types. | compiler policy. | `CONTEXT_DIFF.md` |
-| `src/core/storage/` | Repositories, migrations, SQLite connection policy. | `src/shared/`. | CLI/MCP, compiler policy, trust decisions. | `STORAGE.md` |
-| `src/core/git/` | Git state, branch, commit, dirty tree, ignore inputs. | shared types. | storage SQL. | `STORAGE.md`, `SECURITY.md` |
-| `src/core/indexing/` | File/symbol/FTS indexing. | `git`, `security`, storage interfaces. | trust promotion. | `STORAGE.md` |
-| `src/core/security/` | Redaction, ignored-file approval, artifact scans. | shared types. | adapter transport. | `SECURITY.md` |
+| `src/cli/` | CLI commands and rendering. | `src/app/`, `src/shared/`. | `src/core/storage/sqlite` internals, trust internals. | `../interfaces/cli.md` |
+| `src/mcp/` | MCP server, tool schemas, adapter validation. | `src/app/`, `src/shared/`. | direct storage writes, compiler internals. | `../interfaces/mcp-tools.md` |
+| `src/app/` | Use-case orchestration and transaction boundaries. | `src/core/*`, `src/shared/`. | CLI or MCP rendering. | `overview.md`, `state-machine.md` |
+| `src/core/state/` | State names, events, transition guards. | `src/shared/`. | storage SQL, CLI/MCP. | `state-machine.md` |
+| `src/core/evidence/` | Sources, evidence records, source classification. | `state`, `security`, storage interfaces, shared types. | claim promotion. | `../core/trust-model.md` |
+| `src/core/trust/` | Belief gates and promotion policy. | `claims`, `proofs`, `scope`, shared types. | compression, CLI/MCP. | `../core/trust-model.md` |
+| `src/core/claims/` | Claim types, claim edges, lifecycle. | `proofs`, `scope`, shared types. | adapters. | `../core/trust-model.md` |
+| `src/core/proofs/` | Proof validators and proof hash checks. | `evidence`, `security`, shared types. | compression. | `../core/trust-model.md`, `../core/security.md` |
+| `src/core/scope/` | Branch/worktree/env/feature scope matching. | `git`, shared types. | ranking and artifact rendering. | `../core/trust-model.md` |
+| `src/core/retrieval/` | Current-valid filtering and retrieval assembly. | `claims`, `scope`, `indexing`, shared types. | trust promotion. | `../core/trust-model.md` |
+| `src/core/compiler/` | Context artifact assembly and task policies. | `retrieval`, `compression`, `security`, shared types. | proof validation bypasses, direct SQL. | `../contracts/context-artifact.md` |
+| `src/core/compression/` | Compression artifact creation and invalidation. | `security`, storage interfaces, shared types. | trust, proofs, claim promotion. | `../core/compression.md` |
+| `src/core/diff/` | Diff states and context pack item generation. | `sessions`, `compiler`, shared types. | retrieval mutation. | `../contracts/context-diff.md` |
+| `src/core/sessions/` | Session identity, locks, sent ledgers. | storage interfaces, shared types. | compiler policy. | `../contracts/context-diff.md` |
+| `src/core/storage/` | Repositories, migrations, SQLite connection policy. | `src/shared/`. | CLI/MCP, compiler policy, trust decisions. | `../core/storage.md` |
+| `src/core/git/` | Git state, branch, commit, dirty tree, ignore inputs. | shared types. | storage SQL. | `../core/storage.md`, `../core/security.md` |
+| `src/core/indexing/` | File/symbol/FTS indexing. | `git`, `security`, storage interfaces. | trust promotion. | `../core/storage.md` |
+| `src/core/security/` | Redaction, ignored-file approval, artifact scans. | shared types. | adapter transport. | `../core/security.md` |
 | `src/shared/` | Shared types, schemas, errors, constants, path utilities. | none or platform libraries. | domain workflows. | all docs |
-| `tests/` | Test helpers and fixtures. | production public APIs. | production import of test helpers. | `TESTING.md` |
+| `tests/` | Test helpers and fixtures. | production public APIs. | production import of test helpers. | `../quality/testing.md` |
 
 ## Dependency Direction
 
@@ -140,4 +140,4 @@ flowchart TD
 
 ## Quality Gate
 
-Any pull request that changes architecture must update this file, `docs/v1/SPEC_CHANGELOG.md`, and an ADR when the dependency direction, source tree, or ownership model changes.
+Any pull request that changes architecture must update this file, `../planning/spec-changelog.md`, and an ADR when the dependency direction, source tree, or ownership model changes.

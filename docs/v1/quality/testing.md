@@ -6,7 +6,7 @@ Define required test categories and fixture rules before implementation starts.
 
 ## Source Of Truth
 
-Testing requirements enforce `docs/v1/SPEC.md`, `docs/v1/STATE_MACHINE.md`, and `docs/v1/INVARIANTS.md`.
+Testing requirements enforce `docs/v1/SPEC.md`, `docs/v1/architecture/state-machine.md`, and `docs/v1/architecture/invariants.md`.
 
 ## Update Triggers
 
