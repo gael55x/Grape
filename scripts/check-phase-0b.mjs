@@ -179,6 +179,29 @@ function checkRepoSnapshotShape() {
   }
 }
 
+function checkContextArtifactBuilder() {
+  const source = read("src/core/compiler/context-artifact-builder.ts");
+
+  for (const required of [
+    "dependencyManifest: ContextDependencyManifest;",
+    "sections: ContextSection[];",
+    "assertDependencyManifest(input.dependencyManifest)",
+    "assertSections(input.sections, input.dependencyManifest)",
+    'manifest.hashAlgorithm !== "sha256"',
+    "manifest.dependencies.length === 0",
+    "section.redactionStatus === \"blocked\"",
+    "section.dependencyRefs.length === 0",
+    "section.exactRequired && section.sourceRefs.length === 0",
+    "section.exactRequired && section.type === \"active_claim\" && section.proofRefs.length === 0",
+    "assertSha256Like(\"artifactHash\", input.artifactHash)",
+    "assertSha256Like(\"section.contentHash\", section.contentHash)"
+  ]) {
+    if (!source.includes(required)) {
+      errors.push(`Missing context artifact builder guard: ${required}`);
+    }
+  }
+}
+
 function checkAlphaSnapshot() {
   const fixtureDir = join(root, "tests", "fixtures", "clean-typescript-app");
   const metadata = JSON.parse(readFileSync(join(fixtureDir, "grape-fixture.json"), "utf8"));
@@ -206,6 +229,7 @@ checkStateMachine();
 checkTrustShapes();
 checkCurrentValid();
 checkRepoSnapshotShape();
+checkContextArtifactBuilder();
 checkAlphaSnapshot();
 
 if (errors.length > 0) {

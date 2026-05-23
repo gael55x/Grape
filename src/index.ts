@@ -1,4 +1,5 @@
 export * from "./shared/index.js";
+export * from "./core/compiler/index.js";
 export * from "./core/evidence/index.js";
 export * from "./core/git/index.js";
 export * from "./core/proofs/index.js";
