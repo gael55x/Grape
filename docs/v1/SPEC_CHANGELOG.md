@@ -14,3 +14,5 @@ Each entry should include:
 ## Unreleased
 
 - Established public V1 documentation architecture derived from the canonical V1 contract.
+- Published the canonical V1 implementation contract as `docs/v1/SPEC.md` so future implementation does not depend on ignored planning files.
+- Clarified Phase 0 into `Phase 0A` documentation hardening and `Phase 0B` alpha vertical slice.

@@ -7,12 +7,15 @@ These rules apply to AI coding agents working on Grape.
 Read these files first:
 
 1. `docs/v1/README.md`
-2. `docs/v1/INVARIANTS.md`
-3. `docs/v1/STATE_MACHINE.md`
-4. `docs/v1/IMPLEMENTATION_PHASES.md`
-5. The specific domain doc for the module you will edit
+2. `docs/v1/SPEC.md`
+3. `docs/v1/INVARIANTS.md`
+4. `docs/v1/STATE_MACHINE.md`
+5. `docs/v1/IMPLEMENTATION_PHASES.md`
+6. The specific domain doc for the module you will edit
 
 If the needed behavior is not documented, update the docs before or with the implementation.
+
+Do not implement from placeholders. If a supporting doc says what it should contain but does not define the contract, read `docs/v1/SPEC.md` and harden the supporting doc first.
 
 ## How To Choose The Right Module
 
@@ -47,6 +50,7 @@ If the needed behavior is not documented, update the docs before or with the imp
 - Never silently read ignored or private files.
 - Never store raw secrets in proofs, artifacts, logs, fixtures, or docs.
 - Never commit `do-not-commit-docs/`.
+- Never implement behavior that contradicts `docs/v1/SPEC.md`.
 
 ## Required Closeout
 
