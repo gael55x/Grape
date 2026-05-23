@@ -65,7 +65,7 @@ The fixture must include:
 | `P0B-02` | Add shared TypeScript contract types. | `SPEC.md`, `contracts/`, `core/` docs if changed | contract value check | complete |
 | `P0B-03` | Add state/event skeleton. | `architecture/state-machine.md` | transition table smoke test | complete |
 | `P0B-04` | Add repo snapshot interface. | `core/storage.md`, `architecture/overview.md` if changed | clean snapshot shape check | complete |
-| `P0B-05` | Add evidence/proof/claim interfaces. | `core/trust-model.md` if changed | no-proof and proof-hash unit tests | durable claim cannot exist without proof refs |
+| `P0B-05` | Add evidence/proof/claim interfaces. | `core/trust-model.md` if changed | trust shape check | complete |
 | `P0B-06` | Add current-valid filtering skeleton. | `core/trust-model.md` if changed | scope match/mismatch tests | scope mismatch excluded before ranking |
 | `P0B-07` | Add context artifact builder skeleton. | `contracts/context-artifact.md` if changed | artifact manifest golden test | artifact requires manifest and section hashes |
 | `P0B-08` | Add context diff skeleton. | `contracts/context-diff.md` if changed | first-turn/second-turn diff tests | `ContextPackItem[]` emitted with session scope |
@@ -87,6 +87,7 @@ The fixture must include:
 - `P0B-02`: added shared canonical TypeScript contract exports and `npm run contracts:check`.
 - `P0B-03`: added the state/event skeleton and `npm run state:check`.
 - `P0B-04`: added the repo snapshot shape and `npm run snapshot:check` for the clean fixture.
+- `P0B-05`: added evidence/proof/claim shapes and `npm run trust:check`.
 
 ## Exit Criteria
 

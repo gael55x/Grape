@@ -15,3 +15,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added first Phase 0B fixture with metadata validation.
 - Added validation scripts for shared contracts and state-machine skeleton.
 - Added repo snapshot shape and alpha snapshot smoke check.
+- Added evidence, proof, and durable claim interface baseline.
