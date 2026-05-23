@@ -11,6 +11,10 @@ Each entry should include:
 - tests or checks run
 - risks or follow-ups
 
+## Author Convention
+
+Implementation work from Phase 0B onward should use `Gaille Amolong / Codex` as the author/agent attribution.
+
 ## Entries
 
 ### 2026-05-23 - Phase 0A Documentation Foundation
@@ -40,3 +44,10 @@ Each entry should include:
 - Files changed: `docs/README.md`, `docs/v1/README.md`, V1 supporting docs moved into purpose-based folders, ADR-0003.
 - Checks run: path/reference grep checks and git status checks.
 - Risks/follow-ups: future docs must use the folder map instead of adding new topic files directly under `docs/v1/`.
+
+### 2026-05-23 - Phase 0B Alpha Slice Planning
+
+- Author/agent: Gaille Amolong / Codex
+- Files changed: `docs/v1/planning/phase-0b-alpha-slice.md`, `docs/v1/planning/implementation-phases.md`, planning changelogs.
+- Checks run: git status and docs path checks.
+- Risks/follow-ups: implementation must stay inside the alpha slice; MCP transport, compression, and broad indexing remain out of scope.
