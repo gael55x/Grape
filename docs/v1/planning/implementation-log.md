@@ -42,3 +42,10 @@ Keep entries simple:
 - Summary: added the `clean-typescript-app` fixture, documented expected claims/proofs/diff behavior, and added fixture metadata hash validation.
 - Checks run: `npm run check`.
 - Risks/follow-ups: fixture is static until the alpha application-service tests are introduced.
+
+### 2026-05-23 - Phase 0B Contract And State Skeleton
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added shared contract validation and the first state/event transition skeleton for the alpha path.
+- Checks run: `npm run check`.
+- Risks/follow-ups: TypeScript compiler is still not installed; checker scripts validate structure and canonical values until the test toolchain is introduced.

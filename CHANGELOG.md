@@ -13,3 +13,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Organized V1 documentation into purpose-based folders while keeping `docs/v1/SPEC.md` canonical.
 - Added initial project skeleton and shared V1 contract types.
 - Added first Phase 0B fixture with metadata validation.
+- Added validation scripts for shared contracts and state-machine skeleton.
