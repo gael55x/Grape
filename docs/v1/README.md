@@ -9,6 +9,7 @@ Grape V1 is a local-first incremental context compiler for AI coding agents. It 
 | File or folder | Purpose | Required contents | Primary readers | Update when | Agent check before editing |
 |---|---|---|---|---|---|
 | `README.md` | V1 documentation index and operating map. | Links, doc ownership, source-of-truth rules. | Everyone. | Any V1 doc is added, renamed, or repurposed. | Confirm the relevant domain doc exists. |
+| `SPEC.md` | Canonical committed V1 implementation contract. | Product contract, schemas, invariants, tool contracts, tests, benchmarks, build order. | Everyone. | Any V1 contract changes. | Do not implement behavior that contradicts this file. |
 | `ARCHITECTURE.md` | System layers, module boundaries, dependency direction. | Layer map, module map, dependency rules, Mermaid diagram. | Engineers and agents. | A module, layer, or dependency rule changes. | Check whether the target module owns the behavior. |
 | `STATE_MACHINE.md` | Grape V1 as explicit states and transitions. | State list, transition rules, forbidden transitions, tests. | Core implementers. | Any state or transition changes. | No hidden state transition is being introduced. |
 | `TRUST_MODEL.md` | Evidence, proofs, claims, Trust Kernel, layer isolation. | Promotion rules, proof rules, source trust, failure behavior. | Trust, evidence, retrieval, compiler implementers. | Trust behavior changes. | The change cannot bypass proof validation. |
@@ -32,15 +33,19 @@ Grape V1 is a local-first incremental context compiler for AI coding agents. It 
 
 ## Source-Of-Truth Rules
 
-- V1 docs in this folder are active implementation guidance.
+- `docs/v1/SPEC.md` is the canonical committed V1 implementation contract.
+- Domain docs in this folder are implementation guides derived from `SPEC.md`.
+- If a domain doc and `SPEC.md` disagree, stop and update the docs before coding.
 - `docs/v2/` is future planning only.
 - `docs/archive/` is historical only.
-- Private planning folders are not implementation input unless copied into this docs tree through an explicit docs change.
+- Private planning folders are not implementation input after the canonical material has been copied into this docs tree through an explicit docs change.
+- `do-not-commit-docs/` must never be committed.
 
 ## Required Agent Workflow
 
 1. Read `AGENTS.md`.
 2. Read this index.
-3. Read `INVARIANTS.md`.
-4. Read the specific domain doc for the code being changed.
-5. Update docs, tests, and examples in the same change when behavior changes.
+3. Read `SPEC.md`.
+4. Read `INVARIANTS.md`.
+5. Read the specific domain doc for the code being changed.
+6. Update docs, tests, and examples in the same change when behavior changes.
