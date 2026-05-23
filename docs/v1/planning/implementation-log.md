@@ -1,60 +1,33 @@
 # V1 Implementation Log
 
-This log records substantial implementation-preparation and implementation work.
+This log records phase-level implementation-preparation and implementation work. It is not a commit log; Git already records individual commits.
 
-Each entry should include:
+Each entry may include:
 
 - date
-- author or agent
 - phase
-- files changed
+- summary
 - tests or checks run
 - risks or follow-ups
 
-## Author Convention
+## Entry Style
 
-Implementation work from Phase 0B onward should use `Gaille Amolong / Codex` as the author/agent attribution.
+Keep entries simple:
+
+- one entry per meaningful phase milestone
+- no separate entries for small docs-only commits
+- no repeated details that are already in Git history
 
 ## Entries
 
-### 2026-05-23 - Phase 0A Documentation Foundation
+### 2026-05-23 - Phase 0A Documentation Foundation Complete
 
-- Author/agent: Codex
-- Files changed: root README, contributing guide, agent rules, V1 documentation tree, ADR-0001.
-- Checks run: read-only docs inspection and git status checks.
-- Risks/follow-ups: initial domain docs were intentionally skeletal and required hardening before implementation.
+- Summary: established the public V1 documentation structure, committed `docs/v1/SPEC.md` as the canonical implementation contract, organized supporting docs by purpose, and added ADRs for the documentation architecture, canonical spec, Phase 0 split, and docs structure.
+- Checks run: docs path/reference checks, git status checks.
+- Risks/follow-ups: supporting docs must stay aligned with `docs/v1/SPEC.md`; new V1 docs should use the existing folder map.
 
-### 2026-05-23 - Phase 0A Canonical Spec Publication
+### 2026-05-23 - Phase 0B Alpha Slice Planning And Skeleton
 
-- Author/agent: Codex
-- Files changed: `docs/v1/SPEC.md`, `docs/v1/README.md`, `AGENTS.md`, `docs/v1/planning/implementation-phases.md`, `docs/v1/planning/spec-changelog.md`, `docs/v1/decisions/adr-0002-canonical-spec-and-phase-0.md`.
-- Checks run: staged file review and git status checks.
-- Risks/follow-ups: supporting domain docs must remain aligned with `docs/v1/SPEC.md`.
-
-### 2026-05-23 - Phase 0A Domain Contract Hardening
-
-- Author/agent: Codex
-- Files changed: architecture, state machine, trust, context artifact, context diff, compression, MCP, CLI, storage, testing, benchmarks, security, invariants, fixtures, examples, contribution, and agent docs.
-- Checks run: read-only grep checks for stale placeholder language and source-of-truth references.
-- Risks/follow-ups: actual test runner, linting, fixtures, and benchmark harness are intentionally not implemented yet.
-
-### 2026-05-23 - Phase 0A Documentation Structure Cleanup
-
-- Author/agent: Codex
-- Files changed: `docs/README.md`, `docs/v1/README.md`, V1 supporting docs moved into purpose-based folders, ADR-0003.
-- Checks run: path/reference grep checks and git status checks.
-- Risks/follow-ups: future docs must use the folder map instead of adding new topic files directly under `docs/v1/`.
-
-### 2026-05-23 - Phase 0B Alpha Slice Planning
-
-- Author/agent: Gaille Amolong / Codex
-- Files changed: `docs/v1/planning/phase-0b-alpha-slice.md`, `docs/v1/planning/implementation-phases.md`, planning changelogs.
-- Checks run: git status and docs path checks.
-- Risks/follow-ups: implementation must stay inside the alpha slice; MCP transport, compression, and broad indexing remain out of scope.
-
-### 2026-05-23 - Phase 0B Minimal Skeleton And Shared Contracts
-
-- Author/agent: Gaille Amolong / Codex
-- Files changed: `package.json`, `tsconfig.json`, `scripts/check-docs-structure.mjs`, `src/index.ts`, `src/shared/index.ts`, `src/shared/contracts.ts`, planning changelog/log.
+- Summary: defined the Phase 0B alpha slice, added the minimal package/TypeScript skeleton, added the docs structure guard, and exported shared canonical V1 contract types.
 - Checks run: `npm run docs:check`.
-- Risks/follow-ups: TypeScript compiler dependency is not installed yet; shared contracts are type-only and contain no product logic.
+- Risks/follow-ups: implementation must stay inside the alpha slice; TypeScript compiler dependency is not installed yet; MCP transport, compression, and broad indexing remain out of scope.
