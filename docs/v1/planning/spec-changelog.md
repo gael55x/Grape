@@ -18,3 +18,4 @@ Each entry should include:
 - Clarified Phase 0 into `Phase 0A` documentation hardening and `Phase 0B` alpha vertical slice.
 - Hardened supporting domain docs with schemas, transition gates, storage rules, MCP contracts, compression invalidation, tests, benchmark rules, and security gates derived from `SPEC.md`.
 - Organized supporting docs into purpose-based folders while keeping `docs/v1/SPEC.md` as the canonical top-level contract.
+- Added Phase 0B alpha-slice plan to constrain the first implementation loop.

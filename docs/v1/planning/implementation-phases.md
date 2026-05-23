@@ -87,9 +87,9 @@ No product code should start before `Phase 0A` exits. `Phase 0B` is the first im
 
 ## Current Phase
 
-Phase 0A: Documentation and standards foundation.
+Phase 0B: Alpha vertical slice.
 
-No serious production feature implementation should start until Phase 0A exit criteria are met.
+Phase 0A documentation hardening is complete. Phase 0B is the first implementation slice and must stay limited to the alpha path in `phase-0b-alpha-slice.md`.
 
 ## Phase 0A Exit Criteria
 
@@ -102,8 +102,11 @@ No serious production feature implementation should start until Phase 0A exit cr
 - testing and benchmark standards exist
 - changelog, spec changelog, implementation log, and ADR structure exist
 
+Status: complete.
+
 ## Phase 0B Exit Criteria
 
+- alpha scope is documented in `phase-0b-alpha-slice.md`
 - smallest end-to-end alpha path compiles a safe context artifact
 - proof-backed claim promotion is implemented for the alpha source types
 - current-valid filtering runs before artifact compilation
