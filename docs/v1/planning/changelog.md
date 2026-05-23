@@ -21,3 +21,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added evidence, proof, and durable claim shapes with trust-shape validation.
 - Added current-valid filtering skeleton and consolidated Phase 0B smoke checks.
 - Tightened repo snapshot and current-valid shapes to reject placeholder hashes and missing proofs.
+- Added context artifact builder skeleton with manifest, section hash, dependency-ref, exact-context, and blocked-redaction guards.

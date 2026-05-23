@@ -18,3 +18,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added evidence, proof, and durable claim interface baseline.
 - Added current-valid filtering skeleton and consolidated Phase 0B smoke harness.
 - Tightened Phase 0B snapshot and current-valid shapes.
+- Added context artifact builder skeleton with dependency manifest and section safety guards.

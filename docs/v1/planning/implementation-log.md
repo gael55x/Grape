@@ -77,3 +77,10 @@ Keep entries simple:
 - Summary: removed placeholder snapshot values, required non-empty proof refs for current-valid candidates, and clarified shared dependency direction in architecture docs.
 - Checks run: `npm run check`.
 - Risks/follow-ups: current-valid still needs stale hash, contradiction, privacy, and dirty-worktree gates before artifact compilation can depend on it.
+
+### 2026-05-23 - Phase 0B Artifact Builder Skeleton
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added the first context artifact builder shape with guards for dependency manifests, section hashes, blocked redaction, section dependency refs, exact source refs, and exact active-claim proof refs.
+- Checks run: `npm run check`.
+- Risks/follow-ups: artifact hashing is still input-provided until the real deterministic hash service and golden tests are introduced.
