@@ -14,3 +14,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Expanded implementation contracts for architecture, state machine, trust, artifact, diff, compression, MCP, CLI, storage, testing, benchmarks, security, fixtures, examples, and invariants.
 - Organized V1 supporting docs into purpose-based folders under `architecture/`, `core/`, `contracts/`, `interfaces/`, `quality/`, and `planning/`.
 - Added Phase 0B alpha-slice plan with scoped work tickets and exit criteria.
+- Added minimal project skeleton with package metadata, TypeScript config, docs structure guard, and shared canonical contract types.
