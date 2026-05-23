@@ -35,3 +35,10 @@ Keep entries simple:
 - Summary: defined the Phase 0B alpha slice, added the minimal package/TypeScript skeleton, added the docs structure guard, and exported shared canonical V1 contract types.
 - Checks run: `npm run docs:check`.
 - Risks/follow-ups: implementation must stay inside the alpha slice; TypeScript compiler dependency is not installed yet; MCP transport, compression, and broad indexing remain out of scope.
+
+### 2026-05-23 - Phase 0B Fixture Baseline
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added the `clean-typescript-app` fixture, documented expected claims/proofs/diff behavior, and added fixture metadata hash validation.
+- Checks run: `npm run check`.
+- Risks/follow-ups: fixture is static until the alpha application-service tests are introduced.

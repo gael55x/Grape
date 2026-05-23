@@ -61,7 +61,7 @@ The fixture must include:
 
 | Ticket | Scope | Docs | Required tests | Exit criteria |
 |---|---|---|---|---|
-| `P0B-01` | Create fixture metadata for `clean-typescript-app`. | `fixtures/README.md`, this file | fixture metadata validation | expected labels and hashes documented |
+| `P0B-01` | Create fixture metadata for `clean-typescript-app`. | `fixtures/README.md`, this file | fixture metadata validation | complete |
 | `P0B-02` | Add shared TypeScript contract types. | `SPEC.md`, `contracts/`, `core/` docs if changed | type compile smoke test | canonical enums and schemas exported |
 | `P0B-03` | Add state/event skeleton. | `architecture/state-machine.md` | transition table smoke test | no undocumented transition names |
 | `P0B-04` | Add repo snapshot interface. | `core/storage.md`, `architecture/overview.md` if changed | clean snapshot unit test | branch/commit/worktree hash shape defined |
@@ -80,6 +80,10 @@ The fixture must include:
 - No high-risk exact section replaced by summary.
 - No generated context returned from ignored/private files.
 - No code path treats `current-valid` as relevance ranking.
+
+## Completed Work
+
+- `P0B-01`: added `tests/fixtures/clean-typescript-app`, fixture metadata, fixture docs, and `npm run fixtures:check`.
 
 ## Exit Criteria
 
