@@ -79,6 +79,7 @@ Use these procedures before editing code or docs for the listed behavior.
 - If a module boundary is unclear, update `docs/v1/architecture/overview.md` before adding imports.
 - If a test cannot be written because the behavior is unclear, the spec is not ready for that behavior.
 - Keep `docs/v1/planning/implementation-log.md` phase-level. Do not add one log entry per commit.
+- For AI-assisted implementation log entries, use `Author/agent: <human contributor> / <agent name>`.
 
 ## Never Rules
 
