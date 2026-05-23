@@ -5,6 +5,7 @@ This log records phase-level implementation-preparation and implementation work.
 Each entry may include:
 
 - date
+- author or agent
 - phase
 - summary
 - tests or checks run
@@ -15,6 +16,7 @@ Each entry may include:
 Keep entries simple:
 
 - one entry per meaningful phase milestone
+- use `Author/agent: <human contributor> / <agent name>` for AI-assisted work
 - no separate entries for small docs-only commits
 - no repeated details that are already in Git history
 
@@ -22,12 +24,14 @@ Keep entries simple:
 
 ### 2026-05-23 - Phase 0A Documentation Foundation Complete
 
+- Author/agent: Gaille Amolong / Codex
 - Summary: established the public V1 documentation structure, committed `docs/v1/SPEC.md` as the canonical implementation contract, organized supporting docs by purpose, and added ADRs for the documentation architecture, canonical spec, Phase 0 split, and docs structure.
 - Checks run: docs path/reference checks, git status checks.
 - Risks/follow-ups: supporting docs must stay aligned with `docs/v1/SPEC.md`; new V1 docs should use the existing folder map.
 
 ### 2026-05-23 - Phase 0B Alpha Slice Planning And Skeleton
 
+- Author/agent: Gaille Amolong / Codex
 - Summary: defined the Phase 0B alpha slice, added the minimal package/TypeScript skeleton, added the docs structure guard, and exported shared canonical V1 contract types.
 - Checks run: `npm run docs:check`.
 - Risks/follow-ups: implementation must stay inside the alpha slice; TypeScript compiler dependency is not installed yet; MCP transport, compression, and broad indexing remain out of scope.
