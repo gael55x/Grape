@@ -4,18 +4,9 @@
 
 Define MCP tool contracts and safety boundaries.
 
-## Required Contents
+## Source Of Truth
 
-- read tool list
-- restricted write tool list
-- request and response schemas
-- evidence-write rules
-- examples
-- contract tests
-
-## Readers
-
-MCP implementers, agent integrators, and reviewers.
+Tool schemas and safety rules are derived from `docs/v1/SPEC.md`.
 
 ## Update Triggers
 
@@ -53,3 +44,105 @@ Restricted write tools:
 - `grape_record_command_result`
 - `grape_record_user_decision`
 - `grape_request_user_confirmation`
+
+## Read Tool Contract
+
+```ts
+interface GrapeGetContextInput {
+  repoPath: string;
+  sessionId: string;
+  agentId?: string;
+  task: {
+    id: string;
+    prompt: string;
+    type: TaskType;
+    riskOverlays?: RiskOverlay[];
+    touchedPaths?: string[];
+  };
+  maxTokens?: number;
+  restoreTokens?: string[];
+}
+
+interface GrapeGetContextOutput {
+  status: "ok" | "partial_with_risk" | "unsafe_compile";
+  artifactId?: string;
+  sessionId: string;
+  contextPackItems: ContextPackItem[];
+  contextPackMarkdown: string;
+  omittedItems: Array<{
+    sectionId: string;
+    restoreToken?: string;
+    reason: string;
+  }>;
+  invalidatedPreviousItems: Array<{
+    previousItemId: string;
+    reason: string;
+  }>;
+  warnings: string[];
+  unsafeReasons: string[];
+}
+```
+
+Rules:
+
+- `contextPackItems` is canonical. Markdown is only a rendering.
+- `unsafe_compile` must not return unsafe context as if it were safe.
+- `partial_with_risk` must include explicit warnings and missing-context reasons.
+- Read tools must never silently read ignored/private files.
+
+## Restricted Write Contracts
+
+Write tools record evidence candidates or request direct confirmation. They cannot promote durable truth directly.
+
+```ts
+interface GrapeRecordCommandResultInput {
+  repoPath: string;
+  sessionId: string;
+  observedRunId?: string;
+  command: string;
+  commandHash: string;
+  cwd: string;
+  exitCode: number;
+  stdoutHash: string;
+  stderrHash: string;
+  startedAt: string;
+  endedAt: string;
+  reportedBy: "grape" | "agent";
+}
+
+interface GrapeRecordTestResultInput extends GrapeRecordCommandResultInput {
+  testFramework?: string;
+  testFiles?: string[];
+  passed: boolean;
+}
+
+interface GrapeRecordUserDecisionInput {
+  repoPath: string;
+  sessionId: string;
+  subject: string;
+  promptHash: string;
+  responseHash: string;
+  confirmationChannel: "cli" | "mcp_prompt" | "local_ui";
+  confirmedAt: string;
+  recordedBy: "direct_user_confirmation";
+}
+```
+
+Write rules:
+
+- If `reportedBy === "agent"` and no `observedRunId` exists, command/test evidence is temporary scratch only.
+- A Grape-observed run must include command hash, cwd, exit code, stdout/stderr hashes, and timestamps.
+- User decisions require direct confirmation with prompt hash, response hash, timestamp, and confirmation channel.
+- Write tools return evidence IDs or candidate IDs only. They do not return claim IDs for newly durable claims.
+- Promotion, if later allowed, must replay Trust Kernel gates outside the MCP adapter.
+
+## Contract Tests
+
+- `mcp_get_context_returns_structured_items`
+- `mcp_get_context_markdown_matches_items`
+- `mcp_write_tool_cannot_promote_claim`
+- `agent_reported_test_result_is_temporary`
+- `grape_observed_run_requires_command_and_output_hashes`
+- `user_decision_requires_direct_confirmation_hashes`
+- `ignored_file_read_requires_approval`
+- `unsafe_compile_does_not_return_safe_status`

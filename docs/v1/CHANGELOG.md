@@ -9,3 +9,6 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 ### Added
 
 - Initial V1 documentation architecture.
+- Committed canonical V1 implementation contract at `docs/v1/SPEC.md`.
+- Phase 0 split into `Phase 0A` documentation hardening and `Phase 0B` alpha vertical slice.
+- Expanded implementation contracts for architecture, state machine, trust, artifact, diff, compression, MCP, CLI, storage, testing, benchmarks, security, fixtures, examples, and invariants.

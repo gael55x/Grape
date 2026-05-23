@@ -62,6 +62,29 @@ No product code should start before `Phase 0A` exits. `Phase 0B` is the first im
 15. Benchmarks and hardening
 16. Alpha release checklist
 
+## Phase Roadmap
+
+| Phase | Goal | Deliverables | Required tests/benchmarks | Non-goals |
+|---|---|---|---|---|
+| 0A | Make implementation rules enforceable before code. | `SPEC.md`, domain docs, ADRs, invariants, state matrix, test/benchmark standards. | docs lint/readability checks when available. | production code, schema implementation. |
+| 0B | Prove the smallest safe context compiler loop. | one fixture repo, repo snapshot, evidence, proof-backed claim, artifact, diff, MCP/CLI path. | alpha golden tests, unsafe omission tests, first token benchmark. | broad language support, embeddings, model summaries. |
+| 1 | Establish project skeleton and tooling. | package structure, TypeScript config, test runner, lint/format, CI skeleton. | smoke tests and docs gate checks. | feature behavior beyond skeleton. |
+| 2 | Implement SQLite schema and migrations. | repository layer, migrations, WAL/busy timeout policy. | migration, transaction, lock, path tests. | business policy in storage. |
+| 3 | Capture repo snapshot and worktree state. | branch/commit/dirty/hash snapshot services. | clean/dirty/branch fixtures. | deep call graph indexing. |
+| 4 | Build evidence store. | source records, rejections, hashes, privacy status. | ignored file, source hash, rejection tests. | durable claim promotion. |
+| 5 | Build Trust Kernel and proof validation. | proof validators, belief gate, promotion rules. | trust safety, proof hash, partial verification tests. | model judgment as proof. |
+| 6 | Implement claims and layer isolation. | durable claims, scratch claims, claim edges. | no hidden promotion, contradiction/supersession tests. | advanced contradiction AI. |
+| 7 | Ingest project rules. | pinned rules, rule proofs, rule digests. | pinned resend and stale rule tests. | remote/team rules. |
+| 8 | Build symbol/file index and FTS. | lexical index, basic symbol outlines, path normalization. | FTS, secret exclusion, cross-platform path tests. | full semantic graph. |
+| 9 | Implement current-valid retrieval. | scope matching, stale filtering, partial warnings. | gold label current-valid tests. | relevance ranking over stale facts. |
+| 10 | Implement context artifact compiler. | artifact schema, sections, manifests, redaction scan. | artifact golden tests. | compression optimization first. |
+| 11 | Implement context diff and session locks. | sent ledger, omitted ledger, restore, invalidation. | session isolation, pinned resend, restore tests. | global context lock. |
+| 12 | Add lightweight compression cache. | deterministic symbol/rule/ledger cache. | input hash and invalidation tests. | model summaries, branch summaries. |
+| 13 | Add MCP server. | read tools, restricted write tools, schemas. | MCP contract and safety tests. | MCP writes promoting truth. |
+| 14 | Add CLI inspection/debugging. | status, doctor, artifacts, claims, stale, omitted, bench shell. | CLI snapshots and JSON schema tests. | CLI business logic. |
+| 15 | Build benchmarks and hardening. | benchmark harness, gold labels, baseline scripts. | benchmark determinism and thresholds. | unmeasured token claims. |
+| 16 | Alpha release checklist. | release docs, known limitations, fixture results. | full alpha test/benchmark suite. | V1.1/V2 features. |
+
 ## Current Phase
 
 Phase 0A: Documentation and standards foundation.
