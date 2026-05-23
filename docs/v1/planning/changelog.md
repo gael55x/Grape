@@ -15,3 +15,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Organized V1 supporting docs into purpose-based folders under `architecture/`, `core/`, `contracts/`, `interfaces/`, `quality/`, and `planning/`.
 - Added Phase 0B alpha-slice plan with scoped work tickets and exit criteria.
 - Added minimal project skeleton with package metadata, TypeScript config, docs structure guard, and shared canonical contract types.
+- Added `clean-typescript-app` fixture with metadata hash validation.

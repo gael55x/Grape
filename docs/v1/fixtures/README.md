@@ -21,6 +21,10 @@ Each fixture must document:
 
 Agents must not add benchmarks against undocumented fixtures.
 
+## Fixture Details
+
+- [clean-typescript-app](clean-typescript-app.md)
+
 ## Required Fixture Matrix
 
 | Fixture | Purpose | Branches/files | Expected labels | Benchmarks |

@@ -9,6 +9,7 @@
   },
   "scripts": {
     "docs:check": "node scripts/check-docs-structure.mjs",
-    "check": "npm run docs:check"
+    "fixtures:check": "node scripts/check-fixtures.mjs",
+    "check": "npm run docs:check && npm run fixtures:check"
   }
 }
