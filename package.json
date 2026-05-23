@@ -11,8 +11,9 @@
     "docs:check": "node scripts/check-docs-structure.mjs",
     "contracts:check": "node scripts/check-shared-contracts.mjs",
     "state:check": "node scripts/check-state-machine.mjs",
+    "trust:check": "node scripts/check-trust-shapes.mjs",
     "snapshot:check": "node scripts/check-alpha-snapshot.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
-    "check": "npm run docs:check && npm run contracts:check && npm run state:check && npm run fixtures:check && npm run snapshot:check"
+    "check": "npm run docs:check && npm run contracts:check && npm run state:check && npm run trust:check && npm run fixtures:check && npm run snapshot:check"
   }
 }

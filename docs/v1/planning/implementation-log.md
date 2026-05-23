@@ -56,3 +56,10 @@ Keep entries simple:
 - Summary: added the repo snapshot TypeScript shape and a fixture-based clean snapshot smoke check.
 - Checks run: `npm run check`.
 - Risks/follow-ups: real Git inspection and persisted snapshots are still out of scope until later Phase 0B/Phase 2 work.
+
+### 2026-05-23 - Phase 0B Trust Shape Baseline
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added evidence, proof validation, claim candidate, and durable claim shapes with a guard that durable claims require non-empty proof refs and matched scope.
+- Checks run: `npm run check`.
+- Risks/follow-ups: actual proof validation and persistence are not implemented yet.
