@@ -19,3 +19,5 @@ Each entry should include:
 - Hardened supporting domain docs with schemas, transition gates, storage rules, MCP contracts, compression invalidation, tests, benchmark rules, and security gates derived from `SPEC.md`.
 - Organized supporting docs into purpose-based folders while keeping `docs/v1/SPEC.md` as the canonical top-level contract.
 - Added In-Memory Context Loop plan to constrain the first implementation loop.
+- Aligned supporting storage table names with canonical `SPEC.md` names where present.
+- Added the first alpha storage migration contract for project, repo, source, claim, proof, artifact, and session-ledger tables.
