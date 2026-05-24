@@ -26,3 +26,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added in-memory token accounting for naive resend cost, Grape pack cost, omitted unchanged tokens, pinned overhead, invalidation overhead, unsafe omissions, stale sends, and reduction percent.
 - Added TypeScript typechecking and Node behavioral tests for the in-memory diff/token path.
 - Added a zero-dependency architecture-boundary check for TypeScript import direction.
+- Added empty source ownership modules for the documented app, adapter, storage, security, session, scope, compression, indexing, and claims layers.
