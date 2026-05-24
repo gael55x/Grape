@@ -127,6 +127,8 @@ flowchart TD
 - Production code must not import from `tests/`, benchmark harnesses, or fixture helpers.
 - Shared utilities must stay narrow. If a utility needs domain vocabulary, it belongs in that domain module.
 
+`npm run architecture:check` enforces the basic import boundaries from this section. It is intentionally conservative and only checks layer direction. Domain-specific behavior still needs normal review and tests.
+
 ## Naming And Simplicity Standards
 
 - Use lowercase kebab-case for docs and fixture names.
