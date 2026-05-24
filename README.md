@@ -5,7 +5,7 @@
 <h1 align="center">Grape</h1>
 
 <p align="center">
-  The context infrastructure framework for AI coding agents.
+  The incremental context compiler for AI coding agents.
 </p>
 
 <p align="center">
@@ -22,16 +22,16 @@
   <img alt="Status" src="https://img.shields.io/badge/status-v1%20implementation%20scaffold-6f42c1" />
   <img alt="Runtime" src="https://img.shields.io/badge/node-%3E%3D22.5-339933" />
   <img alt="Storage" src="https://img.shields.io/badge/storage-sqlite%20%2B%20wal-044a64" />
-  <img alt="Framework" src="https://img.shields.io/badge/framework-context%20infrastructure-111827" />
+  <img alt="Compiler" src="https://img.shields.io/badge/compiler-incremental%20context-111827" />
 </p>
 
 ---
 
-Grape is context infrastructure for AI coding agents.
+Grape is context infrastructure for the next generation of AI coding agents.
 
-It helps agents stop rereading the same repository context by compiling safe, current, task-specific context artifacts, tracking what was already sent in the current agent session, invalidating stale context, and returning only the next safe context delta.
+It compiles safe, current repository context and sends only the next safe delta to each agent session. Instead of making agents reread the same files, rediscover the same rules, and repeat the same mistakes, Grape turns repository knowledge into dependency-tracked context artifacts that can be diffed, restored, and invalidated.
 
-Grape is not a coding assistant, a chatbot, or a generic search layer. It is infrastructure for making AI coding agents cheaper, safer, and more consistent on real codebases.
+Grape is not a coding assistant, chatbot, memory toy, or generic search layer. It is the missing context runtime for agentic software development: built to make coding agents cheaper to run, harder to mislead, and more consistent on real codebases.
 
 ## Why Grape Exists
 
@@ -44,9 +44,9 @@ AI coding agents repeatedly spend context window and tool calls rediscovering th
 - prior failures and stale assumptions
 - context already sent earlier in the same session
 
-Search, embeddings, repo maps, and graph retrieval can find related information. Grape’s wedge is different: it compiles a dependency-tracked context artifact, remembers what this agent session already received, and sends only what is new, changed, pinned, restorable, or invalidated.
+Search, embeddings, repo maps, and graph retrieval can find related information. Grape’s wedge is different: it treats context like a build artifact. It compiles what is safe and current, remembers what this exact agent session already received, and sends only what is new, changed, pinned, restorable, or invalidated.
 
-The goal is token savings without hiding uncertainty, stale evidence, or safety-critical constraints.
+The goal is not just smaller prompts. The goal is trustworthy incremental context: token savings without hiding uncertainty, stale evidence, or safety-critical constraints.
 
 ## What Grape Is Building
 
