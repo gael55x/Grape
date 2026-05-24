@@ -103,6 +103,8 @@ Tables outside this subset stay documented for V1, but they require explicit imp
 - Session locks must be represented durably, not only in process memory.
 - FTS5 is allowed for lexical search, but FTS entries must reference source IDs and must not contain raw secrets.
 
+The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` and covered by behavioral tests. Driver-specific code must apply those pragma statements before running migrations or repository writes.
+
 ## Migration Rules
 
 - Migration filenames use `NNNN_short_description.sql`.
