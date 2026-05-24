@@ -94,6 +94,10 @@ The canonical states and constraints come from `docs/v1/SPEC.md`. This file make
 | `session_active` | `session_invalidated` | `invalidate_session` | reset/branch/lock/corruption reason exists | close or reset ledger | context_sessions, session_events | omitted unchanged context | `session_invalidation_blocks_omission` |
 | `session_invalidated` | `context_pack_sent` | `force_full_resend` | artifact valid, all required items included | send full pack with invalidation | context_sent_items, context_pack_items | previous context | `unknown_session_forces_full_resend` |
 
+## Durable Build Implementation Note
+
+The current persisted proof implements the `context_artifact_compiled` -> `session_active` -> `context_diff_generated` -> `context_pack_sent` path for an already-built artifact. It intentionally does not implement evidence collection, trust promotion, current-valid retrieval, MCP transport, or compression. Those states remain documented contracts until their owning goals are implemented.
+
 ## Lifecycle Diagram
 
 ```mermaid

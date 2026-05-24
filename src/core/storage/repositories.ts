@@ -5,6 +5,8 @@ import { applySqliteConnectionPolicy } from "./sqlite-policy.js";
 
 export type ContextDependencyKind =
   | "file"
+  | "repo_snapshot"
+  | "worktree_state"
   | "source"
   | "claim"
   | "proof"
@@ -13,7 +15,8 @@ export type ContextDependencyKind =
   | "lockfile"
   | "symbol"
   | "test"
-  | "compression_artifact";
+  | "compression_artifact"
+  | "session_ledger";
 
 export type ContextPackItemKind =
   | "claim"

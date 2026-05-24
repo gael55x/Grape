@@ -140,3 +140,10 @@ Keep entries simple:
 - Summary: made Node 22.5+ explicit, added ADR-0004, enforced same-session artifact references for sent/omitted/pack ledgers, required restore metadata for restorable omissions, added repository-applied SQLite pragmas, compare-and-set session lock methods, context pack/session event repositories, migration bootstrap rejection for untracked schemas, and a storage transaction helper.
 - Checks run: `npm run check`.
 - Risks/follow-ups: the durable context build service is still not implemented; the next proof must persist artifact, diff, sent/omitted, and pack rows atomically through one narrow build loop.
+
+### 2026-05-24 - Durable Context Build Proof
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added the first app-level durable context build service for an already-built artifact, with one transaction for artifact dependencies, context pack items, sent ledgers, omitted ledgers, stale manifest invalidations, and token metrics. Split record mapping from orchestration and added explicit modularity standards to prevent godfiles.
+- Checks run: `npm run check`.
+- Risks/follow-ups: this is not yet CLI/MCP product flow; repo snapshot, evidence, trust, current-valid retrieval, and transport adapters still need their own implementation goals.

@@ -17,6 +17,8 @@ If the needed behavior is not documented, update the docs before or with the imp
 
 Do not implement from placeholders. If a supporting doc says what it should contain but does not define the contract, read `docs/v1/SPEC.md` and harden the supporting doc first.
 
+Before adding code to an existing large file, read `docs/v1/architecture/overview.md#code-modularity-standards`. If the file is past the split checkpoint, split by ownership before adding another responsibility.
+
 The current in-memory smoke harness is not a substitute for typechecking or behavioral tests. After the In-Memory Context Loop, do not add broad feature code until Project Skeleton And Tooling wires real TypeScript and test gates.
 
 ## Documentation Traversal
@@ -102,6 +104,7 @@ Use these procedures before editing code or docs for the listed behavior.
 - Never implement behavior that contradicts `docs/v1/SPEC.md`.
 - Never use placeholder docs as permission to invent behavior.
 - Never add generic utility modules that hide domain ownership.
+- Never create or expand godfiles when a focused module split would keep ownership clear.
 - Never return context generated from stale dependency manifests.
 
 ## Required Closeout

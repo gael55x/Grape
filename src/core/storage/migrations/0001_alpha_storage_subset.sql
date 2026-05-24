@@ -167,7 +167,7 @@ CREATE TABLE IF NOT EXISTS context_artifacts (
 CREATE TABLE IF NOT EXISTS context_dependencies (
   dependency_id TEXT PRIMARY KEY,
   artifact_id TEXT NOT NULL REFERENCES context_artifacts(artifact_id) ON DELETE CASCADE,
-  dependency_kind TEXT NOT NULL CHECK (dependency_kind IN ('file', 'source', 'claim', 'proof', 'rule', 'config', 'lockfile', 'symbol', 'test', 'compression_artifact')),
+  dependency_kind TEXT NOT NULL CHECK (dependency_kind IN ('file', 'repo_snapshot', 'worktree_state', 'source', 'claim', 'proof', 'rule', 'config', 'lockfile', 'symbol', 'test', 'compression_artifact', 'session_ledger')),
   dependency_ref TEXT NOT NULL,
   dependency_hash TEXT NOT NULL,
   scope_json TEXT NOT NULL,

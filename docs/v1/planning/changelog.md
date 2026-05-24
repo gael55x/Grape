@@ -37,3 +37,6 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added the first typed SQLite repository slice for project/repo/snapshot/worktree setup, context sessions, context artifacts, dependencies, sent items, and omitted items.
 - Added ADR-0004 to make Node 22.5+ the explicit V1 runtime for the built-in SQLite path.
 - Hardened storage repositories with same-session artifact ledger constraints, restorable omission constraints, repository-applied SQLite pragmas, compare-and-set session locks, session events, context pack item persistence, and transaction rollback support.
+- Added a durable context build service that persists an already-built artifact, dependencies, context pack items, sent ledger rows, omitted ledger rows, invalidations, and token metrics inside one transaction.
+- Split durable context build record mapping away from orchestration to keep the app service modular.
+- Added code modularity standards and split triggers for future contributors and agents.

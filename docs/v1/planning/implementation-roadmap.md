@@ -38,9 +38,10 @@ The roadmap uses goal names instead of numeric planning labels. The canonical V1
 
 - Documentation Foundation: make implementation rules enforceable before code.
 - In-Memory Context Loop: prove the smallest safe context compiler shape without storage, CLI, or MCP transport.
+- Durable Context Build Proof: prove the persisted build-system loop without adding transport, compression, or broad indexing.
 - Alpha Product Slice: prove the smallest persisted CLI/MCP path from `SPEC.md`.
 
-No product code should start before the Documentation Foundation is complete. In-Memory Context Loop is the first implementation slice. Alpha Product Slice is the first product-shaped slice.
+No product code should start before the Documentation Foundation is complete. In-Memory Context Loop is the first implementation slice. Durable Context Build Proof is the first persisted build-system proof. Alpha Product Slice is the first product-shaped CLI/MCP slice.
 
 ## Ordered Goals
 
@@ -48,21 +49,22 @@ No product code should start before the Documentation Foundation is complete. In
 2. In-Memory Context Loop
 3. Project Skeleton And Tooling
 4. SQLite Schema And Migrations
-5. Repo Snapshot And Worktree State
-6. Evidence Store
-7. Trust Kernel And Proof Validation
-8. Claims And Layer Isolation
-9. Project Rules Ingestion
-10. Symbol/File Index And FTS
-11. Current-Valid Retrieval
-12. Context Artifact Compiler
-13. Context Diff Engine And Session Locks
-14. Lightweight Compression Cache
-15. MCP Server
-16. CLI Inspection/Debugging
-17. Alpha Product Slice
-18. Benchmarks And Hardening
-19. Alpha Release Checklist
+5. Durable Context Build Proof
+6. Repo Snapshot And Worktree State
+7. Evidence Store
+8. Trust Kernel And Proof Validation
+9. Claims And Layer Isolation
+10. Project Rules Ingestion
+11. Symbol/File Index And FTS
+12. Current-Valid Retrieval
+13. Context Artifact Compiler
+14. Context Diff Engine And Session Locks
+15. Lightweight Compression Cache
+16. MCP Server
+17. CLI Inspection/Debugging
+18. Alpha Product Slice
+19. Benchmarks And Hardening
+20. Alpha Release Checklist
 
 ## Roadmap
 
@@ -72,6 +74,7 @@ No product code should start before the Documentation Foundation is complete. In
 | In-Memory Context Loop | one fixture repo, in-memory repo snapshot, evidence, proof-backed claim, artifact shape, diff proof, token accounting. | memory-loop smoke checks, unsafe omission checks, first/second turn token accounting. | durable storage, MCP transport, full CLI, broad language support, embeddings, model summaries. |
 | Project Skeleton And Tooling | package structure, TypeScript config, test runner, lint/format, CI skeleton. | smoke tests and docs gate checks. | feature behavior beyond skeleton. |
 | SQLite Schema And Migrations | repository layer, migrations, WAL/busy timeout policy. | migration, transaction, lock, path tests. | business policy in storage. |
+| Durable Context Build Proof | app-level build service that persists one provided artifact, dependency rows, context pack items, sent ledger, omitted ledger, invalidations, and token metrics in one transaction. | first-turn send, second-turn omission, stale manifest invalidation, lock failure, rollback tests. | MCP/CLI transport, broad retrieval, trust extraction, compression, graph expansion. |
 | Repo Snapshot And Worktree State | branch/commit/dirty/hash snapshot services. | clean/dirty/branch fixtures. | deep call graph indexing. |
 | Evidence Store | source records, rejections, hashes, privacy status. | ignored file, source hash, rejection tests. | durable claim promotion. |
 | Trust Kernel And Proof Validation | proof validators, belief gate, promotion rules. | trust safety, proof hash, partial verification tests. | model judgment as proof. |
@@ -90,7 +93,7 @@ No product code should start before the Documentation Foundation is complete. In
 
 ## Current Goal
 
-SQLite Schema And Migrations.
+Durable Context Build Proof.
 
 Documentation Foundation, In-Memory Context Loop, and Project Skeleton And Tooling are complete enough for the next goal. Alpha Product Slice comes later and must prove the persisted CLI/MCP session-ledger path.
 
@@ -120,6 +123,18 @@ Status: complete.
 - stale dependencies invalidate artifacts and previous context
 - in-memory token accounting measures first-turn cost, later-turn cost, and unsafe omissions
 - no compression artifact can act as proof
+
+## Durable Context Build Proof Exit Criteria
+
+- one app service owns the durable build orchestration
+- app service accepts an already-built artifact and does not invent trust/retrieval facts
+- session lock is renewed or acquired before writing build outputs
+- artifact, dependencies, pack items, sent ledger, and omitted ledger are persisted in one transaction
+- first build sends `NEW` and `PINNED` pack items
+- second no-change build omits unchanged non-pinned context with restore metadata
+- stale dependency manifest emits `INVALIDATE_PREVIOUS`
+- failed persistence rolls back artifact and ledger rows
+- implementation stays modular and does not create a context-build godfile
 
 ## Alpha Product Slice Exit Criteria
 

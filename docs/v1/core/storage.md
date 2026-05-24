@@ -112,6 +112,7 @@ Tables outside this subset stay documented for V1, but they require explicit imp
 - Sent, omitted, and pack rows must reference an artifact owned by the same session; cross-session artifact references fail closed.
 - Restorable omitted rows must include a restore ID and restore command.
 - Repository construction must apply the SQLite connection policy so foreign keys are not optional caller discipline.
+- Durable context builds must persist artifact, dependency, pack, sent, and omitted rows in one transaction owned by `src/app/`.
 
 The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` and covered by behavioral tests. Runtime migration application uses Node's built-in `node:sqlite` through `src/core/storage/sqlite-runtime.ts`, so V1 requires Node 22.5 or newer and avoids a native SQLite package dependency. Storage factories must apply the pragma statements before running migrations or repository writes.
 
@@ -150,5 +151,7 @@ The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` 
 - `repository_creation_applies_sqlite_pragmas`
 - `non_empty_unmigrated_database_is_rejected`
 - `storage_transaction_rolls_back_partial_state`
+- `durable_context_build_persists_first_turn_pack`
+- `durable_context_build_rolls_back_partial_state`
 - `path_normalization_handles_windows_separators`
 - `fts_entries_do_not_store_raw_secrets`

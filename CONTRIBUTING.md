@@ -33,6 +33,8 @@ Before changing production code, read:
 - Every lasting architecture decision needs an ADR.
 - Every V1 contract change needs `docs/v1/planning/spec-changelog.md`.
 - Every substantial implementation step needs `docs/v1/planning/implementation-log.md`.
+- Every new module must follow the modularity standards in `docs/v1/architecture/overview.md`.
+- Files near or above the split checkpoint must be split before adding another responsibility.
 
 ## Domain Gates
 
@@ -65,3 +67,4 @@ Use Conventional Commits:
 - Do not make compression authoritative.
 - Do not bypass the Trust Kernel.
 - Do not add undocumented behavior.
+- Do not create godfiles, generic utility dumps, or cross-layer helper modules.
