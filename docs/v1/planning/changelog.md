@@ -30,3 +30,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Marked SQLite Schema And Migrations as the next goal and deferred CI wiring until the dependency and lockfile baseline is defined.
 - Added the first alpha storage migration contract and a zero-dependency migration validator.
 - Added typed SQLite connection policy defaults for WAL, foreign keys, busy timeout, synchronous mode, and temp store.
+- Added pure storage migration planning for pending migrations, checksum drift, filename drift, unknown applied migrations, and ordering failures.
