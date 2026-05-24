@@ -90,11 +90,11 @@ No product code should start before the Documentation Foundation is complete. In
 
 ## Current Goal
 
-In-Memory Context Loop.
+SQLite Schema And Migrations.
 
-Documentation Foundation is complete. In-Memory Context Loop is the first implementation slice and must stay limited to `in-memory-context-loop.md`. Alpha Product Slice comes later and must prove the persisted CLI/MCP session-ledger path.
+Documentation Foundation, In-Memory Context Loop, and Project Skeleton And Tooling are complete enough for the next goal. Alpha Product Slice comes later and must prove the persisted CLI/MCP session-ledger path.
 
-The In-Memory Context Loop started with smoke checks only. Project Skeleton And Tooling adds real TypeScript typechecking and behavioral tests before broader source work continues.
+Project Skeleton And Tooling added package scripts, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. CI wiring is intentionally deferred until the package dependency and lockfile baseline is decided; do not add CI that depends on globally installed TypeScript.
 
 ## Documentation Foundation Exit Criteria
 

@@ -27,3 +27,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added TypeScript typechecking and Node behavioral tests for the in-memory diff/token path.
 - Added a zero-dependency architecture-boundary check for TypeScript import direction.
 - Added empty source ownership modules for the documented app, adapter, storage, security, session, scope, compression, indexing, and claims layers.
+- Marked SQLite Schema And Migrations as the next goal and deferred CI wiring until the dependency and lockfile baseline is defined.
