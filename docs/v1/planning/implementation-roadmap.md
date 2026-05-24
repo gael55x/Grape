@@ -75,7 +75,7 @@ No product code should start before the Documentation Foundation is complete. In
 | Project Skeleton And Tooling | package structure, TypeScript config, test runner, lint/format, CI skeleton. | smoke tests and docs gate checks. | feature behavior beyond skeleton. |
 | SQLite Schema And Migrations | repository layer, migrations, WAL/busy timeout policy. | migration, transaction, lock, path tests. | business policy in storage. |
 | Durable Context Build Proof | app-level build service that persists one provided artifact, dependency rows, context pack items, sent ledger, omitted ledger, invalidations, and token metrics in one transaction. | first-turn send, second-turn omission, stale manifest invalidation, lock failure, rollback tests. | MCP/CLI transport, broad retrieval, trust extraction, compression, graph expansion. |
-| Repo Snapshot And Worktree State | branch/commit/dirty/hash snapshot services. | clean/dirty/branch fixtures. | deep call graph indexing. |
+| Repo Snapshot And Worktree State | Git-backed branch, commit, dirty path, ignored-file exclusion, Git-visible file hash, source-kind, snapshot hash, and worktree hash services. | clean, dirty, ignored-file, deterministic hash, branch fixture tests. | deep call graph indexing, trust extraction, artifact compilation. |
 | Evidence Store | source records, rejections, hashes, privacy status. | ignored file, source hash, rejection tests. | durable claim promotion. |
 | Trust Kernel And Proof Validation | proof validators, belief gate, promotion rules. | trust safety, proof hash, partial verification tests. | model judgment as proof. |
 | Claims And Layer Isolation | durable claims, scratch claims, claim edges. | no hidden promotion, contradiction/supersession tests. | advanced contradiction AI. |
@@ -93,9 +93,9 @@ No product code should start before the Documentation Foundation is complete. In
 
 ## Current Goal
 
-Durable Context Build Proof.
+Repo Snapshot And Worktree State.
 
-Documentation Foundation, In-Memory Context Loop, and Project Skeleton And Tooling are complete enough for the next goal. Alpha Product Slice comes later and must prove the persisted CLI/MCP session-ledger path.
+Documentation Foundation, In-Memory Context Loop, Project Skeleton And Tooling, SQLite Schema And Migrations, and Durable Context Build Proof are complete enough for the next goal. Alpha Product Slice comes later and must prove the persisted CLI/MCP session-ledger path.
 
 Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations now uses the built-in Node 22.5+ `node:sqlite` runtime path to avoid native package compilation.
 
@@ -135,6 +135,17 @@ Status: complete.
 - stale dependency manifest emits `INVALIDATE_PREVIOUS`
 - failed persistence rolls back artifact and ledger rows
 - implementation stays modular and does not create a context-build godfile
+
+Status: complete enough to proceed to Repo Snapshot And Worktree State. Future changes should only harden the existing proof path unless required by a later product slice.
+
+## Repo Snapshot And Worktree State Exit Criteria
+
+- Git-backed snapshot service records branch, commit, dirty status, dirty paths, Git-visible file hashes, source kinds, worktree hash, and snapshot hash
+- ignored files are excluded unless an explicit later approval protocol allows them
+- symlinks are hashed as symlink targets, not followed into arbitrary paths
+- clean snapshots are deterministic for the same repo state
+- dirty file changes alter the worktree and snapshot hashes
+- snapshot records can be persisted through existing storage repositories without direct SQL outside storage
 
 ## Alpha Product Slice Exit Criteria
 

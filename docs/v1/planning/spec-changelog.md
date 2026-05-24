@@ -30,3 +30,4 @@ Each entry should include:
 - Added Durable Context Build Proof as the next implementation goal before CLI/MCP product transport.
 - Added code modularity standards with split checkpoints to prevent godfiles and generic utility modules.
 - Extended storage dependency kinds for persisted artifact manifests that include repo snapshot, worktree state, and session ledger dependencies.
+- Extended the repo snapshot implementation contract with dirty paths, deterministic snapshot hashes, Git-visible file hashing, ignored-file exclusion, and symlink hashing without following symlink targets.
