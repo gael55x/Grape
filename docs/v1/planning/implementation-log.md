@@ -125,4 +125,11 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: selected Node 22 built-in `node:sqlite` for the initial no-native-package runtime path and added migration apply tests for empty database setup, idempotent re-run, WAL/foreign-key pragmas, and checksum drift before SQL execution.
 - Checks run: `npm run check`.
-- Risks/follow-ups: repository APIs and transaction-scoped state writes are still not implemented.
+- Risks/follow-ups: repository APIs were started in the later Session Ledger Repository Baseline; transaction-scoped app services are still not implemented.
+
+### 2026-05-24 - Session Ledger Repository Baseline
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added typed SQLite repository wrappers for the persisted session-ledger path: project/repo/snapshot/worktree setup, context sessions, context artifacts, dependencies, sent items, and omitted items.
+- Checks run: `npm run check`.
+- Risks/follow-ups: transaction-scoped app services and durable diff orchestration are still not implemented.

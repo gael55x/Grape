@@ -34,3 +34,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Hardened migration planning for sparse histories, real SQL checksums, schema guards, session ledger identity, restore metadata, and stricter architecture import boundaries.
 - Added a pinned TypeScript dev dependency, `package-lock.json`, contributor `npm ci` guidance, and minimal GitHub Actions CI for `npm run check`.
 - Added Node 22 `node:sqlite` runtime migration application tests for empty DB migration, idempotent re-run, WAL/foreign-key pragmas, and checksum drift before SQL execution.
+- Added the first typed SQLite repository slice for project/repo/snapshot/worktree setup, context sessions, context artifacts, dependencies, sent items, and omitted items.
