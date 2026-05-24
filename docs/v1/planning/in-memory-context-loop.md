@@ -69,7 +69,7 @@ The fixture must include:
 | `memory-05` | Add evidence/proof/claim interfaces. | `core/trust-model.md` if changed | trust shape check | complete |
 | `memory-06` | Add current-valid filtering skeleton. | `core/trust-model.md` if changed | current-valid smoke check | complete |
 | `memory-07` | Add context artifact shape guard. | `contracts/context-artifact.md` if changed | artifact manifest smoke check | complete |
-| `memory-08` | Add context diff proof skeleton. | `contracts/context-diff.md` if changed | first-turn/second-turn diff checks | pack items emitted with session scope and unsafe omission count |
+| `memory-08` | Add context diff proof skeleton. | `contracts/context-diff.md` if changed | first-turn/second-turn diff checks | complete |
 | `memory-09` | Add in-memory token accounting baseline. | `quality/benchmarks.md` | benchmark fixture smoke check | first-turn and later-turn token metrics defined |
 
 ## Quality Gates
@@ -91,6 +91,7 @@ The fixture must include:
 - `memory-05`: added evidence/proof/claim shapes and trust-shape checks.
 - `memory-06`: added current-valid filtering skeleton and consolidated in-memory loop smoke checks under `npm run memory:check`.
 - `memory-07`: added context artifact shape guards for dependency manifests, section hashes, blocked redaction, dependency refs, exact source refs, and exact active-claim proof refs.
+- `memory-08`: added in-memory context diff proof for first-turn `NEW`/`PINNED`, second-turn `OMIT_UNCHANGED`/`RESTORE_AVAILABLE`, session-scoped previous item matching, and unsafe omission counting.
 
 ## Exit Criteria
 
