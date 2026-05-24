@@ -10,7 +10,7 @@
   "scripts": {
     "docs:check": "node scripts/check-docs-structure.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
-    "phase0b:check": "node scripts/check-phase-0b.mjs",
-    "check": "npm run docs:check && npm run fixtures:check && npm run phase0b:check"
+    "alpha:check": "node scripts/check-alpha-loop.mjs",
+    "check": "npm run docs:check && npm run fixtures:check && npm run alpha:check"
   }
 }

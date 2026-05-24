@@ -237,4 +237,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log("phase 0b smoke checks ok");
+console.log("alpha context loop smoke checks ok");

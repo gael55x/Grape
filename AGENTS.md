@@ -10,7 +10,7 @@ Read these files first:
 2. `docs/v1/SPEC.md`
 3. `docs/v1/architecture/invariants.md`
 4. `docs/v1/architecture/state-machine.md`
-5. `docs/v1/planning/implementation-phases.md`
+5. `docs/v1/planning/implementation-roadmap.md`
 6. The specific domain doc for the module you will edit
 
 If the needed behavior is not documented, update the docs before or with the implementation.
@@ -28,7 +28,7 @@ For V1 implementation, start with `docs/v1/SPEC.md`, then read only the folder t
 - `docs/v1/contracts/` for context artifact and context diff schemas.
 - `docs/v1/interfaces/` for MCP and CLI contracts.
 - `docs/v1/quality/` for tests and benchmarks.
-- `docs/v1/planning/` for phases, logs, and changelogs.
+- `docs/v1/planning/` for roadmap, logs, and changelogs.
 - `docs/v1/decisions/` for accepted ADRs.
 - `docs/v1/examples/` and `docs/v1/fixtures/` for serialized examples and fixture expectations.
 
@@ -78,7 +78,7 @@ Use these procedures before editing code or docs for the listed behavior.
 - If a source may contain secrets, block or redact before indexing or rendering.
 - If a module boundary is unclear, update `docs/v1/architecture/overview.md` before adding imports.
 - If a test cannot be written because the behavior is unclear, the spec is not ready for that behavior.
-- Keep `docs/v1/planning/implementation-log.md` phase-level. Do not add one log entry per commit.
+- Keep `docs/v1/planning/implementation-log.md` milestone-level. Do not add one log entry per commit.
 - For AI-assisted implementation log entries, use `Author/agent: <human contributor> / <agent name>`.
 
 ## Never Rules

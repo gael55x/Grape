@@ -1,6 +1,6 @@
 # Clean TypeScript App Fixture
 
-This fixture is the first Phase 0B alpha repository.
+This fixture is the first Alpha Context Loop repository.
 
 It exists to prove the smallest safe Grape loop:
 

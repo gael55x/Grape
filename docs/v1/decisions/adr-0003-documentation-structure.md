@@ -19,7 +19,7 @@ Keep `docs/v1/SPEC.md` at the top level as the canonical V1 implementation contr
 - `contracts/` for context artifact and context diff schemas.
 - `interfaces/` for MCP and CLI adapter contracts.
 - `quality/` for tests and benchmarks.
-- `planning/` for phases, changelogs, and implementation log.
+- `planning/` for roadmap, changelogs, and implementation log.
 - `decisions/`, `examples/`, and `fixtures/` for ADRs, serialized examples, and fixture documentation.
 
 Use lowercase kebab-case filenames for supporting docs. Keep `README.md` and `SPEC.md` uppercase because they are conventional anchors.

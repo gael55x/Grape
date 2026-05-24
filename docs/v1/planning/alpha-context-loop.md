@@ -1,10 +1,10 @@
-# Phase 0B Alpha Slice
+# Alpha Context Loop
 
 ## Goal
 
 Prove the smallest safe end-to-end Grape loop without building broad product surface area.
 
-The alpha slice must show that Grape can:
+This goal must show that Grape can:
 
 ```text
 repo snapshot
@@ -32,7 +32,7 @@ The fixture must include:
 - expected context artifact sections
 - expected first-turn and second-turn context pack items
 
-## Alpha Path
+## Path
 
 1. Detect repo root, branch, commit, and clean worktree state.
 2. Hash allowed source files.
@@ -61,15 +61,15 @@ The fixture must include:
 
 | Ticket | Scope | Docs | Required tests | Exit criteria |
 |---|---|---|---|---|
-| `P0B-01` | Create fixture metadata for `clean-typescript-app`. | `fixtures/README.md`, this file | fixture metadata validation | complete |
-| `P0B-02` | Add shared TypeScript contract types. | `SPEC.md`, `contracts/`, `core/` docs if changed | contract value check | complete |
-| `P0B-03` | Add state/event skeleton. | `architecture/state-machine.md` | transition table smoke test | complete |
-| `P0B-04` | Add repo snapshot interface. | `core/storage.md`, `architecture/overview.md` if changed | clean snapshot shape check | complete |
-| `P0B-05` | Add evidence/proof/claim interfaces. | `core/trust-model.md` if changed | trust shape check | complete |
-| `P0B-06` | Add current-valid filtering skeleton. | `core/trust-model.md` if changed | current-valid smoke check | complete |
-| `P0B-07` | Add context artifact builder skeleton. | `contracts/context-artifact.md` if changed | artifact manifest smoke check | complete |
-| `P0B-08` | Add context diff skeleton. | `contracts/context-diff.md` if changed | first-turn/second-turn diff tests | `ContextPackItem[]` emitted with session scope |
-| `P0B-09` | Add alpha benchmark definition. | `quality/benchmarks.md` | benchmark fixture smoke test | first-turn and later-turn token metrics defined |
+| `alpha-01` | Create fixture metadata for `clean-typescript-app`. | `fixtures/README.md`, this file | fixture metadata validation | complete |
+| `alpha-02` | Add shared TypeScript contract types. | `SPEC.md`, `contracts/`, `core/` docs if changed | contract value check | complete |
+| `alpha-03` | Add state/event skeleton. | `architecture/state-machine.md` | transition table smoke test | complete |
+| `alpha-04` | Add repo snapshot interface. | `core/storage.md`, `architecture/overview.md` if changed | clean snapshot shape check | complete |
+| `alpha-05` | Add evidence/proof/claim interfaces. | `core/trust-model.md` if changed | trust shape check | complete |
+| `alpha-06` | Add current-valid filtering skeleton. | `core/trust-model.md` if changed | current-valid smoke check | complete |
+| `alpha-07` | Add context artifact builder skeleton. | `contracts/context-artifact.md` if changed | artifact manifest smoke check | complete |
+| `alpha-08` | Add context diff skeleton. | `contracts/context-diff.md` if changed | first-turn/second-turn diff tests | `ContextPackItem[]` emitted with session scope |
+| `alpha-09` | Add alpha benchmark definition. | `quality/benchmarks.md` | benchmark fixture smoke test | first-turn and later-turn token metrics defined |
 
 ## Quality Gates
 
@@ -83,13 +83,13 @@ The fixture must include:
 
 ## Completed Work
 
-- `P0B-01`: added `tests/fixtures/clean-typescript-app`, fixture metadata, fixture docs, and `npm run fixtures:check`.
-- `P0B-02`: added shared canonical TypeScript contract exports and `npm run contracts:check`.
-- `P0B-03`: added the state/event skeleton and `npm run state:check`.
-- `P0B-04`: added the repo snapshot shape and `npm run snapshot:check` for the clean fixture.
-- `P0B-05`: added evidence/proof/claim shapes and `npm run trust:check`.
-- `P0B-06`: added current-valid filtering skeleton and consolidated Phase 0B smoke checks under `npm run phase0b:check`.
-- `P0B-07`: added context artifact builder shape guards for dependency manifests, section hashes, blocked redaction, dependency refs, exact source refs, and exact active-claim proof refs.
+- `alpha-01`: added `tests/fixtures/clean-typescript-app`, fixture metadata, fixture docs, and `npm run fixtures:check`.
+- `alpha-02`: added shared canonical TypeScript contract exports and the shared-contract checks in `npm run alpha:check`.
+- `alpha-03`: added the state/event skeleton and transition table smoke checks in `npm run alpha:check`.
+- `alpha-04`: added the repo snapshot shape and clean fixture snapshot smoke check.
+- `alpha-05`: added evidence/proof/claim shapes and trust-shape checks.
+- `alpha-06`: added current-valid filtering skeleton and consolidated alpha loop smoke checks under `npm run alpha:check`.
+- `alpha-07`: added context artifact builder shape guards for dependency manifests, section hashes, blocked redaction, dependency refs, exact source refs, and exact active-claim proof refs.
 
 ## Exit Criteria
 
@@ -104,4 +104,4 @@ The fixture must include:
 
 ## What Comes After
 
-After Phase 0B passes, continue to Phase 1 project skeleton/tooling hardening and then Phase 2 storage/migrations.
+After Alpha Context Loop passes, continue to Project Skeleton And Tooling and then SQLite Schema And Migrations.
