@@ -93,9 +93,9 @@ No product code should start before the Documentation Foundation is complete. In
 
 ## Current Goal
 
-Repo Snapshot And Worktree State.
+Evidence Store.
 
-Documentation Foundation, In-Memory Context Loop, Project Skeleton And Tooling, SQLite Schema And Migrations, and Durable Context Build Proof are complete enough for the next goal. Alpha Product Slice comes later and must prove the persisted CLI/MCP session-ledger path.
+Documentation Foundation, In-Memory Context Loop, Project Skeleton And Tooling, SQLite Schema And Migrations, Durable Context Build Proof, and Repo Snapshot And Worktree State are complete enough for the next goal. Alpha Product Slice comes later and must prove the persisted CLI/MCP session-ledger path.
 
 Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations now uses the built-in Node 22.5+ `node:sqlite` runtime path to avoid native package compilation.
 
@@ -146,6 +146,8 @@ Status: complete enough to proceed to Repo Snapshot And Worktree State. Future c
 - clean snapshots are deterministic for the same repo state
 - dirty file changes alter the worktree and snapshot hashes
 - snapshot records can be persisted through existing storage repositories without direct SQL outside storage
+
+Status: complete enough to proceed to Evidence Store. Future snapshot changes should harden path classification, platform behavior, or persistence integration without expanding into broad indexing.
 
 ## Alpha Product Slice Exit Criteria
 
