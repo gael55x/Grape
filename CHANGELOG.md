@@ -26,3 +26,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added empty source ownership modules for documented V1 layers.
 - Marked SQLite Schema And Migrations as the next implementation goal.
 - Added the first alpha storage migration contract and migration validator.
+- Added typed SQLite connection policy defaults and behavioral coverage.

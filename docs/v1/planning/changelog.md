@@ -29,3 +29,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added empty source ownership modules for the documented app, adapter, storage, security, session, scope, compression, indexing, and claims layers.
 - Marked SQLite Schema And Migrations as the next goal and deferred CI wiring until the dependency and lockfile baseline is defined.
 - Added the first alpha storage migration contract and a zero-dependency migration validator.
+- Added typed SQLite connection policy defaults for WAL, foreign keys, busy timeout, synchronous mode, and temp store.
