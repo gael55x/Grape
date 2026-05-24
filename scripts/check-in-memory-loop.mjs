@@ -268,6 +268,33 @@ function checkInMemoryDiffProof() {
   }
 }
 
+function checkInMemoryTokenAccounting() {
+  const source = read("src/core/diff/in-memory-token-accounting.ts");
+
+  for (const required of [
+    "InMemoryTokenAccountingInput",
+    "InMemoryTokenSavingsMetric",
+    "calculateInMemoryTokenSavings",
+    "naiveTokens",
+    "grapeTokens",
+    "omittedUnchangedTokens",
+    "compressionSavedTokens: 0",
+    "pinnedOverheadTokens",
+    "invalidationOverheadTokens",
+    "unsafeOmissions",
+    "staleItemsSent",
+    "reductionPercent",
+    'item.state === "OMIT_UNCHANGED"',
+    'item.state === "PINNED"',
+    'item.state === "INVALIDATE_PREVIOUS"',
+    "estimateTextTokens"
+  ]) {
+    if (!source.includes(required)) {
+      errors.push(`Missing in-memory token accounting guard: ${required}`);
+    }
+  }
+}
+
 function checkAlphaSnapshot() {
   const fixtureDir = join(root, "tests", "fixtures", "clean-typescript-app");
   const metadata = JSON.parse(readFileSync(join(fixtureDir, "grape-fixture.json"), "utf8"));
@@ -297,6 +324,7 @@ checkCurrentValid();
 checkRepoSnapshotShape();
 checkInMemoryArtifactShape();
 checkInMemoryDiffProof();
+checkInMemoryTokenAccounting();
 checkAlphaSnapshot();
 
 if (errors.length > 0) {
