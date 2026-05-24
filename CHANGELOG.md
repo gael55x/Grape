@@ -23,3 +23,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added in-memory token accounting baseline for naive resend versus Grape context pack cost.
 - Added TypeScript typecheck and Node behavioral test gates.
 - Added an architecture-boundary check for TypeScript import direction.
+- Added empty source ownership modules for documented V1 layers.
