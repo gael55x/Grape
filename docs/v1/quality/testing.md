@@ -27,7 +27,7 @@ Before editing code, agents must identify:
 
 No production behavior is complete without tests for the related state transition or invariant.
 
-The current in-memory smoke harness is temporary. It may guard file shape and obvious contract drift, but it must not be treated as proof that TypeScript compiles or behavior is correct. Project Skeleton And Tooling must add real typechecking and behavioral tests before broad implementation continues.
+The in-memory smoke harness guards file shape and obvious contract drift. Project Skeleton And Tooling adds two stronger zero-dependency gates: `npm run typecheck` for TypeScript compilation and `npm run test:behavior` for Node's built-in behavioral tests over compiled source.
 
 ## Test Categories
 
