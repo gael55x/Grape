@@ -108,7 +108,22 @@ The current implementation goal proves only the in-memory part of the diff contr
 - pinned sections are resent instead of omitted
 - unsafe omission count must stay zero
 
-Durable ledgers, restore lookup, branch invalidation, and cross-process session locks belong to the later Alpha Product Slice.
+Full restore lookup, branch switching behavior, and transport-facing session recovery belong to the later Alpha Product Slice. The current durable build proof persists the sent and omitted ledgers needed to prove first-turn/second-turn omission behavior.
+
+## Durable Build Proof
+
+The current persisted build proof adds a narrow app-level build service:
+
+- it accepts an already-built context artifact
+- it renews or acquires the session lock
+- it persists the artifact dependency manifest
+- it compares against the same-session sent ledger
+- it persists structured context pack items
+- it persists sent and omitted ledger rows
+- it emits `INVALIDATE_PREVIOUS` for stale dependency manifests
+- it commits or rolls back the build as one storage transaction
+
+This proof does not perform MCP transport, CLI rendering, broad repository indexing, trust extraction, or compression.
 
 ## Restore Protocol
 
@@ -129,3 +144,7 @@ Durable ledgers, restore lookup, branch invalidation, and cross-process session 
 - `invalidate_previous_names_prior_item`
 - `branch_switch_invalidates_sent_items`
 - `compression_invalidation_invalidates_sent_items`
+- `durable_context_build_persists_first_turn_pack`
+- `durable_context_build_omits_second_turn_unchanged_context`
+- `durable_context_build_invalidates_stale_manifest`
+- `durable_context_build_rolls_back_partial_state`

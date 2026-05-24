@@ -33,3 +33,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added Node 22.5+ built-in SQLite migration runtime and behavior tests.
 - Added first typed SQLite repository slice for persisted session-ledger work.
 - Hardened persisted session-ledger storage so cross-session artifact references fail closed and restorable omissions require restore metadata.
+- Added the first durable context build proof for persisted first-turn send, second-turn omission, stale manifest invalidation, and rollback behavior.

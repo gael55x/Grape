@@ -9,7 +9,7 @@ export const storageMigrationReferences = [
   {
     id: "0001",
     filename: "0001_alpha_storage_subset.sql",
-    checksumSha256: "b0e5527108c77a2f86c9cd5089fda827a431a4f1db29c5e5989c82586a377ec1",
+    checksumSha256: "5f683fea7b7a5adc7d04fb21ee62cc28f2d6c6d1109262c680797bc4599a4c6b",
     description: "Create the alpha storage subset for project, repo, evidence, claim, artifact, and session ledgers."
   }
 ] as const satisfies readonly StorageMigrationReference[];

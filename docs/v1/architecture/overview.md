@@ -140,6 +140,32 @@ flowchart TD
 - Do not create generic `utils` folders for domain behavior. Prefer `path-normalization.ts`, `redaction.ts`, or `claim-scope.ts` with a single owner.
 - Centralize shared enums and serialized schemas in `src/shared/` only after two domain modules need the same contract.
 
+## Code Modularity Standards
+
+- One file should own one reason to change. If a file starts owning orchestration, persistence mapping, validation, and transport at once, split it.
+- Treat 300 lines as a review checkpoint. Treat 500 lines as a split-before-expanding checkpoint unless the file is a generated artifact, SQL migration, fixture, or intentionally flat test data.
+- Do not add a second responsibility to a file that is already past the split checkpoint. Split first, then add behavior.
+- Keep application services as orchestration. Move record mapping, rendering, serialization, and persistence conversion into named helper modules owned by the same layer.
+- Keep storage repositories boring: SQL execution, row mapping, and typed repository methods only. Trust, compiler, and diff policy do not belong in storage.
+- Keep core modules independent. A core module should expose explicit functions and records, not hidden singleton state.
+- Prefer narrow files such as `durable-context-build.ts` and `durable-context-records.ts` over a single context-build godfile.
+- Prefer domain-specific helper names. `storage-row-mappers.ts` is acceptable; `utils.ts`, `helpers.ts`, and `misc.ts` are not.
+- Split tests by behavior once one test file mixes unrelated contracts. A larger test file is acceptable only when it covers one cohesive behavior surface.
+- Public exports should flow through the owning folder's `index.ts`; do not deep-import private helper files from unrelated layers.
+
+## Split Triggers
+
+Split a module when any of these happen:
+
+- it has more than one public API family
+- it contains both state transition orchestration and low-level record conversion
+- it contains SQL for unrelated table families
+- it needs comments to explain where new code should be inserted
+- a future agent cannot inspect the whole file quickly before editing
+- tests for the module need unrelated fixture setup paths
+
+Current pressure point: `src/core/storage/repositories.ts` is intentionally boring but already large. Do not add new table families to it without splitting storage repositories by ownership area.
+
 ## Quality Gate
 
 Any pull request that changes architecture must update this file, `../planning/spec-changelog.md`, and an ADR when the dependency direction, source tree, or ownership model changes.

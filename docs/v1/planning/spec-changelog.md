@@ -27,3 +27,6 @@ Each entry should include:
 - Tightened the storage contract so sent, omitted, and pack ledger rows must reference artifacts owned by the same session.
 - Tightened restorable omission storage so restore metadata, branch/commit identity, dependency manifest hash, send count, and token count are persisted.
 - Added runtime migration bootstrap protection for non-empty databases without trusted migration metadata.
+- Added Durable Context Build Proof as the next implementation goal before CLI/MCP product transport.
+- Added code modularity standards with split checkpoints to prevent godfiles and generic utility modules.
+- Extended storage dependency kinds for persisted artifact manifests that include repo snapshot, worktree state, and session ledger dependencies.
