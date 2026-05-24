@@ -40,3 +40,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added a durable context build service that persists an already-built artifact, dependencies, context pack items, sent ledger rows, omitted ledger rows, invalidations, and token metrics inside one transaction.
 - Split durable context build record mapping away from orchestration to keep the app service modular.
 - Added code modularity standards and split triggers for future contributors and agents.
+- Added a Git-backed repo snapshot service that reads branch, commit, dirty paths, Git-visible file hashes, ignored-file exclusions, source-kind classification, and deterministic snapshot/worktree hashes.
