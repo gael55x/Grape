@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -45,10 +46,11 @@ function read(relPath) {
 function extractManifestEntries() {
   const source = readFileSync(manifestPath, "utf8");
   const entries = [];
-  const objectPattern = /{\s*id:\s*"([^"]+)",\s*filename:\s*"([^"]+)",/g;
+  const objectPattern =
+    /{\s*id:\s*"([^"]+)",\s*filename:\s*"([^"]+)",\s*checksumSha256:\s*"([^"]+)",/g;
 
   for (const match of source.matchAll(objectPattern)) {
-    entries.push({ id: match[1], filename: match[2] });
+    entries.push({ id: match[1], filename: match[2], checksumSha256: match[3] });
   }
 
   if (entries.length === 0) {
@@ -71,12 +73,27 @@ const manifestFiles = new Set(manifestEntries.map((entry) => entry.filename));
 for (const file of files) {
   expect(/^\d{4}_[a-z0-9_]+\.sql$/.test(file), `invalid migration filename: ${file}`);
   expect(manifestFiles.has(file), `migration file is missing from manifest: ${file}`);
+
+  const source = readFileSync(path.join(migrationDir, file), "utf8");
+  for (const forbidden of ["DROP TABLE", "DELETE FROM", "UPDATE "]) {
+    expect(!source.includes(forbidden), `migration ${file} must not contain ${forbidden.trim()}`);
+  }
 }
 
 for (const entry of manifestEntries) {
   const expectedId = entry.filename.slice(0, 4);
   expect(entry.id === expectedId, `manifest id ${entry.id} does not match filename ${entry.filename}`);
   expect(files.includes(entry.filename), `manifest references missing migration file: ${entry.filename}`);
+  expect(/^[a-f0-9]{64}$/.test(entry.checksumSha256), `manifest checksum is invalid: ${entry.filename}`);
+
+  if (files.includes(entry.filename)) {
+    const source = readFileSync(path.join(migrationDir, entry.filename));
+    const actualChecksum = createHash("sha256").update(source).digest("hex");
+    expect(
+      entry.checksumSha256 === actualChecksum,
+      `manifest checksum does not match SQL bytes: ${entry.filename}`
+    );
+  }
 }
 
 const firstMigration = read("src/core/storage/migrations/0001_alpha_storage_subset.sql");
@@ -98,14 +115,32 @@ for (const table of forbiddenTableNames) {
   );
 }
 
-for (const forbidden of ["DROP TABLE", "DELETE FROM", "UPDATE "]) {
-  expect(!firstMigration.includes(forbidden), `initial migration must not contain ${forbidden.trim()}`);
-}
-
 expect(
   (firstMigration.match(/CREATE INDEX IF NOT EXISTS/g) ?? []).length >= 5,
   "first migration should define basic lookup indexes"
 );
+
+for (const required of [
+  "repo_id TEXT NOT NULL REFERENCES repos(repo_id)",
+  "repo_snapshot_id TEXT NOT NULL REFERENCES repo_snapshots(snapshot_id)",
+  "worktree_state_id TEXT NOT NULL REFERENCES worktree_states(worktree_state_id)",
+  "head_commit_sha TEXT NOT NULL",
+  "status TEXT NOT NULL CHECK",
+  "dependency_manifest_hash TEXT NOT NULL",
+  "item_kind TEXT NOT NULL CHECK",
+  "item_ref TEXT NOT NULL",
+  "item_hash TEXT NOT NULL",
+  "branch_name TEXT NOT NULL",
+  "commit_sha TEXT NOT NULL",
+  "send_count INTEGER NOT NULL CHECK",
+  "token_count INTEGER NOT NULL CHECK",
+  "CHECK (last_diff_state IN",
+  "CHECK (diff_state IN",
+  "CHECK (verification_status IN",
+  "CHECK (privacy_status IN"
+]) {
+  expect(firstMigration.includes(required), `first migration is missing required schema guard: ${required}`);
+}
 
 if (errors.length > 0) {
   console.error("storage migration checks failed:");

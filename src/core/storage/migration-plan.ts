@@ -22,7 +22,10 @@ export function planPendingStorageMigrations(
 ): StorageMigrationPlan {
   assertUniqueMigrationIds(available, "available");
   assertUniqueMigrationIds(applied, "applied");
-  assertSortedById(available);
+  assertSortedById(available, "available");
+  assertSortedById(applied, "applied");
+  assertChecksums(available, "available");
+  assertChecksums(applied, "applied");
 
   const availableById = new Map(available.map((migration) => [migration.id, migration]));
   const appliedById = new Map(applied.map((migration) => [migration.id, migration]));
@@ -42,10 +45,15 @@ export function planPendingStorageMigrations(
     }
   }
 
+  let seenPendingMigration = false;
   for (const migration of available) {
     if (appliedById.has(migration.id)) {
+      if (seenPendingMigration) {
+        throw new Error(`applied migrations must be a prefix of available migrations: ${migration.id}`);
+      }
       alreadyApplied.push(migration);
     } else {
+      seenPendingMigration = true;
       pending.push(migration);
     }
   }
@@ -66,11 +74,22 @@ function assertUniqueMigrationIds(
   }
 }
 
-function assertSortedById(migrations: readonly StorageMigrationDefinition[]): void {
+function assertSortedById(migrations: readonly { readonly id: string }[], label: string): void {
   const sorted = [...migrations].sort((left, right) => left.id.localeCompare(right.id));
   for (let index = 0; index < migrations.length; index += 1) {
     if (migrations[index]?.id !== sorted[index]?.id) {
-      throw new Error("available migrations must be sorted by id");
+      throw new Error(`${label} migrations must be sorted by id`);
+    }
+  }
+}
+
+function assertChecksums(
+  migrations: readonly { readonly id: string; readonly checksumSha256: string }[],
+  label: string
+): void {
+  for (const migration of migrations) {
+    if (!/^[a-f0-9]{64}$/.test(migration.checksumSha256)) {
+      throw new Error(`${label} migration has invalid checksum: ${migration.id}`);
     }
   }
 }

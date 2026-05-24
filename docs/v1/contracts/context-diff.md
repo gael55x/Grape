@@ -41,13 +41,24 @@ RESTORE_AVAILABLE
 interface ContextSentItem {
   sentItemId: string;
   sessionId: string;
+  taskId?: string;
   artifactId: string;
   sectionId: string;
-  contentHash: string;
-  diffState: DiffState;
+  itemKind: ContextPackItem["itemKind"];
+  itemRef: string;
+  itemHash: string;
+  branchName: string;
+  commitSha: string;
   dependencyManifestHash: string;
-  pinned: boolean;
-  sentAt: string;
+  wasPinned: boolean;
+  lastDiffState: DiffState;
+  omitReason?: string;
+  restoreHint?: string;
+  sessionResetId?: string;
+  firstSentAt: string;
+  lastSentAt: string;
+  sendCount: number;
+  tokenCount: number;
 }
 
 interface OmittedContextItem {
@@ -55,10 +66,13 @@ interface OmittedContextItem {
   sessionId: string;
   artifactId: string;
   sectionId: string;
-  contentHash: string;
-  reason: "unchanged" | "not_relevant" | "unsafe_to_send" | "blocked_by_policy";
-  restoreAvailable: boolean;
-  restoreToken?: string;
+  itemKind: ContextPackItem["itemKind"];
+  itemRef: string;
+  itemHash: string;
+  reasonOmitted: "unchanged_restorable" | "not_relevant" | "unsafe_to_send" | "blocked_by_policy";
+  canRestore: boolean;
+  restoreId?: string;
+  restoreCommand?: string;
   omittedAt: string;
 }
 ```

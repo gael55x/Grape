@@ -105,3 +105,10 @@ Keep entries simple:
 - Summary: added a real TypeScript typecheck gate and Node built-in behavioral tests for the in-memory diff and token accounting path without adding dependencies.
 - Checks run: `npm run check`.
 - Risks/follow-ups: test build output is temporary under `.tmp/`; richer unit/integration coverage still belongs to later implementation goals.
+
+### 2026-05-24 - Storage Contract Correction
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: hardened the alpha storage contract around migration ordering, SQL checksums, session ledger identity, dependency manifest hashes, restore metadata, and serialized-state constraints.
+- Checks run: `npm run check`.
+- Risks/follow-ups: runtime SQLite apply tests and repository APIs still require a driver/package decision; token benchmark claims still need scripted baselines.
