@@ -30,3 +30,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added pure storage migration planning with checksum and ordering safeguards.
 - Hardened storage migration and session-ledger contracts for safe omission/invalidation work.
 - Added pinned TypeScript dev dependency, lockfile, and CI check workflow.
+- Added Node 22 built-in SQLite migration runtime and behavior tests.

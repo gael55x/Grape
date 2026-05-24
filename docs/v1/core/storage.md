@@ -106,7 +106,7 @@ Tables outside this subset stay documented for V1, but they require explicit imp
 - `context_sessions` must persist repo, snapshot, worktree, branch, head commit, task, status, and lock identity so branch/session invalidation can fail closed.
 - `context_sent_items` and `omitted_context_items` must persist item kind/ref/hash, branch/commit identity, dependency manifest hash where applicable, token counts, restore metadata, and send counts so omission and restore decisions are auditable.
 
-The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` and covered by behavioral tests. Driver-specific code must apply those pragma statements before running migrations or repository writes.
+The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` and covered by behavioral tests. Runtime migration application uses Node's built-in `node:sqlite` through `src/core/storage/sqlite-runtime.ts`, so V1 currently requires Node 22 or newer and avoids a native SQLite package dependency. Driver-specific code must apply the pragma statements before running migrations or repository writes.
 
 ## Migration Rules
 
@@ -119,7 +119,7 @@ The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` 
 - `npm run storage:check` validates migration naming, manifest coverage, the first alpha table set, canonical table names, and obviously unsafe migration statements.
 - Migration planning must reject duplicate IDs, out-of-order available migrations, unknown applied migrations, changed filenames, and changed checksums before any SQL is applied.
 - Applied migrations must form a prefix of available migrations. Sparse histories fail closed.
-- Runtime SQLite apply tests are required when the SQLite driver/package baseline is selected. Until then, migration SQL is validated as a contract artifact only.
+- Runtime SQLite apply tests must cover empty-database migration, idempotent re-run, WAL/foreign-key pragmas, and checksum drift before SQL execution.
 
 ## Path And Hash Rules
 

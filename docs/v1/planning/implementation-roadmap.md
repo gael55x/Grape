@@ -94,7 +94,7 @@ SQLite Schema And Migrations.
 
 Documentation Foundation, In-Memory Context Loop, and Project Skeleton And Tooling are complete enough for the next goal. Alpha Product Slice comes later and must prove the persisted CLI/MCP session-ledger path.
 
-Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules.
+Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations now uses the built-in Node 22 `node:sqlite` runtime path to avoid native package compilation.
 
 ## Documentation Foundation Exit Criteria
 

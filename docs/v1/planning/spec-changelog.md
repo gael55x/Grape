@@ -22,3 +22,4 @@ Each entry should include:
 - Aligned supporting storage table names with canonical `SPEC.md` names where present.
 - Added the first alpha storage migration contract for project, repo, source, claim, proof, artifact, and session-ledger tables.
 - Hardened the alpha storage contract with SQL checksum validation, serialized-state constraints, session branch/worktree identity, dependency manifest hashes, and complete sent/omitted ledger fields.
+- Selected Node 22 built-in `node:sqlite` for the initial runtime migration path to avoid native SQLite package installation.
