@@ -130,7 +130,8 @@ function checkStateMachine() {
     ["proof_validated", "durable_claim_persisted", "promote_claim"],
     ["durable_claim_persisted", "current_valid_context_resolved", "resolve_current_valid"],
     ["current_valid_context_resolved", "context_artifact_compiled", "compile_artifact"],
-    ["context_artifact_compiled", "context_diff_generated", "generate_diff"],
+    ["context_artifact_compiled", "session_active", "activate_session"],
+    ["session_active", "context_diff_generated", "generate_diff"],
     ["context_diff_generated", "context_pack_sent", "send_pack"]
   ];
 
@@ -178,6 +179,13 @@ function checkCurrentValid() {
     "resolveInMemoryCurrentValidCandidates",
     'candidate.verificationStatus !== "verified"',
     "candidate.proofRefs.length === 0",
+    'candidate.sourceHashStatus === "mismatch"',
+    'candidate.proofHashStatus === "mismatch"',
+    'candidate.sourceHashStatus === "unknown" || candidate.proofHashStatus === "unknown"',
+    'candidate.contradictionStatus === "active"',
+    'candidate.privacyStatus === "blocked"',
+    'candidate.dirtyScopeStatus === "mismatch"',
+    'candidate.dirtyScopeStatus === "unknown"',
     'candidate.scopeResult === "match"',
     'candidate.scopeResult === "mismatch"',
     'candidate.scopeResult === "partial"',

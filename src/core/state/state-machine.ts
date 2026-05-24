@@ -43,6 +43,7 @@ export const stateEvents = [
   "promote_claim",
   "resolve_current_valid",
   "compile_artifact",
+  "activate_session",
   "generate_diff",
   "send_pack",
   "omit_unchanged",
@@ -91,6 +92,11 @@ export const alphaLoopTransitions: StateTransition[] = [
   },
   {
     from: "context_artifact_compiled",
+    to: "session_active",
+    event: "activate_session"
+  },
+  {
+    from: "session_active",
     to: "context_diff_generated",
     event: "generate_diff"
   },

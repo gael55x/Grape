@@ -46,7 +46,7 @@ The canonical states and constraints come from `docs/v1/SPEC.md`. This file make
 | `current_valid_context_resolved` | Active safe context set is selected. | branch/worktree/env/feature scope matches current run. | `compression_cache_used`, `compression_cache_invalidated`, `context_artifact_compiled`, `partial_with_risk`, `unsafe_compile` | sent context states directly | current-valid is safety filter, not ranking. | emit partial/unsafe state when coverage missing | `current_valid_filters_before_ranking` |
 | `compression_cache_used` | Valid deterministic compression artifact was read. | input hashes match and policy allows use. | `context_artifact_compiled` | proof validation or claim promotion | compression is cache, not truth. | fall back to exact source if stale/unsafe | `compression_used_only_with_matching_hashes` |
 | `compression_cache_invalidated` | Existing compression no longer matches inputs. | input hash, policy, or scope changed. | `context_artifact_compiled`, `previous_context_invalidated` | compression use without regeneration | stale compression cannot be returned silently. | emit invalidation if previously sent | `stale_compression_emits_invalidation` |
-| `context_artifact_compiled` | Artifact was built for task and current scope. | current-valid set exists, dependencies listed, secret scan passes. | `context_diff_generated`, `context_artifact_dirty` | context pack sent | every artifact has dependency manifest. | return unsafe compile if manifest/scan fails | `artifact_requires_dependency_manifest` |
+| `context_artifact_compiled` | Artifact was built for task and current scope. | current-valid set exists, dependencies listed, secret scan passes. | `session_active`, `context_artifact_dirty` | context pack sent | every artifact has dependency manifest. | return unsafe compile if manifest/scan fails | `artifact_requires_dependency_manifest` |
 | `context_artifact_dirty` | Existing artifact has stale dependencies. | dependency manifest no longer matches current inputs. | `context_artifact_compiled`, `previous_context_invalidated` | context pack sent as unchanged | stale artifact is not active context. | force recompile or unsafe state | `artifact_dirty_blocks_unchanged_send` |
 | `context_diff_generated` | New artifact is compared to session ledger. | session active, artifact valid, sent ledger loaded. | `context_pack_sent`, `previous_context_invalidated`, `omitted_context_restorable` | durable claim states | diff is session-scoped. | return full context on unknown session | `diff_requires_session_scope` |
 | `context_pack_sent` | Structured context pack was returned to agent/CLI. | pack items validated and ledger update committed. | `session_active`, `previous_context_invalidated` | source/claim mutation | pinned safety context cannot be omitted. | rollback ledger on transport failure if not observed | `sent_pack_updates_ledger` |
@@ -85,7 +85,8 @@ The canonical states and constraints come from `docs/v1/SPEC.md`. This file make
 | `compression_cache_used` | `context_artifact_compiled` | `compile_artifact` | artifact manifest includes compression input hashes | render artifact | artifacts, artifact_dependencies | older artifacts with changed deps | `artifact_records_compression_dependencies` |
 | `compression_cache_invalidated` | `context_artifact_compiled` | `compile_without_stale_cache` | exact context available or cache regenerated | render without stale cache | artifacts, artifact_dependencies | stale cache use | `stale_cache_not_used_in_artifact` |
 | `context_artifact_compiled` | `context_artifact_dirty` | `check_manifest` | dependency mismatch detected | mark artifact stale | artifact_invalidations | sent artifact items | `manifest_mismatch_marks_dirty` |
-| `context_artifact_compiled` | `context_diff_generated` | `generate_diff` | session lock held, ledger loaded | compute structured pack items | diff_run | none | `diff_output_is_structured` |
+| `context_artifact_compiled` | `session_active` | `activate_session` | session identity exists and lock is acquired | load sent and omitted ledgers | sessions, session_events | stale session locks | `diff_requires_active_session` |
+| `session_active` | `context_diff_generated` | `generate_diff` | session lock held, ledger loaded | compute structured pack items | diff_run | none | `diff_output_is_structured` |
 | `context_artifact_dirty` | `previous_context_invalidated` | `invalidate_previous_context` | prior sent item refs exist | emit invalidations | context_pack_items | stale sent items | `dirty_artifact_invalidates_prior_items` |
 | `context_diff_generated` | `omitted_context_restorable` | `omit_unchanged` | item unchanged, not pinned, restore metadata exists | store omission record | omitted_items | none | `omitted_unchanged_has_restore` |
 | `context_diff_generated` | `previous_context_invalidated` | `emit_invalidations` | stale prior item refs identified | add invalidation items | context_pack_items | stale sent ledger rows | `invalidation_items_name_prior_ids` |
@@ -123,7 +124,7 @@ stateDiagram-v2
   compression_cache_used --> context_artifact_compiled
   compression_cache_invalidated --> context_artifact_compiled
   context_artifact_compiled --> context_artifact_dirty
-  context_artifact_compiled --> context_diff_generated
+  context_artifact_compiled --> session_active
   context_artifact_dirty --> previous_context_invalidated
   session_active --> context_diff_generated
   context_diff_generated --> context_pack_sent
