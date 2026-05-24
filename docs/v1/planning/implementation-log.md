@@ -118,4 +118,11 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: pinned TypeScript as a local dev dependency, generated `package-lock.json`, documented `npm ci`, and added a minimal GitHub Actions workflow for `npm run check`.
 - Checks run: `npm run check`.
-- Risks/follow-ups: runtime SQLite still needs a driver decision before repository implementation.
+- Risks/follow-ups: runtime SQLite driver selection was resolved by the later SQLite Runtime Migration Baseline; repository APIs still need implementation.
+
+### 2026-05-24 - SQLite Runtime Migration Baseline
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: selected Node 22 built-in `node:sqlite` for the initial no-native-package runtime path and added migration apply tests for empty database setup, idempotent re-run, WAL/foreign-key pragmas, and checksum drift before SQL execution.
+- Checks run: `npm run check`.
+- Risks/follow-ups: repository APIs and transaction-scoped state writes are still not implemented.

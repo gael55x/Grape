@@ -13,9 +13,14 @@ Before changing production code, read:
 5. `docs/v1/architecture/state-machine.md`
 6. The domain document for the code you intend to touch
 
+## Local Setup
+
+- Use Node 22 or newer.
+- Run `npm ci`.
+- Run `npm run check` before opening a PR.
+
 ## Change Requirements
 
-- Run `npm ci` before local development and `npm run check` before opening a PR.
 - Every state transition needs a documented transition and tests.
 - Every schema change needs a migration, storage docs, and migration tests.
 - Every trust rule needs Trust Model and invariant tests.
