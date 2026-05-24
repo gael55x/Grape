@@ -1,22 +1,24 @@
 import type {
-  ContextArtifact,
-  ContextDependencyManifest,
-  ContextInput,
-  ContextSection
+  InMemoryContextArtifactShape,
+  InMemoryContextDependencyManifestShape,
+  InMemoryContextRequest,
+  InMemoryContextSectionShape
 } from "../../shared/index.js";
 
-export interface ContextArtifactBuildInput {
+export interface InMemoryContextArtifactShapeInput {
   artifactId: string;
-  input: ContextInput;
-  sections: ContextSection[];
-  dependencyManifest: ContextDependencyManifest;
+  input: InMemoryContextRequest;
+  sections: InMemoryContextSectionShape[];
+  dependencyManifest: InMemoryContextDependencyManifestShape;
   warnings?: string[];
   unsafeReasons?: string[];
   createdAt: string;
   artifactHash: string;
 }
 
-export function buildContextArtifactShape(input: ContextArtifactBuildInput): ContextArtifact {
+export function assertInMemoryContextArtifactShape(
+  input: InMemoryContextArtifactShapeInput
+): InMemoryContextArtifactShape {
   assertNonEmpty("artifactId", input.artifactId);
   assertNonEmpty("createdAt", input.createdAt);
   assertSha256Like("artifactHash", input.artifactHash);
@@ -35,7 +37,7 @@ export function buildContextArtifactShape(input: ContextArtifactBuildInput): Con
   };
 }
 
-function assertDependencyManifest(manifest: ContextDependencyManifest): void {
+function assertDependencyManifest(manifest: InMemoryContextDependencyManifestShape): void {
   assertNonEmpty("dependencyManifest.manifestId", manifest.manifestId);
   assertNonEmpty("dependencyManifest.createdAt", manifest.createdAt);
   assertSha256Like("dependencyManifest.manifestHash", manifest.manifestHash);
@@ -56,8 +58,8 @@ function assertDependencyManifest(manifest: ContextDependencyManifest): void {
 }
 
 function assertSections(
-  sections: ContextSection[],
-  manifest: ContextDependencyManifest
+  sections: InMemoryContextSectionShape[],
+  manifest: InMemoryContextDependencyManifestShape
 ): void {
   if (sections.length === 0) {
     throw new Error("Context artifact requires at least one section.");

@@ -41,7 +41,7 @@ The fixture must include:
 5. Attach and validate one exact proof span.
 6. Persist one durable claim only after proof and scope validation.
 7. Resolve current-valid context for the current branch/worktree.
-8. Compile a `ContextArtifact` with dependency manifest.
+8. Compile an `InMemoryContextArtifactShape` with dependency manifest.
 9. Generate first-turn context diff with `NEW` and `PINNED` items.
 10. Generate second-turn no-change diff with safe `OMIT_UNCHANGED` and restore metadata.
 
@@ -97,7 +97,7 @@ The fixture must include:
 - `clean-typescript-app` fixture expectations are documented.
 - Shared contract shapes are checked by the in-memory harness.
 - In-memory workflow can be executed through application service tests.
-- First turn returns structured `ContextPackItem[]`.
+- First turn returns structured in-memory context pack item shapes.
 - Second no-change turn omits unchanged non-pinned context safely.
 - Pinned rules are resent.
 - Stale dependency test fails closed.

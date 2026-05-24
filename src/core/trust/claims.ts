@@ -1,6 +1,4 @@
-import type { ScopeMatchResult, VerificationStatus } from "../../shared/index.js";
-
-export type NonEmptyArray<T> = readonly [T, ...T[]];
+import type { NonEmptyArray, ScopeMatchResult, VerificationStatus } from "../../shared/index.js";
 
 export interface ClaimCandidate {
   candidateId: string;

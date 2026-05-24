@@ -1,5 +1,4 @@
-import type { ScopeMatchResult, VerificationStatus } from "../../shared/index.js";
-import type { NonEmptyArray } from "../trust/index.js";
+import type { NonEmptyArray, ScopeMatchResult, VerificationStatus } from "../../shared/index.js";
 
 export interface CurrentValidCandidate {
   id: string;
@@ -29,7 +28,7 @@ export interface CurrentValidResolution {
   warnings: string[];
 }
 
-export function resolveCurrentValidCandidates(
+export function resolveInMemoryCurrentValidCandidates(
   candidates: readonly CurrentValidCandidate[]
 ): CurrentValidResolution {
   const active: CurrentValidCandidate[] = [];

@@ -34,7 +34,11 @@ V1 compression is deterministic only. Model-written summaries, branch summaries,
 type CompressionArtifactType =
   | "symbol_outline"
   | "rule_digest"
-  | "context_pack_ledger";
+  | "context_pack_summary"
+  | "decision_digest"
+  | "failure_timeline"
+  | "module_outline"
+  | "test_summary";
 
 type CompressionMethod = "deterministic";
 
@@ -59,7 +63,7 @@ interface CompressionArtifact {
 - Summary is never proof.
 - A compression artifact must never appear in a `ProofRef`.
 - A compression artifact is invalid unless every input hash still matches.
-- `context_pack_ledger` is a deterministic ledger of sent item IDs, labels, hashes, states, and timestamps. It is not a freeform summary.
+- `context_pack_summary` is a deterministic ledger of sent item IDs, labels, hashes, states, and timestamps. It is not a freeform summary.
 - Active contradictions, stale warnings, missing verification warnings, pinned invariants, and high-risk exact sections are never compressed away.
 
 ## High-Risk Rule
@@ -104,6 +108,6 @@ flowchart TD
 - `compression_artifact_requires_input_hashes`
 - `compression_artifact_never_valid_proof`
 - `high_risk_overlay_forbids_summary_replacement`
-- `context_pack_ledger_is_deterministic`
+- `context_pack_summary_is_deterministic`
 - `stale_compression_emits_invalidated_previous_when_sent`
 - `compression_dependency_is_in_artifact_manifest`

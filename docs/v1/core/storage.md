@@ -57,6 +57,32 @@ The V1 schema must define at least these tables or explicitly defer a table with
 | `test_runs` | evidence | Grape-observed test runs |
 | `audit_events` | security/app | privacy approvals, blocked reads, redactions |
 
+## Alpha Product Slice Storage Subset
+
+Do not implement the full table set as the next storage step. The first persisted product slice should start with only the tables needed to prove safe session-scoped omission:
+
+- `schema_migrations`
+- `projects`
+- `repos`
+- `repo_snapshots`
+- `worktree_states`
+- `sources`
+- `source_rejections`
+- `claims`
+- `claim_candidates`
+- `proofs`
+- `rules`
+- `sessions`
+- `session_events`
+- `artifacts`
+- `artifact_dependencies`
+- `sent_items`
+- `omitted_items`
+- `context_pack_items`
+- `audit_events`
+
+Tables outside this subset stay documented for V1, but they require explicit implementation need before code is added.
+
 ## Repository Boundary
 
 - Every table must have an owning repository module.

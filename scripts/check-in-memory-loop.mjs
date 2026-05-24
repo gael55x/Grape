@@ -29,21 +29,14 @@ function checkSharedContracts() {
   const source = read("src/shared/contracts.ts");
 
   expectEqual("taskTypes", extractConstArray(source, "taskTypes"), [
-    "general",
+    "bug_fix",
+    "security_fix",
     "refactor",
-    "feature",
-    "bugfix",
-    "test",
-    "docs",
-    "security",
-    "auth",
-    "permissions",
-    "payments",
-    "webhooks",
-    "secrets",
-    "crypto",
     "migration",
-    "production_config"
+    "feature",
+    "test_repair",
+    "analysis",
+    "bootstrap"
   ]);
 
   expectEqual("riskOverlays", extractConstArray(source, "riskOverlays"), [
@@ -74,8 +67,48 @@ function checkSharedContracts() {
     "unknown"
   ]);
 
+  expectEqual("sourceTypes", extractConstArray(source, "sourceTypes"), [
+    "repository_file",
+    "git_diff",
+    "test_run",
+    "command_run",
+    "user_message",
+    "tool_call",
+    "runtime_log",
+    "ci_job",
+    "assistant_response",
+    "manual_import",
+    "rule_file",
+    "config_file",
+    "lockfile",
+    "migration_file",
+    "commit_message"
+  ]);
+
+  expectEqual("verificationStatuses", extractConstArray(source, "verificationStatuses"), [
+    "verified",
+    "partially_verified",
+    "unverified",
+    "refuted",
+    "stale"
+  ]);
+
+  expectEqual("compressionArtifactTypes", extractConstArray(source, "compressionArtifactTypes"), [
+    "symbol_outline",
+    "rule_digest",
+    "context_pack_summary",
+    "decision_digest",
+    "failure_timeline",
+    "module_outline",
+    "test_summary"
+  ]);
+
   if (source.includes("\"INVALIDATED\"")) {
     errors.push("DiffState must use INVALIDATE_PREVIOUS, not INVALIDATED");
+  }
+
+  if (!source.includes("export type NonEmptyArray<T> = readonly [T, ...T[]];")) {
+    errors.push("NonEmptyArray must live in shared contracts, not trust internals");
   }
 }
 
@@ -122,7 +155,6 @@ function checkTrustShapes() {
   const source = read("src/core/trust/claims.ts");
 
   for (const required of [
-    "export type NonEmptyArray<T> = readonly [T, ...T[]];",
     "proofRefs: NonEmptyArray<string>;",
     'verificationStatus: Extract<VerificationStatus, "verified">;',
     'scopeResult: Extract<ScopeMatchResult, "match">;'
@@ -141,7 +173,9 @@ function checkCurrentValid() {
   const source = read("src/core/retrieval/current-valid.ts");
 
   for (const required of [
+    "import type { NonEmptyArray, ScopeMatchResult, VerificationStatus } from \"../../shared/index.js\";",
     "proofRefs: NonEmptyArray<string>",
+    "resolveInMemoryCurrentValidCandidates",
     'candidate.verificationStatus !== "verified"',
     "candidate.proofRefs.length === 0",
     'candidate.scopeResult === "match"',
@@ -179,12 +213,13 @@ function checkRepoSnapshotShape() {
   }
 }
 
-function checkContextArtifactBuilder() {
-  const source = read("src/core/compiler/context-artifact-builder.ts");
+function checkInMemoryArtifactShape() {
+  const source = read("src/core/compiler/in-memory-context-artifact.ts");
 
   for (const required of [
-    "dependencyManifest: ContextDependencyManifest;",
-    "sections: ContextSection[];",
+    "dependencyManifest: InMemoryContextDependencyManifestShape;",
+    "sections: InMemoryContextSectionShape[];",
+    "assertInMemoryContextArtifactShape",
     "assertDependencyManifest(input.dependencyManifest)",
     "assertSections(input.sections, input.dependencyManifest)",
     'manifest.hashAlgorithm !== "sha256"',
@@ -197,7 +232,7 @@ function checkContextArtifactBuilder() {
     "assertSha256Like(\"section.contentHash\", section.contentHash)"
   ]) {
     if (!source.includes(required)) {
-      errors.push(`Missing context artifact builder guard: ${required}`);
+      errors.push(`Missing in-memory artifact shape guard: ${required}`);
     }
   }
 }
@@ -229,7 +264,7 @@ checkStateMachine();
 checkTrustShapes();
 checkCurrentValid();
 checkRepoSnapshotShape();
-checkContextArtifactBuilder();
+checkInMemoryArtifactShape();
 checkAlphaSnapshot();
 
 if (errors.length > 0) {
