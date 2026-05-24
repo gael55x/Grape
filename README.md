@@ -1,92 +1,149 @@
-# Grape
+<p align="center">
+  <img src="docs/assets/grape.png" alt="Grape logo" width="128" />
+</p>
 
-Grape is a local-first incremental context compiler for AI coding agents.
+<h1 align="center">Grape</h1>
 
-It helps agents stop rereading the same repository context by compiling safe, current, task-specific context artifacts and returning only the context delta an agent needs next.
+<p align="center">
+  The context infrastructure framework for AI coding agents.
+</p>
 
-Grape is not another coding assistant. It is context infrastructure for coding agents.
+<p align="center">
+  <a href="docs/README.md"><strong>Documentation</strong></a>
+  ·
+  <a href="docs/v1/architecture/overview.md"><strong>Architecture</strong></a>
+  ·
+  <a href="docs/v1/planning/implementation-roadmap.md"><strong>Roadmap</strong></a>
+  ·
+  <a href="AGENTS.md"><strong>Agent Rules</strong></a>
+</p>
 
-## Status
+<p align="center">
+  <img alt="Status" src="https://img.shields.io/badge/status-v1%20implementation%20scaffold-6f42c1" />
+  <img alt="Runtime" src="https://img.shields.io/badge/node-%3E%3D22.5-339933" />
+  <img alt="Storage" src="https://img.shields.io/badge/storage-sqlite%20%2B%20wal-044a64" />
+  <img alt="Framework" src="https://img.shields.io/badge/framework-context%20infrastructure-111827" />
+</p>
 
-Grape is in V1 implementation-preparation mode.
+---
 
-The public documentation architecture is being established before production code begins. The project is not ready for production use yet.
+Grape is context infrastructure for AI coding agents.
 
-What exists today:
+It helps agents stop rereading the same repository context by compiling safe, current, task-specific context artifacts, tracking what was already sent in the current agent session, invalidating stale context, and returning only the next safe context delta.
 
-- committed V1 implementation contract in `docs/v1/SPEC.md`
-- documentation architecture and implementation guardrails
-- state machine, trust, artifact, diff, compression, storage, security, test, and benchmark standards
+Grape is not a coding assistant, a chatbot, or a generic search layer. It is infrastructure for making AI coding agents cheaper, safer, and more consistent on real codebases.
 
-What does not exist yet:
+## Why Grape Exists
 
-- published package
-- working CLI
-- MCP server
-- production storage schema
-- benchmark harness
-
-## Why Grape
-
-AI coding agents repeatedly spend context window and tool calls rediscovering:
+AI coding agents repeatedly spend context window and tool calls rediscovering the same facts:
 
 - repository structure
 - active project rules
 - branch and worktree state
-- relevant code, tests, and config
-- prior decisions and failures
-- context already sent earlier in the same agent session
-- stale or invalid assumptions that should not be reused
+- relevant code, tests, config, and decisions
+- prior failures and stale assumptions
+- context already sent earlier in the same session
 
-Traditional retrieval can find related text. Grape is designed to compile a safe, dependency-tracked context artifact and then diff it against what the agent has already seen.
+Search, embeddings, repo maps, and graph retrieval can find related information. Grape’s wedge is different: it compiles a dependency-tracked context artifact, remembers what this agent session already received, and sends only what is new, changed, pinned, restorable, or invalidated.
 
 The goal is token savings without hiding uncertainty, stale evidence, or safety-critical constraints.
 
-## What Grape Does
+## What Grape Is Building
 
-Grape V1 is designed to:
+Grape is designed around a few hard rules:
 
-- create branch-aware repo and worktree snapshots
-- store raw evidence separately from trusted claims
-- require proof before durable claims are persisted
-- resolve scope before current-valid retrieval
-- compile task-specific context artifacts
-- track sent context per agent session
-- resend pinned safety-critical context
-- invalidate stale claims, proofs, compression artifacts, and context packs
-- use compression as derived cache, never as truth
-- expose safe context deltas through MCP and CLI
+- **Runs on repository state directly.** Context is built from the working tree, branch state, proofs, rules, and session ledger.
+- **Proof before durable truth.** Raw evidence, assistant summaries, and durable claims stay separate.
+- **Current-valid before relevance.** Stale, branch-invalid, dirty-scope, private, or contradicted facts are filtered before ranking.
+- **Compression is cache, not truth.** Summaries can orient; they cannot prove behavior.
+- **Diffs are session-scoped.** One agent session cannot omit context just because another session saw it.
+- **Pinned safety context is resent.** Rules and high-risk context are not optimized away.
+- **Every artifact has dependencies.** Context can be invalidated when files, proofs, rules, config, branches, or manifests change.
 
-## Core Concept
+## Product Model
 
 ```text
-repo state
+repo snapshot
 + worktree state
-+ task type
++ task policy
 + active rules
 + proof-backed claims
 + relevant code, tests, and config
-+ reusable deterministic compression cache
-+ previous context sent to this agent session
 + dependency hashes
--> context artifact
--> context diff
--> safe context pack
++ prior sent context for this session
+-> ContextArtifact
+-> ContextDiff
+-> ContextPack
 ```
 
-The central product objects are:
+Core objects:
 
-- `ContextArtifact`: the compiled, dependency-tracked context for a task.
-- `ContextDiff`: the session-scoped delta between the new artifact and what the agent has already seen.
-- `ContextPackItem`: a structured item sent to the agent as `NEW`, `CHANGED`, `PINNED`, `INVALIDATE_PREVIOUS`, or `RESTORE_AVAILABLE`.
+| Object | Purpose |
+|---|---|
+| `ContextArtifact` | A compiled, dependency-tracked context artifact for a task. |
+| `ContextDiff` | The session-scoped delta between the latest artifact and what the agent has already seen. |
+| `ContextPackItem` | A structured item sent as `NEW`, `CHANGED`, `PINNED`, `OMIT_UNCHANGED`, `INVALIDATE_PREVIOUS`, or `RESTORE_AVAILABLE`. |
+| `Trust Kernel` | The rules that prevent unproven, stale, private, or assistant-generated claims from becoming durable truth. |
+| `Compression Cache` | Deterministic derived cache used for token savings, never proof. |
+
+## Current Status
+
+Grape is under active implementation. This repository is the official home for Grape’s documentation and framework scaffold.
+
+Implemented today:
+
+- committed implementation contract
+- documentation architecture and agent operating rules
+- explicit state machine and invariants
+- in-memory context artifact and diff proof
+- durable SQLite session-ledger storage
+- durable context build proof for first-turn send, second-turn omission, stale manifest invalidation, and rollback
+- TypeScript, behavior tests, storage checks, docs checks, and architecture-boundary checks
+
+Not released yet:
+
+- npm package
+- production CLI
+- MCP server
+- full repository indexing
+- benchmark harness
+- compression cache implementation
+
+## Documentation
+
+Start here:
+
+- [Documentation Index](docs/README.md)
+- [Framework Documentation](docs/v1/README.md)
+- [Implementation Contract](docs/v1/SPEC.md)
+- [Architecture](docs/v1/architecture/overview.md)
+- [State Machine](docs/v1/architecture/state-machine.md)
+- [Invariants](docs/v1/architecture/invariants.md)
+- [Implementation Roadmap](docs/v1/planning/implementation-roadmap.md)
+- [Agent Operating Rules](AGENTS.md)
+
+Core contracts:
+
+- [Trust Model](docs/v1/core/trust-model.md)
+- [Context Artifact](docs/v1/contracts/context-artifact.md)
+- [Context Diff](docs/v1/contracts/context-diff.md)
+- [Compression](docs/v1/core/compression.md)
+- [Storage](docs/v1/core/storage.md)
+- [Security](docs/v1/core/security.md)
+- [MCP Tools](docs/v1/interfaces/mcp-tools.md)
+- [CLI](docs/v1/interfaces/cli.md)
+- [Testing](docs/v1/quality/testing.md)
+- [Benchmarks](docs/v1/quality/benchmarks.md)
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  Agent[AI Agent / CLI] --> App[Application Services]
-  App --> Preflight[Repo Preflight]
-  Preflight --> Evidence[Evidence Store]
+  Agent[AI Agent / CLI] --> Adapter[CLI or MCP Adapter]
+  Adapter --> App[Application Services]
+  App --> State[State Machine]
+  App --> Repo[Repo Snapshot]
+  Repo --> Evidence[Evidence Store]
   Evidence --> Trust[Trust Kernel]
   Trust --> Scope[Scope Engine]
   Scope --> Current[Current-Valid Retrieval]
@@ -96,25 +153,30 @@ flowchart LR
   Artifact --> Diff[Context Diff]
   Sessions[Session Locks] --> Diff
   Diff --> Pack[Context Pack]
-  Pack --> Agent
+  Pack --> Adapter
+  Storage[(SQLite Repositories)] --> Evidence
+  Storage --> Trust
+  Storage --> Current
+  Storage --> Compiler
+  Storage --> Diff
 ```
 
-## Planned Quick Start
+## Planned Usage
 
-The intended V1 setup is provisional:
+The intended V1 setup is:
 
 ```bash
 npm install -g grape-context
 grape init --connect
 ```
 
-During normal use, an MCP-capable coding agent should call:
+An MCP-capable coding agent will request context through:
 
 ```text
 grape_get_context
 ```
 
-Manual inspection and debugging will be available through commands such as:
+Inspection and debugging commands are planned:
 
 ```bash
 grape status
@@ -125,66 +187,27 @@ grape conflicts
 grape omitted
 ```
 
-These commands are not implemented yet.
+These commands are not released yet.
 
-## V1 Scope
+## Development
 
-V1 focuses on the smallest useful context compiler loop:
+Requirements:
 
-- local-first storage with SQLite
-- file hashing and incremental sync
-- source trust classification
-- proof-backed claims
-- current-valid retrieval
-- deterministic context artifacts
-- session-scoped context diffing
-- deterministic compression cache
-- MCP server
-- CLI inspection tools
-- benchmark and safety test harness
+- Node.js 22.5+
+- npm
 
-V1 does not aim to be:
+Run the full local gate:
 
-- a coding assistant
-- a general chatbot over a codebase
-- a cloud memory platform
-- a full runtime tracing system
-- a complete code intelligence engine
-- an autonomous patch applier
+```bash
+npm ci
+npm run check
+```
 
-## Documentation
-
-- [Documentation Index](docs/README.md)
-- [V1 Documentation Index](docs/v1/README.md)
-- [Architecture](docs/v1/architecture/overview.md)
-- [State Machine](docs/v1/architecture/state-machine.md)
-- [Trust Model](docs/v1/core/trust-model.md)
-- [Context Artifact](docs/v1/contracts/context-artifact.md)
-- [Context Diff](docs/v1/contracts/context-diff.md)
-- [Compression](docs/v1/core/compression.md)
-- [MCP Tools](docs/v1/interfaces/mcp-tools.md)
-- [CLI](docs/v1/interfaces/cli.md)
-- [Storage](docs/v1/core/storage.md)
-- [Testing](docs/v1/quality/testing.md)
-- [Benchmarks](docs/v1/quality/benchmarks.md)
-- [Security](docs/v1/core/security.md)
-- [Invariants](docs/v1/architecture/invariants.md)
-- [Implementation Roadmap](docs/v1/planning/implementation-roadmap.md)
-- [Agent Operating Rules](AGENTS.md)
-
-## Engineering Principles
-
-- Keep code simple and inspectable.
-- Prefer explicit state transitions over implicit side effects.
-- Prefer deterministic validation over model judgment.
-- Prefer typed interfaces over loosely shaped objects.
-- Preserve trust and correctness before optimizing token savings.
-- Keep compression as cache, not truth.
-- Require tests for every state transition, invariant, compiler policy, and schema migration.
+The check suite currently covers documentation structure, fixtures, in-memory context loop checks, architecture boundaries, storage migrations, TypeScript typechecking, and behavior tests.
 
 ## Contributing
 
-Grape is not ready for broad feature work yet. The current priority is documentation, standards, state machine discipline, tests, benchmarks, and implementation guardrails.
+Grape is not ready for broad feature work yet. Contributions should preserve the implementation contract and avoid expanding product surface before the current roadmap goal is proven.
 
 Before contributing, read:
 
@@ -192,6 +215,20 @@ Before contributing, read:
 - [Agent Operating Rules](AGENTS.md)
 - [V1 Invariants](docs/v1/architecture/invariants.md)
 - [V1 Implementation Roadmap](docs/v1/planning/implementation-roadmap.md)
+
+Implementation standards are strict:
+
+- no godfiles
+- no generic utility dumps
+- no hidden state transitions
+- no direct SQLite outside storage repositories
+- no summaries as proof
+- no MCP writes that promote durable truth
+- no stale dependency manifests in returned context
+
+## Repository Status
+
+This repository is public-facing but pre-release. APIs, schemas, and command names may change until the V1 alpha contract is complete.
 
 ## License
 
