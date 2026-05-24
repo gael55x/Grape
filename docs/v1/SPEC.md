@@ -3382,23 +3382,23 @@ Before implementation starts, all of the following must be true:
 
 ---
 
-## 38. Build Order
+## 38. Implementation Order
 
 ```mermaid
 flowchart TD
-    P0[Phase 0<br/>Alpha vertical slice] --> P1[Phase 1<br/>Local project skeleton]
-    P1 --> P2[Phase 2<br/>Repo state foundation]
-    P2 --> P3[Phase 3<br/>Trust kernel]
-    P3 --> P4[Phase 4<br/>Symbol index + FTS5 retrieval]
-    P4 --> P5[Phase 5<br/>Context artifacts]
-    P5 --> P6[Phase 6<br/>Context diff + sessions]
-    P6 --> P7[Phase 7<br/>Lightweight compression cache]
-    P7 --> P8[Phase 8<br/>MCP integration]
-    P8 --> P9[Phase 9<br/>Bootstrap mode]
-    P9 --> P10[Phase 10<br/>Hardening + release]
+    G0[Alpha vertical slice] --> G1[Local project skeleton]
+    G1 --> G2[Repo state foundation]
+    G2 --> G3[Trust kernel]
+    G3 --> G4[Symbol index + FTS5 retrieval]
+    G4 --> G5[Context artifacts]
+    G5 --> G6[Context diff + sessions]
+    G6 --> G7[Lightweight compression cache]
+    G7 --> G8[MCP integration]
+    G8 --> G9[Bootstrap mode]
+    G9 --> G10[Hardening + release]
 ```
 
-### Phase 0 — Alpha vertical slice
+### Alpha vertical slice
 
 Build:
 
@@ -3421,7 +3421,7 @@ Tests:
 - final artifact redaction blocks test secrets
 - two concurrent Grape processes do not corrupt session/artifact state
 
-### Phase 1 — Local project skeleton
+### Local project skeleton
 
 Build:
 
@@ -3436,7 +3436,7 @@ Build:
 - `grape status`
 - `grape doctor`
 
-### Phase 2 — Repo state foundation
+### Repo state foundation
 
 Build:
 
@@ -3448,7 +3448,7 @@ Build:
 - ignore policy
 - basic secret scan/redaction
 
-### Phase 3 — Trust kernel
+### Trust kernel
 
 Build:
 
@@ -3459,7 +3459,7 @@ Build:
 - belief gate
 - layer isolation
 
-### Phase 4 — Symbol index and FTS5 retrieval
+### Symbol index and FTS5 retrieval
 
 Build:
 
@@ -3471,7 +3471,7 @@ Build:
 - current-valid filter
 - task relevance ranking
 
-### Phase 5 — Context artifacts
+### Context artifacts
 
 Build:
 
@@ -3482,7 +3482,7 @@ Build:
 - missing/unverified context section
 - dual JSON/Markdown output
 
-### Phase 6 — Context diff and sessions
+### Context diff and sessions
 
 Build:
 
@@ -3497,7 +3497,7 @@ Reason:
 
 Compression depends on knowing what was previously sent, omitted, pinned, and restoreable. Build the diff/session substrate before richer compression behavior.
 
-### Phase 7 — Lightweight compression cache
+### Lightweight compression cache
 
 Build:
 
@@ -3510,7 +3510,7 @@ Build:
 - input hash tracking and stale invalidation
 - rule that summaries can route/reduce context but never prove truth
 
-### Phase 8 — MCP integration
+### MCP integration
 
 Build:
 
@@ -3521,7 +3521,7 @@ Build:
 - safe write boundaries
 - `grape mcp --print-config`
 
-### Phase 9 — Bootstrap mode
+### Bootstrap mode
 
 Build:
 
@@ -3532,7 +3532,7 @@ Build:
 - bootstrap artifact
 - confidence labels
 
-### Phase 10 — V1 hardening
+### V1 hardening
 
 Build:
 

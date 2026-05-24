@@ -64,7 +64,7 @@ export interface StateTransition {
   event: StateEvent;
 }
 
-export const phase0bTransitions: StateTransition[] = [
+export const alphaLoopTransitions: StateTransition[] = [
   { from: "uninitialized", to: "initialized", event: "init_project" },
   { from: "initialized", to: "repo_detected", event: "detect_repo" },
   { from: "repo_detected", to: "repo_snapshot_created", event: "create_snapshot" },

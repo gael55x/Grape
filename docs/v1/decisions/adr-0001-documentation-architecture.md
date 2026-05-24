@@ -6,11 +6,11 @@ Accepted
 
 ## Context
 
-Grape V1 will be implemented over many phases by humans and AI agents. The project needs a public documentation structure before production code begins so implementation decisions stay coherent and traceable.
+Grape V1 will be implemented over many milestones by humans and AI agents. The project needs a public documentation structure before production code begins so implementation decisions stay coherent and traceable.
 
 ## Decision
 
-Create a V1 documentation tree under `docs/v1/` with domain-specific documents for architecture, state machine, trust model, context artifacts, compression, context diffing, MCP tools, CLI, storage, testing, benchmarks, security, invariants, implementation phases, decisions, examples, and fixtures.
+Create a V1 documentation tree under `docs/v1/` with domain-specific documents for architecture, state machine, trust model, context artifacts, compression, context diffing, MCP tools, CLI, storage, testing, benchmarks, security, invariants, implementation roadmap, decisions, examples, and fixtures.
 
 ## Consequences
 

@@ -169,7 +169,7 @@ V1 does not aim to be:
 - [Benchmarks](docs/v1/quality/benchmarks.md)
 - [Security](docs/v1/core/security.md)
 - [Invariants](docs/v1/architecture/invariants.md)
-- [Implementation Phases](docs/v1/planning/implementation-phases.md)
+- [Implementation Roadmap](docs/v1/planning/implementation-roadmap.md)
 - [Agent Operating Rules](AGENTS.md)
 
 ## Engineering Principles
@@ -191,7 +191,7 @@ Before contributing, read:
 - [Contributing Guide](CONTRIBUTING.md)
 - [Agent Operating Rules](AGENTS.md)
 - [V1 Invariants](docs/v1/architecture/invariants.md)
-- [V1 Implementation Phases](docs/v1/planning/implementation-phases.md)
+- [V1 Implementation Roadmap](docs/v1/planning/implementation-roadmap.md)
 
 ## License
 
