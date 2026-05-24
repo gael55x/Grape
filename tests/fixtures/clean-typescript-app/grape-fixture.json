@@ -1,6 +1,6 @@
 {
   "name": "clean-typescript-app",
-  "purpose": "Baseline clean repository for Alpha Context Loop context compilation.",
+  "purpose": "Baseline clean repository for In-Memory Context Loop context compilation.",
   "repoShape": {
     "branches": ["main"],
     "worktree": "clean",

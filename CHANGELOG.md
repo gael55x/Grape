@@ -2,7 +2,7 @@
 
 All notable user-facing changes to Grape will be documented here.
 
-This file tracks released package behavior. V1 implementation-internal changes belong in `docs/v1/CHANGELOG.md`. Spec-only changes belong in `docs/v1/SPEC_CHANGELOG.md`.
+This file tracks released package behavior. V1 implementation-internal changes belong in `docs/v1/planning/changelog.md`. Spec-only changes belong in `docs/v1/planning/spec-changelog.md`.
 
 ## Unreleased
 
@@ -12,10 +12,10 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Committed V1 implementation contract and Documentation Foundation standards.
 - Organized V1 documentation into purpose-based folders while keeping `docs/v1/SPEC.md` canonical.
 - Added initial project skeleton and shared V1 contract types.
-- Added first Alpha Context Loop fixture with metadata validation.
+- Added first In-Memory Context Loop fixture with metadata validation.
 - Added validation scripts for shared contracts and state-machine skeleton.
 - Added repo snapshot shape and alpha snapshot smoke check.
 - Added evidence, proof, and durable claim interface baseline.
-- Added current-valid filtering skeleton and consolidated Alpha Context Loop smoke harness.
-- Tightened Alpha Context Loop snapshot and current-valid shapes.
+- Added current-valid filtering skeleton and consolidated In-Memory Context Loop smoke harness.
+- Tightened In-Memory Context Loop snapshot and current-valid shapes.
 - Added context artifact builder skeleton with dependency manifest and section safety guards.

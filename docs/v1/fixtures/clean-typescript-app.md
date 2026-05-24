@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Baseline clean repository for Alpha Context Loop sync, evidence, proof-backed claim, current-valid retrieval, context artifact, and no-change diff behavior.
+Baseline clean repository for In-Memory Context Loop sync, evidence, proof-backed claim, current-valid retrieval, context artifact, and no-change diff behavior.
 
 ## Repository Shape
 

@@ -237,4 +237,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log("alpha context loop smoke checks ok");
+console.log("in-memory context loop smoke checks ok");
