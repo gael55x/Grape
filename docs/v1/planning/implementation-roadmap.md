@@ -94,7 +94,7 @@ SQLite Schema And Migrations.
 
 Documentation Foundation, In-Memory Context Loop, and Project Skeleton And Tooling are complete enough for the next goal. Alpha Product Slice comes later and must prove the persisted CLI/MCP session-ledger path.
 
-Project Skeleton And Tooling added package scripts, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. CI wiring is intentionally deferred until the package dependency and lockfile baseline is decided; do not add CI that depends on globally installed TypeScript.
+Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules.
 
 ## Documentation Foundation Exit Criteria
 

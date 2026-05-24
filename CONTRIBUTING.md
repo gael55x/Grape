@@ -15,6 +15,7 @@ Before changing production code, read:
 
 ## Change Requirements
 
+- Run `npm ci` before local development and `npm run check` before opening a PR.
 - Every state transition needs a documented transition and tests.
 - Every schema change needs a migration, storage docs, and migration tests.
 - Every trust rule needs Trust Model and invariant tests.

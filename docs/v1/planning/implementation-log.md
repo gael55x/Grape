@@ -112,3 +112,10 @@ Keep entries simple:
 - Summary: hardened the alpha storage contract around migration ordering, SQL checksums, session ledger identity, dependency manifest hashes, restore metadata, and serialized-state constraints.
 - Checks run: `npm run check`.
 - Risks/follow-ups: runtime SQLite apply tests and repository APIs still require a driver/package decision; token benchmark claims still need scripted baselines.
+
+### 2026-05-24 - Dependency And CI Baseline
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: pinned TypeScript as a local dev dependency, generated `package-lock.json`, documented `npm ci`, and added a minimal GitHub Actions workflow for `npm run check`.
+- Checks run: `npm run check`.
+- Risks/follow-ups: runtime SQLite still needs a driver decision before repository implementation.
