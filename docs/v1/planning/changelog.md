@@ -33,5 +33,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added pure storage migration planning for pending migrations, checksum drift, filename drift, unknown applied migrations, and ordering failures.
 - Hardened migration planning for sparse histories, real SQL checksums, schema guards, session ledger identity, restore metadata, and stricter architecture import boundaries.
 - Added a pinned TypeScript dev dependency, `package-lock.json`, contributor `npm ci` guidance, and minimal GitHub Actions CI for `npm run check`.
-- Added Node 22 `node:sqlite` runtime migration application tests for empty DB migration, idempotent re-run, WAL/foreign-key pragmas, and checksum drift before SQL execution.
+- Added Node 22.5+ `node:sqlite` runtime migration application tests for empty DB migration, idempotent re-run, WAL/foreign-key pragmas, and checksum drift before SQL execution.
 - Added the first typed SQLite repository slice for project/repo/snapshot/worktree setup, context sessions, context artifacts, dependencies, sent items, and omitted items.
+- Added ADR-0004 to make Node 22.5+ the explicit V1 runtime for the built-in SQLite path.
+- Hardened storage repositories with same-session artifact ledger constraints, restorable omission constraints, repository-applied SQLite pragmas, compare-and-set session locks, session events, context pack item persistence, and transaction rollback support.

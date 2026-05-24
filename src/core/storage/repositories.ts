@@ -1,5 +1,39 @@
 import type { DatabaseSync } from "node:sqlite";
 
+import type { DiffState, TaskType } from "../../shared/contracts.js";
+import { applySqliteConnectionPolicy } from "./sqlite-policy.js";
+
+export type ContextDependencyKind =
+  | "file"
+  | "source"
+  | "claim"
+  | "proof"
+  | "rule"
+  | "config"
+  | "lockfile"
+  | "symbol"
+  | "test"
+  | "compression_artifact";
+
+export type ContextPackItemKind =
+  | "claim"
+  | "proof"
+  | "code_span"
+  | "rule"
+  | "test_output"
+  | "symbol_summary"
+  | "compression_artifact"
+  | "open_question"
+  | "context_summary"
+  | "invalidation"
+  | "restore_hint";
+
+export type OmittedContextReason =
+  | "unchanged_restorable"
+  | "not_relevant"
+  | "unsafe_to_send"
+  | "blocked_by_policy";
+
 export interface ProjectRecord {
   readonly projectId: string;
   readonly rootPath: string;
@@ -46,7 +80,7 @@ export interface ContextSessionRecord {
   readonly agentName?: string;
   readonly agentSessionId?: string;
   readonly taskId?: string;
-  readonly taskType?: string;
+  readonly taskType?: TaskType;
   readonly branchName: string;
   readonly baseCommitSha?: string;
   readonly headCommitSha: string;
@@ -61,11 +95,11 @@ export interface ContextSessionRecord {
 
 export interface ContextArtifactRecord {
   readonly artifactId: string;
-  readonly sessionId?: string;
-  readonly snapshotId?: string;
+  readonly sessionId: string;
+  readonly snapshotId: string;
   readonly artifactHash: string;
   readonly dependencyManifestHash: string;
-  readonly taskType: string;
+  readonly taskType: TaskType;
   readonly riskOverlaysJson: string;
   readonly warningsJson: string;
   readonly unsafeReasonsJson: string;
@@ -75,7 +109,7 @@ export interface ContextArtifactRecord {
 export interface ContextDependencyRecord {
   readonly dependencyId: string;
   readonly artifactId: string;
-  readonly dependencyKind: string;
+  readonly dependencyKind: ContextDependencyKind;
   readonly dependencyRef: string;
   readonly dependencyHash: string;
   readonly scopeJson: string;
@@ -88,7 +122,7 @@ export interface ContextSentItemRecord {
   readonly artifactId: string;
   readonly sectionId: string;
   readonly taskId?: string;
-  readonly itemKind: string;
+  readonly itemKind: ContextPackItemKind;
   readonly itemRef: string;
   readonly itemHash: string;
   readonly contentHash: string;
@@ -96,7 +130,7 @@ export interface ContextSentItemRecord {
   readonly commitSha: string;
   readonly dependencyManifestHash: string;
   readonly wasPinned: boolean;
-  readonly lastDiffState: string;
+  readonly lastDiffState: DiffState;
   readonly omitReason?: string;
   readonly restoreHint?: string;
   readonly sessionResetId?: string;
@@ -111,15 +145,60 @@ export interface OmittedContextItemRecord {
   readonly sessionId: string;
   readonly artifactId: string;
   readonly sectionId: string;
-  readonly itemKind: string;
+  readonly itemKind: ContextPackItemKind;
   readonly itemRef: string;
   readonly itemHash: string;
   readonly contentHash: string;
-  readonly reasonOmitted: string;
+  readonly branchName: string;
+  readonly commitSha: string;
+  readonly dependencyManifestHash: string;
+  readonly lastDiffState: DiffState;
+  readonly reasonOmitted: OmittedContextReason;
   readonly canRestore: boolean;
   readonly restoreId?: string;
   readonly restoreCommand?: string;
   readonly omittedAt: string;
+  readonly sendCount: number;
+  readonly tokenCount: number;
+}
+
+export interface SessionEventRecord {
+  readonly eventId: string;
+  readonly sessionId: string;
+  readonly eventType: string;
+  readonly reason: string;
+  readonly metadataJson: string;
+  readonly createdAt: string;
+}
+
+export interface ContextPackItemRecord {
+  readonly packItemId: string;
+  readonly sessionId: string;
+  readonly artifactId: string;
+  readonly sectionId?: string;
+  readonly diffState: DiffState;
+  readonly itemKind: ContextPackItemKind;
+  readonly itemRef: string;
+  readonly contentHash: string;
+  readonly tokenCount: number;
+  readonly pinned: boolean;
+  readonly safetyCritical: boolean;
+  readonly invalidatesSentItemId?: string;
+  readonly restoreId?: string;
+  readonly inputRefsJson: string;
+  readonly createdAt: string;
+}
+
+export interface SessionLockUpdate {
+  readonly sessionId: string;
+  readonly lockToken: string;
+  readonly now: string;
+}
+
+export interface SessionLockExpireUpdate {
+  readonly sessionId: string;
+  readonly expectedLockToken?: string;
+  readonly now: string;
 }
 
 export interface StorageRepositories {
@@ -138,6 +217,14 @@ export interface StorageRepositories {
   readonly contextSessions: {
     insert(record: ContextSessionRecord): void;
     get(sessionId: string): ContextSessionRecord | undefined;
+    acquireLock(update: SessionLockUpdate): boolean;
+    renewLock(update: SessionLockUpdate): boolean;
+    releaseLock(update: SessionLockUpdate): boolean;
+    expireLock(update: SessionLockExpireUpdate): boolean;
+  };
+  readonly sessionEvents: {
+    insert(record: SessionEventRecord): void;
+    listBySession(sessionId: string): readonly SessionEventRecord[];
   };
   readonly contextArtifacts: {
     insert(record: ContextArtifactRecord): void;
@@ -155,9 +242,15 @@ export interface StorageRepositories {
     insert(record: OmittedContextItemRecord): void;
     listBySession(sessionId: string): readonly OmittedContextItemRecord[];
   };
+  readonly contextPackItems: {
+    insert(record: ContextPackItemRecord): void;
+    listBySession(sessionId: string): readonly ContextPackItemRecord[];
+  };
 }
 
 export function createStorageRepositories(database: DatabaseSync): StorageRepositories {
+  applySqliteConnectionPolicy(database);
+
   return {
     projects: {
       insert(record) {
@@ -276,6 +369,86 @@ export function createStorageRepositories(database: DatabaseSync): StorageReposi
             .prepare("SELECT * FROM context_sessions WHERE session_id = ?")
             .get(sessionId) as Record<string, unknown> | undefined
         );
+      },
+      acquireLock(update) {
+        const result = database
+          .prepare(
+            [
+              "UPDATE context_sessions",
+              "SET lock_token = ?, lock_status = 'locked', last_seen_at = ?, updated_at = ?",
+              "WHERE session_id = ? AND lock_status IN ('unlocked', 'expired')"
+            ].join(" ")
+          )
+          .run(update.lockToken, update.now, update.now, update.sessionId);
+        return result.changes === 1;
+      },
+      renewLock(update) {
+        const result = database
+          .prepare(
+            [
+              "UPDATE context_sessions",
+              "SET last_seen_at = ?, updated_at = ?",
+              "WHERE session_id = ? AND lock_token = ? AND lock_status = 'locked'"
+            ].join(" ")
+          )
+          .run(update.now, update.now, update.sessionId, update.lockToken);
+        return result.changes === 1;
+      },
+      releaseLock(update) {
+        const result = database
+          .prepare(
+            [
+              "UPDATE context_sessions",
+              "SET lock_token = NULL, lock_status = 'unlocked', last_seen_at = ?, updated_at = ?",
+              "WHERE session_id = ? AND lock_token = ? AND lock_status = 'locked'"
+            ].join(" ")
+          )
+          .run(update.now, update.now, update.sessionId, update.lockToken);
+        return result.changes === 1;
+      },
+      expireLock(update) {
+        const params = update.expectedLockToken
+          ? [update.now, update.now, update.sessionId, update.expectedLockToken]
+          : [update.now, update.now, update.sessionId];
+        const result = database
+          .prepare(
+            [
+              "UPDATE context_sessions",
+              "SET lock_status = 'expired', last_seen_at = ?, updated_at = ?",
+              update.expectedLockToken
+                ? "WHERE session_id = ? AND lock_token = ? AND lock_status = 'locked'"
+                : "WHERE session_id = ? AND lock_status = 'locked'"
+            ].join(" ")
+          )
+          .run(...params);
+        return result.changes === 1;
+      }
+    },
+    sessionEvents: {
+      insert(record) {
+        database
+          .prepare(
+            [
+              "INSERT INTO session_events",
+              "(event_id, session_id, event_type, reason, metadata_json, created_at)",
+              "VALUES (?, ?, ?, ?, ?, ?)"
+            ].join(" ")
+          )
+          .run(
+            record.eventId,
+            record.sessionId,
+            record.eventType,
+            record.reason,
+            record.metadataJson,
+            record.createdAt
+          );
+      },
+      listBySession(sessionId) {
+        return (
+          database
+            .prepare("SELECT * FROM session_events WHERE session_id = ? ORDER BY created_at ASC, event_id ASC")
+            .all(sessionId) as Array<Record<string, unknown>>
+        ).map(mapSessionEvent);
       }
     },
     contextArtifacts: {
@@ -293,8 +466,8 @@ export function createStorageRepositories(database: DatabaseSync): StorageReposi
           )
           .run(
             record.artifactId,
-            sqlNullable(record.sessionId),
-            sqlNullable(record.snapshotId),
+            record.sessionId,
+            record.snapshotId,
             record.artifactHash,
             record.dependencyManifestHash,
             record.taskType,
@@ -394,9 +567,10 @@ export function createStorageRepositories(database: DatabaseSync): StorageReposi
               "INSERT INTO omitted_context_items",
               [
                 "(omitted_item_id, session_id, artifact_id, section_id, item_kind, item_ref, item_hash,",
-                "content_hash, reason_omitted, can_restore, restore_id, restore_command, omitted_at)"
+                "content_hash, branch_name, commit_sha, dependency_manifest_hash, last_diff_state,",
+                "reason_omitted, can_restore, restore_id, restore_command, omitted_at, send_count, token_count)"
               ].join(" "),
-              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             ].join(" ")
           )
           .run(
@@ -408,11 +582,17 @@ export function createStorageRepositories(database: DatabaseSync): StorageReposi
             record.itemRef,
             record.itemHash,
             record.contentHash,
+            record.branchName,
+            record.commitSha,
+            record.dependencyManifestHash,
+            record.lastDiffState,
             record.reasonOmitted,
             boolToInt(record.canRestore),
             sqlNullable(record.restoreId),
             sqlNullable(record.restoreCommand),
-            record.omittedAt
+            record.omittedAt,
+            record.sendCount,
+            record.tokenCount
           );
       },
       listBySession(sessionId) {
@@ -421,6 +601,46 @@ export function createStorageRepositories(database: DatabaseSync): StorageReposi
             .prepare("SELECT * FROM omitted_context_items WHERE session_id = ? ORDER BY omitted_item_id ASC")
             .all(sessionId) as Array<Record<string, unknown>>
         ).map(mapOmittedContextItem);
+      }
+    },
+    contextPackItems: {
+      insert(record) {
+        database
+          .prepare(
+            [
+              "INSERT INTO context_pack_items",
+              [
+                "(pack_item_id, session_id, artifact_id, section_id, diff_state, item_kind, item_ref,",
+                "content_hash, token_count, pinned, safety_critical, invalidates_sent_item_id, restore_id,",
+                "input_refs_json, created_at)"
+              ].join(" "),
+              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            ].join(" ")
+          )
+          .run(
+            record.packItemId,
+            record.sessionId,
+            record.artifactId,
+            sqlNullable(record.sectionId),
+            record.diffState,
+            record.itemKind,
+            record.itemRef,
+            record.contentHash,
+            record.tokenCount,
+            boolToInt(record.pinned),
+            boolToInt(record.safetyCritical),
+            sqlNullable(record.invalidatesSentItemId),
+            sqlNullable(record.restoreId),
+            record.inputRefsJson,
+            record.createdAt
+          );
+      },
+      listBySession(sessionId) {
+        return (
+          database
+            .prepare("SELECT * FROM context_pack_items WHERE session_id = ? ORDER BY created_at ASC, pack_item_id ASC")
+            .all(sessionId) as Array<Record<string, unknown>>
+        ).map(mapContextPackItem);
       }
     }
   };
@@ -437,7 +657,7 @@ function mapContextSession(row: Record<string, unknown> | undefined): ContextSes
     agentName: optionalStringField(row, "agent_name"),
     agentSessionId: optionalStringField(row, "agent_session_id"),
     taskId: optionalStringField(row, "task_id"),
-    taskType: optionalStringField(row, "task_type"),
+    taskType: optionalStringField(row, "task_type") as ContextSessionRecord["taskType"],
     branchName: stringField(row, "branch_name"),
     baseCommitSha: optionalStringField(row, "base_commit_sha"),
     headCommitSha: stringField(row, "head_commit_sha"),
@@ -455,11 +675,11 @@ function mapContextArtifact(row: Record<string, unknown> | undefined): ContextAr
   if (!row) return undefined;
   return {
     artifactId: stringField(row, "artifact_id"),
-    sessionId: optionalStringField(row, "session_id"),
-    snapshotId: optionalStringField(row, "snapshot_id"),
+    sessionId: stringField(row, "session_id"),
+    snapshotId: stringField(row, "snapshot_id"),
     artifactHash: stringField(row, "artifact_hash"),
     dependencyManifestHash: stringField(row, "dependency_manifest_hash"),
-    taskType: stringField(row, "task_type"),
+    taskType: stringField(row, "task_type") as ContextArtifactRecord["taskType"],
     riskOverlaysJson: stringField(row, "risk_overlays_json"),
     warningsJson: stringField(row, "warnings_json"),
     unsafeReasonsJson: stringField(row, "unsafe_reasons_json"),
@@ -471,7 +691,7 @@ function mapContextDependency(row: Record<string, unknown>): ContextDependencyRe
   return {
     dependencyId: stringField(row, "dependency_id"),
     artifactId: stringField(row, "artifact_id"),
-    dependencyKind: stringField(row, "dependency_kind"),
+    dependencyKind: stringField(row, "dependency_kind") as ContextDependencyKind,
     dependencyRef: stringField(row, "dependency_ref"),
     dependencyHash: stringField(row, "dependency_hash"),
     scopeJson: stringField(row, "scope_json"),
@@ -486,7 +706,7 @@ function mapContextSentItem(row: Record<string, unknown>): ContextSentItemRecord
     artifactId: stringField(row, "artifact_id"),
     sectionId: stringField(row, "section_id"),
     taskId: optionalStringField(row, "task_id"),
-    itemKind: stringField(row, "item_kind"),
+    itemKind: stringField(row, "item_kind") as ContextPackItemKind,
     itemRef: stringField(row, "item_ref"),
     itemHash: stringField(row, "item_hash"),
     contentHash: stringField(row, "content_hash"),
@@ -494,7 +714,7 @@ function mapContextSentItem(row: Record<string, unknown>): ContextSentItemRecord
     commitSha: stringField(row, "commit_sha"),
     dependencyManifestHash: stringField(row, "dependency_manifest_hash"),
     wasPinned: intToBool(row.was_pinned),
-    lastDiffState: stringField(row, "last_diff_state"),
+    lastDiffState: stringField(row, "last_diff_state") as DiffState,
     omitReason: optionalStringField(row, "omit_reason"),
     restoreHint: optionalStringField(row, "restore_hint"),
     sessionResetId: optionalStringField(row, "session_reset_id"),
@@ -511,15 +731,52 @@ function mapOmittedContextItem(row: Record<string, unknown>): OmittedContextItem
     sessionId: stringField(row, "session_id"),
     artifactId: stringField(row, "artifact_id"),
     sectionId: stringField(row, "section_id"),
-    itemKind: stringField(row, "item_kind"),
+    itemKind: stringField(row, "item_kind") as ContextPackItemKind,
     itemRef: stringField(row, "item_ref"),
     itemHash: stringField(row, "item_hash"),
     contentHash: stringField(row, "content_hash"),
-    reasonOmitted: stringField(row, "reason_omitted"),
+    branchName: stringField(row, "branch_name"),
+    commitSha: stringField(row, "commit_sha"),
+    dependencyManifestHash: stringField(row, "dependency_manifest_hash"),
+    lastDiffState: stringField(row, "last_diff_state") as DiffState,
+    reasonOmitted: stringField(row, "reason_omitted") as OmittedContextReason,
     canRestore: intToBool(row.can_restore),
     restoreId: optionalStringField(row, "restore_id"),
     restoreCommand: optionalStringField(row, "restore_command"),
-    omittedAt: stringField(row, "omitted_at")
+    omittedAt: stringField(row, "omitted_at"),
+    sendCount: numberField(row, "send_count"),
+    tokenCount: numberField(row, "token_count")
+  };
+}
+
+function mapSessionEvent(row: Record<string, unknown>): SessionEventRecord {
+  return {
+    eventId: stringField(row, "event_id"),
+    sessionId: stringField(row, "session_id"),
+    eventType: stringField(row, "event_type"),
+    reason: stringField(row, "reason"),
+    metadataJson: stringField(row, "metadata_json"),
+    createdAt: stringField(row, "created_at")
+  };
+}
+
+function mapContextPackItem(row: Record<string, unknown>): ContextPackItemRecord {
+  return {
+    packItemId: stringField(row, "pack_item_id"),
+    sessionId: stringField(row, "session_id"),
+    artifactId: stringField(row, "artifact_id"),
+    sectionId: optionalStringField(row, "section_id"),
+    diffState: stringField(row, "diff_state") as DiffState,
+    itemKind: stringField(row, "item_kind") as ContextPackItemKind,
+    itemRef: stringField(row, "item_ref"),
+    contentHash: stringField(row, "content_hash"),
+    tokenCount: numberField(row, "token_count"),
+    pinned: intToBool(row.pinned),
+    safetyCritical: intToBool(row.safety_critical),
+    invalidatesSentItemId: optionalStringField(row, "invalidates_sent_item_id"),
+    restoreId: optionalStringField(row, "restore_id"),
+    inputRefsJson: stringField(row, "input_refs_json"),
+    createdAt: stringField(row, "created_at")
   };
 }
 

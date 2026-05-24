@@ -3,3 +3,4 @@ export * from "./migration-plan.js";
 export * from "./repositories.js";
 export * from "./sqlite-policy.js";
 export * from "./sqlite-runtime.js";
+export * from "./transactions.js";

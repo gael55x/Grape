@@ -15,7 +15,7 @@ Before changing production code, read:
 
 ## Local Setup
 
-- Use Node 22 or newer.
+- Use Node 22.5 or newer.
 - Run `npm ci`.
 - Run `npm run check` before opening a PR.
 

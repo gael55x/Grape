@@ -30,5 +30,6 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added pure storage migration planning with checksum and ordering safeguards.
 - Hardened storage migration and session-ledger contracts for safe omission/invalidation work.
 - Added pinned TypeScript dev dependency, lockfile, and CI check workflow.
-- Added Node 22 built-in SQLite migration runtime and behavior tests.
+- Added Node 22.5+ built-in SQLite migration runtime and behavior tests.
 - Added first typed SQLite repository slice for persisted session-ledger work.
+- Hardened persisted session-ledger storage so cross-session artifact references fail closed and restorable omissions require restore metadata.

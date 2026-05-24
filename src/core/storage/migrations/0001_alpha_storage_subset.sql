@@ -152,15 +152,16 @@ CREATE TABLE IF NOT EXISTS session_events (
 
 CREATE TABLE IF NOT EXISTS context_artifacts (
   artifact_id TEXT PRIMARY KEY,
-  session_id TEXT REFERENCES context_sessions(session_id) ON DELETE SET NULL,
-  snapshot_id TEXT REFERENCES repo_snapshots(snapshot_id) ON DELETE SET NULL,
+  session_id TEXT NOT NULL REFERENCES context_sessions(session_id) ON DELETE CASCADE,
+  snapshot_id TEXT NOT NULL REFERENCES repo_snapshots(snapshot_id) ON DELETE CASCADE,
   artifact_hash TEXT NOT NULL,
   dependency_manifest_hash TEXT NOT NULL,
   task_type TEXT NOT NULL CHECK (task_type IN ('bug_fix', 'security_fix', 'refactor', 'migration', 'feature', 'test_repair', 'analysis', 'bootstrap')),
   risk_overlays_json TEXT NOT NULL,
   warnings_json TEXT NOT NULL,
   unsafe_reasons_json TEXT NOT NULL,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  UNIQUE (artifact_id, session_id)
 );
 
 CREATE TABLE IF NOT EXISTS context_dependencies (
@@ -176,7 +177,7 @@ CREATE TABLE IF NOT EXISTS context_dependencies (
 CREATE TABLE IF NOT EXISTS context_sent_items (
   sent_item_id TEXT PRIMARY KEY,
   session_id TEXT NOT NULL REFERENCES context_sessions(session_id) ON DELETE CASCADE,
-  artifact_id TEXT NOT NULL REFERENCES context_artifacts(artifact_id) ON DELETE CASCADE,
+  artifact_id TEXT NOT NULL,
   section_id TEXT NOT NULL,
   task_id TEXT,
   item_kind TEXT NOT NULL CHECK (item_kind IN ('claim', 'proof', 'code_span', 'rule', 'test_output', 'symbol_summary', 'compression_artifact', 'open_question', 'context_summary', 'invalidation', 'restore_hint')),
@@ -194,29 +195,38 @@ CREATE TABLE IF NOT EXISTS context_sent_items (
   first_sent_at TEXT NOT NULL,
   last_sent_at TEXT NOT NULL,
   send_count INTEGER NOT NULL CHECK (send_count > 0),
-  token_count INTEGER NOT NULL CHECK (token_count >= 0)
+  token_count INTEGER NOT NULL CHECK (token_count >= 0),
+  FOREIGN KEY (artifact_id, session_id) REFERENCES context_artifacts(artifact_id, session_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS omitted_context_items (
   omitted_item_id TEXT PRIMARY KEY,
   session_id TEXT NOT NULL REFERENCES context_sessions(session_id) ON DELETE CASCADE,
-  artifact_id TEXT NOT NULL REFERENCES context_artifacts(artifact_id) ON DELETE CASCADE,
+  artifact_id TEXT NOT NULL,
   section_id TEXT NOT NULL,
   item_kind TEXT NOT NULL CHECK (item_kind IN ('claim', 'proof', 'code_span', 'rule', 'test_output', 'symbol_summary', 'compression_artifact', 'open_question', 'context_summary', 'invalidation', 'restore_hint')),
   item_ref TEXT NOT NULL,
   item_hash TEXT NOT NULL,
   content_hash TEXT NOT NULL,
+  branch_name TEXT NOT NULL,
+  commit_sha TEXT NOT NULL,
+  dependency_manifest_hash TEXT NOT NULL,
+  last_diff_state TEXT NOT NULL CHECK (last_diff_state IN ('NEW', 'CHANGED', 'PINNED', 'OMIT_UNCHANGED', 'INVALIDATE_PREVIOUS', 'RESTORE_AVAILABLE')),
   reason_omitted TEXT NOT NULL CHECK (reason_omitted IN ('unchanged_restorable', 'not_relevant', 'unsafe_to_send', 'blocked_by_policy')),
   can_restore INTEGER NOT NULL CHECK (can_restore IN (0, 1)),
   restore_id TEXT,
   restore_command TEXT,
-  omitted_at TEXT NOT NULL
+  omitted_at TEXT NOT NULL,
+  send_count INTEGER NOT NULL CHECK (send_count > 0),
+  token_count INTEGER NOT NULL CHECK (token_count >= 0),
+  CHECK (can_restore = 0 OR (restore_id IS NOT NULL AND restore_command IS NOT NULL)),
+  FOREIGN KEY (artifact_id, session_id) REFERENCES context_artifacts(artifact_id, session_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS context_pack_items (
   pack_item_id TEXT PRIMARY KEY,
   session_id TEXT NOT NULL REFERENCES context_sessions(session_id) ON DELETE CASCADE,
-  artifact_id TEXT NOT NULL REFERENCES context_artifacts(artifact_id) ON DELETE CASCADE,
+  artifact_id TEXT NOT NULL,
   section_id TEXT,
   diff_state TEXT NOT NULL CHECK (diff_state IN ('NEW', 'CHANGED', 'PINNED', 'OMIT_UNCHANGED', 'INVALIDATE_PREVIOUS', 'RESTORE_AVAILABLE')),
   item_kind TEXT NOT NULL CHECK (item_kind IN ('claim', 'proof', 'code_span', 'rule', 'test_output', 'symbol_summary', 'compression_artifact', 'open_question', 'context_summary', 'invalidation', 'restore_hint')),
@@ -228,7 +238,8 @@ CREATE TABLE IF NOT EXISTS context_pack_items (
   invalidates_sent_item_id TEXT REFERENCES context_sent_items(sent_item_id) ON DELETE SET NULL,
   restore_id TEXT,
   input_refs_json TEXT NOT NULL,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (artifact_id, session_id) REFERENCES context_artifacts(artifact_id, session_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS audit_events (

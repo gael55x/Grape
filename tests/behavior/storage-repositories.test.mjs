@@ -8,6 +8,7 @@ import test from "node:test";
 import {
   applyStorageMigrations,
   createStorageRepositories,
+  runStorageTransaction,
   storageMigrationReferences
 } from "../../.tmp/build/src/core/storage/index.js";
 
@@ -34,6 +35,20 @@ function withMigratedDatabase(fn) {
     fn(database, createStorageRepositories(database));
   } finally {
     database.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function withMigratedDatabaseFile(fn) {
+  const dir = mkdtempSync(path.join(tmpdir(), "grape-repositories-"));
+  const databasePath = path.join(dir, "grape.db");
+  const database = new DatabaseSync(databasePath);
+
+  try {
+    applyStorageMigrations(database, migrationSources(), () => now);
+    database.close();
+    fn(databasePath);
+  } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 }
@@ -74,7 +89,11 @@ function insertBaseGraph(repositories, overrides = {}) {
   });
 }
 
-function insertSession(repositories, sessionId) {
+function insertSession(repositories, sessionId, overrides = {}) {
+  const lockToken = Object.hasOwn(overrides, "lockToken")
+    ? overrides.lockToken
+    : `lock-${sessionId}`;
+
   repositories.contextSessions.insert({
     sessionId,
     projectId: "project-1",
@@ -87,9 +106,9 @@ function insertSession(repositories, sessionId) {
     taskType: "analysis",
     branchName: "main",
     headCommitSha: "abc123",
-    status: "active",
-    lockStatus: "locked",
-    lockToken: `lock-${sessionId}`,
+    status: overrides.status ?? "active",
+    lockStatus: overrides.lockStatus ?? "locked",
+    lockToken,
     startedAt: now,
     lastSeenAt: now,
     createdAt: now,
@@ -136,6 +155,11 @@ function sentItem(overrides = {}) {
 }
 
 function omittedItem(overrides = {}) {
+  const restoreId = Object.hasOwn(overrides, "restoreId") ? overrides.restoreId : "restore-1";
+  const restoreCommand = Object.hasOwn(overrides, "restoreCommand")
+    ? overrides.restoreCommand
+    : "grape restore restore-1";
+
   return {
     omittedItemId: overrides.omittedItemId ?? "omitted-1",
     sessionId: overrides.sessionId ?? "session-1",
@@ -145,11 +169,35 @@ function omittedItem(overrides = {}) {
     itemRef: "claim-1",
     itemHash: hashA,
     contentHash: hashA,
+    branchName: "main",
+    commitSha: "abc123",
+    dependencyManifestHash: hashB,
+    lastDiffState: "OMIT_UNCHANGED",
     reasonOmitted: "unchanged_restorable",
     canRestore: true,
-    restoreId: "restore-1",
-    restoreCommand: "grape restore restore-1",
-    omittedAt: now
+    restoreId,
+    restoreCommand,
+    omittedAt: now,
+    sendCount: 1,
+    tokenCount: 42
+  };
+}
+
+function packItem(overrides = {}) {
+  return {
+    packItemId: overrides.packItemId ?? "pack-1",
+    sessionId: overrides.sessionId ?? "session-1",
+    artifactId: overrides.artifactId ?? "artifact-1",
+    sectionId: "section-1",
+    diffState: "NEW",
+    itemKind: "claim",
+    itemRef: "claim-1",
+    contentHash: hashA,
+    tokenCount: 42,
+    pinned: false,
+    safetyCritical: false,
+    inputRefsJson: "[\"dep-1\"]",
+    createdAt: now
   };
 }
 
@@ -170,6 +218,15 @@ test("storage repositories persist session, artifact, dependency, sent, and omit
     });
     repositories.contextSentItems.insert(sentItem());
     repositories.omittedContextItems.insert(omittedItem());
+    repositories.contextPackItems.insert(packItem());
+    repositories.sessionEvents.insert({
+      eventId: "event-1",
+      sessionId: "session-1",
+      eventType: "lock_acquired",
+      reason: "test",
+      metadataJson: "{}",
+      createdAt: now
+    });
 
     assert.equal(repositories.contextSessions.get("session-1")?.headCommitSha, "abc123");
     assert.equal(repositories.contextArtifacts.get("artifact-1")?.dependencyManifestHash, hashB);
@@ -184,6 +241,14 @@ test("storage repositories persist session, artifact, dependency, sent, and omit
     assert.deepEqual(
       repositories.omittedContextItems.listBySession("session-1").map((item) => item.restoreId),
       ["restore-1"]
+    );
+    assert.deepEqual(
+      repositories.contextPackItems.listBySession("session-1").map((item) => item.packItemId),
+      ["pack-1"]
+    );
+    assert.deepEqual(
+      repositories.sessionEvents.listBySession("session-1").map((item) => item.eventId),
+      ["event-1"]
     );
   });
 });
@@ -221,6 +286,117 @@ test("storage repositories fail closed on invalid sent item references", () => {
     assert.throws(
       () => repositories.contextSentItems.insert(sentItem()),
       /constraint failed/i
+    );
+  });
+});
+
+test("storage repositories reject cross-session artifact ledger rows", () => {
+  withMigratedDatabase((_database, repositories) => {
+    insertBaseGraph(repositories);
+    insertSession(repositories, "session-1");
+    insertSession(repositories, "session-2");
+    insertArtifact(repositories, "artifact-1", "session-1");
+    insertArtifact(repositories, "artifact-2", "session-2");
+
+    assert.throws(
+      () => repositories.contextSentItems.insert(sentItem({ sessionId: "session-1", artifactId: "artifact-2" })),
+      /constraint failed/i
+    );
+    assert.throws(
+      () =>
+        repositories.omittedContextItems.insert(
+          omittedItem({ omittedItemId: "omitted-cross", sessionId: "session-1", artifactId: "artifact-2" })
+        ),
+      /constraint failed/i
+    );
+    assert.throws(
+      () =>
+        repositories.contextPackItems.insert(
+          packItem({ packItemId: "pack-cross", sessionId: "session-1", artifactId: "artifact-2" })
+        ),
+      /constraint failed/i
+    );
+  });
+});
+
+test("storage repositories require restore metadata for restorable omissions", () => {
+  withMigratedDatabase((_database, repositories) => {
+    insertBaseGraph(repositories);
+    insertSession(repositories, "session-1");
+    insertArtifact(repositories, "artifact-1", "session-1");
+
+    assert.throws(
+      () =>
+        repositories.omittedContextItems.insert(
+          omittedItem({ restoreId: undefined, restoreCommand: undefined })
+        ),
+      /constraint failed/i
+    );
+  });
+});
+
+test("storage repository creation applies sqlite pragmas on reopened connections", () => {
+  withMigratedDatabaseFile((databasePath) => {
+    const database = new DatabaseSync(databasePath);
+
+    try {
+      const repositories = createStorageRepositories(database);
+      assert.equal(database.prepare("PRAGMA foreign_keys").get().foreign_keys, 1);
+      assert.throws(
+        () => repositories.contextSentItems.insert(sentItem()),
+        /constraint failed/i
+      );
+    } finally {
+      database.close();
+    }
+  });
+});
+
+test("storage session locks coordinate with compare-and-set updates", () => {
+  withMigratedDatabaseFile((databasePath) => {
+    const first = new DatabaseSync(databasePath);
+    const second = new DatabaseSync(databasePath);
+
+    try {
+      const firstRepo = createStorageRepositories(first);
+      const secondRepo = createStorageRepositories(second);
+      insertBaseGraph(firstRepo);
+      insertSession(firstRepo, "session-1", { lockStatus: "unlocked", lockToken: undefined });
+
+      assert.equal(firstRepo.contextSessions.acquireLock({ sessionId: "session-1", lockToken: "token-a", now }), true);
+      assert.equal(secondRepo.contextSessions.acquireLock({ sessionId: "session-1", lockToken: "token-b", now }), false);
+      assert.equal(secondRepo.contextSessions.renewLock({ sessionId: "session-1", lockToken: "token-b", now }), false);
+      assert.equal(firstRepo.contextSessions.renewLock({ sessionId: "session-1", lockToken: "token-a", now }), true);
+      assert.equal(secondRepo.contextSessions.releaseLock({ sessionId: "session-1", lockToken: "token-b", now }), false);
+      assert.equal(firstRepo.contextSessions.releaseLock({ sessionId: "session-1", lockToken: "token-a", now }), true);
+      assert.equal(secondRepo.contextSessions.acquireLock({ sessionId: "session-1", lockToken: "token-b", now }), true);
+    } finally {
+      first.close();
+      second.close();
+    }
+  });
+});
+
+test("storage transactions roll back multi-record writes", () => {
+  withMigratedDatabase((database, repositories) => {
+    assert.throws(
+      () =>
+        runStorageTransaction(database, () => {
+          repositories.projects.insert({
+            projectId: "project-rollback",
+            rootPath: "/repo",
+            grapeDirPath: "/repo/.grape",
+            createdAt: now,
+            updatedAt: now
+          });
+          throw new Error("stop transaction");
+        }),
+      /stop transaction/
+    );
+
+    assert.equal(
+      database.prepare("SELECT count(*) AS count FROM projects WHERE project_id = 'project-rollback'").get().count,
+      0
     );
   });
 });

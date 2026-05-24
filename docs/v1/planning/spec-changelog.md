@@ -22,4 +22,8 @@ Each entry should include:
 - Aligned supporting storage table names with canonical `SPEC.md` names where present.
 - Added the first alpha storage migration contract for project, repo, source, claim, proof, artifact, and session-ledger tables.
 - Hardened the alpha storage contract with SQL checksum validation, serialized-state constraints, session branch/worktree identity, dependency manifest hashes, and complete sent/omitted ledger fields.
-- Selected Node 22 built-in `node:sqlite` for the initial runtime migration path to avoid native SQLite package installation.
+- Selected Node 22.5+ built-in `node:sqlite` for the initial runtime migration path to avoid native SQLite package installation.
+- Made Node 22.5+ the canonical V1 runtime and added ADR-0004 for the no-native SQLite runtime decision.
+- Tightened the storage contract so sent, omitted, and pack ledger rows must reference artifacts owned by the same session.
+- Tightened restorable omission storage so restore metadata, branch/commit identity, dependency manifest hash, send count, and token count are persisted.
+- Added runtime migration bootstrap protection for non-empty databases without trusted migration metadata.
