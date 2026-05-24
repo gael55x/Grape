@@ -150,6 +150,7 @@ export interface InMemoryContextDependencyManifestShape {
 export interface InMemoryContextPackItemShape {
   itemId: string;
   artifactId: string;
+  sessionId: string;
   sectionId: string;
   state: DiffState;
   title: string;
@@ -157,6 +158,7 @@ export interface InMemoryContextPackItemShape {
   contentHash: string;
   previousItemId?: string;
   restoreToken?: string;
+  safeOmissionReason?: "unchanged_restorable";
   pinned: boolean;
   warnings: string[];
 }

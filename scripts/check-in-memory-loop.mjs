@@ -245,6 +245,29 @@ function checkInMemoryArtifactShape() {
   }
 }
 
+function checkInMemoryDiffProof() {
+  const source = read("src/core/diff/in-memory-context-diff.ts");
+
+  for (const required of [
+    "InMemoryContextDiffInput",
+    "InMemoryContextDiffResult",
+    "previous.sessionId === input.sessionId",
+    'createPackItem(input, section, "PINNED", previous)',
+    'createPackItem(input, section, "NEW")',
+    'createPackItem(input, section, "CHANGED", previous)',
+    '"OMIT_UNCHANGED"',
+    '"RESTORE_AVAILABLE"',
+    "safeOmissionReason: \"unchanged_restorable\"",
+    "restoreToken",
+    "unsafeOmissions",
+    "omittedItems.push"
+  ]) {
+    if (!source.includes(required)) {
+      errors.push(`Missing in-memory diff proof guard: ${required}`);
+    }
+  }
+}
+
 function checkAlphaSnapshot() {
   const fixtureDir = join(root, "tests", "fixtures", "clean-typescript-app");
   const metadata = JSON.parse(readFileSync(join(fixtureDir, "grape-fixture.json"), "utf8"));
@@ -273,6 +296,7 @@ checkTrustShapes();
 checkCurrentValid();
 checkRepoSnapshotShape();
 checkInMemoryArtifactShape();
+checkInMemoryDiffProof();
 checkAlphaSnapshot();
 
 if (errors.length > 0) {

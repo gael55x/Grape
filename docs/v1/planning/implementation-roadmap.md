@@ -113,7 +113,7 @@ Status: complete.
 - smallest in-memory path compiles a safe context artifact shape
 - proof-backed claim promotion is implemented for the alpha source types
 - current-valid filtering runs before artifact compilation
-- session-scoped diffing emits structured `ContextPackItem` values
+- session-scoped diffing emits structured in-memory context pack item shapes
 - high-risk pinned context is resent
 - stale dependencies invalidate artifacts and previous context
 - in-memory token accounting measures first-turn cost, later-turn cost, and unsafe omissions

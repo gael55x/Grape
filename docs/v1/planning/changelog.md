@@ -22,3 +22,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added current-valid filtering skeleton and consolidated In-Memory Context Loop smoke checks.
 - Tightened repo snapshot and current-valid shapes to reject placeholder hashes and missing proofs.
 - Added context artifact builder skeleton with manifest, section hash, dependency-ref, exact-context, and blocked-redaction guards.
+- Added in-memory context diff proof for safe omission, restore metadata, pinned resend, and unsafe omission counting.

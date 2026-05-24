@@ -84,3 +84,10 @@ Keep entries simple:
 - Summary: added the first context artifact builder shape with guards for dependency manifests, section hashes, blocked redaction, section dependency refs, exact source refs, and exact active-claim proof refs.
 - Checks run: `npm run check`.
 - Risks/follow-ups: artifact hashing is still input-provided until the real deterministic hash service and golden tests are introduced.
+
+### 2026-05-24 - In-Memory Context Loop Diff Proof
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added the first session-scoped in-memory diff proof with pinned resend, safe unchanged omission, restore metadata, and unsafe omission counting.
+- Checks run: `npm run check`.
+- Risks/follow-ups: diff state is still in-memory only; durable session ledgers belong to the later Alpha Product Slice.

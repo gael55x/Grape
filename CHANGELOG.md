@@ -19,3 +19,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added current-valid filtering skeleton and consolidated In-Memory Context Loop smoke harness.
 - Tightened In-Memory Context Loop snapshot and current-valid shapes.
 - Added context artifact builder skeleton with dependency manifest and section safety guards.
+- Added in-memory context diff proof for pinned resend, safe omission, restore metadata, and unsafe omission counting.

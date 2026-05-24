@@ -73,6 +73,20 @@ interface OmittedContextItem {
 - `INVALIDATE_PREVIOUS` must include the prior item ID or prior section ID being invalidated.
 - A branch, worktree, dependency, or compression invalidation must invalidate sent items that relied on it.
 
+## In-Memory Loop Proof
+
+The current implementation goal proves only the in-memory part of the diff contract:
+
+- first turn emits `NEW` for ordinary sections and `PINNED` for pinned sections
+- second no-change turn emits `OMIT_UNCHANGED` only for unchanged, non-pinned sections
+- every in-memory omission includes `safeOmissionReason: "unchanged_restorable"` and a restore token
+- `RESTORE_AVAILABLE` is emitted for omitted restorable sections
+- previous sent items are matched only when `sessionId` matches
+- pinned sections are resent instead of omitted
+- unsafe omission count must stay zero
+
+Durable ledgers, restore lookup, branch invalidation, and cross-process session locks belong to the later Alpha Product Slice.
+
 ## Restore Protocol
 
 1. Diff engine omits an unchanged item only after writing an `OmittedContextItem`.
