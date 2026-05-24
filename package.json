@@ -11,6 +11,9 @@
     "docs:check": "node scripts/check-docs-structure.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
     "memory:check": "node scripts/check-in-memory-loop.mjs",
-    "check": "npm run docs:check && npm run fixtures:check && npm run memory:check"
+    "typecheck": "tsc --noEmit",
+    "build:test": "tsc -p tsconfig.build.json",
+    "test:behavior": "npm run build:test && node --test tests/behavior/*.test.mjs",
+    "check": "npm run docs:check && npm run fixtures:check && npm run memory:check && npm run typecheck && npm run test:behavior"
   }
 }

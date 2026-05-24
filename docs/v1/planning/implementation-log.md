@@ -98,3 +98,10 @@ Keep entries simple:
 - Summary: added deterministic approximate token accounting for naive resend cost, Grape context pack cost, omitted unchanged tokens, pinned overhead, invalidation overhead, unsafe omissions, stale sends, and reduction percent.
 - Checks run: `npm run check`.
 - Risks/follow-ups: numbers are scaffold estimates only; release benchmark claims require a real tokenizer, scripted workflows, and gold fixtures.
+
+### 2026-05-24 - Project Skeleton Tooling Gates
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added a real TypeScript typecheck gate and Node built-in behavioral tests for the in-memory diff and token accounting path without adding dependencies.
+- Checks run: `npm run check`.
+- Risks/follow-ups: test build output is temporary under `.tmp/`; richer unit/integration coverage still belongs to later implementation goals.
