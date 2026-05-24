@@ -36,6 +36,23 @@ test("storage migration planner rejects checksum drift", () => {
   );
 });
 
+test("storage migration planner rejects filename drift", () => {
+  assert.throws(
+    () =>
+      planPendingStorageMigrations(
+        [migrationOne],
+        [
+          {
+            ...migrationOne,
+            filename: "0001_renamed.sql",
+            appliedAt: "2026-05-24T00:00:00.000Z"
+          }
+        ]
+      ),
+    /filename changed/
+  );
+});
+
 test("storage migration planner rejects unknown applied migrations", () => {
   assert.throws(
     () =>
@@ -50,5 +67,55 @@ test("storage migration planner rejects out-of-order available migrations", () =
   assert.throws(
     () => planPendingStorageMigrations([migrationTwo, migrationOne], []),
     /sorted by id/
+  );
+});
+
+test("storage migration planner rejects out-of-order applied migrations", () => {
+  assert.throws(
+    () =>
+      planPendingStorageMigrations(
+        [migrationOne, migrationTwo],
+        [
+          { ...migrationTwo, appliedAt: "2026-05-24T00:00:00.000Z" },
+          { ...migrationOne, appliedAt: "2026-05-24T00:00:01.000Z" }
+        ]
+      ),
+    /applied migrations must be sorted/
+  );
+});
+
+test("storage migration planner rejects sparse applied migration history", () => {
+  assert.throws(
+    () =>
+      planPendingStorageMigrations(
+        [migrationOne, migrationTwo],
+        [{ ...migrationTwo, appliedAt: "2026-05-24T00:00:00.000Z" }]
+      ),
+    /prefix/
+  );
+});
+
+test("storage migration planner rejects duplicate applied IDs", () => {
+  assert.throws(
+    () =>
+      planPendingStorageMigrations(
+        [migrationOne],
+        [
+          { ...migrationOne, appliedAt: "2026-05-24T00:00:00.000Z" },
+          { ...migrationOne, appliedAt: "2026-05-24T00:00:01.000Z" }
+        ]
+      ),
+    /duplicate applied migration id/
+  );
+});
+
+test("storage migration planner rejects invalid checksum shapes", () => {
+  assert.throws(
+    () =>
+      planPendingStorageMigrations(
+        [{ ...migrationOne, checksumSha256: "not-a-sha" }],
+        []
+      ),
+    /invalid checksum/
   );
 });

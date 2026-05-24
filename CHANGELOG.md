@@ -28,3 +28,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added the first alpha storage migration contract and migration validator.
 - Added typed SQLite connection policy defaults and behavioral coverage.
 - Added pure storage migration planning with checksum and ordering safeguards.
+- Hardened storage migration and session-ledger contracts for safe omission/invalidation work.

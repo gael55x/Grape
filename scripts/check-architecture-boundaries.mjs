@@ -70,6 +70,24 @@ function coreDomain(layer) {
   return layer.startsWith("core/") ? layer.slice("core/".length) : null;
 }
 
+const allowedCoreDomainImports = {
+  state: [],
+  evidence: ["state", "security", "storage"],
+  trust: ["claims", "proofs", "scope"],
+  claims: ["proofs", "scope"],
+  proofs: ["evidence", "security"],
+  scope: ["git"],
+  retrieval: ["claims", "scope", "indexing"],
+  compiler: ["retrieval", "compression", "security"],
+  compression: ["security", "storage"],
+  diff: ["sessions", "compiler"],
+  sessions: ["storage"],
+  storage: [],
+  git: [],
+  indexing: ["git", "security", "storage"],
+  security: []
+};
+
 function isAllowedImport(fromLayer, toLayer) {
   if (toLayer === "outside") return false;
   if (toLayer === "tests" || toLayer === "scripts") return false;
@@ -99,13 +117,7 @@ function isAllowedImport(fromLayer, toLayer) {
     const toDomain = coreDomain(toLayer);
 
     if (fromDomain === toDomain) return true;
-    if (fromDomain === "state") return false;
-    if (fromDomain === "storage") return false;
-    if (fromDomain === "trust" && ["compression", "diff", "sessions"].includes(toDomain)) return false;
-    if (fromDomain === "retrieval" && toDomain === "trust") return false;
-    if (fromDomain === "compression" && ["trust", "proofs", "claims"].includes(toDomain)) return false;
-
-    return true;
+    return allowedCoreDomainImports[fromDomain]?.includes(toDomain) ?? false;
   }
 
   return false;

@@ -102,6 +102,9 @@ Tables outside this subset stay documented for V1, but they require explicit imp
 - Use one writer transaction for each explicit state transition that persists multiple records.
 - Session locks must be represented durably, not only in process memory.
 - FTS5 is allowed for lexical search, but FTS entries must reference source IDs and must not contain raw secrets.
+- Safety-critical serialized enums must use database `CHECK` constraints, including diff state, task type, verification status, privacy status, source type, lock status, and session status.
+- `context_sessions` must persist repo, snapshot, worktree, branch, head commit, task, status, and lock identity so branch/session invalidation can fail closed.
+- `context_sent_items` and `omitted_context_items` must persist item kind/ref/hash, branch/commit identity, dependency manifest hash where applicable, token counts, restore metadata, and send counts so omission and restore decisions are auditable.
 
 The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` and covered by behavioral tests. Driver-specific code must apply those pragma statements before running migrations or repository writes.
 
@@ -111,9 +114,11 @@ The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` 
 - Migrations are append-only after merge.
 - Every schema change updates this file, `../planning/spec-changelog.md`, and migration tests.
 - Every migration stores checksum and applied timestamp in `schema_migrations`.
+- Committed migration references must include the SHA-256 checksum of the SQL file bytes.
 - Destructive migrations require an ADR before implementation.
 - `npm run storage:check` validates migration naming, manifest coverage, the first alpha table set, canonical table names, and obviously unsafe migration statements.
 - Migration planning must reject duplicate IDs, out-of-order available migrations, unknown applied migrations, changed filenames, and changed checksums before any SQL is applied.
+- Applied migrations must form a prefix of available migrations. Sparse histories fail closed.
 - Runtime SQLite apply tests are required when the SQLite driver/package baseline is selected. Until then, migration SQL is validated as a contract artifact only.
 
 ## Path And Hash Rules
