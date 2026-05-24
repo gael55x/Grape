@@ -93,6 +93,8 @@ Tables outside this subset stay documented for V1, but they require explicit imp
 - Repositories return typed domain records, not loosely shaped row objects.
 - Application services own transaction boundaries for multi-repository state changes.
 - Storage repositories do not decide trust, relevance, compression policy, or redaction policy.
+- The first repository slice in `src/core/storage/repositories.ts` covers only the tables needed to prove persisted session-scoped omission: project/repo/snapshot/worktree setup, context sessions, artifacts, dependencies, sent items, and omitted items.
+- Repository tests must prove session-scoped sent/omitted ledgers and fail-closed foreign-key behavior before app services rely on those tables.
 
 ## SQLite Policy
 
