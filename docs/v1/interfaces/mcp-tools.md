@@ -49,46 +49,50 @@ Restricted write tools:
 
 ```ts
 interface GrapeGetContextInput {
-  repoPath: string;
-  sessionId: string;
-  agentId?: string;
-  task: {
-    id: string;
-    prompt: string;
-    type: TaskType;
-    riskOverlays?: RiskOverlay[];
-    touchedPaths?: string[];
-  };
-  maxTokens?: number;
-  restoreTokens?: string[];
+  query: string;
+  taskType?: Exclude<TaskType, "bootstrap">;
+  files?: string[];
+  symbols?: string[];
+  tests?: string[];
+  environmentScope?: "local" | "test" | "ci" | "staging" | "production" | "unknown";
+  tokenBudget?: number;
+  sessionId?: string;
+  agentName?: string;
+  agentSessionId?: string;
 }
 
 interface GrapeGetContextOutput {
-  status: "ok" | "partial_with_risk" | "unsafe_compile";
-  artifactId?: string;
+  artifactId: string;
   sessionId: string;
+  branch: string;
+  headCommit: string;
+  dirtyWorktree: boolean;
+  taskType: TaskType;
+  riskOverlays: RiskOverlay[];
+  compileMode: CompileMode;
   contextPackItems: ContextPackItem[];
   contextPackMarkdown: string;
-  omittedItems: Array<{
-    sectionId: string;
-    restoreToken?: string;
-    reason: string;
-  }>;
-  invalidatedPreviousItems: Array<{
-    previousItemId: string;
-    reason: string;
-  }>;
+  diffSummary: {
+    newItems: number;
+    changedItems: number;
+    pinnedItems: number;
+    omittedItems: number;
+    invalidatedItems: number;
+    restoreAvailableItems: number;
+  };
   warnings: string[];
-  unsafeReasons: string[];
+  restoreAvailable: boolean;
 }
 ```
 
 Rules:
 
 - `contextPackItems` is canonical. Markdown is only a rendering.
+- `compileMode` carries `safe`, `partial_with_risk`, or `unsafe_compile` semantics from the compiler.
 - `unsafe_compile` must not return unsafe context as if it were safe.
 - `partial_with_risk` must include explicit warnings and missing-context reasons.
 - Read tools must never silently read ignored/private files.
+- This is the final V1 MCP contract, not part of the current In-Memory Context Loop implementation goal.
 
 ## Restricted Write Contracts
 

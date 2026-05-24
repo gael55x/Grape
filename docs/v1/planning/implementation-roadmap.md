@@ -94,6 +94,8 @@ In-Memory Context Loop.
 
 Documentation Foundation is complete. In-Memory Context Loop is the first implementation slice and must stay limited to `in-memory-context-loop.md`. Alpha Product Slice comes later and must prove the persisted CLI/MCP session-ledger path.
 
+The current `npm run check` harness is a smoke guard, not implementation validation. After the In-Memory Context Loop is complete, broader source work must wait for Project Skeleton And Tooling to add real TypeScript typechecking and behavioral tests.
+
 ## Documentation Foundation Exit Criteria
 
 - documentation architecture exists

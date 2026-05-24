@@ -17,6 +17,8 @@ If the needed behavior is not documented, update the docs before or with the imp
 
 Do not implement from placeholders. If a supporting doc says what it should contain but does not define the contract, read `docs/v1/SPEC.md` and harden the supporting doc first.
 
+The current in-memory smoke harness is not a substitute for typechecking or behavioral tests. After the In-Memory Context Loop, do not add broad feature code until Project Skeleton And Tooling wires real TypeScript and test gates.
+
 ## Documentation Traversal
 
 Use `docs/README.md` for the top-level map and `docs/v1/README.md` for V1 work.
