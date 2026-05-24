@@ -37,14 +37,15 @@ Before implementation, agents must confirm the work belongs to the current goal.
 The roadmap uses goal names instead of numeric planning labels. The canonical V1 spec starts with an alpha vertical slice; this docs tree keeps a prerequisite documentation goal so the implementation contract, agent rules, and quality gates are enforceable before production code starts.
 
 - Documentation Foundation: make implementation rules enforceable before code.
-- Alpha Context Loop: prove the smallest safe context compiler loop from `SPEC.md`.
+- In-Memory Context Loop: prove the smallest safe context compiler shape without storage, CLI, or MCP transport.
+- Alpha Product Slice: prove the smallest persisted CLI/MCP path from `SPEC.md`.
 
-No product code should start before the Documentation Foundation is complete. Alpha Context Loop is the first implementation slice.
+No product code should start before the Documentation Foundation is complete. In-Memory Context Loop is the first implementation slice. Alpha Product Slice is the first product-shaped slice.
 
 ## Ordered Goals
 
 1. Documentation Foundation
-2. Alpha Context Loop
+2. In-Memory Context Loop
 3. Project Skeleton And Tooling
 4. SQLite Schema And Migrations
 5. Repo Snapshot And Worktree State
@@ -59,15 +60,16 @@ No product code should start before the Documentation Foundation is complete. Al
 14. Lightweight Compression Cache
 15. MCP Server
 16. CLI Inspection/Debugging
-17. Benchmarks And Hardening
-18. Alpha Release Checklist
+17. Alpha Product Slice
+18. Benchmarks And Hardening
+19. Alpha Release Checklist
 
 ## Roadmap
 
 | Goal | Deliverables | Required tests/benchmarks | Non-goals |
 |---|---|---|---|
 | Documentation Foundation | `SPEC.md`, domain docs, ADRs, invariants, state matrix, test/benchmark standards. | docs lint/readability checks when available. | production code, schema implementation. |
-| Alpha Context Loop | one fixture repo, repo snapshot, evidence, proof-backed claim, artifact, diff, MCP/CLI path. | alpha golden tests, unsafe omission tests, first token benchmark. | broad language support, embeddings, model summaries. |
+| In-Memory Context Loop | one fixture repo, in-memory repo snapshot, evidence, proof-backed claim, artifact shape, diff proof, token accounting. | memory-loop smoke checks, unsafe omission checks, first/second turn token accounting. | durable storage, MCP transport, full CLI, broad language support, embeddings, model summaries. |
 | Project Skeleton And Tooling | package structure, TypeScript config, test runner, lint/format, CI skeleton. | smoke tests and docs gate checks. | feature behavior beyond skeleton. |
 | SQLite Schema And Migrations | repository layer, migrations, WAL/busy timeout policy. | migration, transaction, lock, path tests. | business policy in storage. |
 | Repo Snapshot And Worktree State | branch/commit/dirty/hash snapshot services. | clean/dirty/branch fixtures. | deep call graph indexing. |
@@ -82,14 +84,15 @@ No product code should start before the Documentation Foundation is complete. Al
 | Lightweight Compression Cache | deterministic symbol/rule/ledger cache. | input hash and invalidation tests. | model summaries, branch summaries. |
 | MCP Server | read tools, restricted write tools, schemas. | MCP contract and safety tests. | MCP writes promoting truth. |
 | CLI Inspection/Debugging | status, doctor, artifacts, claims, stale, omitted, bench shell. | CLI snapshots and JSON schema tests. | CLI business logic. |
+| Alpha Product Slice | persisted setup and get-context path across one CLI/MCP entrypoint, SQLite session ledger, current-valid artifact, structured diff, and token metrics. | two-command fixture setup, MCP/CLI get-context, no-change safe omission, stale invalidation, concurrent session safety. | broad indexing, model summaries, cloud/team features. |
 | Benchmarks And Hardening | benchmark harness, gold labels, baseline scripts. | benchmark determinism and thresholds. | unmeasured token claims. |
 | Alpha Release Checklist | release docs, known limitations, fixture results. | full alpha test/benchmark suite. | V1.1/V2 features. |
 
 ## Current Goal
 
-Alpha Context Loop.
+In-Memory Context Loop.
 
-Documentation Foundation is complete. Alpha Context Loop is the first implementation slice and must stay limited to `alpha-context-loop.md`.
+Documentation Foundation is complete. In-Memory Context Loop is the first implementation slice and must stay limited to `in-memory-context-loop.md`. Alpha Product Slice comes later and must prove the persisted CLI/MCP session-ledger path.
 
 ## Documentation Foundation Exit Criteria
 
@@ -104,14 +107,24 @@ Documentation Foundation is complete. Alpha Context Loop is the first implementa
 
 Status: complete.
 
-## Alpha Context Loop Exit Criteria
+## In-Memory Context Loop Exit Criteria
 
-- alpha scope is documented in `alpha-context-loop.md`
-- smallest end-to-end alpha path compiles a safe context artifact
+- in-memory scope is documented in `in-memory-context-loop.md`
+- smallest in-memory path compiles a safe context artifact shape
 - proof-backed claim promotion is implemented for the alpha source types
 - current-valid filtering runs before artifact compilation
 - session-scoped diffing emits structured `ContextPackItem` values
 - high-risk pinned context is resent
 - stale dependencies invalidate artifacts and previous context
-- alpha benchmarks measure first-turn cost, later-turn cost, and unsafe omissions
+- in-memory token accounting measures first-turn cost, later-turn cost, and unsafe omissions
 - no compression artifact can act as proof
+
+## Alpha Product Slice Exit Criteria
+
+- two-command setup works in a fixture repo
+- one CLI or MCP entrypoint returns structured context without manual sync/compile/diff
+- SQLite session ledger records sent and omitted items
+- second no-change request safely omits unchanged non-pinned context
+- stale dependency change emits `INVALIDATE_PREVIOUS`
+- concurrent sessions do not corrupt sent or omitted ledgers
+- first-turn and later-turn token metrics are reported against a scripted naive baseline
