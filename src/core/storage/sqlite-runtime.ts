@@ -6,7 +6,7 @@ import {
   type AppliedStorageMigration,
   type StorageMigrationDefinition
 } from "./migration-plan.js";
-import { createSqlitePragmaStatements } from "./sqlite-policy.js";
+import { applySqliteConnectionPolicy } from "./sqlite-policy.js";
 
 export interface StorageMigrationSource extends StorageMigrationDefinition {
   readonly sql: string;
@@ -28,7 +28,8 @@ export function applyStorageMigrations(
   migrations: readonly StorageMigrationSource[],
   now: () => string = () => new Date().toISOString()
 ): ApplyStorageMigrationsResult {
-  database.exec(createSqlitePragmaStatements().join("\n"));
+  applySqliteConnectionPolicy(database);
+  assertTrustedMigrationBootstrap(database);
 
   assertMigrationSourceChecksums(migrations);
   const appliedBefore = readAppliedStorageMigrations(database);
@@ -61,10 +62,13 @@ export function applyStorageMigrations(
     }
   }
 
+  const appliedAfter = readAppliedStorageMigrations(database);
+  const planAfter = planPendingStorageMigrations(migrations, appliedAfter);
+
   return {
     alreadyApplied: plan.alreadyApplied,
     applied,
-    pendingAfterApply: []
+    pendingAfterApply: planAfter.pending
   };
 }
 
@@ -113,4 +117,28 @@ function hasSchemaMigrationsTable(database: DatabaseSync): boolean {
     .get();
 
   return row !== undefined;
+}
+
+function assertTrustedMigrationBootstrap(database: DatabaseSync): void {
+  if (hasSchemaMigrationsTable(database)) {
+    return;
+  }
+
+  const row = database
+    .prepare(
+      [
+        "SELECT name",
+        "FROM sqlite_master",
+        "WHERE name NOT LIKE 'sqlite_%'",
+        "AND type IN ('table', 'index', 'trigger', 'view')",
+        "LIMIT 1"
+      ].join(" ")
+    )
+    .get() as { name?: unknown } | undefined;
+
+  if (row?.name !== undefined) {
+    throw new Error(
+      "refusing to apply migrations to a non-empty database without schema_migrations"
+    );
+  }
 }

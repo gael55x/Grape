@@ -69,11 +69,18 @@ interface OmittedContextItem {
   itemKind: ContextPackItem["itemKind"];
   itemRef: string;
   itemHash: string;
+  contentHash: string;
+  branchName: string;
+  commitSha: string;
+  dependencyManifestHash: string;
+  lastDiffState: DiffState;
   reasonOmitted: "unchanged_restorable" | "not_relevant" | "unsafe_to_send" | "blocked_by_policy";
   canRestore: boolean;
   restoreId?: string;
   restoreCommand?: string;
   omittedAt: string;
+  sendCount: number;
+  tokenCount: number;
 }
 ```
 
@@ -84,6 +91,8 @@ interface OmittedContextItem {
 - `PINNED` context is resent when safety-critical, when policy requires it, or when the session was reset.
 - `OMIT_UNCHANGED` is allowed only for unchanged, non-pinned items with a safe omission reason.
 - `RESTORE_AVAILABLE` requires a restore token that can retrieve the omitted item from local storage.
+- When `canRestore` is true, `restoreId` and `restoreCommand` are required.
+- Stored sent, omitted, and pack items must reference an artifact owned by the same session.
 - `INVALIDATE_PREVIOUS` must include the prior item ID or prior section ID being invalidated.
 - A branch, worktree, dependency, or compression invalidation must invalidate sent items that relied on it.
 
@@ -114,6 +123,8 @@ Durable ledgers, restore lookup, branch invalidation, and cross-process session 
 - `unknown_session_forces_full_resend`
 - `pinned_context_is_resent`
 - `omit_unchanged_requires_restore_or_safe_reason`
+- `cross_session_artifact_ledger_rows_fail_closed`
+- `restorable_omission_requires_restore_metadata`
 - `restore_token_rejects_stale_dependency`
 - `invalidate_previous_names_prior_item`
 - `branch_switch_invalidates_sent_items`

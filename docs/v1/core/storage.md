@@ -92,6 +92,7 @@ Tables outside this subset stay documented for V1, but they require explicit imp
 - No code outside `src/core/storage/` may execute raw SQL.
 - Repositories return typed domain records, not loosely shaped row objects.
 - Application services own transaction boundaries for multi-repository state changes.
+- `runStorageTransaction` is the storage helper for one explicit writer transaction; app services decide the state transition, storage only guarantees commit/rollback.
 - Storage repositories do not decide trust, relevance, compression policy, or redaction policy.
 - The first repository slice in `src/core/storage/repositories.ts` covers only the tables needed to prove persisted session-scoped omission: project/repo/snapshot/worktree setup, context sessions, artifacts, dependencies, sent items, and omitted items.
 - Repository tests must prove session-scoped sent/omitted ledgers and fail-closed foreign-key behavior before app services rely on those tables.
@@ -103,12 +104,16 @@ Tables outside this subset stay documented for V1, but they require explicit imp
 - Keep write transactions short.
 - Use one writer transaction for each explicit state transition that persists multiple records.
 - Session locks must be represented durably, not only in process memory.
+- Session locks must use atomic compare/update methods for acquire, renew, release, and expiry; direct lock-column mutation outside the session repository is forbidden.
 - FTS5 is allowed for lexical search, but FTS entries must reference source IDs and must not contain raw secrets.
 - Safety-critical serialized enums must use database `CHECK` constraints, including diff state, task type, verification status, privacy status, source type, lock status, and session status.
 - `context_sessions` must persist repo, snapshot, worktree, branch, head commit, task, status, and lock identity so branch/session invalidation can fail closed.
 - `context_sent_items` and `omitted_context_items` must persist item kind/ref/hash, branch/commit identity, dependency manifest hash where applicable, token counts, restore metadata, and send counts so omission and restore decisions are auditable.
+- Sent, omitted, and pack rows must reference an artifact owned by the same session; cross-session artifact references fail closed.
+- Restorable omitted rows must include a restore ID and restore command.
+- Repository construction must apply the SQLite connection policy so foreign keys are not optional caller discipline.
 
-The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` and covered by behavioral tests. Runtime migration application uses Node's built-in `node:sqlite` through `src/core/storage/sqlite-runtime.ts`, so V1 currently requires Node 22 or newer and avoids a native SQLite package dependency. Driver-specific code must apply the pragma statements before running migrations or repository writes.
+The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` and covered by behavioral tests. Runtime migration application uses Node's built-in `node:sqlite` through `src/core/storage/sqlite-runtime.ts`, so V1 requires Node 22.5 or newer and avoids a native SQLite package dependency. Storage factories must apply the pragma statements before running migrations or repository writes.
 
 ## Migration Rules
 
@@ -122,6 +127,7 @@ The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` 
 - Migration planning must reject duplicate IDs, out-of-order available migrations, unknown applied migrations, changed filenames, and changed checksums before any SQL is applied.
 - Applied migrations must form a prefix of available migrations. Sparse histories fail closed.
 - Runtime SQLite apply tests must cover empty-database migration, idempotent re-run, WAL/foreign-key pragmas, and checksum drift before SQL execution.
+- Runtime migration must reject a non-empty database that has no trusted `schema_migrations` table.
 
 ## Path And Hash Rules
 
@@ -139,5 +145,10 @@ The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` 
 - `direct_sql_outside_storage_is_forbidden`
 - `wal_mode_and_busy_timeout_configured`
 - `session_lock_survives_process_boundary`
+- `cross_session_artifact_ledger_rows_fail_closed`
+- `restorable_omission_requires_restore_metadata`
+- `repository_creation_applies_sqlite_pragmas`
+- `non_empty_unmigrated_database_is_rejected`
+- `storage_transaction_rolls_back_partial_state`
 - `path_normalization_handles_windows_separators`
 - `fts_entries_do_not_store_raw_secrets`

@@ -132,6 +132,8 @@ for (const required of [
   "item_hash TEXT NOT NULL",
   "branch_name TEXT NOT NULL",
   "commit_sha TEXT NOT NULL",
+  "FOREIGN KEY (artifact_id, session_id) REFERENCES context_artifacts(artifact_id, session_id)",
+  "CHECK (can_restore = 0 OR (restore_id IS NOT NULL AND restore_command IS NOT NULL))",
   "send_count INTEGER NOT NULL CHECK",
   "token_count INTEGER NOT NULL CHECK",
   "CHECK (last_diff_state IN",

@@ -1,3 +1,5 @@
+import type { DatabaseSync } from "node:sqlite";
+
 export interface SqliteConnectionPolicy {
   readonly journalMode: "WAL";
   readonly foreignKeys: true;
@@ -28,4 +30,11 @@ export function createSqlitePragmaStatements(
     `PRAGMA synchronous = ${policy.synchronous};`,
     `PRAGMA temp_store = ${policy.tempStore};`
   ];
+}
+
+export function applySqliteConnectionPolicy(
+  database: DatabaseSync,
+  policy: SqliteConnectionPolicy = defaultSqliteConnectionPolicy
+): void {
+  database.exec(createSqlitePragmaStatements(policy).join("\n"));
 }

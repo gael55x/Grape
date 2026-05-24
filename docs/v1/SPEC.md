@@ -5,7 +5,7 @@
 **Product:** Grape — local-first incremental context compiler for AI coding agents  
 **Primary goal:** save tokens by preventing AI agents from rereading, rediscovering, and resending unchanged codebase context  
 **Safety model:** proof-backed, branch-aware, task-specific context artifacts with explicit uncertainty  
-**Runtime:** TypeScript on Node.js 20+  
+**Runtime:** TypeScript on Node.js 22.5+  
 **Distribution:** `npm install -g grape-context`  
 **Storage:** SQLite + WAL + FTS5  
 **Integration:** MCP server + CLI  
@@ -623,7 +623,7 @@ sequenceDiagram
 
 | Parameter | V1 value |
 |---|---|
-| Runtime | Node.js 20+ |
+| Runtime | Node.js 22.5+ |
 | Language | TypeScript |
 | Package | `grape-context` |
 | CLI binary | `grape` |
@@ -2463,15 +2463,24 @@ type OmittedContextItem = {
   id: string;
   sessionId: string;
   artifactId: string;
+  sectionId: string;
 
   itemKind: ContextPackItem["itemKind"];
   itemRef: string;
   itemHash: string;
+  contentHash: string;
+
+  branchName: string;
+  commitSha: string;
+  dependencyManifestHash: string;
+  lastDiffState: DiffState;
 
   reasonOmitted: string;
   canRestore: boolean;
   restoreId?: string;
   restoreCommand?: string;
+  sendCount: number;
+  tokenCount: number;
 };
 ```
 

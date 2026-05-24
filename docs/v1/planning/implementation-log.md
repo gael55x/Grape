@@ -123,7 +123,7 @@ Keep entries simple:
 ### 2026-05-24 - SQLite Runtime Migration Baseline
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: selected Node 22 built-in `node:sqlite` for the initial no-native-package runtime path and added migration apply tests for empty database setup, idempotent re-run, WAL/foreign-key pragmas, and checksum drift before SQL execution.
+- Summary: selected Node 22.5+ built-in `node:sqlite` for the initial no-native-package runtime path and added migration apply tests for empty database setup, idempotent re-run, WAL/foreign-key pragmas, and checksum drift before SQL execution.
 - Checks run: `npm run check`.
 - Risks/follow-ups: repository APIs were started in the later Session Ledger Repository Baseline; transaction-scoped app services are still not implemented.
 
@@ -133,3 +133,10 @@ Keep entries simple:
 - Summary: added typed SQLite repository wrappers for the persisted session-ledger path: project/repo/snapshot/worktree setup, context sessions, context artifacts, dependencies, sent items, and omitted items.
 - Checks run: `npm run check`.
 - Risks/follow-ups: transaction-scoped app services and durable diff orchestration are still not implemented.
+
+### 2026-05-24 - Session Ledger Correctness Hardening
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: made Node 22.5+ explicit, added ADR-0004, enforced same-session artifact references for sent/omitted/pack ledgers, required restore metadata for restorable omissions, added repository-applied SQLite pragmas, compare-and-set session lock methods, context pack/session event repositories, migration bootstrap rejection for untracked schemas, and a storage transaction helper.
+- Checks run: `npm run check`.
+- Risks/follow-ups: the durable context build service is still not implemented; the next proof must persist artifact, diff, sent/omitted, and pack rows atomically through one narrow build loop.

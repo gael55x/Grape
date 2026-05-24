@@ -84,3 +84,19 @@ test("storage runtime rejects checksum drift before applying sql", () => {
     );
   });
 });
+
+test("storage runtime rejects non-empty databases without migration metadata", () => {
+  withDatabase((database) => {
+    database.exec("CREATE TABLE projects (project_id TEXT PRIMARY KEY);");
+
+    assert.throws(
+      () => applyStorageMigrations(database, migrationSources(), () => "2026-05-24T00:00:00.000Z"),
+      /non-empty database without schema_migrations/
+    );
+
+    assert.equal(
+      database.prepare("SELECT name FROM sqlite_master WHERE name = 'schema_migrations'").get(),
+      undefined
+    );
+  });
+});
