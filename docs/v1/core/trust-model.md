@@ -40,22 +40,28 @@ Raw evidence, source trust, model output, command output, and user text are not 
 
 ```ts
 type SourceType =
-  | "repo_file"
-  | "project_rule"
+  | "repository_file"
+  | "git_diff"
+  | "test_run"
+  | "command_run"
+  | "user_message"
+  | "tool_call"
+  | "runtime_log"
+  | "ci_job"
+  | "assistant_response"
+  | "manual_import"
+  | "rule_file"
   | "config_file"
-  | "test_result"
-  | "command_result"
-  | "user_confirmation"
-  | "agent_reported"
-  | "model_summarized";
+  | "lockfile"
+  | "migration_file"
+  | "commit_message";
 
 type VerificationStatus =
-  | "unverified"
-  | "partially_verified"
   | "verified"
-  | "stale"
-  | "contradicted"
-  | "rejected";
+  | "partially_verified"
+  | "unverified"
+  | "refuted"
+  | "stale";
 
 type ScopeMatchResult = "match" | "mismatch" | "partial" | "unknown";
 
@@ -81,14 +87,16 @@ interface ProofRef {
 
 | Source type | Trust posture | May create durable proof? | Notes |
 |---|---|---:|---|
-| `repo_file` | Direct repository evidence. | Yes, if file is allowed and hash matches. | A code span proves existence, not behavior/correctness. |
-| `project_rule` | Local policy evidence. | Yes, if rule source and hash match. | Rules are pinned when safety-critical. |
+| `repository_file` | Direct repository evidence. | Yes, if file is allowed and hash matches. | A code span proves existence, not behavior/correctness. |
+| `rule_file` | Local policy evidence. | Yes, if rule source and hash match. | Rules are pinned when safety-critical. |
 | `config_file` | Config evidence. | Yes, if not ignored/private or explicitly approved. | High-risk config requires exact spans. |
-| `test_result` | Observed execution evidence. | Yes, only when tied to a Grape-observed run ID. | Agent-reported test results are temporary. |
-| `command_result` | Observed execution evidence. | Yes, only when tied to a Grape-observed run ID. | Store command hash, cwd, exit code, stdout/stderr hashes. |
-| `user_confirmation` | Direct user decision evidence. | Yes, only with prompt hash, response hash, timestamp, and confirmation channel. | Scoped to the exact prompt and subject. |
-| `agent_reported` | Agent-provided statement. | No. | Scratch/session-only unless independently proven. |
-| `model_summarized` | Derived language output. | No. | Never proof, never durable truth. |
+| `test_run` | Observed execution evidence. | Yes, only when tied to a Grape-observed run ID. | Agent-reported test results are temporary. |
+| `command_run` | Observed execution evidence. | Yes, only when tied to a Grape-observed run ID. | Store command hash, cwd, exit code, stdout/stderr hashes. |
+| `user_message` | Direct user decision evidence. | Yes, only with prompt hash, response hash, timestamp, and confirmation channel. | Scoped to the exact prompt and subject. |
+| `assistant_response` | Agent-provided statement. | No. | Scratch/session-only unless independently proven. |
+| `manual_import` | User-provided context bundle. | No by default. | Requires independent proof before durable truth. |
+| `runtime_log` / `ci_job` | Runtime or CI evidence. | Yes, when locally observed or imported with verifiable hashes. | Scope must include environment. |
+| `git_diff` / `commit_message` | VCS evidence. | Partial only unless backed by exact source proof. | Useful for orientation, not behavior proof. |
 
 ## Promotion Rules
 
@@ -147,4 +155,4 @@ flowchart TD
 - `partially_verified_not_current_valid_by_default`
 - `dirty_worktree_claim_not_branch_global`
 - `branch_invalid_claim_excluded`
-- `repo_file_claim_does_not_overclaim_runtime_behavior`
+- `repository_file_claim_does_not_overclaim_runtime_behavior`

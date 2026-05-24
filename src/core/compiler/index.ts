@@ -1,1 +1,1 @@
-export * from "./context-artifact-builder.js";
+export * from "./in-memory-context-artifact.js";

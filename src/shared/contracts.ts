@@ -1,19 +1,12 @@
 export const taskTypes = [
-  "general",
+  "bug_fix",
+  "security_fix",
   "refactor",
-  "feature",
-  "bugfix",
-  "test",
-  "docs",
-  "security",
-  "auth",
-  "permissions",
-  "payments",
-  "webhooks",
-  "secrets",
-  "crypto",
   "migration",
-  "production_config"
+  "feature",
+  "test_repair",
+  "analysis",
+  "bootstrap"
 ] as const;
 
 export type TaskType = (typeof taskTypes)[number];
@@ -44,25 +37,31 @@ export const diffStates = [
 export type DiffState = (typeof diffStates)[number];
 
 export const sourceTypes = [
-  "repo_file",
-  "project_rule",
+  "repository_file",
+  "git_diff",
+  "test_run",
+  "command_run",
+  "user_message",
+  "tool_call",
+  "runtime_log",
+  "ci_job",
+  "assistant_response",
+  "manual_import",
+  "rule_file",
   "config_file",
-  "test_result",
-  "command_result",
-  "user_confirmation",
-  "agent_reported",
-  "model_summarized"
+  "lockfile",
+  "migration_file",
+  "commit_message"
 ] as const;
 
 export type SourceType = (typeof sourceTypes)[number];
 
 export const verificationStatuses = [
-  "unverified",
-  "partially_verified",
   "verified",
-  "stale",
-  "contradicted",
-  "rejected"
+  "partially_verified",
+  "unverified",
+  "refuted",
+  "stale"
 ] as const;
 
 export type VerificationStatus = (typeof verificationStatuses)[number];
@@ -71,7 +70,23 @@ export const scopeMatchResults = ["match", "mismatch", "partial", "unknown"] as 
 
 export type ScopeMatchResult = (typeof scopeMatchResults)[number];
 
-export interface ContextInput {
+export const compressionArtifactTypes = [
+  "symbol_outline",
+  "rule_digest",
+  "context_pack_summary",
+  "decision_digest",
+  "failure_timeline",
+  "module_outline",
+  "test_summary"
+] as const;
+
+export type CompressionArtifactType = (typeof compressionArtifactTypes)[number];
+
+export type CompressionMethod = "deterministic";
+
+export type NonEmptyArray<T> = readonly [T, ...T[]];
+
+export interface InMemoryContextRequest {
   taskId: string;
   sessionId: string;
   repoId: string;
@@ -83,7 +98,7 @@ export interface ContextInput {
   userRequestHash: string;
 }
 
-export interface ContextSection {
+export interface InMemoryContextSectionShape {
   id: string;
   type:
     | "task"
@@ -108,7 +123,7 @@ export interface ContextSection {
   redactionStatus: "clean" | "redacted" | "blocked";
 }
 
-export interface ContextDependency {
+export interface InMemoryContextDependencyShape {
   id: string;
   kind:
     | "repo_snapshot"
@@ -124,15 +139,15 @@ export interface ContextDependency {
   scope: Record<string, unknown>;
 }
 
-export interface ContextDependencyManifest {
+export interface InMemoryContextDependencyManifestShape {
   manifestId: string;
-  dependencies: ContextDependency[];
+  dependencies: InMemoryContextDependencyShape[];
   createdAt: string;
   hashAlgorithm: "sha256";
   manifestHash: string;
 }
 
-export interface ContextPackItem {
+export interface InMemoryContextPackItemShape {
   itemId: string;
   artifactId: string;
   sectionId: string;
@@ -146,11 +161,11 @@ export interface ContextPackItem {
   warnings: string[];
 }
 
-export interface ContextArtifact {
+export interface InMemoryContextArtifactShape {
   artifactId: string;
-  input: ContextInput;
-  sections: ContextSection[];
-  dependencyManifest: ContextDependencyManifest;
+  input: InMemoryContextRequest;
+  sections: InMemoryContextSectionShape[];
+  dependencyManifest: InMemoryContextDependencyManifestShape;
   warnings: string[];
   unsafeReasons: string[];
   createdAt: string;
@@ -174,10 +189,10 @@ export interface ProofRef {
   observedAt: string;
 }
 
-export interface CompressionArtifact {
+export interface InMemoryCompressionArtifactShape {
   compressionId: string;
-  type: "symbol_outline" | "rule_digest" | "context_pack_ledger";
-  method: "deterministic";
+  type: Extract<CompressionArtifactType, "symbol_outline" | "rule_digest" | "context_pack_summary">;
+  method: CompressionMethod;
   inputRefs: string[];
   inputHashes: string[];
   policyHash: string;

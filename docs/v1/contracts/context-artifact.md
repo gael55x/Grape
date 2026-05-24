@@ -24,46 +24,12 @@ Before editing artifact behavior, agents must verify:
 - high-risk required context is exact, not summary-only
 - artifact output passes secret scan before storage or return
 
-## Canonical Schemas
+## Canonical And In-Memory Schemas
+
+Canonical V1 artifact schemas live in `docs/v1/SPEC.md` sections 25.1 and 25.2. The current implementation work uses narrower `InMemory*Shape` types so the scaffold cannot masquerade as the final V1 contract.
 
 ```ts
-type TaskType =
-  | "general"
-  | "refactor"
-  | "feature"
-  | "bugfix"
-  | "test"
-  | "docs"
-  | "security"
-  | "auth"
-  | "permissions"
-  | "payments"
-  | "webhooks"
-  | "secrets"
-  | "crypto"
-  | "migration"
-  | "production_config";
-
-type RiskOverlay =
-  | "security"
-  | "auth"
-  | "permissions"
-  | "payments"
-  | "webhooks"
-  | "secrets"
-  | "crypto"
-  | "migration"
-  | "production_config";
-
-type DiffState =
-  | "NEW"
-  | "CHANGED"
-  | "PINNED"
-  | "OMIT_UNCHANGED"
-  | "INVALIDATE_PREVIOUS"
-  | "RESTORE_AVAILABLE";
-
-interface ContextInput {
+interface InMemoryContextRequest {
   taskId: string;
   sessionId: string;
   repoId: string;
@@ -75,7 +41,7 @@ interface ContextInput {
   userRequestHash: string;
 }
 
-interface ContextSection {
+interface InMemoryContextSectionShape {
   id: string;
   type:
     | "task"
@@ -100,7 +66,7 @@ interface ContextSection {
   redactionStatus: "clean" | "redacted" | "blocked";
 }
 
-interface ContextDependency {
+interface InMemoryContextDependencyShape {
   id: string;
   kind:
     | "repo_snapshot"
@@ -116,15 +82,15 @@ interface ContextDependency {
   scope: Record<string, unknown>;
 }
 
-interface ContextDependencyManifest {
+interface InMemoryContextDependencyManifestShape {
   manifestId: string;
-  dependencies: ContextDependency[];
+  dependencies: InMemoryContextDependencyShape[];
   createdAt: string;
   hashAlgorithm: "sha256";
   manifestHash: string;
 }
 
-interface ContextPackItem {
+interface InMemoryContextPackItemShape {
   itemId: string;
   artifactId: string;
   sectionId: string;
@@ -138,11 +104,11 @@ interface ContextPackItem {
   warnings: string[];
 }
 
-interface ContextArtifact {
+interface InMemoryContextArtifactShape {
   artifactId: string;
-  input: ContextInput;
-  sections: ContextSection[];
-  dependencyManifest: ContextDependencyManifest;
+  input: InMemoryContextRequest;
+  sections: InMemoryContextSectionShape[];
+  dependencyManifest: InMemoryContextDependencyManifestShape;
   warnings: string[];
   unsafeReasons: string[];
   createdAt: string;
@@ -152,7 +118,7 @@ interface ContextArtifact {
 
 ## Minimum Artifact Rule
 
-A context artifact is invalid unless it is:
+A final V1 context artifact is invalid unless it is:
 
 - task-specific
 - branch/worktree-aware
@@ -162,6 +128,8 @@ A context artifact is invalid unless it is:
 - inspectable
 - invalidatable
 - redaction-scanned
+
+An in-memory artifact shape is not a final V1 artifact. It is valid only as a scaffold when its name remains `InMemoryContextArtifactShape` and its output is not persisted or exposed as MCP/CLI product output.
 
 ## Section Rules
 

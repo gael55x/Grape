@@ -98,7 +98,6 @@ Write tools record evidence candidates or request direct confirmation. They cann
 interface GrapeRecordCommandResultInput {
   repoPath: string;
   sessionId: string;
-  observedRunId?: string;
   command: string;
   commandHash: string;
   cwd: string;
@@ -107,7 +106,7 @@ interface GrapeRecordCommandResultInput {
   stderrHash: string;
   startedAt: string;
   endedAt: string;
-  reportedBy: "grape" | "agent";
+  reportedBy: "agent";
 }
 
 interface GrapeRecordTestResultInput extends GrapeRecordCommandResultInput {
@@ -130,8 +129,10 @@ interface GrapeRecordUserDecisionInput {
 
 Write rules:
 
-- If `reportedBy === "agent"` and no `observedRunId` exists, command/test evidence is temporary scratch only.
-- A Grape-observed run must include command hash, cwd, exit code, stdout/stderr hashes, and timestamps.
+- MCP command/test write tools are agent-reported by definition and remain temporary scratch evidence.
+- MCP callers cannot self-declare Grape-observed authority or mint `observedRunId`.
+- Only a local Grape command runner may create Grape-observed command/test evidence with an observed run ID.
+- A Grape-observed run must include command hash, cwd, exit code, stdout/stderr hashes, and timestamps, and it must be created outside the MCP adapter.
 - User decisions require direct confirmation with prompt hash, response hash, timestamp, and confirmation channel.
 - Write tools return evidence IDs or candidate IDs only. They do not return claim IDs for newly durable claims.
 - Promotion, if later allowed, must replay Trust Kernel gates outside the MCP adapter.
