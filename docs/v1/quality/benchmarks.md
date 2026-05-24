@@ -33,6 +33,21 @@ Before adding benchmark code, agents must verify:
 - Unsafe omissions, stale sends, and missing pinned context are zero-tolerance correctness failures.
 - Results include wall-clock time, tool-call count, token count, and invalidation count.
 
+## In-Memory Token Accounting
+
+The In-Memory Context Loop uses deterministic approximate token accounting only. It is a scaffold for comparing naive resend cost with structured context pack cost before a real tokenizer and benchmark harness exist.
+
+Rules:
+
+- `naiveTokens` estimates the cost of resending every selected in-memory section.
+- `grapeTokens` estimates the cost of the emitted in-memory context pack items.
+- `omittedUnchangedTokens` estimates the section tokens omitted by `OMIT_UNCHANGED`.
+- `compressionSavedTokens` is always `0` in the in-memory loop because compression is out of scope.
+- `pinnedOverheadTokens` is reported separately because pinned safety context is intentionally resent.
+- `invalidationOverheadTokens` is reported separately when `INVALIDATE_PREVIOUS` exists.
+- `unsafeOmissions` must be `0`; otherwise the token-saving result is invalid.
+- These numbers are not release benchmark claims. They only prove the accounting path exists.
+
 ## Metric Schema
 
 ```ts

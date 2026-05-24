@@ -91,3 +91,10 @@ Keep entries simple:
 - Summary: added the first session-scoped in-memory diff proof with pinned resend, safe unchanged omission, restore metadata, and unsafe omission counting.
 - Checks run: `npm run check`.
 - Risks/follow-ups: diff state is still in-memory only; durable session ledgers belong to the later Alpha Product Slice.
+
+### 2026-05-24 - In-Memory Token Accounting Baseline
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added deterministic approximate token accounting for naive resend cost, Grape context pack cost, omitted unchanged tokens, pinned overhead, invalidation overhead, unsafe omissions, stale sends, and reduction percent.
+- Checks run: `npm run check`.
+- Risks/follow-ups: numbers are scaffold estimates only; release benchmark claims require a real tokenizer, scripted workflows, and gold fixtures.

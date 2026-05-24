@@ -23,3 +23,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Tightened repo snapshot and current-valid shapes to reject placeholder hashes and missing proofs.
 - Added context artifact builder skeleton with manifest, section hash, dependency-ref, exact-context, and blocked-redaction guards.
 - Added in-memory context diff proof for safe omission, restore metadata, pinned resend, and unsafe omission counting.
+- Added in-memory token accounting for naive resend cost, Grape pack cost, omitted unchanged tokens, pinned overhead, invalidation overhead, unsafe omissions, stale sends, and reduction percent.

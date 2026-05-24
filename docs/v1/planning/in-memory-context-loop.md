@@ -70,7 +70,7 @@ The fixture must include:
 | `memory-06` | Add current-valid filtering skeleton. | `core/trust-model.md` if changed | current-valid smoke check | complete |
 | `memory-07` | Add context artifact shape guard. | `contracts/context-artifact.md` if changed | artifact manifest smoke check | complete |
 | `memory-08` | Add context diff proof skeleton. | `contracts/context-diff.md` if changed | first-turn/second-turn diff checks | complete |
-| `memory-09` | Add in-memory token accounting baseline. | `quality/benchmarks.md` | benchmark fixture smoke check | first-turn and later-turn token metrics defined |
+| `memory-09` | Add in-memory token accounting baseline. | `quality/benchmarks.md` | benchmark fixture smoke check | complete |
 
 ## Quality Gates
 
@@ -92,6 +92,7 @@ The fixture must include:
 - `memory-06`: added current-valid filtering skeleton and consolidated in-memory loop smoke checks under `npm run memory:check`.
 - `memory-07`: added context artifact shape guards for dependency manifests, section hashes, blocked redaction, dependency refs, exact source refs, and exact active-claim proof refs.
 - `memory-08`: added in-memory context diff proof for first-turn `NEW`/`PINNED`, second-turn `OMIT_UNCHANGED`/`RESTORE_AVAILABLE`, session-scoped previous item matching, and unsafe omission counting.
+- `memory-09`: added deterministic in-memory token accounting for naive resend cost, Grape pack cost, omitted unchanged tokens, pinned overhead, invalidation overhead, unsafe omissions, stale sends, and reduction percent.
 
 ## Exit Criteria
 
