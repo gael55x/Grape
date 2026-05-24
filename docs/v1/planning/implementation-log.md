@@ -151,6 +151,6 @@ Keep entries simple:
 ### 2026-05-24 - Repo Snapshot And Worktree State Baseline
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: added the first Git-backed snapshot service for branch, commit, dirty paths, Git-visible file hashes, ignored-file exclusion, source-kind classification, and deterministic snapshot/worktree hashes.
+- Summary: added the first Git-backed snapshot service for branch, commit, dirty paths, Git-visible file hashes, ignored-file exclusion, source-kind classification, and deterministic snapshot/worktree hashes. Added a narrow app service that persists project, repo, snapshot, and worktree state records in one transaction through storage repositories.
 - Checks run: `npm run check`.
-- Risks/follow-ups: snapshot persistence is still manual through existing repositories; the next app service should connect Git snapshots to durable setup/build orchestration without adding broad indexing.
+- Risks/follow-ups: the next goal should connect persisted snapshots to evidence collection without adding broad indexing, graph expansion, or transport behavior.

@@ -41,3 +41,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Split durable context build record mapping away from orchestration to keep the app service modular.
 - Added code modularity standards and split triggers for future contributors and agents.
 - Added a Git-backed repo snapshot service that reads branch, commit, dirty paths, Git-visible file hashes, ignored-file exclusions, source-kind classification, and deterministic snapshot/worktree hashes.
+- Added a narrow app service that persists Git repo snapshots, project/repo identity, and worktree state through storage repositories in one transaction.
