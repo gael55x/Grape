@@ -26,7 +26,7 @@ Before editing storage behavior, agents must verify:
 
 ## Minimum Tables
 
-The V1 schema must define at least these tables or explicitly defer a table with an ADR:
+The V1 schema must define at least these tables or explicitly defer a table with an ADR. Table names follow `docs/v1/SPEC.md` where the canonical spec defines them. Supporting V1 tables are marked as additions.
 
 | Table | Owner | Purpose |
 |---|---|---|
@@ -41,16 +41,18 @@ The V1 schema must define at least these tables or explicitly defer a table with
 | `claim_candidates` | claims/trust | non-durable candidate claims |
 | `proofs` | proofs/trust | proof refs, source hashes, excerpt hashes, support status |
 | `claim_edges` | claims/trust | supersedes, contradicts, depends_on relationships |
-| `rules` | evidence/trust | project rules and pinned safety invariants |
-| `symbols` | indexing | symbol/file index metadata |
+| `project_rules` | evidence/trust | project rules and pinned safety invariants |
+| `symbol_nodes` | indexing | symbol/file index metadata |
+| `symbol_edges` | indexing | symbol relationship metadata |
 | `fts_entries` | indexing | FTS5 searchable text refs, never raw secrets |
-| `sessions` | sessions | session identity, agent ID, current lock status |
+| `context_sessions` | sessions | session identity, agent ID, current lock status |
 | `session_events` | sessions | reset, invalidation, lock conflict, branch switch events |
-| `artifacts` | compiler | artifact metadata and hashes |
-| `artifact_dependencies` | compiler | dependency manifest rows |
+| `context_artifacts` | compiler | artifact metadata and hashes |
+| `context_dependencies` | compiler | dependency manifest rows |
 | `compression_artifacts` | compression | deterministic cache records and input hashes |
-| `sent_items` | diff/sessions | session-scoped sent ledger |
-| `omitted_items` | diff/sessions | restore metadata and omission reasons |
+| `compression_inputs` | compression | compression artifact dependency hashes |
+| `context_sent_items` | diff/sessions | session-scoped sent ledger |
+| `omitted_context_items` | diff/sessions | restore metadata and omission reasons |
 | `context_pack_items` | diff | emitted structured pack items |
 | `sync_runs` | app/state | repo sync attempts and outcomes |
 | `command_runs` | evidence | Grape-observed command runs |
@@ -71,13 +73,14 @@ Do not implement the full table set as the next storage step. The first persiste
 - `claims`
 - `claim_candidates`
 - `proofs`
-- `rules`
-- `sessions`
+- `claim_edges`
+- `project_rules`
+- `context_sessions`
 - `session_events`
-- `artifacts`
-- `artifact_dependencies`
-- `sent_items`
-- `omitted_items`
+- `context_artifacts`
+- `context_dependencies`
+- `context_sent_items`
+- `omitted_context_items`
 - `context_pack_items`
 - `audit_events`
 
@@ -107,6 +110,8 @@ Tables outside this subset stay documented for V1, but they require explicit imp
 - Every schema change updates this file, `../planning/spec-changelog.md`, and migration tests.
 - Every migration stores checksum and applied timestamp in `schema_migrations`.
 - Destructive migrations require an ADR before implementation.
+- `npm run storage:check` validates migration naming, manifest coverage, the first alpha table set, canonical table names, and obviously unsafe migration statements.
+- Runtime SQLite apply tests are required when the SQLite driver/package baseline is selected. Until then, migration SQL is validated as a contract artifact only.
 
 ## Path And Hash Rules
 
