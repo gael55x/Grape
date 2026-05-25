@@ -5,7 +5,7 @@
 <h1 align="center">Grape</h1>
 
 <p align="center">
-  The context compiler for AI coding agents.
+  The build system for AI coding agents.
 </p>
 
 <p align="center">
@@ -27,7 +27,7 @@
 
 ---
 
-Grape is the context infrastructure for the next generation of AI coding agents.
+Grape is the build system for AI coding-agent context.
 
 It compiles safe, current repository context and sends only the next safe delta to each agent session. Instead of making agents reread the same files, rediscover the same rules, and repeat the same mistakes, Grape turns repository knowledge into dependency-tracked context artifacts that can be diffed, restored, and invalidated.
 
