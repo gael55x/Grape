@@ -5,7 +5,7 @@
 <h1 align="center">Grape</h1>
 
 <p align="center">
-  The build system for AI coding agents.
+  The context artifact system for AI agents.
 </p>
 
 <p align="center">
