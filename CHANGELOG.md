@@ -34,3 +34,5 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added first typed SQLite repository slice for persisted session-ledger work.
 - Hardened persisted session-ledger storage so cross-session artifact references fail closed and restorable omissions require restore metadata.
 - Added the first durable context build proof for persisted first-turn send, second-turn omission, stale manifest invalidation, and rollback behavior.
+- Added the first local setup CLI slice with `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`.
+- Added conservative local privacy ignore filtering for repo snapshots before file bytes are read.

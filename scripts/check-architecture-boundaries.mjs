@@ -83,7 +83,7 @@ const allowedCoreDomainImports = {
   diff: ["sessions", "compiler"],
   sessions: ["storage"],
   storage: [],
-  git: [],
+  git: ["security"],
   indexing: ["git", "security", "storage"],
   security: []
 };

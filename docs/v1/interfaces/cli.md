@@ -42,6 +42,24 @@ Before editing CLI behavior, agents must verify:
 - benchmarks: `grape bench`, `grape bench --fixture <name>`
 - privacy: `grape doctor --privacy`, `grape export`, `grape purge`
 
+## Implemented Setup Slice
+
+The current implementation includes the first CLI setup/debugging slice:
+
+- `grape help`
+- `grape init --connect`
+- `grape status`
+- `grape doctor`
+- `grape mcp --print-config`
+
+`grape init --connect` creates the local `.grape/` layout, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures and persists the first Git repo snapshot, and adds `.grape/` to `.git/info/exclude` so local Grape state is not committed.
+
+`grape status` reports initialization, config, database, migration, branch, head commit, and worktree state. `grape doctor` reports setup diagnostics, Node runtime compatibility, migration state, dirty worktree state, and whether `.grape/` is locally excluded from Git.
+
+`grape mcp --print-config` prints the V1 MCP connection shape for stdio clients. The actual `grape mcp --stdio` server remains pending until the product context compile path is implemented.
+
+All implemented commands support `--repo <path>` where relevant and `--json` for machine-readable output. Unsupported options fail with a usage error instead of being silently ignored; for example, `grape doctor --privacy` is documented V1 scope but is not accepted until the privacy-specific doctor workflow exists.
+
 ## Adapter Rule
 
 The CLI must call application services. It must not:

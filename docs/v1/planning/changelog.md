@@ -42,3 +42,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added code modularity standards and split triggers for future contributors and agents.
 - Added a Git-backed repo snapshot service that reads branch, commit, dirty paths, Git-visible file hashes, ignored-file exclusions, source-kind classification, and deterministic snapshot/worktree hashes.
 - Added a narrow app service that persists Git repo snapshots, project/repo identity, and worktree state through storage repositories in one transaction.
+- Added the first CLI setup/bootstrap slice with `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`.
+- Added modular local-project app services for `.grape/` layout/config, local migration-backed storage, Git exclusion, initialization, status, doctor diagnostics, and MCP connection guidance.
+- Added a conservative local privacy ignore policy for repo snapshots so `.ignore`, `.cursorignore`, `.aiignore`, `.grapeignore`, and Git ignored paths are filtered before file bytes are read.
+- Added the V1 implementation status matrix at `docs/v1/planning/implementation-status.md`.

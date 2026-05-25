@@ -1,13 +1,17 @@
 {
-  "name": "grape",
+  "name": "grape-context",
   "version": "0.0.0",
   "private": true,
   "description": "The context infrastructure layer between a repository and an AI coding agent.",
   "type": "module",
+  "bin": {
+    "grape": "./dist/cli/index.js"
+  },
   "engines": {
     "node": ">=22.5.0"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.dist.json",
     "docs:check": "node scripts/check-docs-structure.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
     "memory:check": "node scripts/check-in-memory-loop.mjs",

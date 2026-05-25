@@ -98,13 +98,14 @@ Implemented today:
 - in-memory context artifact and diff proof
 - durable SQLite session-ledger storage
 - durable context build proof for first-turn send, second-turn omission, stale manifest invalidation, and rollback
+- first local setup CLI slice: `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`
 - TypeScript, behavior tests, storage checks, docs checks, and architecture-boundary checks
 
 Not released yet:
 
 - npm package
-- production CLI
-- MCP server
+- full production CLI inspection surface
+- MCP stdio server
 - full repository indexing
 - benchmark harness
 - compression cache implementation
@@ -170,6 +171,8 @@ npm install -g grape-context
 grape init --connect
 ```
 
+The repository now has the first local setup implementation path for that second command. It creates `.grape/`, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures the initial Git snapshot, and prints MCP connection guidance. The npm package is not released yet.
+
 An MCP-capable coding agent will request context through:
 
 ```text
@@ -181,13 +184,14 @@ Inspection and debugging commands are planned:
 ```bash
 grape status
 grape doctor
+grape mcp --print-config
 grape artifacts
 grape stale
 grape conflicts
 grape omitted
 ```
 
-These commands are not released yet.
+`grape status`, `grape doctor`, and `grape mcp --print-config` are implemented for setup inspection. `grape mcp --print-config` is explicitly marked `contract_only` until the stdio MCP server is implemented. Artifact, stale, conflict, omitted, and full MCP context commands are not implemented yet.
 
 ## Development
 
