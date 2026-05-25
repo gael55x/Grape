@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/grape.png" alt="Grape logo" width="128" />
+  <img src="docs/assets/grape-nw.png" alt="Grape logo" width="128" />
 </p>
 
 <h1 align="center">Grape</h1>
