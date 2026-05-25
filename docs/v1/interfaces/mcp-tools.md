@@ -45,6 +45,26 @@ Restricted write tools:
 - `grape_record_user_decision`
 - `grape_request_user_confirmation`
 
+## Current Implementation Status
+
+The first setup slice implements `grape mcp --print-config` as a CLI-delivered MCP connection contract:
+
+```json
+{
+  "grapeMcp": {
+    "status": "contract_only",
+    "implemented": false,
+    "serverName": "grape",
+    "command": "grape",
+    "args": ["mcp", "--stdio"],
+    "transport": "stdio",
+    "note": "The stdio MCP server is not implemented in the current setup slice."
+  }
+}
+```
+
+This is deliberately not a drop-in MCP client config yet. The stdio MCP server and `grape_get_context` tool are not implemented yet. They remain required V1 work and must call app services instead of owning storage, trust, retrieval, or compiler behavior.
+
 ## Read Tool Contract
 
 ```ts

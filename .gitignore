@@ -1,3 +1,4 @@
 do-not-commit-docs/
 .tmp/
 node_modules/
+dist/

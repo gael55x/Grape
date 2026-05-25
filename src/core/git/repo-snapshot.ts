@@ -1,7 +1,9 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { lstatSync, readFileSync, readlinkSync } from "node:fs";
 import path from "node:path";
+
+import { isIgnoredByPrivacyPolicy, loadPrivacyIgnorePolicy } from "../security/index.js";
 
 export type WorktreeStatus = "clean" | "dirty" | "unknown";
 
@@ -78,14 +80,24 @@ export interface GitRepoSnapshotInput {
   gitBinary?: string;
 }
 
+export function resolveGitMetadataPath(
+  rootPath: string,
+  gitPath: string,
+  gitBinary = "git"
+): string {
+  const resolved = runGit(rootPath, gitBinary, ["rev-parse", "--git-path", gitPath]);
+  return path.isAbsolute(resolved) ? normalizeAbsolutePath(resolved) : normalizeAbsolutePath(path.join(rootPath, resolved));
+}
+
 export function createGitRepoSnapshot(input: GitRepoSnapshotInput): RepoSnapshot {
   const gitBinary = input.gitBinary ?? "git";
   const rootPath = resolveGitRoot(input.rootPath, gitBinary);
   const repoId = input.repoId ?? `repo:${hashStableParts([normalizeRepoPath(rootPath)]).slice(0, 16)}`;
   const branch = readBranch(rootPath, gitBinary);
   const commit = runGit(rootPath, gitBinary, ["rev-parse", "HEAD"]);
-  const dirtyPaths = readDirtyPaths(rootPath, gitBinary);
-  const files = readGitVisibleFileHashes(rootPath, gitBinary);
+  const privacyPolicy = loadPrivacyIgnorePolicy(rootPath);
+  const dirtyPaths = readDirtyPaths(rootPath, gitBinary, privacyPolicy);
+  const files = readGitVisibleFileHashes(rootPath, gitBinary, privacyPolicy);
   const worktreeStatus: WorktreeStatus = dirtyPaths.length === 0 ? "clean" : "dirty";
   const worktreeHash = hashStableParts([
     branch,
@@ -120,7 +132,11 @@ function readBranch(rootPath: string, gitBinary: string): string {
   }
 }
 
-function readDirtyPaths(rootPath: string, gitBinary: string): string[] {
+function readDirtyPaths(
+  rootPath: string,
+  gitBinary: string,
+  privacyPolicy: ReturnType<typeof loadPrivacyIgnorePolicy>
+): string[] {
   const status = runGit(rootPath, gitBinary, ["status", "--porcelain=v1", "-z"]);
   const entries = status.split("\0").filter(Boolean);
   const dirtyPaths = [];
@@ -136,15 +152,28 @@ function readDirtyPaths(rootPath: string, gitBinary: string): string[] {
     }
   }
 
-  return [...new Set(dirtyPaths)].sort();
+  const gitIgnored = readGitIgnoredPaths(rootPath, gitBinary, dirtyPaths);
+  return [...new Set(dirtyPaths)]
+    .filter((repoPath) => !gitIgnored.has(repoPath))
+    .filter((repoPath) => !isIgnoredByPrivacyPolicy(repoPath, privacyPolicy))
+    .sort();
 }
 
-function readGitVisibleFileHashes(rootPath: string, gitBinary: string): SnapshotFileHash[] {
-  return runGit(rootPath, gitBinary, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
+function readGitVisibleFileHashes(
+  rootPath: string,
+  gitBinary: string,
+  privacyPolicy: ReturnType<typeof loadPrivacyIgnorePolicy>
+): SnapshotFileHash[] {
+  const repoPaths = runGit(rootPath, gitBinary, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
     .split("\0")
     .filter(Boolean)
     .map(normalizeRepoPath)
-    .sort()
+    .sort();
+  const gitIgnored = readGitIgnoredPaths(rootPath, gitBinary, repoPaths);
+
+  return repoPaths
+    .filter((repoPath) => !gitIgnored.has(repoPath))
+    .filter((repoPath) => !isIgnoredByPrivacyPolicy(repoPath, privacyPolicy))
     .flatMap((repoPath): SnapshotFileHash[] => {
       const absolutePath = path.join(rootPath, repoPath);
 
@@ -167,6 +196,22 @@ function readGitVisibleFileHashes(rootPath: string, gitBinary: string): Snapshot
         return [];
       }
     });
+}
+
+function readGitIgnoredPaths(rootPath: string, gitBinary: string, repoPaths: readonly string[]): Set<string> {
+  if (repoPaths.length === 0) return new Set();
+
+  const result = spawnSync(gitBinary, ["-C", rootPath, "check-ignore", "--no-index", "-z", "--stdin"], {
+    input: `${repoPaths.join("\0")}\0`,
+    encoding: "utf8",
+    stdio: ["pipe", "pipe", "pipe"]
+  });
+
+  if (result.status !== 0 && result.status !== 1) {
+    throw new Error(`git check-ignore failed: ${result.stderr.trim()}`);
+  }
+
+  return new Set(result.stdout.split("\0").filter(Boolean).map(normalizeRepoPath));
 }
 
 function classifySourceKind(repoPath: string): SnapshotFileHash["sourceKind"] {

@@ -67,6 +67,7 @@ flowchart LR
 | `src/cli/` | CLI commands and rendering. | `src/app/`, `src/shared/`. | `src/core/storage/sqlite` internals, trust internals. | `../interfaces/cli.md` |
 | `src/mcp/` | MCP server, tool schemas, adapter validation. | `src/app/`, `src/shared/`. | direct storage writes, compiler internals. | `../interfaces/mcp-tools.md` |
 | `src/app/` | Use-case orchestration and transaction boundaries. | `src/core/*`, `src/shared/`. | CLI or MCP rendering. | `overview.md`, `state-machine.md` |
+| `src/app/local-project/` | Local setup, config, migration loading, status, doctor, and MCP guidance services for `.grape/`. | `src/core/git/`, `src/core/storage/`, local app services. | CLI rendering, MCP transport, trust promotion, compiler policy. | `../interfaces/cli.md`, `../core/storage.md`, `../core/security.md` |
 | `src/core/state/` | State names, events, transition guards. | `src/shared/`. | storage SQL, CLI/MCP. | `state-machine.md` |
 | `src/core/evidence/` | Sources, evidence records, source classification. | `state`, `security`, storage interfaces, shared types. | claim promotion. | `../core/trust-model.md` |
 | `src/core/trust/` | Belief gates and promotion policy. | `claims`, `proofs`, `scope`, shared types. | compression, CLI/MCP. | `../core/trust-model.md` |
@@ -79,7 +80,7 @@ flowchart LR
 | `src/core/diff/` | Diff states and context pack item generation. | `sessions`, `compiler`, shared types. | retrieval mutation. | `../contracts/context-diff.md` |
 | `src/core/sessions/` | Session identity, locks, sent ledgers. | storage interfaces, shared types. | compiler policy. | `../contracts/context-diff.md` |
 | `src/core/storage/` | Repositories, migrations, SQLite connection policy. | `src/shared/`. | CLI/MCP, compiler policy, trust decisions. | `../core/storage.md` |
-| `src/core/git/` | Git state, branch, commit, dirty tree, ignore inputs. | shared types. | storage SQL. | `../core/storage.md`, `../core/security.md` |
+| `src/core/git/` | Git state, branch, commit, dirty tree, ignore inputs. | `security`, shared types. | storage SQL. | `../core/storage.md`, `../core/security.md` |
 | `src/core/indexing/` | File/symbol/FTS indexing. | `git`, `security`, storage interfaces. | trust promotion. | `../core/storage.md` |
 | `src/core/security/` | Redaction, ignored-file approval, artifact scans. | shared types. | adapter transport. | `../core/security.md` |
 | `src/shared/` | Shared types, schemas, errors, constants, path utilities. | none or platform libraries. | domain workflows. | all docs |
@@ -165,6 +166,8 @@ Split a module when any of these happen:
 - tests for the module need unrelated fixture setup paths
 
 Current pressure point: `src/core/storage/repositories.ts` is intentionally boring but already large. Do not add new table families to it without splitting storage repositories by ownership area.
+
+The local setup path is split under `src/app/local-project/` by use case: config/layout, migration-backed local storage, Git exclusion, initialization, status, doctor diagnostics, and MCP guidance. CLI command handlers must keep calling those app services rather than taking ownership of filesystem, Git, storage, or diagnostic policy.
 
 ## Quality Gate
 

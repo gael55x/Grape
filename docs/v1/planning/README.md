@@ -3,6 +3,7 @@
 Planning docs track implementation order and project history.
 
 - [Implementation roadmap](implementation-roadmap.md)
+- [Implementation status](implementation-status.md)
 - [In-Memory Context Loop](in-memory-context-loop.md)
 - [Implementation log](implementation-log.md)
 - [V1 changelog](changelog.md)

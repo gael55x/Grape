@@ -30,6 +30,7 @@ docs/v1/
     benchmarks.md
   planning/
     implementation-roadmap.md
+    implementation-status.md
     implementation-log.md
     changelog.md
     spec-changelog.md
@@ -57,6 +58,7 @@ docs/v1/
 | Quality | `quality/testing.md` | Test categories, named tests, fixture mapping. | Test strategy or required tests change. | Required tests exist for touched invariant/transition. |
 | Quality | `quality/benchmarks.md` | Benchmark metrics, baselines, thresholds, token-saving proof. | Benchmarks or token-saving claims change. | Baselines are scripted. |
 | Planning | `planning/implementation-roadmap.md` | Goal order, deliverables, exit criteria. | Scope or build order changes. | Work belongs to the current goal. |
+| Planning | `planning/implementation-status.md` | Acceptance matrix for the V1 core pipeline. | A core-pipeline area changes status. | Status reflects implementation, tests, docs, and known limitations honestly. |
 | Planning | `planning/implementation-log.md` | Chronological implementation-preparation and implementation log. | Substantial work is completed. | Read recent entries before continuing. |
 | Planning | `planning/changelog.md` | V1 implementation-facing changelog. | V1 behavior or docs change. | Root changelog is updated when user-facing behavior changes. |
 | Planning | `planning/spec-changelog.md` | Spec-contract change log. | V1 contract changes. | Update before implementing changed behavior. |

@@ -1,0 +1,39 @@
+export interface ParsedArgs {
+  readonly command: string;
+  readonly flags: Set<string>;
+  readonly values: Map<string, string>;
+}
+
+export function parseArgs(argv: readonly string[]): ParsedArgs {
+  const [command = "", ...rest] = argv;
+  const flags = new Set<string>();
+  const values = new Map<string, string>();
+
+  for (let index = 0; index < rest.length; index += 1) {
+    const arg = rest[index];
+    if (arg === "--repo") {
+      const value = rest[index + 1];
+      if (!value) throw new Error("--repo requires a path");
+      values.set("--repo", value);
+      index += 1;
+      continue;
+    }
+    flags.add(arg);
+  }
+
+  return { command, flags, values };
+}
+
+export function repoPath(parsed: ParsedArgs): string {
+  return parsed.values.get("--repo") ?? process.cwd();
+}
+
+export function unsupportedFlag(
+  parsed: ParsedArgs,
+  allowed: ReadonlySet<string>
+): string | undefined {
+  for (const flag of parsed.flags) {
+    if (!allowed.has(flag)) return flag;
+  }
+  return undefined;
+}

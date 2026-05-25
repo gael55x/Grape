@@ -65,10 +65,26 @@ test("git repo snapshot is deterministic for a clean worktree", () => {
 
 test("git repo snapshot excludes ignored files and classifies visible files", () => {
   withGitRepo((repoPath) => {
+    writeFileSync(path.join(repoPath, ".aiignore"), "private.txt\n");
+    writeFileSync(path.join(repoPath, "private.txt"), "PRIVATE=value\n");
+    writeFileSync(path.join(repoPath, "ignored.env"), "SECRET=tracked\n");
+    execGit(repoPath, ["add", ".aiignore"]);
+    execGit(repoPath, ["add", "-f", "ignored.env", "private.txt"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add ignored fixtures"
+    ]);
+
     const snapshot = createGitRepoSnapshot({ rootPath: repoPath, repoId: "repo-1", createdAt: now });
     const fileKinds = new Map(snapshot.files.map((file) => [file.path, file.sourceKind]));
 
     assert.equal(fileKinds.has("ignored.env"), false);
+    assert.equal(fileKinds.has("private.txt"), false);
     assert.equal(fileKinds.get(".grape/rules.md"), "rule");
     assert.equal(fileKinds.get("src/calculateDiscount.ts"), "source");
     assert.equal(fileKinds.get("src/calculateDiscount.test.ts"), "test");

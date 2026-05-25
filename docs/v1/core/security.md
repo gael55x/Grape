@@ -40,6 +40,8 @@ Before editing security-sensitive code, agents must verify:
 - Approval records go to `audit_events` and must be visible through doctor/status inspection.
 - A one-time approval cannot become durable approval without direct user confirmation.
 
+Current implementation note: Git repo snapshots filter paths through Git ignore rules and local privacy ignore files before reading file bytes for hashes. The local privacy ignore baseline currently covers `.ignore`, `.cursorignore`, `.aiignore`, and `.grapeignore` with conservative pattern support. Negated unignore rules are intentionally not supported in this slice because false inclusion is riskier than skipping an extra file.
+
 ## Redaction And Hash Rules
 
 - Source hashes are computed from original source bytes.
