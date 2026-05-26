@@ -287,3 +287,10 @@ Keep entries simple:
 - Summary: omitted-context restore now validates proof dependencies against persisted proof rows before returning omitted bodies. Missing proof rows, changed excerpt hashes, and changed source hashes make restore return stale metadata.
 - Checks run: focused CLI omitted-restore regression test before full verification.
 - Risks/follow-ups: proof invalidation is enforced at restore time for scaffold artifacts. Durable claim stale-state propagation remains pending.
+
+### 2026-05-26 - High-Risk Exact Context Policy
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added compiler-owned high-risk policy evaluation. Risk overlays now require task-selected proof-backed exact source/config/rule excerpts and fail closed with `risk_overlay_missing_exact_context` when retrieval cannot select one.
+- Checks run: focused compiler/CLI/MCP behavior tests before full verification.
+- Risks/follow-ups: this is still source-selection over scaffold evidence, not durable current-valid claim retrieval or full exact-span ranking.

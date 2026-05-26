@@ -55,3 +55,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added validated exact source proof-row persistence during local compile, while keeping durable claim promotion deferred.
 - Added proof-row inspection through CLI `grape proofs` and MCP `grape_get_proofs`.
 - Hardened omitted-context restore so stale proof dependencies reject restore tokens before content is returned.
+- Added high-risk exact-context gating so risk overlays only compile safely when task-selected proof-backed exact evidence exists.

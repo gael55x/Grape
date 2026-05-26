@@ -6,11 +6,11 @@ import { repositoryContextSection as section } from "./repository-context-sectio
 import {
   selectedRuleSourceExcerpts,
   selectedSources,
-  selectedSourceExcerpts,
   selectedSymbolEdges,
   selectedSymbolNodes,
   sourceTypeCounts
 } from "./repository-context-selection.js";
+import { selectedPolicyExactSourceExcerpts } from "./repository-context-risk-policy.js";
 import { sourceProofDependencyId, sourceProofRefs } from "./repository-source-proofs.js";
 import { taskRetrievalSection } from "./repository-context-task-retrieval-section.js";
 import type { CompileRepositoryContextArtifactInput } from "./repository-context-types.js";
@@ -122,7 +122,7 @@ function exactSourceEvidenceSection(
   input: CompileRepositoryContextArtifactInput,
   dependencies: readonly InMemoryContextDependencyShape[]
 ): InMemoryContextSectionShape {
-  const excerpts = selectedSourceExcerpts(input.sourceExcerpts, preferredSourceRefs(input));
+  const excerpts = selectedPolicyExactSourceExcerpts(input);
   return section({
     id: "exact-source-evidence",
     type: "code_span",
@@ -188,7 +188,7 @@ function activeProjectRulesBody(
 }
 
 function exactSourceEvidenceBody(
-  excerpts: ReturnType<typeof selectedSourceExcerpts>
+  excerpts: ReturnType<typeof selectedPolicyExactSourceExcerpts>
 ): string {
   if (excerpts.length === 0) {
     return [

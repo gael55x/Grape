@@ -405,7 +405,7 @@ test("cli compile invalidates prior sent context when a session switches branche
   });
 });
 
-test("cli compile marks risk overlays unsafe until exact spans exist", () => {
+test("cli compile marks risk overlays unsafe without task-selected exact spans", () => {
   withGitRepo((repoPath) => {
     const result = runCli(repoPath, [
       "compile",
@@ -418,8 +418,50 @@ test("cli compile marks risk overlays unsafe until exact spans exist", () => {
     assert.equal(result.stderr, "");
     const parsed = JSON.parse(result.stdout);
     assert.deepEqual(parsed.riskOverlays, ["auth"]);
-    assert.deepEqual(parsed.unsafeReasons, ["risk_overlay_exact_spans_not_implemented"]);
+    assert.deepEqual(parsed.unsafeReasons, ["risk_overlay_missing_exact_context"]);
     assert.ok(parsed.warnings.includes("risk_overlay_requires_exact_context"));
+  });
+});
+
+test("cli compile accepts risk overlays when task-selected exact spans exist", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "src"), { recursive: true });
+    writeFileSync(
+      path.join(repoPath, "src", "auth.ts"),
+      [
+        "export function requireSession(sessionId: string | undefined) {",
+        "  if (!sessionId) return { status: 401 };",
+        "  return { status: 200 };",
+        "}",
+        ""
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "src/auth.ts"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add auth fixture"
+    ]);
+
+    const result = runCli(repoPath, [
+      "compile",
+      "--task",
+      "Review authentication session handling in src/auth.ts",
+      "--json"
+    ]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stderr, "");
+    const parsed = JSON.parse(result.stdout);
+    assert.deepEqual(parsed.riskOverlays, ["auth"]);
+    assert.deepEqual(parsed.unsafeReasons, []);
+    const exactEvidence = parsed.contextArtifact.outputSections.find((section) => section.id === "exact-source-evidence");
+    assert.ok(exactEvidence.itemRefs.some((ref) => ref.ref === "src/auth.ts"));
+    assert.equal(exactEvidence.requiresExactCode, true);
   });
 });
 

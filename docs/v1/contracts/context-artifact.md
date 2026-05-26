@@ -172,16 +172,16 @@ The exact-source-evidence section is a scaffold proof foundation: it reads only 
 
 When `--token-budget` or MCP `tokenBudget` is supplied, the rendered JSON/Markdown includes budget status, estimated pack tokens, required context tokens, warnings, and unsafe reasons. V1 scaffold budget handling evaluates fit only; it does not prune context yet. Required context means pinned, exact/safety-critical, and invalidation items. If required context is larger than the requested budget, output is marked unsafe with `token_budget_below_required_context`.
 
-Risk overlays currently mark the scaffold artifact unsafe with `risk_overlay_exact_spans_not_implemented`, because V1 still needs task-policy-specific exact source-span selection before high-risk compiles can be reported as safe.
+Risk overlays now require task-selected exact source/config/rule evidence. If task retrieval selects at least one allowed source and the compiler can validate a proof-backed exact excerpt for that source, the high-risk compile may proceed as `partial_with_risk` or `safe_minimum` depending on other warnings. If no task-selected exact excerpt exists, the artifact is unsafe with `risk_overlay_missing_exact_context`.
 
 `grape artifacts --artifact <id>` and MCP `grape_get_artifact` expose stored artifact metadata, dependency rows, and repo-relative public artifact file refs for inspection. They do not return raw scaffold sidecar bodies and do not promote scaffold summaries to proof.
 
-This is still a projection from the repository-derived scaffold rather than durable current-valid claim retrieval. It now uses the V1 `ContextArtifact` JSON envelope, but it does not yet select task-policy-specific exact spans for high-risk overlays or promote durable claims.
+This is still a projection from the repository-derived scaffold rather than durable current-valid claim retrieval. It now uses the V1 `ContextArtifact` JSON envelope and enforces the first task-specific high-risk exact-span policy, but it does not yet promote durable claims.
 
 ## Section Rules
 
 - `pinned_rule`, `risk_warning`, `stale_warning`, `contradiction`, and high-risk exact sections must not be replaced by compression.
-- High-risk overlays require exact code/config/rule spans for required context. Bounded scaffold excerpts are useful evidence, but they do not satisfy the high-risk policy until task-specific required spans are selected.
+- High-risk overlays require exact code/config/rule spans for required context. Bounded scaffold excerpts satisfy the current high-risk policy only when they are selected by task retrieval or explicit seed refs and have proof dependencies.
 - A section with `redactionStatus: "blocked"` cannot be returned or persisted as a context pack item.
 - A section with `exactRequired: true` must include at least one source ref and, for durable claims, at least one proof ref.
 - `compression_orientation` may help navigation only. It cannot satisfy required proof, exact code, warning, or pinned context.

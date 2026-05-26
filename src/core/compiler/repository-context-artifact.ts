@@ -10,6 +10,7 @@ import {
   repositoryContextManifestHash
 } from "./repository-context-integrity.js";
 import { maxListedEdges, maxListedSources, maxListedSymbols } from "./repository-context-selection.js";
+import { evaluateRepositoryRiskPolicy } from "./repository-context-risk-policy.js";
 import { contextSections } from "./repository-context-sections.js";
 import type { CompileRepositoryContextArtifactInput } from "./repository-context-types.js";
 
@@ -70,17 +71,17 @@ function artifactInput(input: CompileRepositoryContextArtifactInput): InMemoryCo
 }
 
 function compileWarnings(input: CompileRepositoryContextArtifactInput): string[] {
+  const riskPolicy = evaluateRepositoryRiskPolicy(input);
   const warnings = ["repository_artifact_uses_lightweight_index"];
   if (input.sources.length > maxListedSources) warnings.push("source_manifest_truncated");
   if (input.symbolNodes.length > maxListedSymbols) warnings.push("symbol_nodes_truncated");
   if (input.symbolEdges.length > maxListedEdges) warnings.push("symbol_edges_truncated");
   if (input.snapshot.worktreeStatus !== "clean") warnings.push("dirty_worktree_context");
-  if (input.riskOverlays.length > 0) warnings.push("risk_overlay_requires_exact_context");
+  warnings.push(...riskPolicy.warnings);
   warnings.push(...(input.taskRetrieval?.warnings ?? []));
   return warnings;
 }
 
 function unsafeReasons(input: CompileRepositoryContextArtifactInput): string[] {
-  if (input.riskOverlays.length === 0) return [];
-  return ["risk_overlay_exact_spans_not_implemented"];
+  return [...evaluateRepositoryRiskPolicy(input).unsafeReasons];
 }

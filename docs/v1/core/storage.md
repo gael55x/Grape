@@ -100,7 +100,7 @@ Migration `0003_fts_entries.sql` adds the first FTS5 lexical index foundation:
 - `fts_entries` stores source-linked lexical entry metadata, hashes, and repo/snapshot refs.
 - `fts_entry_text` is the FTS5 virtual table that indexes text for allowed source records.
 
-FTS persistence reads only existing allowed source records, reuses the same path/hash/binary/symlink guards as file indexing, skips secret-looking text before inserting FTS rows, and stores search results through repository methods rather than direct SQL outside storage. The local compile service now uses these rows, explicit seed file refs, and symbol/path matches to prioritize scaffold source evidence. This is still a source-selection foundation only; durable current-valid claim retrieval and final high-risk exact-span compiler policy remain pending.
+FTS persistence reads only existing allowed source records, reuses the same path/hash/binary/symlink guards as file indexing, skips secret-looking text before inserting FTS rows, and stores search results through repository methods rather than direct SQL outside storage. The local compile service now uses these rows, explicit seed file refs, and symbol/path matches to prioritize scaffold source evidence and to satisfy the first high-risk exact-context policy only when a proof-backed exact excerpt is selected for the task. This is still a source-selection foundation only; durable current-valid claim retrieval remains pending.
 
 ## Repository Boundary
 
