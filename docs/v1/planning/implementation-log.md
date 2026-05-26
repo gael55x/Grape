@@ -186,9 +186,9 @@ Keep entries simple:
 ### 2026-05-26 - MCP Get Context Foundation
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: added the first MCP stdio adapter with framed JSON-RPC handling, `initialize`, `tools/list`, `tools/call`, `grape_get_context`, and `grape_get_status`. The MCP adapter is thin: `grape_get_context` calls the local compile service and returns structured scaffold context-pack items plus Markdown, while `grape_get_status` calls the local status service.
+- Summary: added the first MCP stdio adapter with framed JSON-RPC handling, `initialize`, `tools/list`, `tools/call`, `grape_get_context`, and `grape_get_status`. The MCP adapter is thin: `grape_get_context` calls the local compile service and returns structured context-pack items plus Markdown, while `grape_get_status` calls the local status service.
 - Checks run: `npm run typecheck`; `npm run build:test`; focused CLI/MCP behavior tests.
-- Risks/follow-ups: this is not the complete V1 MCP surface. The current `grape_get_context` output still exposes scaffold `InMemoryContextPackItemShape` items, requires `sessionId` or `agentSessionId` to preserve session-scoped diffing, uses seed file/symbol/test refs for risk detection but not retrieval narrowing, downgrades ignored seed/budget behavior to `partial_with_risk`, and still needs final ContextArtifact/ContextPackItem schemas, restore lookup, and restricted write tools.
+- Risks/follow-ups: this is not the complete V1 MCP surface. The current `grape_get_context` path requires `sessionId` or `agentSessionId` to preserve session-scoped diffing, uses seed file/symbol/test refs for risk detection but not retrieval narrowing, downgrades ignored seed/budget behavior to `partial_with_risk`, and still needs the final ContextArtifact schema plus restricted write tools.
 
 ### 2026-05-26 - Omitted Context Restore Lookup
 
@@ -223,7 +223,7 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: added explicit session reset recovery for the scaffold diff path. CLI `grape compile --reset-session` and MCP `grape_get_context` with `resetSession: true` now record `session_reset` invalidation events, emit `INVALIDATE_PREVIOUS` for active prior sent items, and force current scaffold sections to be resent instead of omitted.
 - Checks run: focused durable/CLI/MCP behavior tests before full verification.
-- Risks/follow-ups: reset recovery still operates on scaffold `InMemoryContextPackItemShape` rows. Final V1 `ContextPackItem` schema mapping and durable claim/proof invalidation remain pending.
+- Risks/follow-ups: reset recovery still operates on scaffold diff rows internally. Durable claim/proof invalidation remains pending.
 
 ### 2026-05-26 - Pinned Active Project Rules
 
@@ -238,3 +238,10 @@ Keep entries simple:
 - Summary: added `fts_entries` metadata rows plus an FTS5 text table for allowed source records. FTS persistence now reuses source-hash/path/binary/symlink guards, skips secret-looking text, exposes source-linked search results through storage repositories, and remains separate from compiler selection policy.
 - Checks run: focused file-index and storage-runtime behavior tests; `npm run check`; `npm run build`; `git diff --check`.
 - Risks/follow-ups: FTS rows are persisted and searchable, but task-specific retrieval does not use them yet. Current-valid filtering, task-policy ranking, and final compiler integration remain pending.
+
+### 2026-05-26 - V1 ContextPackItem Output Mapping
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: public CLI JSON, artifact JSON, Markdown rendering, and MCP `grape_get_context` output now map internal scaffold diff rows into V1-shaped `ContextPackItem` objects. Pack items expose `content`, `itemKind`, `itemRef`, `inputRefs`, `restoreId`, token counts, and safety flags while durable storage can continue using scaffold rows internally.
+- Checks run: focused CLI/MCP behavior tests; `npm run check`; `npm run build`; `git diff --check`.
+- Risks/follow-ups: the public pack item shape is now V1-shaped, but the stored artifact body remains the repository-derived scaffold artifact. Final V1 `ContextArtifact` schema promotion remains pending.

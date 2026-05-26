@@ -148,6 +148,14 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(existsSync(first.artifactMarkdownPath), true);
     assert.equal(first.sessionId, "session-test");
     assert.equal(first.contextPackItems.some((item) => item.state === "NEW"), true);
+    const firstPackItem = first.contextPackItems[0];
+    assert.equal(typeof firstPackItem.id, "string");
+    assert.equal(typeof firstPackItem.itemKind, "string");
+    assert.equal(typeof firstPackItem.itemRef, "string");
+    assert.equal(typeof firstPackItem.content, "string");
+    assert.equal(typeof firstPackItem.tokenCount, "number");
+    assert.equal(Array.isArray(firstPackItem.inputRefs), true);
+    assert.equal("body" in firstPackItem, false);
     assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /# Grape Context Pack/);
     assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Active Project Rules/);
     assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Prefer focused tests/);
@@ -155,6 +163,7 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Proof: proof:/);
 
     const artifactJson = JSON.parse(readFileSync(first.artifactJsonPath, "utf8"));
+    assert.equal(artifactJson.contextPackItemShape, "ContextPackItem");
     assert.equal(artifactJson.artifact.artifactId, first.artifactId);
     assert.equal(artifactJson.contextPackItems.length, first.contextPackItems.length);
     assert.equal(
@@ -184,7 +193,7 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(second.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE"), true);
     assert.equal(localContextArtifactCount(repoPath), 2);
 
-    const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE").restoreToken;
+    const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE").restoreId;
     const omitted = runCliJson(repoPath, ["omitted", "--session", "session-test"]);
     assert.equal(omitted.omittedItems.some((item) => item.restoreId === restoreToken), true);
 
@@ -468,7 +477,7 @@ function createRestorableOmission(repoPath, sessionId) {
     "--session",
     sessionId
   ]);
-  const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE")?.restoreToken;
+  const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE")?.restoreId;
   assert.ok(restoreToken);
   return {
     artifactJsonPath: second.artifactJsonPath,

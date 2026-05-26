@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 
 import { compileLocalContext } from "../app/local-project/index.js";
 import type { CompileLocalContextResult } from "../app/local-project/index.js";
-import type { DiffState, InMemoryContextPackItemShape, RiskOverlay, TaskType } from "../shared/index.js";
+import type { ContextPackItemShape, DiffState, RiskOverlay, TaskType } from "../shared/index.js";
 import { taskTypes } from "../shared/index.js";
 import { resolveMcpSessionId } from "./session.js";
 
@@ -32,7 +32,7 @@ export interface GrapeGetContextToolOutput {
   readonly taskType: TaskType;
   readonly riskOverlays: readonly RiskOverlay[];
   readonly compileMode: "safe_minimum" | "partial_with_risk" | "broad_context_required" | "cannot_compile_safely";
-  readonly contextPackItems: readonly InMemoryContextPackItemShape[];
+  readonly contextPackItems: readonly ContextPackItemShape[];
   readonly contextPackMarkdown: string;
   readonly diffSummary: {
     readonly newItems: number;
@@ -83,7 +83,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     warnings,
     unsafeReasons: result.unsafeReasons,
     sessionResetId: result.sessionResetId,
-    restoreAvailable: result.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE" || item.restoreToken),
+    restoreAvailable: result.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE" || item.restoreId),
     artifactFiles: {
       json: relativeArtifactPath(result.rootPath, result.artifactJsonPath),
       markdown: relativeArtifactPath(result.rootPath, result.artifactMarkdownPath)
@@ -187,7 +187,7 @@ function compileModeFor(
   return "safe_minimum";
 }
 
-function summarizeDiff(items: readonly InMemoryContextPackItemShape[]): GrapeGetContextToolOutput["diffSummary"] {
+function summarizeDiff(items: readonly ContextPackItemShape[]): GrapeGetContextToolOutput["diffSummary"] {
   return {
     newItems: countState(items, "NEW"),
     changedItems: countState(items, "CHANGED"),
@@ -198,7 +198,7 @@ function summarizeDiff(items: readonly InMemoryContextPackItemShape[]): GrapeGet
   };
 }
 
-function countState(items: readonly InMemoryContextPackItemShape[], state: DiffState): number {
+function countState(items: readonly ContextPackItemShape[], state: DiffState): number {
   return items.filter((item) => item.state === state).length;
 }
 

@@ -128,6 +128,8 @@ The current persisted build proof adds a narrow app-level build service:
 
 This proof does not perform MCP transport, CLI rendering, broad repository indexing, trust extraction, or compression.
 
+Current implementation note: the durable diff service still uses scaffold in-memory diff rows internally for comparison and ledger persistence, then maps them to V1-shaped `ContextPackItem` outputs at the compiler/app boundary. Public CLI, artifact JSON, and MCP context responses expose `content`, `restoreId`, `inputRefs`, `itemKind`, and safety fields rather than the internal scaffold row shape.
+
 ## Restore Protocol
 
 1. Diff engine omits an unchanged item only after writing an `OmittedContextItem`.

@@ -72,6 +72,22 @@ export const sourceRedactionStatuses = ["not_needed", "redacted", "blocked"] as 
 
 export type SourceRedactionStatus = (typeof sourceRedactionStatuses)[number];
 
+export const contextPackItemKinds = [
+  "claim",
+  "proof",
+  "code_span",
+  "rule",
+  "test_output",
+  "symbol_summary",
+  "compression_artifact",
+  "open_question",
+  "context_summary",
+  "invalidation",
+  "restore_hint"
+] as const;
+
+export type ContextPackItemKind = (typeof contextPackItemKinds)[number];
+
 export const verificationStatuses = [
   "verified",
   "partially_verified",
@@ -166,6 +182,32 @@ export interface InMemoryContextDependencyManifestShape {
   createdAt: string;
   hashAlgorithm: "sha256";
   manifestHash: string;
+}
+
+export interface ContextInputRefShape {
+  id: string;
+  kind: InMemoryContextDependencyShape["kind"];
+  ref: string;
+  hash: string;
+  scope: Record<string, unknown>;
+}
+
+export interface ContextPackItemShape {
+  id: string;
+  state: DiffState;
+  itemKind: ContextPackItemKind;
+  itemRef: string;
+  sectionId?: string;
+  title: string;
+  content: string;
+  contentHash: string;
+  tokenCount: number;
+  pinned: boolean;
+  safetyCritical: boolean;
+  invalidatesSentItemId?: string;
+  restoreId?: string;
+  inputRefs: ContextInputRefShape[];
+  warnings: string[];
 }
 
 export interface InMemoryContextPackItemShape {

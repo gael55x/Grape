@@ -1,6 +1,6 @@
 import type { LocalProjectConfig } from "./config.js";
 import type { InMemoryTokenSavingsMetric } from "../../core/diff/index.js";
-import type { InMemoryContextPackItemShape, RiskOverlay } from "../../shared/index.js";
+import type { ContextPackItemShape, RiskOverlay } from "../../shared/index.js";
 
 export type DiagnosticStatus = "pass" | "warn" | "fail";
 
@@ -105,7 +105,7 @@ export interface CompileLocalContextResult {
   readonly branch: string;
   readonly headCommit: string;
   readonly dirtyWorktree: boolean;
-  readonly contextPackItems: readonly InMemoryContextPackItemShape[];
+  readonly contextPackItems: readonly ContextPackItemShape[];
   readonly omittedItemCount: number;
   readonly sentItemCount: number;
   readonly tokenMetric: InMemoryTokenSavingsMetric;
