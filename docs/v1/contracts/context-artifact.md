@@ -123,6 +123,8 @@ interface InMemoryContextArtifactShape {
 }
 ```
 
+Current CLI, artifact JSON, and MCP output map internal scaffold diff rows to the V1 `ContextPackItem` output shape before returning them to agents. The emitted item fields are `id`, `state`, `itemKind`, `itemRef`, optional `sectionId`, `title`, `content`, `contentHash`, `tokenCount`, `pinned`, `safetyCritical`, optional `invalidatesSentItemId`, optional `restoreId`, `inputRefs`, and `warnings`. This closes the public pack-item shape gap without claiming that the stored scaffold artifact has become the final V1 `ContextArtifact` schema.
+
 ## Minimum Artifact Rule
 
 A final V1 context artifact is invalid unless it is:

@@ -1,6 +1,6 @@
 import type {
+  ContextPackItemShape,
   InMemoryContextArtifactShape,
-  InMemoryContextPackItemShape
 } from "../../shared/index.js";
 
 export interface RepositoryContextRenderTokenMetric {
@@ -11,7 +11,7 @@ export interface RepositoryContextRenderTokenMetric {
 
 export interface RepositoryContextRenderInput {
   readonly artifact: InMemoryContextArtifactShape;
-  readonly contextPackItems: readonly InMemoryContextPackItemShape[];
+  readonly contextPackItems: readonly ContextPackItemShape[];
   readonly omittedItems: readonly { readonly sectionId: string; readonly restoreId?: string }[];
   readonly tokenMetric: RepositoryContextRenderTokenMetric;
 }
@@ -21,6 +21,7 @@ export function renderRepositoryContextPackJson(input: RepositoryContextRenderIn
     {
       schemaVersion: 1,
       artifactShape: "InMemoryContextArtifactShape",
+      contextPackItemShape: "ContextPackItem",
       artifact: input.artifact,
       contextPackItems: input.contextPackItems,
       omittedItems: input.omittedItems,
@@ -64,16 +65,18 @@ export function renderRepositoryContextPackMarkdown(input: RepositoryContextRend
   ].join("\n");
 }
 
-function renderPackItem(item: InMemoryContextPackItemShape): string[] {
+function renderPackItem(item: ContextPackItemShape): string[] {
   return [
     `### ${item.state}: ${item.title}`,
     "",
-    `Section: ${item.sectionId}`,
+    `Item: ${item.id}`,
+    `Kind: ${item.itemKind}`,
+    `Section: ${item.sectionId ?? "none"}`,
     `Content hash: ${item.contentHash}`,
-    item.restoreToken ? `Restore token: ${item.restoreToken}` : undefined,
-    item.previousItemId ? `Previous item: ${item.previousItemId}` : undefined,
+    item.restoreId ? `Restore ID: ${item.restoreId}` : undefined,
+    item.invalidatesSentItemId ? `Invalidates sent item: ${item.invalidatesSentItemId}` : undefined,
     "",
-    item.body.length > 0 ? item.body : "_Body omitted; restore metadata is available._",
+    item.content.length > 0 ? item.content : "_Content omitted; restore metadata is available._",
     ""
   ].filter((line): line is string => line !== undefined);
 }

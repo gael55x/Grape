@@ -5,7 +5,8 @@ import { persistGitRepoSnapshot } from "../persist-repo-snapshot.js";
 import {
   compileRepositoryContextArtifact,
   renderRepositoryContextPackJson,
-  renderRepositoryContextPackMarkdown
+  renderRepositoryContextPackMarkdown,
+  toContextPackItems
 } from "../../core/compiler/index.js";
 import { createGitRepoSnapshot } from "../../core/git/index.js";
 import { assertArtifactTextHasNoSecrets } from "../../core/security/index.js";
@@ -165,9 +166,10 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
             : undefined,
         sessionReset,
         prepareOutput(preview) {
+          const contextPackItems = toContextPackItems(artifact, preview.contextPackItems);
           const renderInput = {
             artifact,
-            contextPackItems: preview.contextPackItems,
+            contextPackItems,
             omittedItems: preview.omittedItems,
             tokenMetric: preview.tokenMetric
           };
@@ -197,6 +199,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
   });
 
   const value = databaseResult.value;
+  const contextPackItems = toContextPackItems(value.artifact, value.build.contextPackItems);
   return {
     rootPath: snapshot.rootPath,
     projectId: config.project.projectId,
@@ -210,7 +213,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     branch: value.snapshotResult.snapshot.branch,
     headCommit: value.snapshotResult.snapshot.commit,
     dirtyWorktree: value.snapshotResult.snapshot.worktreeStatus !== "clean",
-    contextPackItems: value.build.contextPackItems,
+    contextPackItems,
     omittedItemCount: value.build.omittedItems.length,
     sentItemCount: value.build.sentItems.length,
     tokenMetric: value.build.tokenMetric,

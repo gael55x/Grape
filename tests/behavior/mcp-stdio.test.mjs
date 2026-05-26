@@ -239,6 +239,11 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     assert.equal(toolResult.structuredContent.sessionId, "mcp-session");
     assert.equal(toolResult.structuredContent.branch, "main");
     assert.equal(toolResult.structuredContent.contextPackItems.some((item) => item.state === "NEW"), true);
+    const packItem = toolResult.structuredContent.contextPackItems[0];
+    assert.equal(typeof packItem.id, "string");
+    assert.equal(typeof packItem.content, "string");
+    assert.equal(Array.isArray(packItem.inputRefs), true);
+    assert.equal("body" in packItem, false);
     assert.match(toolResult.structuredContent.contextPackMarkdown, /# Grape Context Pack/);
     assert.match(toolResult.structuredContent.artifactFiles.json, /^\.grape\//);
     assert.equal(
@@ -577,7 +582,7 @@ function createMcpRestorableOmission(repoPath, sessionId) {
       }
     }
   ])[0].result.structuredContent;
-  const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE")?.restoreToken;
+  const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE")?.restoreId;
   assert.ok(restoreToken);
   return { restoreToken };
 }

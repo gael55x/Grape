@@ -43,3 +43,4 @@ Each entry should include:
 - Clarified session reset recovery for the scaffold product slice: explicit reset requests invalidate active prior sent context and force current sections to be resent instead of relying on omitted unchanged context.
 - Clarified active rule handling for the scaffold product slice: trusted rule files can be rendered as pinned exact-context sections before parsed durable project-rule records exist.
 - Clarified FTS storage foundation behavior: lexical FTS rows may be persisted for allowed source records only after source-hash verification and secret-looking text rejection; FTS-backed task retrieval remains pending compiler policy work.
+- Clarified the scaffold-to-V1 boundary: internal scaffold diff rows can remain an implementation detail when public CLI/MCP/artifact JSON output is mapped to V1-shaped `ContextPackItem` objects.
