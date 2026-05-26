@@ -33,11 +33,11 @@ import { prepareLocalCompileProofs } from "./compile-proofs.js";
 import { ensureCompileSession } from "./compile-session.js";
 import { prepareLocalCompressionArtifacts } from "./compression.js";
 import { resolveLocalCurrentValidClaims } from "./claim-resolution.js";
-import { initializeLocalProject } from "./initialize.js";
 import { resolveLocalTaskRetrieval } from "./task-retrieval.js";
 import { withMigratedLocalDatabase } from "./storage.js";
 import type { CompileLocalContextInput, CompileLocalContextResult } from "./types.js";
 import type { LocalArtifactWriteResult } from "./artifact-files.js";
+import { ensureLocalProjectBootstrapped } from "./bootstrap.js";
 import { projectLocalContextArtifact, writeLocalContextOutput } from "./context-output.js";
 
 export function compileLocalContext(input: CompileLocalContextInput): CompileLocalContextResult {
@@ -49,7 +49,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
   );
   const rootPath = path.resolve(input.rootPath);
 
-  ensureBootstrapped({
+  ensureLocalProjectBootstrapped({
     rootPath,
     now,
     gitBinary: input.gitBinary,
@@ -302,28 +302,4 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     artifactMarkdownPath: value.files.markdownPath,
     sessionResetId: value.sessionResetId
   };
-}
-
-function ensureBootstrapped(input: {
-  readonly rootPath: string;
-  readonly now: string;
-  readonly gitBinary?: string;
-  readonly migrationsDir?: string;
-}): void {
-  const snapshot = createGitRepoSnapshot({
-    rootPath: input.rootPath,
-    createdAt: input.now,
-    gitBinary: input.gitBinary
-  });
-  const layout = ensureLocalProjectLayout(snapshot.rootPath);
-  const config = readLocalProjectConfig(layout.configPath);
-  if (config) return;
-
-  initializeLocalProject({
-    rootPath: snapshot.rootPath,
-    connect: false,
-    now: input.now,
-    gitBinary: input.gitBinary,
-    migrationsDir: input.migrationsDir
-  });
 }

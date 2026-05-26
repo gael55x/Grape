@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -72,6 +73,10 @@ function runMcpFrom(repoPath, messages, cwd) {
   return parseFrames(result.stdout);
 }
 
+function sha256(text) {
+  return createHash("sha256").update(text).digest("hex");
+}
+
 function parseFrames(buffer) {
   const messages = [];
   let rest = Buffer.from(buffer);
@@ -115,13 +120,187 @@ test("mcp stdio lists implemented Grape tools", () => {
         "grape_get_rules",
         "grape_get_omitted_item",
         "grape_get_stale_items",
-        "grape_get_status"
+        "grape_get_status",
+        "grape_record_command_result",
+        "grape_record_test_result"
       ]
     );
     const contextTool = responses[1].result.tools.find((tool) => tool.name === "grape_get_context");
     assert.deepEqual(contextTool.inputSchema.anyOf, [{ required: ["sessionId"] }, { required: ["agentSessionId"] }]);
     assert.equal(contextTool.inputSchema.properties.tokenBudget.type, "integer");
     assert.equal(contextTool.inputSchema.properties.tokenBudget.minimum, 1);
+    const commandTool = responses[1].result.tools.find((tool) => tool.name === "grape_record_command_result");
+    assert.equal(commandTool.inputSchema.additionalProperties, false);
+    assert.match(commandTool.inputSchema.properties.command.description, /not persisted/);
+  });
+});
+
+test("mcp restricted write tools record temporary evidence without promoting claims", () => {
+  withGitRepo((repoPath) => {
+    runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-write-session"
+          }
+        }
+      }
+    ]);
+
+    const command = "npm test -- --runInBand";
+    const commandResult = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_record_command_result",
+          arguments: {
+            sessionId: "mcp-write-session",
+            command,
+            commandHash: sha256(command),
+            cwd: ".",
+            exitCode: 0,
+            stdoutHash: sha256("tests passed"),
+            stderrHash: sha256(""),
+            startedAt: "2026-05-26T00:00:00.000Z",
+            endedAt: "2026-05-26T00:00:01.000Z",
+            reportedBy: "agent"
+          }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(commandResult.isError, false);
+    assert.equal(commandResult.structuredContent.sourceType, "command_run");
+    assert.equal(commandResult.structuredContent.trustClass, "temporary");
+    assert.equal(commandResult.structuredContent.durable, false);
+    assert.equal(Object.hasOwn(commandResult.structuredContent, "rootPath"), false);
+    assert.equal(commandResult.content[0].text.includes(repoPath), false);
+    assert.equal(commandResult.content[0].text.includes(command), false);
+    assert.deepEqual(commandResult.structuredContent.redactedFields, ["command", "stdout", "stderr"]);
+
+    const proofs = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_proofs",
+          arguments: { sourceId: commandResult.structuredContent.sourceId }
+        }
+      }
+    ])[0].result;
+    assert.equal(proofs.isError, false);
+    assert.equal(proofs.structuredContent.proofs.length, 0);
+
+    const testCommand = "npm test";
+    const testResult = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "grape_record_test_result",
+          arguments: {
+            sessionId: "mcp-write-session",
+            command: testCommand,
+            commandHash: sha256(testCommand),
+            cwd: ".",
+            exitCode: 1,
+            stdoutHash: sha256("one test failed"),
+            stderrHash: sha256(""),
+            startedAt: "2026-05-26T00:01:00.000Z",
+            endedAt: "2026-05-26T00:01:02.000Z",
+            passed: false,
+            testFramework: "node:test",
+            testFiles: ["tests/example.test.ts"]
+          }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(testResult.isError, false);
+    assert.equal(testResult.structuredContent.sourceType, "test_run");
+    assert.equal(testResult.structuredContent.trustClass, "temporary");
+    assert.equal(testResult.structuredContent.durable, false);
+    assert.equal(testResult.content[0].text.includes(testCommand), false);
+  });
+});
+
+test("mcp restricted write tools reject grape-observed authority from agents", () => {
+  withGitRepo((repoPath) => {
+    runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-observed-reject-session"
+          }
+        }
+      }
+    ]);
+
+    const command = "npm test";
+    const rejected = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_record_command_result",
+          arguments: {
+            sessionId: "mcp-observed-reject-session",
+            command,
+            commandHash: sha256(command),
+            cwd: ".",
+            exitCode: 0,
+            stdoutHash: sha256(""),
+            stderrHash: sha256(""),
+            startedAt: "2026-05-26T00:00:00.000Z",
+            endedAt: "2026-05-26T00:00:01.000Z",
+            observedRunId: "run:agent-minted"
+          }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(rejected.isError, true);
+    assert.match(rejected.content[0].text, /unsupported observation argument: observedRunId/);
+
+    const outsideCwd = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "grape_record_command_result",
+          arguments: {
+            sessionId: "mcp-observed-reject-session",
+            command,
+            commandHash: sha256(command),
+            cwd: "../outside",
+            exitCode: 0,
+            stdoutHash: sha256(""),
+            stderrHash: sha256(""),
+            startedAt: "2026-05-26T00:00:00.000Z",
+            endedAt: "2026-05-26T00:00:01.000Z"
+          }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(outsideCwd.isError, true);
+    assert.match(outsideCwd.content[0].text, /cwd must be inside the repository root/);
   });
 });
 

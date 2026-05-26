@@ -343,3 +343,10 @@ Keep entries simple:
 - Summary: added MCP `grape_get_rules` as a read-only adapter over a local rules app service. It captures the current Git snapshot, classifies trusted rule files, verifies source hashes before reading bounded excerpts, applies the artifact secret scan, removes `rootPath` from MCP output, and reports rejected rule refs without persisting parsed durable rules.
 - Checks run: focused MCP/CLI behavior tests before full verification.
 - Risks/follow-ups: this exposes current rule excerpts only. Parsed durable `project_rules`, nested scope resolution, generated/candidate rules, and conflict handling remain pending.
+
+### 2026-05-26 - MCP Command And Test Observation Writes
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added restricted MCP `grape_record_command_result` and `grape_record_test_result` tools backed by a local observation app service and pure evidence builders. Agent-reported observations are persisted as temporary `command_run` / `test_run` source rows scoped to the current repo snapshot and context session. Raw command/stdout/stderr bodies are not persisted, and MCP callers cannot mint Grape-observed authority or durable claims.
+- Checks run: focused MCP behavior tests before full verification.
+- Risks/follow-ups: these are scratch evidence rows only. Grape-observed command runners, `command_runs` / `test_runs` tables, durable proof attachment, and CLI decision workflows remain pending.
