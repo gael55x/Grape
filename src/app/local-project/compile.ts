@@ -24,6 +24,7 @@ import {
   sha256,
   taskIdFor
 } from "./compile-ids.js";
+import { detectRiskOverlaysForTask, mergeRiskOverlays } from "./compile-risk.js";
 import { ensureCompileSession } from "./compile-session.js";
 import { initializeLocalProject } from "./initialize.js";
 import { withMigratedLocalDatabase } from "./storage.js";
@@ -34,7 +35,10 @@ import { writeLocalArtifactFiles } from "./artifact-files.js";
 export function compileLocalContext(input: CompileLocalContextInput): CompileLocalContextResult {
   const now = input.now ?? new Date().toISOString();
   const taskType = parseTaskType(input.taskType);
-  const requestedRiskOverlays = parseRiskOverlays(input.riskOverlays);
+  const requestedRiskOverlays = mergeRiskOverlays(
+    parseRiskOverlays(input.riskOverlays),
+    detectRiskOverlaysForTask(input.task, input.riskSeedRefs)
+  );
   const rootPath = path.resolve(input.rootPath);
 
   ensureBootstrapped({
@@ -162,6 +166,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     repoId: config.project.repoId,
     sessionId,
     taskId,
+    riskOverlays: requestedRiskOverlays,
     artifactId: value.artifact.artifactId,
     artifactHash: value.artifact.artifactHash,
     dependencyManifestHash: value.artifact.dependencyManifest.manifestHash,

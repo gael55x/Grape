@@ -100,13 +100,14 @@ Implemented today:
 - durable context build proof for first-turn send, second-turn omission, stale manifest invalidation, and rollback
 - first local setup CLI slice: `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`
 - first CLI context compile fallback: `grape compile --task <text>` auto-bootstraps local state, compiles from real repo inputs, persists session diff rows, and writes inspectable `.grape/artifacts/ctx_*.json` and `.md` scaffold artifacts
+- first MCP stdio server: `grape mcp --stdio` supports `initialize`, `tools/list`, `grape_get_context`, and `grape_get_status` over framed stdio
 - TypeScript, behavior tests, storage checks, docs checks, and architecture-boundary checks
 
 Not released yet:
 
 - npm package
 - full production CLI inspection surface
-- MCP stdio server
+- full MCP read/write tool surface
 - full repository indexing
 - benchmark harness
 - compression cache implementation
@@ -187,13 +188,14 @@ grape compile --task "Explain the files I need to edit"
 grape status
 grape doctor
 grape mcp --print-config
+grape mcp --stdio
 grape artifacts
 grape stale
 grape conflicts
 grape omitted
 ```
 
-`grape compile --task <text>`, `grape status`, `grape doctor`, and `grape mcp --print-config` are implemented for local inspection and CLI-first fallback context generation. `grape mcp --print-config` is explicitly marked `contract_only` until the stdio MCP server is implemented. Artifact-listing, stale, conflict, omitted, and full MCP context commands are not implemented yet.
+`grape compile --task <text>`, `grape status`, `grape doctor`, `grape mcp --print-config`, and `grape mcp --stdio` are implemented for local inspection, CLI-first fallback context generation, and the first MCP context retrieval path. Artifact-listing, stale, conflict, omitted, final artifact schema, and the full MCP read/write surface are not implemented yet.
 
 ## Development
 

@@ -77,6 +77,6 @@ export function initializeLocalProject(
     headCommit: snapshot.commit,
     dirtyWorktree: snapshot.worktreeStatus !== "clean",
     migrationsApplied: databaseResult.migrationResult.applied.map((migration) => migration.id),
-    mcp: mcpConnectionGuide()
+    mcp: mcpConnectionGuide(snapshot.rootPath)
   };
 }

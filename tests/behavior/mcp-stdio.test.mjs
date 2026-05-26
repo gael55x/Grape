@@ -1,0 +1,343 @@
+import assert from "node:assert/strict";
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import test from "node:test";
+
+const cliPath = path.join(process.cwd(), ".tmp/build/src/cli/index.js");
+
+function withGitRepo(fn) {
+  const dir = mkdtempSync(path.join(tmpdir(), "grape-mcp-stdio-"));
+
+  try {
+    execGit(dir, ["init", "-b", "main"]);
+    writeFileSync(path.join(dir, "README.md"), "# Fixture\n");
+    execGit(dir, ["add", "README.md"]);
+    execGit(dir, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "initial fixture"
+    ]);
+    fn(dir);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function execGit(repoPath, args) {
+  return execFileSync("git", ["-C", repoPath, ...args], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"]
+  }).trim();
+}
+
+function requestFrame(message) {
+  const body = Buffer.from(JSON.stringify(message), "utf8");
+  return Buffer.concat([Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "utf8"), body]);
+}
+
+function runMcp(repoPath, messages) {
+  return runMcpFrom(repoPath, messages, repoPath);
+}
+
+function runMcpFrom(repoPath, messages, cwd) {
+  const input = Buffer.concat(messages.map(requestFrame));
+  const result = spawnSync(process.execPath, [cliPath, "mcp", "--stdio", "--repo", repoPath], {
+    cwd,
+    input,
+    encoding: "buffer"
+  });
+  assert.equal(result.status, 0, result.stderr.toString("utf8"));
+  assert.equal(result.stderr.toString("utf8"), "");
+  return parseFrames(result.stdout);
+}
+
+function parseFrames(buffer) {
+  const messages = [];
+  let rest = Buffer.from(buffer);
+  while (rest.length > 0) {
+    const headerEnd = rest.indexOf("\r\n\r\n");
+    assert.notEqual(headerEnd, -1, `missing MCP frame header in ${rest.toString("utf8")}`);
+    const header = rest.subarray(0, headerEnd).toString("utf8");
+    const match = /^Content-Length:\s*(\d+)$/im.exec(header);
+    assert.ok(match, `missing content length in ${header}`);
+    const length = Number.parseInt(match[1], 10);
+    const bodyStart = headerEnd + 4;
+    const bodyEnd = bodyStart + length;
+    assert.ok(rest.length >= bodyEnd, "incomplete MCP body");
+    messages.push(JSON.parse(rest.subarray(bodyStart, bodyEnd).toString("utf8")));
+    rest = rest.subarray(bodyEnd);
+  }
+  return messages;
+}
+
+test("mcp stdio lists implemented Grape tools", () => {
+  withGitRepo((repoPath) => {
+    const responses = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "test", version: "0" } }
+      },
+      { jsonrpc: "2.0", id: 2, method: "tools/list" }
+    ]);
+
+    assert.equal(responses.length, 2);
+    assert.equal(responses[0].result.serverInfo.name, "grape");
+    assert.deepEqual(
+      responses[1].result.tools.map((tool) => tool.name),
+      ["grape_get_context", "grape_get_status"]
+    );
+    const contextTool = responses[1].result.tools.find((tool) => tool.name === "grape_get_context");
+    assert.deepEqual(contextTool.inputSchema.anyOf, [{ required: ["sessionId"] }, { required: ["agentSessionId"] }]);
+  });
+});
+
+test("mcp grape_get_context compiles and returns structured context pack output", () => {
+  withGitRepo((repoPath) => {
+    const responses = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "test", version: "0" } }
+      },
+      {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-session"
+          }
+        }
+      }
+    ]);
+
+    const toolResult = responses[1].result;
+    assert.equal(toolResult.isError, false);
+    assert.equal(toolResult.content[0].type, "text");
+    assert.equal(toolResult.structuredContent.sessionId, "mcp-session");
+    assert.equal(toolResult.structuredContent.branch, "main");
+    assert.equal(toolResult.structuredContent.contextPackItems.some((item) => item.state === "NEW"), true);
+    assert.match(toolResult.structuredContent.contextPackMarkdown, /# Grape Context Pack/);
+    assert.match(toolResult.structuredContent.artifactFiles.json, /^\.grape\//);
+    assert.equal(
+      JSON.parse(readFileSync(path.join(repoPath, toolResult.structuredContent.artifactFiles.json), "utf8")).artifact.artifactId,
+      toolResult.structuredContent.artifactId
+    );
+  });
+});
+
+test("mcp grape_get_context exposes unsafe compile mode for risk overlays", () => {
+  withGitRepo((repoPath) => {
+    const responses = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Review authentication changes",
+            agentSessionId: "agent-risk-session"
+          }
+        }
+      }
+    ]);
+
+    const toolResult = responses[0].result;
+    assert.equal(toolResult.isError, true);
+    assert.equal(toolResult.structuredContent.compileMode, "cannot_compile_safely");
+    assert.deepEqual(toolResult.structuredContent.riskOverlays, ["auth"]);
+    assert.deepEqual(toolResult.structuredContent.unsafeReasons, ["risk_overlay_exact_spans_not_implemented"]);
+  });
+});
+
+test("mcp grape_get_context requires a session identity", () => {
+  withGitRepo((repoPath) => {
+    const responses = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository"
+          }
+        }
+      }
+    ]);
+
+    const toolResult = responses[0].result;
+    assert.equal(toolResult.isError, true);
+    assert.match(toolResult.content[0].text, /requires sessionId or agentSessionId/);
+  });
+});
+
+test("mcp agentSessionId maps to an isolated stable Grape session", () => {
+  withGitRepo((repoPath) => {
+    const first = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository",
+            agentName: "codex",
+            agentSessionId: "agent-one"
+          }
+        }
+      }
+    ])[0].result.structuredContent;
+
+    const second = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository",
+            agentName: "codex",
+            agentSessionId: "agent-two"
+          }
+        }
+      }
+    ])[0].result.structuredContent;
+
+    assert.notEqual(first.sessionId, second.sessionId);
+    assert.equal(first.contextPackItems.some((item) => item.state === "NEW"), true);
+    assert.equal(second.contextPackItems.some((item) => item.state === "NEW"), true);
+  });
+});
+
+test("mcp ignored seed inputs downgrade compile mode to partial risk", () => {
+  withGitRepo((repoPath) => {
+    const responses = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository",
+            sessionId: "seed-warning-session",
+            files: ["src/main.ts"],
+            tokenBudget: 1200
+          }
+        }
+      }
+    ]);
+
+    const output = responses[0].result.structuredContent;
+    assert.equal(output.compileMode, "partial_with_risk");
+    assert.ok(output.warnings.includes("mcp_seed_files_not_used_in_scaffold_compile"));
+    assert.ok(output.warnings.includes("mcp_token_budget_not_enforced_in_scaffold_compile"));
+  });
+});
+
+test("mcp file hints participate in risk overlay detection", () => {
+  withGitRepo((repoPath) => {
+    const responses = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Fix bug",
+            sessionId: "auth-file-session",
+            files: ["src/auth/session.ts"]
+          }
+        }
+      }
+    ]);
+
+    const output = responses[0].result.structuredContent;
+    assert.equal(output.compileMode, "cannot_compile_safely");
+    assert.deepEqual(output.riskOverlays, ["auth"]);
+  });
+});
+
+test("mcp stdio can launch outside the repository when --repo is provided", () => {
+  withGitRepo((repoPath) => {
+    const cwd = mkdtempSync(path.join(tmpdir(), "grape-mcp-nonrepo-"));
+    try {
+      const responses = runMcpFrom(
+        repoPath,
+        [
+          {
+            jsonrpc: "2.0",
+            id: 1,
+            method: "tools/call",
+            params: {
+              name: "grape_get_status",
+              arguments: {}
+            }
+          }
+        ],
+        cwd
+      );
+
+      assert.equal(responses[0].result.isError, false);
+      assert.equal(responses[0].result.structuredContent.rootPath, realpathSync(repoPath));
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+});
+
+test("mcp stdio rejects oversized frames", () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), "grape-mcp-oversized-"));
+  try {
+    const result = spawnSync(process.execPath, [cliPath, "mcp", "--stdio", "--repo", cwd], {
+      cwd,
+      input: Buffer.from("Content-Length: 4194305\r\n\r\n", "utf8")
+    });
+
+    assert.equal(result.status, 0, result.stderr.toString("utf8"));
+    const responses = parseFrames(result.stdout);
+    assert.equal(responses[0].error.code, -32700);
+    assert.match(responses[0].error.message, /maximum frame size/);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test("mcp grape_get_context rejects unsupported arguments", () => {
+  withGitRepo((repoPath) => {
+    const responses = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository",
+            riskOverlays: ["security"]
+          }
+        }
+      }
+    ]);
+
+    const toolResult = responses[0].result;
+    assert.equal(toolResult.isError, true);
+    assert.match(toolResult.content[0].text, /unsupported grape_get_context argument: riskOverlays/);
+  });
+});

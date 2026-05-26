@@ -1,5 +1,6 @@
 export * from "./compile.js";
 export * from "./config.js";
+export * from "./compile-risk.js";
 export * from "./doctor.js";
 export * from "./initialize.js";
 export * from "./mcp-guide.js";

@@ -1,13 +1,15 @@
 import type { McpConnectionGuide } from "./types.js";
 
-export function mcpConnectionGuide(): McpConnectionGuide {
+export function mcpConnectionGuide(rootPath = process.cwd()): McpConnectionGuide {
   return {
-    status: "contract_only",
-    implemented: false,
+    status: "implemented",
+    implemented: true,
     serverName: "grape",
     command: "grape",
-    args: ["mcp", "--stdio"],
+    args: ["mcp", "--stdio", "--repo", rootPath],
+    cwd: rootPath,
     transport: "stdio",
-    note: "The stdio MCP server is not implemented in the current setup slice."
+    tools: ["grape_get_context", "grape_get_status"],
+    note: "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
   };
 }
