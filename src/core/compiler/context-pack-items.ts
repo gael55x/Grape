@@ -93,11 +93,17 @@ function inputRefsForItem(
     .filter((dependency): dependency is InMemoryContextDependencyShape => dependency !== undefined)
     .map((dependency) => ({
       id: dependency.id,
-      kind: dependency.kind,
+      kind: inputRefKindForDependency(dependency.kind),
       ref: dependency.ref,
       hash: dependency.hash,
       scope: dependency.scope
     }));
+}
+
+function inputRefKindForDependency(
+  kind: InMemoryContextDependencyShape["kind"]
+): ContextPackItemShape["inputRefs"][number]["kind"] {
+  return kind === "source_file" ? "file" : kind;
 }
 
 function estimateTextTokens(text: string): number {

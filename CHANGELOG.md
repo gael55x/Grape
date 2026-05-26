@@ -51,3 +51,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Updated public context pack items returned by CLI, artifact JSON, and MCP to use the V1 `ContextPackItem` output shape.
 - Added task source retrieval for scaffold context compilation, using safe FTS rows, symbol/path matches, and MCP seed refs to prioritize exact source evidence.
 - Added conservative token-budget evaluation for CLI `--token-budget` and MCP `tokenBudget`, including unsafe output when required context cannot fit.
+- Added public V1 `ContextArtifact` JSON projection for compile artifacts while keeping scaffold restore data in an internal sidecar.

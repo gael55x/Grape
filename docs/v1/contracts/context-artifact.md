@@ -26,7 +26,7 @@ Before editing artifact behavior, agents must verify:
 
 ## Canonical And In-Memory Schemas
 
-Canonical V1 artifact schemas live in `docs/v1/SPEC.md` sections 25.1 and 25.2. The current implementation work uses narrower `InMemory*Shape` types so the scaffold cannot masquerade as the final V1 contract.
+Canonical V1 artifact schemas live in `docs/v1/SPEC.md` sections 25.1 and 25.2. The current implementation keeps narrower `InMemory*Shape` types internally so the scaffold cannot masquerade as durable truth, then projects that scaffold into a public V1 `ContextArtifact` JSON shape for CLI/MCP consumers.
 
 ```ts
 interface InMemoryContextRequest {
@@ -123,7 +123,19 @@ interface InMemoryContextArtifactShape {
 }
 ```
 
-Current CLI, artifact JSON, and MCP output map internal scaffold diff rows to the V1 `ContextPackItem` output shape before returning them to agents. The emitted item fields are `id`, `state`, `itemKind`, `itemRef`, optional `sectionId`, `title`, `content`, `contentHash`, `tokenCount`, `pinned`, `safetyCritical`, optional `invalidatesSentItemId`, optional `restoreId`, `inputRefs`, and `warnings`. This closes the public pack-item shape gap without claiming that the stored scaffold artifact has become the final V1 `ContextArtifact` schema.
+Current CLI, artifact JSON, and MCP output map internal scaffold diff rows to the V1 `ContextPackItem` output shape before returning them to agents. The emitted item fields are `id`, `state`, `itemKind`, `itemRef`, optional `sectionId`, `title`, `content`, `contentHash`, `tokenCount`, `pinned`, `safetyCritical`, optional `invalidatesSentItemId`, optional `restoreId`, `inputRefs`, and `warnings`.
+
+Public `.grape/artifacts/ctx_<id>.json` files now include:
+
+- `artifactFormat: "grape.context-pack.v1"`
+- `artifactFormatVersion: 1`
+- `contextArtifact`, a V1 `ContextArtifact` projection with output sections, dependency manifest, compile mode, confidence fields, token fields, and current branch/worktree identity
+- `contextPackItems`
+- `omittedItems`
+- `tokenMetric`
+- `budget`
+
+The internal scaffold artifact is written separately to `.grape/artifacts/ctx_<id>.scaffold.json` for omitted-item restore verification. That sidecar is an implementation detail, not the public agent contract.
 
 ## Minimum Artifact Rule
 
@@ -156,15 +168,15 @@ The active-project-rules section is pinned. It is compiled from trusted `rule_fi
 
 The exact-source-evidence section is a scaffold proof foundation: it reads only already-allowed non-rule source records, verifies the current file/symlink bytes still match the stored source hash, truncates a bounded excerpt, records a deterministic proof ref, stores the excerpt hash as a proof dependency, and includes the exact excerpt in the artifact. This proves that the excerpt exists in the current source input. It does not promote durable claims or prove runtime behavior.
 
-`grape compile --task <text>` now writes this scaffold as inspectable JSON and Markdown under `.grape/artifacts/ctx_<id>.json` and `.grape/artifacts/ctx_<id>.md`, after a basic artifact-level secret scan. These files are useful for CLI review and session-diff testing, but they are still marked as `InMemoryContextArtifactShape` scaffold output. The artifact ID identifies a compile output instance; the artifact hash is the deterministic content identity and excludes `createdAt` and instance IDs.
+`grape compile --task <text>` now writes an inspectable V1 context-pack JSON and Markdown under `.grape/artifacts/ctx_<id>.json` and `.grape/artifacts/ctx_<id>.md`, after a basic artifact-level secret scan. The public JSON contains the V1 `ContextArtifact` projection plus the diffed `ContextPackItem[]`; the internal scaffold sidecar remains available only so restore can verify section hashes against the original scaffold source. The artifact ID identifies a compile output instance; the artifact hash is the deterministic scaffold content identity and excludes `createdAt` and instance IDs.
 
 When `--token-budget` or MCP `tokenBudget` is supplied, the rendered JSON/Markdown includes budget status, estimated pack tokens, required context tokens, warnings, and unsafe reasons. V1 scaffold budget handling evaluates fit only; it does not prune context yet. Required context means pinned, exact/safety-critical, and invalidation items. If required context is larger than the requested budget, output is marked unsafe with `token_budget_below_required_context`.
 
 Risk overlays currently mark the scaffold artifact unsafe with `risk_overlay_exact_spans_not_implemented`, because V1 still needs task-policy-specific exact source-span selection before high-risk compiles can be reported as safe.
 
-`grape artifacts --artifact <id>` and MCP `grape_get_artifact` expose stored scaffold artifact metadata, dependency rows, and repo-relative artifact file refs for inspection. They do not return a final V1 artifact schema and do not promote scaffold summaries to proof.
+`grape artifacts --artifact <id>` and MCP `grape_get_artifact` expose stored artifact metadata, dependency rows, and repo-relative public artifact file refs for inspection. They do not return raw scaffold sidecar bodies and do not promote scaffold summaries to proof.
 
-This is not yet the final V1 artifact product. It does not yet implement the final V1 JSON schema or select exact spans for high-risk overlays.
+This is still a projection from the repository-derived scaffold rather than durable current-valid claim retrieval. It now uses the V1 `ContextArtifact` JSON envelope, but it does not yet select task-policy-specific exact spans for high-risk overlays or promote durable claims.
 
 ## Section Rules
 

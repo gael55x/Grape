@@ -2131,7 +2131,7 @@ function evaluateCompileSafety(artifact: ContextArtifact, policy: CompilerPolicy
     return "cannot_compile_safely";
   }
 
-  if (artifact.tokenBudget < policy.minimumSafetyBudget) {
+  if (artifact.tokenBudget !== undefined && artifact.tokenBudget < policy.minimumSafetyBudget) {
     return "cannot_compile_safely";
   }
 
@@ -2171,7 +2171,11 @@ type ContextInput = {
     | "symbol"
     | "test"
     | "config"
-    | "compression_artifact";
+    | "lockfile"
+    | "compression_artifact"
+    | "repo_snapshot"
+    | "worktree_state"
+    | "session_ledger";
   ref: string;
   hash: string;
   scope: Scope;
@@ -2240,7 +2244,10 @@ type ContextDependency = {
     | "lockfile"
     | "symbol"
     | "test"
-    | "compression_artifact";
+    | "compression_artifact"
+    | "repo_snapshot"
+    | "worktree_state"
+    | "session_ledger";
   ref: string;
   hash: string;
   scope: Scope;
@@ -2344,7 +2351,7 @@ type ContextArtifact = {
   omittedRequired: string[];
   omittedDueToBudget: OmittedContextItem[];
 
-  tokenBudget: number;
+  tokenBudget?: number;
   tokenCost: number;
   contentHash: string;
 

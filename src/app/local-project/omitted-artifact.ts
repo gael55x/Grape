@@ -64,7 +64,7 @@ function requireStoredArtifactRecord(
 }
 
 function readStoredArtifact(artifactDirPath: string, artifactId: string): InMemoryContextArtifactShape {
-  const artifactPath = path.join(artifactDirPath, `${artifactFileBaseName(artifactId)}.json`);
+  const artifactPath = storedScaffoldArtifactPath(artifactDirPath, artifactId);
   if (!existsSync(artifactPath)) {
     throw new Error(`context artifact file is missing for omitted restore: ${artifactId}`);
   }
@@ -74,6 +74,13 @@ function readStoredArtifact(artifactDirPath: string, artifactId: string): InMemo
     throw new Error(`context artifact file has an unsupported shape: ${artifactId}`);
   }
   return parsed.artifact;
+}
+
+function storedScaffoldArtifactPath(artifactDirPath: string, artifactId: string): string {
+  const baseName = artifactFileBaseName(artifactId);
+  const scaffoldPath = path.join(artifactDirPath, `${baseName}.scaffold.json`);
+  if (existsSync(scaffoldPath)) return scaffoldPath;
+  return path.join(artifactDirPath, `${baseName}.json`);
 }
 
 function assertStoredDependenciesMatchArtifact(
