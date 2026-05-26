@@ -1,4 +1,6 @@
+export * from "./artifacts.js";
 export * from "./compile.js";
+export * from "./configured-layout.js";
 export * from "./config.js";
 export * from "./compile-risk.js";
 export * from "./doctor.js";

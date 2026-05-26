@@ -65,6 +65,7 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.equal(result.stderr, "");
   assert.match(result.stdout, /grape init --connect/);
   assert.match(result.stdout, /grape compile --task <text>/);
+  assert.match(result.stdout, /grape artifacts/);
   assert.match(result.stdout, /grape status/);
   assert.match(result.stdout, /grape doctor/);
   assert.match(result.stdout, /grape mcp --print-config/);
@@ -147,6 +148,17 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(restored.status, "restored");
     assert.equal(restored.sectionId, "task");
     assert.match(restored.body, /Task type/);
+
+    const artifactList = runCliJson(repoPath, ["artifacts", "--session", "session-test"]);
+    assert.equal(artifactList.artifacts.length, 2);
+    assert.equal(artifactList.artifacts.some((artifact) => artifact.artifactId === second.artifactId), true);
+
+    const artifactDetail = runCliJson(repoPath, ["artifacts", "--artifact", second.artifactId]);
+    assert.equal(artifactDetail.artifactId, second.artifactId);
+    assert.equal(typeof artifactDetail.rootPath, "string");
+    assert.equal(artifactDetail.dependencies.length > 0, true);
+    assert.match(artifactDetail.artifactFiles.json, /^\.grape\//);
+    assert.equal(path.isAbsolute(artifactDetail.artifactFiles.json), false);
   });
 });
 
@@ -345,7 +357,7 @@ test("cli mcp --print-config emits the V1 stdio connection contract", () => {
       args: ["mcp", "--stdio", "--repo", repoPath],
       cwd: repoPath,
       transport: "stdio",
-      tools: ["grape_get_context", "grape_get_omitted_item", "grape_get_status"],
+      tools: ["grape_get_context", "grape_get_artifact", "grape_get_omitted_item", "grape_get_status"],
       note: "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
     });
   });

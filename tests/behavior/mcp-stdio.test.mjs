@@ -92,10 +92,50 @@ test("mcp stdio lists implemented Grape tools", () => {
     assert.equal(responses[0].result.serverInfo.name, "grape");
     assert.deepEqual(
       responses[1].result.tools.map((tool) => tool.name),
-      ["grape_get_context", "grape_get_omitted_item", "grape_get_status"]
+      ["grape_get_context", "grape_get_artifact", "grape_get_omitted_item", "grape_get_status"]
     );
     const contextTool = responses[1].result.tools.find((tool) => tool.name === "grape_get_context");
     assert.deepEqual(contextTool.inputSchema.anyOf, [{ required: ["sessionId"] }, { required: ["agentSessionId"] }]);
+  });
+});
+
+test("mcp grape_get_artifact returns artifact metadata without absolute root paths", () => {
+  withGitRepo((repoPath) => {
+    const context = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-artifact-session"
+          }
+        }
+      }
+    ])[0].result.structuredContent;
+
+    const artifact = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_artifact",
+          arguments: {
+            artifactId: context.artifactId
+          }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(artifact.isError, false);
+    assert.equal(artifact.structuredContent.artifactId, context.artifactId);
+    assert.equal(Object.hasOwn(artifact.structuredContent, "rootPath"), false);
+    assert.equal(artifact.content[0].text.includes(repoPath), false);
+    assert.equal(artifact.structuredContent.dependencies.length > 0, true);
+    assert.match(artifact.structuredContent.artifactFiles.json, /^\.grape\//);
   });
 });
 

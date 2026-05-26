@@ -236,6 +236,8 @@ export interface StorageRepositories {
   readonly contextArtifacts: {
     insert(record: ContextArtifactRecord): void;
     get(artifactId: string): ContextArtifactRecord | undefined;
+    list(): readonly ContextArtifactRecord[];
+    listBySession(sessionId: string): readonly ContextArtifactRecord[];
   };
   readonly contextDependencies: {
     insert(record: ContextDependencyRecord): void;
@@ -519,6 +521,22 @@ export function createStorageRepositories(database: DatabaseSync): StorageReposi
             .prepare("SELECT * FROM context_artifacts WHERE artifact_id = ?")
             .get(artifactId) as Record<string, unknown> | undefined
         );
+      },
+      list() {
+        return (
+          database
+            .prepare("SELECT * FROM context_artifacts ORDER BY created_at DESC, artifact_id DESC")
+            .all() as Array<Record<string, unknown>>
+        ).map(mapContextArtifactRequired);
+      },
+      listBySession(sessionId) {
+        return (
+          database
+            .prepare(
+              "SELECT * FROM context_artifacts WHERE session_id = ? ORDER BY created_at DESC, artifact_id DESC"
+            )
+            .all(sessionId) as Array<Record<string, unknown>>
+        ).map(mapContextArtifactRequired);
       }
     },
     contextDependencies: {
@@ -772,6 +790,10 @@ function mapContextSession(row: Record<string, unknown> | undefined): ContextSes
 
 function mapContextArtifact(row: Record<string, unknown> | undefined): ContextArtifactRecord | undefined {
   if (!row) return undefined;
+  return mapContextArtifactRequired(row);
+}
+
+function mapContextArtifactRequired(row: Record<string, unknown>): ContextArtifactRecord {
   return {
     artifactId: stringField(row, "artifact_id"),
     sessionId: stringField(row, "session_id"),

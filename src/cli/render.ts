@@ -23,6 +23,7 @@ export function helpText(): string {
     "Usage:",
     "  grape init --connect        Initialize local .grape state and show MCP guidance",
     "  grape compile --task <text> Compile a task context pack",
+    "  grape artifacts             Inspect compiled context artifacts",
     "  grape omitted --session <id> Inspect or restore omitted context",
     "  grape status                Inspect local project/bootstrap state",
     "  grape doctor                Run setup and privacy diagnostics",
@@ -36,6 +37,7 @@ export function helpText(): string {
     "  --risk <a,b>                Add compile risk overlays",
     "  --session <id>              Reuse a context session for diffing",
     "  --token <restore_token>     Restore an omitted context item",
+    "  --artifact <id>             Inspect one context artifact",
     "  --json                      Emit machine-readable JSON"
   ].join("\n");
 }

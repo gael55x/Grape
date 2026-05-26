@@ -49,6 +49,8 @@ The current implementation includes the first CLI setup/debugging slice:
 - `grape help`
 - `grape init --connect`
 - `grape compile --task <text>`
+- `grape artifacts`
+- `grape artifacts --artifact <id>`
 - `grape omitted --session <id>`
 - `grape omitted --session <id> --token <restoreToken>`
 - `grape status`
@@ -60,11 +62,13 @@ The current implementation includes the first CLI setup/debugging slice:
 
 `grape compile --task <text>` auto-bootstraps local `.grape/` state if needed, captures the current Git snapshot, persists source evidence and the lightweight file index, compiles a repository-derived context artifact, runs session diffing, persists the durable context build, and writes inspectable JSON and Markdown under `.grape/artifacts/`. Supported options are `--task-type <type>`, `--risk <overlay,overlay>`, `--session <id>`, `--repo <path>`, and `--json`. Risk overlays can be detected from the task text or supplied explicitly through `--risk`; they currently return exit code `2` with an explicit unsafe reason until exact-span high-risk policies are implemented.
 
+`grape artifacts` lists stored scaffold context artifacts from local SQLite metadata. `grape artifacts --session <id>` filters that list to one context session. `grape artifacts --artifact <id>` returns artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative `.grape/artifacts/` file refs. It is an inspection command; it does not claim the scaffold JSON is the final V1 artifact schema.
+
 `grape omitted --session <id>` lists omitted context rows for a session. `grape omitted --session <id> --token <restoreToken>` validates the token against the session, stored artifact metadata, stored dependency rows, artifact hash, section content hash, dependency manifest, redaction status, current branch, head commit, worktree hash, and source/config/lockfile/rule dependency hashes before returning the omitted body. If any dependency is stale, the command exits `3` and returns stale metadata instead of sending old context.
 
 `grape status` reports initialization, config, database, migration, branch, head commit, and worktree state. `grape doctor` reports setup diagnostics, Node runtime compatibility, migration state, dirty worktree state, and whether `.grape/` is locally excluded from Git.
 
-`grape mcp --print-config` prints the V1 MCP connection shape for stdio clients, including `--repo <root>` and `cwd` guidance so MCP clients do not accidentally launch Grape against their own working directory. `grape mcp --stdio` serves the first MCP adapter with `grape_get_context`, `grape_get_omitted_item`, and `grape_get_status`; the context tool reuses the local compile service and currently returns scaffold context-pack item shapes until the final V1 artifact schema is implemented.
+`grape mcp --print-config` prints the V1 MCP connection shape for stdio clients, including `--repo <root>` and `cwd` guidance so MCP clients do not accidentally launch Grape against their own working directory. `grape mcp --stdio` serves the first MCP adapter with `grape_get_context`, `grape_get_artifact`, `grape_get_omitted_item`, and `grape_get_status`; the context tool reuses the local compile service and currently returns scaffold context-pack item shapes until the final V1 artifact schema is implemented.
 
 All implemented commands support `--repo <path>` where relevant and `--json` for machine-readable output. Unsupported options fail with a usage error instead of being silently ignored; for example, `grape doctor --privacy` is documented V1 scope but is not accepted until the privacy-specific doctor workflow exists.
 

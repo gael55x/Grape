@@ -1,0 +1,72 @@
+import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
+import { errorMessage, write, writeError, writeJson } from "../render.js";
+import { exitCodes } from "../exit-codes.js";
+
+export async function runArtifacts(parsed: ParsedArgs): Promise<number> {
+  const flag = unsupportedFlag(parsed, new Set(["--json", "--repo", "--session", "--artifact"]));
+  if (flag) {
+    writeError(`Unsupported option for grape ${parsed.command}: ${flag}`);
+    return exitCodes.usage;
+  }
+
+  try {
+    const artifactId = parsed.values.get("--artifact");
+    const { getLocalArtifact, listLocalArtifacts } = await import("../../app/local-project/artifacts.js");
+
+    if (artifactId) {
+      const result = getLocalArtifact({ rootPath: repoPath(parsed), artifactId });
+      if (parsed.flags.has("--json")) {
+        writeJson(result);
+        return exitCodes.ok;
+      }
+      write([
+        `Artifact: ${result.artifactId}`,
+        "",
+        `Session: ${result.sessionId}`,
+        `Task type: ${result.taskType}`,
+        `Created: ${result.createdAt}`,
+        `Artifact hash: ${result.artifactHash}`,
+        `Dependency manifest: ${result.dependencyManifestHash}`,
+        `Warnings: ${result.warnings.length === 0 ? "none" : result.warnings.join(", ")}`,
+        `Unsafe reasons: ${result.unsafeReasons.length === 0 ? "none" : result.unsafeReasons.join(", ")}`,
+        "",
+        "Files:",
+        `  JSON: ${result.artifactFiles.json} (${result.artifactFiles.jsonExists ? "present" : "missing"})`,
+        `  Markdown: ${result.artifactFiles.markdown} (${result.artifactFiles.markdownExists ? "present" : "missing"})`,
+        "",
+        `Dependencies: ${result.dependencies.length}`,
+        ...result.dependencies.map((dependency) => `  ${dependency.kind}: ${dependency.ref} @ ${dependency.hash}`)
+      ].join("\n"));
+      return exitCodes.ok;
+    }
+
+    const result = listLocalArtifacts({
+      rootPath: repoPath(parsed),
+      sessionId: parsed.values.get("--session")
+    });
+    if (parsed.flags.has("--json")) {
+      writeJson(result);
+      return exitCodes.ok;
+    }
+
+    write([
+      `Context artifacts: ${result.artifacts.length}`,
+      "",
+      ...result.artifacts.map(
+        (artifact) =>
+          `${artifact.artifactId}  ${artifact.sessionId}  ${artifact.taskType}  ${artifact.createdAt}`
+      )
+    ].join("\n"));
+    return exitCodes.ok;
+  } catch (error) {
+    writeError(`grape artifacts failed: ${errorMessage(error)}`);
+    return artifactsErrorExitCode(error);
+  }
+}
+
+function artifactsErrorExitCode(error: unknown): number {
+  const message = errorMessage(error);
+  if (message.includes("was not found")) return exitCodes.usage;
+  if (message.includes("config root path does not match")) return exitCodes.stale;
+  return exitCodes.storage;
+}

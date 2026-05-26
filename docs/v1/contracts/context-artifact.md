@@ -136,7 +136,7 @@ A final V1 context artifact is invalid unless it is:
 - invalidatable
 - redaction-scanned
 
-An in-memory artifact shape is not a final V1 artifact. It is valid only as a scaffold when its name remains `InMemoryContextArtifactShape` and its output is not persisted or exposed as MCP/CLI product output.
+An in-memory artifact shape is not a final V1 artifact. It is valid only as a scaffold when its name remains `InMemoryContextArtifactShape`, every exposed surface labels it as scaffold output, and docs do not claim it is the final V1 artifact schema.
 
 ## Current Repository-Derived Compiler Foundation
 
@@ -152,7 +152,9 @@ It emits task, repository-state, allowed-source-manifest, file-relationship, and
 
 Risk overlays currently mark the scaffold artifact unsafe with `risk_overlay_exact_spans_not_implemented`, because V1 still needs exact source-span selection before high-risk compiles can be reported as safe.
 
-This is not yet the final V1 artifact product. It does not yet implement the final V1 JSON schema, select exact spans for high-risk overlays, or expose MCP context retrieval.
+`grape artifacts --artifact <id>` and MCP `grape_get_artifact` expose stored scaffold artifact metadata, dependency rows, and repo-relative artifact file refs for inspection. They do not return a final V1 artifact schema and do not promote scaffold summaries to proof.
+
+This is not yet the final V1 artifact product. It does not yet implement the final V1 JSON schema or select exact spans for high-risk overlays.
 
 ## Section Rules
 
