@@ -40,3 +40,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added lightweight file/symbol relationship indexing for allowed snapshot files during local bootstrap.
 - Added a repository-derived context artifact compiler foundation from persisted snapshot, source, and relationship-index inputs.
 - Added `grape compile --task <text>` to auto-bootstrap, compile, diff, persist, and write inspectable local context artifact files.
+- Added the first MCP stdio server with `grape_get_context` and `grape_get_status` backed by the local compile/status app services, session-scoped context identity, `--repo` launch support, and explicit partial/unsafe handling for unsupported or risky context requests.

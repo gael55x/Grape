@@ -166,7 +166,7 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
       "MCP connection contract:",
       `  command: ${result.mcp.command}`,
       `  args: ${result.mcp.args.join(" ")}`,
-      `  status: ${result.mcp.status}; server pending`,
+      `  status: ${result.mcp.status}`,
       "",
       "Next:",
       "  grape status",
@@ -240,22 +240,20 @@ async function runDoctor(parsed: ParsedArgs): Promise<number> {
 }
 
 async function runMcp(parsed: ParsedArgs): Promise<number> {
-  const usageError = rejectUnsupportedFlags(parsed, new Set(["--print-config", "--stdio"]));
+  const usageError = rejectUnsupportedFlags(parsed, new Set(["--print-config", "--stdio", "--repo"]));
   if (usageError) return usageError;
 
   if (parsed.flags.has("--print-config")) {
     const { mcpConnectionGuide } = await import("../app/local-project/mcp-guide.js");
     writeJson({
-      grapeMcp: mcpConnectionGuide()
+      grapeMcp: mcpConnectionGuide(repoPath(parsed))
     });
     return exitCodes.ok;
   }
 
   if (parsed.flags.has("--stdio")) {
-    writeError(
-      "The MCP stdio server is not implemented in this slice. Use grape mcp --print-config for the V1 connection contract."
-    );
-    return exitCodes.usage;
+    const { runStdioMcpServer } = await import("../mcp/index.js");
+    return runStdioMcpServer({ rootPath: repoPath(parsed) });
   }
 
   write([
@@ -263,9 +261,11 @@ async function runMcp(parsed: ParsedArgs): Promise<number> {
     "",
     "Available now:",
     "  grape mcp --print-config",
+    "  grape mcp --stdio",
     "",
-    "Planned V1 transport:",
-    "  grape mcp --stdio"
+    "Tools:",
+    "  grape_get_context",
+    "  grape_get_status"
   ].join("\n"));
   return exitCodes.ok;
 }

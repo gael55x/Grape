@@ -47,23 +47,34 @@ Restricted write tools:
 
 ## Current Implementation Status
 
-The first setup slice implements `grape mcp --print-config` as a CLI-delivered MCP connection contract:
+The current implementation includes the first stdio MCP server:
 
 ```json
 {
   "grapeMcp": {
-    "status": "contract_only",
-    "implemented": false,
+    "status": "implemented",
+    "implemented": true,
     "serverName": "grape",
     "command": "grape",
-    "args": ["mcp", "--stdio"],
+    "args": ["mcp", "--stdio", "--repo", "<repo-root>"],
+    "cwd": "<repo-root>",
     "transport": "stdio",
-    "note": "The stdio MCP server is not implemented in the current setup slice."
+    "tools": ["grape_get_context", "grape_get_status"],
+    "note": "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
   }
 }
 ```
 
-This is deliberately not a drop-in MCP client config yet. The stdio MCP server and `grape_get_context` tool are not implemented yet. The CLI `grape compile --task <text>` path now exercises the app-level compile, durable diff, and artifact rendering service that `grape_get_context` should call later instead of duplicating storage, trust, retrieval, or compiler behavior.
+`grape mcp --stdio` implements framed JSON-RPC stdio handling for `initialize`, `tools/list`, `tools/call`, and `ping`. The implemented Grape tools are:
+
+- `grape_get_context`
+- `grape_get_status`
+
+`grape_get_context` calls the same local-project compile service used by `grape compile --task <text>`. It auto-bootstraps local `.grape/` state when needed, captures the current repo snapshot, persists source/index inputs, compiles a repository-derived scaffold artifact, persists session diff rows, writes JSON/Markdown artifacts under `.grape/artifacts/`, and returns structured context-pack items plus rendered Markdown.
+
+Current limitation: the returned `contextPackItems` are the scaffold `InMemoryContextPackItemShape`, not the final V1 `ContextPackItem` schema. The current implementation requires `sessionId` or `agentSessionId` so session-scoped diffing cannot collapse across independent agents. Seed `files`, `symbols`, `tests`, non-local `environmentScope`, `agentName`, `agentSessionId`, and `tokenBudget` are accepted for contract compatibility; unsupported retrieval/budget behavior produces explicit warnings and `compileMode: "partial_with_risk"` unless a stronger unsafe condition applies. Seed names do participate in risk-overlay detection, but they do not yet narrow retrieval. Detected risk overlays return `compileMode: "cannot_compile_safely"` until exact-span high-risk policies are implemented. Artifact file refs returned over MCP are repo-relative paths, not absolute local paths.
+
+The remaining V1 read tools and restricted write tools are still pending. They must reuse app services and storage/trust modules rather than embedding business logic in the MCP adapter.
 
 ## Read Tool Contract
 
@@ -108,11 +119,11 @@ interface GrapeGetContextOutput {
 Rules:
 
 - `contextPackItems` is canonical. Markdown is only a rendering.
-- `compileMode` carries `safe`, `partial_with_risk`, or `unsafe_compile` semantics from the compiler.
-- `unsafe_compile` must not return unsafe context as if it were safe.
+- `compileMode` carries `safe_minimum`, `partial_with_risk`, `broad_context_required`, or `cannot_compile_safely` semantics from the compiler.
+- `cannot_compile_safely` must not return unsafe context as if it were safe.
 - `partial_with_risk` must include explicit warnings and missing-context reasons.
 - Read tools must never silently read ignored/private files.
-- This is the final V1 MCP contract, not part of the current In-Memory Context Loop implementation goal.
+- The final V1 contract uses `ContextPackItem[]`; the current implementation returns scaffold pack item shapes and documents that limitation in the output warnings/status matrix.
 
 ## Restricted Write Contracts
 

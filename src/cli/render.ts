@@ -26,6 +26,7 @@ export function helpText(): string {
     "  grape status                Inspect local project/bootstrap state",
     "  grape doctor                Run setup and privacy diagnostics",
     "  grape mcp --print-config    Print MCP client configuration",
+    "  grape mcp --stdio           Serve MCP tools over stdio",
     "  grape help                  Show this help",
     "",
     "Options:",

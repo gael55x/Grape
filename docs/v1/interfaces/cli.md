@@ -52,14 +52,15 @@ The current implementation includes the first CLI setup/debugging slice:
 - `grape status`
 - `grape doctor`
 - `grape mcp --print-config`
+- `grape mcp --stdio`
 
 `grape init --connect` creates the local `.grape/` layout, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures and persists the first Git repo snapshot, persists allowed source records plus privacy-safe source rejections, persists lightweight file/symbol relationship index rows, and adds `.grape/` to `.git/info/exclude` so local Grape state is not committed.
 
-`grape compile --task <text>` auto-bootstraps local `.grape/` state if needed, captures the current Git snapshot, persists source evidence and the lightweight file index, compiles a repository-derived context artifact, runs session diffing, persists the durable context build, and writes inspectable JSON and Markdown under `.grape/artifacts/`. Supported options are `--task-type <type>`, `--risk <overlay,overlay>`, `--session <id>`, `--repo <path>`, and `--json`. Risk overlays currently return exit code `2` with an explicit unsafe reason until exact-span high-risk policies are implemented.
+`grape compile --task <text>` auto-bootstraps local `.grape/` state if needed, captures the current Git snapshot, persists source evidence and the lightweight file index, compiles a repository-derived context artifact, runs session diffing, persists the durable context build, and writes inspectable JSON and Markdown under `.grape/artifacts/`. Supported options are `--task-type <type>`, `--risk <overlay,overlay>`, `--session <id>`, `--repo <path>`, and `--json`. Risk overlays can be detected from the task text or supplied explicitly through `--risk`; they currently return exit code `2` with an explicit unsafe reason until exact-span high-risk policies are implemented.
 
 `grape status` reports initialization, config, database, migration, branch, head commit, and worktree state. `grape doctor` reports setup diagnostics, Node runtime compatibility, migration state, dirty worktree state, and whether `.grape/` is locally excluded from Git.
 
-`grape mcp --print-config` prints the V1 MCP connection shape for stdio clients. The actual `grape mcp --stdio` server remains pending until the product context compile path is implemented.
+`grape mcp --print-config` prints the V1 MCP connection shape for stdio clients, including `--repo <root>` and `cwd` guidance so MCP clients do not accidentally launch Grape against their own working directory. `grape mcp --stdio` serves the first MCP adapter with `grape_get_context` and `grape_get_status`; the context tool reuses the local compile service and currently returns scaffold context-pack item shapes until the final V1 artifact schema is implemented.
 
 All implemented commands support `--repo <path>` where relevant and `--json` for machine-readable output. Unsupported options fail with a usage error instead of being silently ignored; for example, `grape doctor --privacy` is documented V1 scope but is not accepted until the privacy-specific doctor workflow exists.
 

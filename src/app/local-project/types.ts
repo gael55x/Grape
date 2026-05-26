@@ -1,6 +1,6 @@
 import type { LocalProjectConfig } from "./config.js";
 import type { InMemoryTokenSavingsMetric } from "../../core/diff/index.js";
-import type { InMemoryContextPackItemShape } from "../../shared/index.js";
+import type { InMemoryContextPackItemShape, RiskOverlay } from "../../shared/index.js";
 
 export type DiagnosticStatus = "pass" | "warn" | "fail";
 
@@ -63,12 +63,14 @@ export interface LocalProjectDoctor {
 }
 
 export interface McpConnectionGuide {
-  readonly status: "contract_only";
-  readonly implemented: false;
+  readonly status: "implemented";
+  readonly implemented: true;
   readonly serverName: "grape";
   readonly command: "grape";
-  readonly args: readonly ["mcp", "--stdio"];
+  readonly args: readonly string[];
+  readonly cwd: string;
   readonly transport: "stdio";
+  readonly tools: readonly ["grape_get_context", "grape_get_status"];
   readonly note: string;
 }
 
@@ -77,6 +79,7 @@ export interface CompileLocalContextInput {
   readonly task: string;
   readonly taskType?: string;
   readonly riskOverlays?: string;
+  readonly riskSeedRefs?: readonly string[];
   readonly sessionId?: string;
   readonly now?: string;
   readonly gitBinary?: string;
@@ -89,6 +92,7 @@ export interface CompileLocalContextResult {
   readonly repoId: string;
   readonly sessionId: string;
   readonly taskId: string;
+  readonly riskOverlays: readonly RiskOverlay[];
   readonly artifactId: string;
   readonly artifactHash: string;
   readonly dependencyManifestHash: string;

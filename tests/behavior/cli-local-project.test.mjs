@@ -68,6 +68,7 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.match(result.stdout, /grape status/);
   assert.match(result.stdout, /grape doctor/);
   assert.match(result.stdout, /grape mcp --print-config/);
+  assert.match(result.stdout, /grape mcp --stdio/);
 });
 
 test("cli init --connect bootstraps local .grape state and keeps it out of git status", () => {
@@ -146,14 +147,13 @@ test("cli compile marks risk overlays unsafe until exact spans exist", () => {
       "compile",
       "--task",
       "Review authentication changes",
-      "--risk",
-      "security",
       "--json"
     ]);
 
     assert.equal(result.status, 2, result.stderr);
     assert.equal(result.stderr, "");
     const parsed = JSON.parse(result.stdout);
+    assert.deepEqual(parsed.riskOverlays, ["auth"]);
     assert.deepEqual(parsed.unsafeReasons, ["risk_overlay_exact_spans_not_implemented"]);
     assert.ok(parsed.warnings.includes("risk_overlay_requires_exact_context"));
   });
@@ -227,21 +227,23 @@ function setContextSessionLocked(repoPath, sessionId) {
 }
 
 test("cli mcp --print-config emits the V1 stdio connection contract", () => {
-  const result = spawnSync(process.execPath, [cliPath, "mcp", "--print-config"], {
-    encoding: "utf8"
-  });
+  withGitRepo((repoPath) => {
+    const result = runCli(repoPath, ["mcp", "--print-config", "--repo", repoPath]);
 
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(result.stderr, "");
-  const parsed = JSON.parse(result.stdout);
-  assert.deepEqual(parsed.grapeMcp, {
-    status: "contract_only",
-    implemented: false,
-    serverName: "grape",
-    command: "grape",
-    args: ["mcp", "--stdio"],
-    transport: "stdio",
-    note: "The stdio MCP server is not implemented in the current setup slice."
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stderr, "");
+    const parsed = JSON.parse(result.stdout);
+    assert.deepEqual(parsed.grapeMcp, {
+      status: "implemented",
+      implemented: true,
+      serverName: "grape",
+      command: "grape",
+      args: ["mcp", "--stdio", "--repo", repoPath],
+      cwd: repoPath,
+      transport: "stdio",
+      tools: ["grape_get_context", "grape_get_status"],
+      note: "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
+    });
   });
 });
 

@@ -182,3 +182,10 @@ Keep entries simple:
 - Summary: added a repository-derived context artifact compiler and CLI fallback path. `grape compile --task <text>` now auto-bootstraps local state, captures/persists the current repo snapshot, compiles from source evidence and lightweight relationship indexes, prepares artifact files before durable send ledgers are committed, persists session-scoped diff rows, writes scaffold JSON/Markdown artifacts under `.grape/artifacts/`, and blocks obvious raw secrets before artifact output.
 - Checks run: `npm run typecheck`; focused behavior tests; `npm run check`; `npm run build`.
 - Risks/follow-ups: the JSON/Markdown files are still scaffold `InMemoryContextArtifactShape` outputs, not final V1 artifact schema. MCP stdio, exact-span high-risk policies, stronger secret/redaction scanning, restore lookup, and broader inspection commands remain required. Risk overlays intentionally return unsafe output until exact spans exist.
+
+### 2026-05-26 - MCP Get Context Foundation
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added the first MCP stdio adapter with framed JSON-RPC handling, `initialize`, `tools/list`, `tools/call`, `grape_get_context`, and `grape_get_status`. The MCP adapter is thin: `grape_get_context` calls the local compile service and returns structured scaffold context-pack items plus Markdown, while `grape_get_status` calls the local status service.
+- Checks run: `npm run typecheck`; `npm run build:test`; focused CLI/MCP behavior tests.
+- Risks/follow-ups: this is not the complete V1 MCP surface. The current `grape_get_context` output still exposes scaffold `InMemoryContextPackItemShape` items, requires `sessionId` or `agentSessionId` to preserve session-scoped diffing, uses seed file/symbol/test refs for risk detection but not retrieval narrowing, downgrades ignored seed/budget behavior to `partial_with_risk`, and still needs final ContextArtifact/ContextPackItem schemas, restore lookup, and restricted write tools.
