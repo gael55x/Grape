@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { runArtifacts } from "./commands/artifacts.js";
+import { runClaims } from "./commands/claims.js";
 import { runCompile } from "./commands/compile.js";
 import { runOmitted } from "./commands/omitted.js";
 import { runProofs } from "./commands/proofs.js";
@@ -47,6 +48,8 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
       return runCompile(parsed);
     case "artifacts":
       return runArtifacts(parsed);
+    case "claims":
+      return runClaims(parsed);
     case "status":
       return runStatus(parsed);
     case "doctor":
@@ -203,6 +206,7 @@ async function runMcp(parsed: ParsedArgs): Promise<number> {
     "Tools:",
     "  grape_get_context",
     "  grape_get_artifact",
+    "  grape_get_claims",
     "  grape_get_proofs",
     "  grape_get_omitted_item",
     "  grape_get_status"

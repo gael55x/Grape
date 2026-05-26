@@ -1,4 +1,5 @@
 import { runGrapeGetArtifactTool } from "./artifact.js";
+import { runGrapeGetClaimsTool } from "./claims.js";
 import { runGrapeGetContextTool } from "./get-context.js";
 import { runGrapeGetOmittedItemTool } from "./omitted.js";
 import { runGrapeGetProofsTool } from "./proofs.js";
@@ -68,6 +69,17 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
         }
       },
       {
+        name: "grape_get_claims",
+        description: "Inspect current-valid durable claims without returning raw source bodies.",
+        inputSchema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            activeOnly: { type: "boolean" }
+          }
+        }
+      },
+      {
         name: "grape_get_proofs",
         description: "Inspect persisted exact-source proof rows without returning proof excerpts or raw source text.",
         inputSchema: {
@@ -125,6 +137,8 @@ export function callMcpTool(params: ToolCallParams, rootPath: string): McpToolRe
       }
       case "grape_get_artifact":
         return toolResult(runGrapeGetArtifactTool(params.arguments ?? {}, rootPath), false);
+      case "grape_get_claims":
+        return toolResult(runGrapeGetClaimsTool(params.arguments ?? {}, rootPath), false);
       case "grape_get_proofs":
         return toolResult(runGrapeGetProofsTool(params.arguments ?? {}, rootPath), false);
       case "grape_get_omitted_item": {

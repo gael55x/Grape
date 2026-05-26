@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { buildDurableContext } from "../durable-context-build.js";
 import { persistGitRepoSnapshot } from "../persist-repo-snapshot.js";
+import { persistSourceExcerptClaims } from "../persist-source-claims.js";
 import {
   compileRepositoryContextArtifact,
   evaluateContextPackBudget,
@@ -10,6 +11,7 @@ import {
 import { createGitRepoSnapshot } from "../../core/git/index.js";
 import { assertArtifactTextHasNoSecrets } from "../../core/security/index.js";
 import {
+  createClaimStorageRepositories,
   createEvidenceStorageRepositories,
   createIndexingStorageRepositories,
   createProofStorageRepositories,
@@ -73,6 +75,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
       const evidenceRepositories = createEvidenceStorageRepositories(database);
       const indexingRepositories = createIndexingStorageRepositories(database);
       const proofRepositories = createProofStorageRepositories(database);
+      const claimRepositories = createClaimStorageRepositories(database);
       const snapshotResult = persistGitRepoSnapshot({
         database,
         repositories,
@@ -120,6 +123,16 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         rootPath: snapshot.rootPath,
         sources,
         taskRetrieval,
+        now
+      });
+      persistSourceExcerptClaims({
+        repositories: claimRepositories,
+        proofRepositories,
+        sources,
+        sourceExcerpts: proofs.sourceExcerpts,
+        branch: snapshotResult.snapshot.branch,
+        commit: snapshotResult.snapshot.commit,
+        worktreeHash: snapshotResult.snapshot.worktreeHash,
         now
       });
       const artifact = compileRepositoryContextArtifact({

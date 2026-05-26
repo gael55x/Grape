@@ -294,3 +294,10 @@ Keep entries simple:
 - Summary: added compiler-owned high-risk policy evaluation. Risk overlays now require task-selected proof-backed exact source/config/rule excerpts and fail closed with `risk_overlay_missing_exact_context` when retrieval cannot select one.
 - Checks run: focused compiler/CLI/MCP behavior tests before full verification.
 - Risks/follow-ups: this is still source-selection over scaffold evidence, not durable current-valid claim retrieval or full exact-span ranking.
+
+### 2026-05-26 - Narrow Source-Excerpt Claim Foundation
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: local compile now creates claim candidates from validated exact-source proof rows, promotes only the narrow `repository_source_excerpt_exists` claim type, links proof rows to accepted claims, and exposes active claims through CLI `grape claims --active` and MCP `grape_get_claims`.
+- Checks run: focused source-claim, CLI, and MCP behavior tests before full verification.
+- Risks/follow-ups: durable claims are inspection-only for now and are not yet used as the primary artifact retrieval input. Broader claim types, contradiction/supersession, and artifact sections over current-valid claims remain pending.

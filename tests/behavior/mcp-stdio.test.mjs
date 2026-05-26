@@ -110,6 +110,7 @@ test("mcp stdio lists implemented Grape tools", () => {
       [
         "grape_get_context",
         "grape_get_artifact",
+        "grape_get_claims",
         "grape_get_proofs",
         "grape_get_omitted_item",
         "grape_get_status"
@@ -119,6 +120,48 @@ test("mcp stdio lists implemented Grape tools", () => {
     assert.deepEqual(contextTool.inputSchema.anyOf, [{ required: ["sessionId"] }, { required: ["agentSessionId"] }]);
     assert.equal(contextTool.inputSchema.properties.tokenBudget.type, "integer");
     assert.equal(contextTool.inputSchema.properties.tokenBudget.minimum, 1);
+  });
+});
+
+test("mcp grape_get_claims returns active claims without root paths or raw excerpts", () => {
+  withGitRepo((repoPath) => {
+    runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-claims-session"
+          }
+        }
+      }
+    ]);
+
+    const claims = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "grape_get_claims",
+          arguments: { activeOnly: true }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(claims.isError, false);
+    assert.equal(Object.hasOwn(claims.structuredContent, "rootPath"), false);
+    assert.equal(claims.content[0].text.includes(repoPath), false);
+    assert.equal(claims.structuredContent.claims.length > 0, true);
+    const claim = claims.structuredContent.claims[0];
+    assert.equal(claim.claimType, "repository_source_excerpt_exists");
+    assert.equal(claim.verificationStatus, "verified");
+    assert.equal(claim.proofRefs.length > 0, true);
+    assert.equal("excerpt" in claim, false);
+    assert.equal("body" in claim, false);
   });
 });
 

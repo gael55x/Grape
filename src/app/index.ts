@@ -4,3 +4,4 @@ export * from "./persist-file-index.js";
 export * from "./persist-repo-snapshot.js";
 export * from "./persist-snapshot-evidence.js";
 export * from "./persist-source-proofs.js";
+export * from "./persist-source-claims.js";

@@ -1,4 +1,5 @@
 export * from "./artifacts.js";
+export * from "./claims.js";
 export * from "./compile.js";
 export * from "./configured-layout.js";
 export * from "./config.js";
