@@ -444,6 +444,33 @@ test("cli omitted rejects stale restore tokens after repository changes", () => 
   });
 });
 
+test("cli omitted rejects restore tokens when proof dependencies changed", () => {
+  withGitRepo((repoPath) => {
+    const { artifactScaffoldJsonPath, restoreToken } = createRestorableOmission(
+      repoPath,
+      "stale-proof-restore-session",
+      "exact-source-evidence"
+    );
+    const proofId = proofIdForSection(artifactScaffoldJsonPath, "exact-source-evidence");
+    tamperProofExcerptHash(repoPath, proofId);
+
+    const restore = runCli(repoPath, [
+      "omitted",
+      "--session",
+      "stale-proof-restore-session",
+      "--token",
+      restoreToken,
+      "--json"
+    ]);
+
+    assert.equal(restore.status, 3, restore.stderr);
+    const parsed = JSON.parse(restore.stdout);
+    assert.equal(parsed.status, "stale");
+    assert.equal(parsed.reason, `proof_hash_changed:${proofId}`);
+    assert.ok(parsed.warnings.includes("restore_token_rejects_stale_dependency"));
+  });
+});
+
 test("cli omitted rejects tampered artifact body before restoring context", () => {
   withGitRepo((repoPath) => {
     const { artifactScaffoldJsonPath, restoreToken } = createRestorableOmission(repoPath, "tamper-restore-session");
@@ -574,7 +601,7 @@ function localSessionEvents(repoPath, sessionId) {
   }
 }
 
-function createRestorableOmission(repoPath, sessionId) {
+function createRestorableOmission(repoPath, sessionId, sectionId) {
   runCliJson(repoPath, [
     "compile",
     "--task",
@@ -589,13 +616,34 @@ function createRestorableOmission(repoPath, sessionId) {
     "--session",
     sessionId
   ]);
-  const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE")?.restoreId;
+  const restoreToken = second.contextPackItems.find(
+    (item) => item.state === "RESTORE_AVAILABLE" && (!sectionId || item.sectionId === sectionId)
+  )?.restoreId;
   assert.ok(restoreToken);
   return {
     artifactJsonPath: second.artifactJsonPath,
     artifactScaffoldJsonPath: second.artifactJsonPath.replace(/\.json$/, ".scaffold.json"),
     restoreToken
   };
+}
+
+function proofIdForSection(artifactScaffoldJsonPath, sectionId) {
+  const artifactPack = JSON.parse(readFileSync(artifactScaffoldJsonPath, "utf8"));
+  const proofId = artifactPack.artifact.sections.find((section) => section.id === sectionId)?.proofRefs?.[0];
+  assert.ok(proofId);
+  return proofId;
+}
+
+function tamperProofExcerptHash(repoPath, proofId) {
+  const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
+  try {
+    const result = database
+      .prepare("UPDATE proofs SET excerpt_hash = ? WHERE proof_id = ?")
+      .run("0".repeat(64), proofId);
+    assert.equal(result.changes, 1);
+  } finally {
+    database.close();
+  }
 }
 
 function updateArtifactJson(artifactJsonPath, mutate) {

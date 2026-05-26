@@ -71,6 +71,7 @@ Artifact and diff:
 - `pinned_context_is_resent`
 - `omit_unchanged_requires_restore_or_safe_reason`
 - `restore_token_rejects_stale_dependency`
+- `restore_token_rejects_stale_proof_dependency`
 
 Compression:
 

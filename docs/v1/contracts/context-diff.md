@@ -135,7 +135,7 @@ Current implementation note: the durable diff service still uses scaffold in-mem
 1. Diff engine omits an unchanged item only after writing an `OmittedContextItem`.
 2. MCP or CLI returns `RESTORE_AVAILABLE` with `restoreToken` when applicable.
 3. `grape omitted --session <id>` lists omitted rows for a session.
-4. `grape omitted --session <id> --token <restoreToken>` and `grape_get_omitted_item` validate session ID, token, stored artifact identity, artifact hash, stored dependency rows, section content hash, dependency manifest, branch, head commit, worktree hash, source/config/lockfile/rule dependency hashes, and redaction status.
+4. `grape omitted --session <id> --token <restoreToken>` and `grape_get_omitted_item` validate session ID, token, stored artifact identity, artifact hash, stored dependency rows, section content hash, dependency manifest, branch, head commit, worktree hash, source/config/lockfile/rule dependency hashes, proof dependency rows/hashes, and redaction status.
 5. If dependencies changed, restore returns stale metadata instead of stale content.
 
 ## Required Tests

@@ -1,8 +1,12 @@
 import { createGitRepoSnapshot } from "../../core/git/index.js";
 import { assertArtifactTextHasNoSecrets } from "../../core/security/index.js";
-import { createStorageRepositories } from "../../core/storage/index.js";
+import {
+  createProofStorageRepositories,
+  createStorageRepositories
+} from "../../core/storage/index.js";
 import type {
   OmittedContextItemRecord,
+  ProofRecord,
   StorageRepositories
 } from "../../core/storage/index.js";
 import type {
@@ -58,13 +62,19 @@ export function restoreOmittedContext(input: RestoreOmittedContextInput): Restor
     now: () => now,
     operation(database): RestoreOmittedContextResult {
       const repositories = createStorageRepositories(database);
+      const proofRepositories = createProofStorageRepositories(database);
       const omitted = requireOmittedItem(repositories, input.sessionId, input.restoreToken);
       const { artifact, section } = loadVerifiedOmittedArtifact({
         artifactDirPath: layout.artifactDirPath,
         repositories,
         omitted
       });
-      const staleReason = dependencyStaleReason(artifact, omitted, currentSnapshot);
+      const staleReason = dependencyStaleReason(
+        artifact,
+        omitted,
+        currentSnapshot,
+        proofRepositories.proofs
+      );
 
       if (staleReason) {
         return {
@@ -111,7 +121,10 @@ function requireOmittedItem(
 function dependencyStaleReason(
   artifact: InMemoryContextArtifactShape,
   omitted: OmittedContextItemRecord,
-  currentSnapshot: ReturnType<typeof createGitRepoSnapshot>
+  currentSnapshot: ReturnType<typeof createGitRepoSnapshot>,
+  proofRepository: {
+    readonly get: (proofId: string) => ProofRecord | undefined;
+  }
 ): string | undefined {
   if (artifact.input.branch !== currentSnapshot.branch) return "branch_changed";
   if (artifact.input.commit !== currentSnapshot.commit) return "head_commit_changed";
@@ -122,8 +135,34 @@ function dependencyStaleReason(
   for (const dependency of artifact.dependencyManifest.dependencies) {
     const stale = sourceDependencyStaleReason(dependency, currentFiles);
     if (stale) return stale;
+    const proofStale = proofDependencyStaleReason(dependency, proofRepository);
+    if (proofStale) return proofStale;
   }
   return undefined;
+}
+
+function proofDependencyStaleReason(
+  dependency: InMemoryContextDependencyShape,
+  proofRepository: {
+    readonly get: (proofId: string) => ProofRecord | undefined;
+  }
+): string | undefined {
+  if (dependency.kind !== "proof") return undefined;
+
+  const proof = proofRepository.get(dependency.ref);
+  if (!proof) return `proof_missing:${dependency.ref}`;
+  if (proof.excerptHash !== dependency.hash) return `proof_hash_changed:${dependency.ref}`;
+
+  const expectedSourceHash = proofSourceHash(dependency);
+  if (expectedSourceHash && proof.sourceHash !== expectedSourceHash) {
+    return `proof_source_hash_changed:${dependency.ref}`;
+  }
+  return undefined;
+}
+
+function proofSourceHash(dependency: InMemoryContextDependencyShape): string | undefined {
+  const value = dependency.scope.sourceHash;
+  return typeof value === "string" ? value : undefined;
 }
 
 function sourceDependencyStaleReason(
