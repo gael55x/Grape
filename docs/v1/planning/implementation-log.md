@@ -280,3 +280,10 @@ Keep entries simple:
 - Summary: added `grape proofs`, `grape proofs --proof <id>`, `grape proofs --source <sourceId>`, and MCP `grape_get_proofs` so persisted proof rows are inspectable without raw excerpts or absolute root paths. The service is app-owned; CLI and MCP adapters only parse and render.
 - Checks run: focused CLI/MCP behavior tests before full verification.
 - Risks/follow-ups: this inspects claimless scaffold proof rows. Claim-linked `grape proofs <claim_id>` remains pending until durable claims exist.
+
+### 2026-05-26 - Proof-Aware Omitted Restore Validation
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: omitted-context restore now validates proof dependencies against persisted proof rows before returning omitted bodies. Missing proof rows, changed excerpt hashes, and changed source hashes make restore return stale metadata.
+- Checks run: focused CLI omitted-restore regression test before full verification.
+- Risks/follow-ups: proof invalidation is enforced at restore time for scaffold artifacts. Durable claim stale-state propagation remains pending.
