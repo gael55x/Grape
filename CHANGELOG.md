@@ -49,3 +49,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added pinned active project rules from trusted rule files to repository-derived scaffold context artifacts.
 - Added safe FTS5 lexical index persistence for allowed source records as an indexing foundation.
 - Updated public context pack items returned by CLI, artifact JSON, and MCP to use the V1 `ContextPackItem` output shape.
+- Added task source retrieval for scaffold context compilation, using safe FTS rows, symbol/path matches, and MCP seed refs to prioritize exact source evidence.

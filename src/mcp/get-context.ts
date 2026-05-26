@@ -60,6 +60,9 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     task: parsed.query,
     taskType: parsed.taskType,
     riskSeedRefs: [...(parsed.files ?? []), ...(parsed.symbols ?? []), ...(parsed.tests ?? [])],
+    seedFiles: parsed.files,
+    seedSymbols: parsed.symbols,
+    seedTests: parsed.tests,
     sessionId,
     resetSession: parsed.resetSession
   });
@@ -204,9 +207,6 @@ function countState(items: readonly ContextPackItemShape[], state: DiffState): n
 
 function unsupportedInputWarnings(input: GrapeGetContextToolInput): string[] {
   const warnings: string[] = [];
-  if (input.files && input.files.length > 0) warnings.push("mcp_seed_files_not_used_in_scaffold_compile");
-  if (input.symbols && input.symbols.length > 0) warnings.push("mcp_seed_symbols_not_used_in_scaffold_compile");
-  if (input.tests && input.tests.length > 0) warnings.push("mcp_seed_tests_not_used_in_scaffold_compile");
   if (input.tokenBudget !== undefined) warnings.push("mcp_token_budget_not_enforced_in_scaffold_compile");
   if (input.environmentScope && input.environmentScope !== "local") {
     warnings.push("mcp_environment_scope_not_applied_in_scaffold_compile");

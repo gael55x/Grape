@@ -17,42 +17,45 @@ const maxExcerptCharacters = 2_000;
 export interface ReadLocalSourceExcerptsInput {
   readonly rootPath: string;
   readonly sources: readonly RepositoryArtifactSourceInput[];
+  readonly preferredSourceRefs?: readonly string[];
 }
 
 export function readLocalSourceExcerpts(
   input: ReadLocalSourceExcerptsInput
 ): readonly RepositoryArtifactSourceExcerptInput[] {
   const rootPath = path.resolve(input.rootPath);
-  return selectedExactSourceSources(input.sources).flatMap((source): RepositoryArtifactSourceExcerptInput[] => {
-    const bytes = readAllowedSourceBytes(rootPath, source.sourceRef);
-    if (!bytes) return [];
-    if (sha256(bytes) !== source.sourceHash) return [];
+  return selectedExactSourceSources(input.sources, input.preferredSourceRefs ?? []).flatMap(
+    (source): RepositoryArtifactSourceExcerptInput[] => {
+      const bytes = readAllowedSourceBytes(rootPath, source.sourceRef);
+      if (!bytes) return [];
+      if (sha256(bytes) !== source.sourceHash) return [];
 
-    const text = bytes.toString("utf8");
-    if (text.includes("\0")) return [];
+      const text = bytes.toString("utf8");
+      if (text.includes("\0")) return [];
 
-    const excerpt = truncateExcerpt(text);
-    const excerptHash = sha256(Buffer.from(excerpt.text, "utf8"));
-    return [
-      {
-        proofId: repositorySourceProofId({
+      const excerpt = truncateExcerpt(text);
+      const excerptHash = sha256(Buffer.from(excerpt.text, "utf8"));
+      return [
+        {
+          proofId: repositorySourceProofId({
+            sourceId: source.sourceId,
+            sourceHash: source.sourceHash,
+            excerptHash
+          }),
           sourceId: source.sourceId,
+          sourceType: source.sourceType,
+          sourceRef: source.sourceRef,
           sourceHash: source.sourceHash,
-          excerptHash
-        }),
-        sourceId: source.sourceId,
-        sourceType: source.sourceType,
-        sourceRef: source.sourceRef,
-        sourceHash: source.sourceHash,
-        sourceScope: source.sourceScope,
-        excerpt: excerpt.text,
-        excerptHash,
-        startLine: 1,
-        endLine: excerpt.endLine,
-        truncated: excerpt.truncated
-      }
-    ];
-  });
+          sourceScope: source.sourceScope,
+          excerpt: excerpt.text,
+          excerptHash,
+          startLine: 1,
+          endLine: excerpt.endLine,
+          truncated: excerpt.truncated
+        }
+      ];
+    }
+  );
 }
 
 function readAllowedSourceBytes(rootPath: string, sourceRef: string): Buffer | undefined {

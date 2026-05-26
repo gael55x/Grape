@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -435,8 +435,21 @@ test("mcp agentSessionId maps to an isolated stable Grape session", () => {
   });
 });
 
-test("mcp ignored seed inputs downgrade compile mode to partial risk", () => {
+test("mcp seed files participate in retrieval while unsupported budget remains partial risk", () => {
   withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "src"));
+    writeFileSync(path.join(repoPath, "src", "main.ts"), "export function mainEntry() { return 'main'; }\n");
+    execGit(repoPath, ["add", "src/main.ts"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add main source"
+    ]);
+
     const responses = runMcp(repoPath, [
       {
         jsonrpc: "2.0",
@@ -455,9 +468,13 @@ test("mcp ignored seed inputs downgrade compile mode to partial risk", () => {
     ]);
 
     const output = responses[0].result.structuredContent;
+    const artifactJson = JSON.parse(readFileSync(path.join(repoPath, output.artifactFiles.json), "utf8"));
+    const retrievalSection = artifactJson.artifact.sections.find((section) => section.id === "task-retrieval");
+
     assert.equal(output.compileMode, "partial_with_risk");
-    assert.ok(output.warnings.includes("mcp_seed_files_not_used_in_scaffold_compile"));
+    assert.equal(output.warnings.includes("mcp_seed_files_not_used_in_scaffold_compile"), false);
     assert.ok(output.warnings.includes("mcp_token_budget_not_enforced_in_scaffold_compile"));
+    assert.equal(retrievalSection.sourceRefs.includes("src/main.ts"), true);
   });
 });
 

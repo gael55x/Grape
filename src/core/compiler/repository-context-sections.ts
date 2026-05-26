@@ -2,7 +2,7 @@ import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
 } from "../../shared/index.js";
-import { repositoryContextSectionHash } from "./repository-context-integrity.js";
+import { repositoryContextSection as section } from "./repository-context-section-factory.js";
 import {
   selectedRuleSourceExcerpts,
   selectedSources,
@@ -12,6 +12,7 @@ import {
   sourceTypeCounts
 } from "./repository-context-selection.js";
 import { sourceProofDependencyId, sourceProofRefs } from "./repository-source-proofs.js";
+import { taskRetrievalSection } from "./repository-context-task-retrieval-section.js";
 import type { CompileRepositoryContextArtifactInput } from "./repository-context-types.js";
 
 export function contextSections(
@@ -20,6 +21,7 @@ export function contextSections(
 ): InMemoryContextSectionShape[] {
   return compactSections([
     taskSection(input),
+    taskRetrievalSection(input, dependencies),
     repoStateSection(input),
     sourceManifestSection(input, dependencies),
     activeProjectRulesSection(input, dependencies),
@@ -67,7 +69,7 @@ function sourceManifestSection(
   input: CompileRepositoryContextArtifactInput,
   dependencies: readonly InMemoryContextDependencyShape[]
 ): InMemoryContextSectionShape {
-  const sources = selectedSources(input.sources);
+  const sources = selectedSources(input.sources, preferredSourceRefs(input));
   const counts = sourceTypeCounts(input.sources);
   return section({
     id: "source-manifest",
@@ -93,7 +95,7 @@ function symbolSummarySection(
   input: CompileRepositoryContextArtifactInput,
   dependencies: readonly InMemoryContextDependencyShape[]
 ): InMemoryContextSectionShape {
-  const nodes = selectedSymbolNodes(input.symbolNodes);
+  const nodes = selectedSymbolNodes(input.symbolNodes, preferredSourceRefs(input));
   const edges = selectedSymbolEdges(input.symbolEdges);
   return section({
     id: "symbol-summary",
@@ -120,7 +122,7 @@ function exactSourceEvidenceSection(
   input: CompileRepositoryContextArtifactInput,
   dependencies: readonly InMemoryContextDependencyShape[]
 ): InMemoryContextSectionShape {
-  const excerpts = selectedSourceExcerpts(input.sourceExcerpts);
+  const excerpts = selectedSourceExcerpts(input.sourceExcerpts, preferredSourceRefs(input));
   return section({
     id: "exact-source-evidence",
     type: "code_span",
@@ -131,7 +133,7 @@ function exactSourceEvidenceSection(
     dependencyRefs: sectionDependencyRefs(
       ["repo-snapshot", "worktree-state"],
       [
-        ...excerpts.map((excerpt) => sourceDependencyRefForExcerpt(excerpt.sourceRef, dependencies)),
+        ...excerpts.map((excerpt) => sourceDependencyRefForSourceRef(excerpt.sourceRef, dependencies)),
         ...excerpts.map((excerpt) => sourceProofDependencyId(excerpt.proofId))
       ].filter((ref): ref is string => Boolean(ref))
     ),
@@ -157,7 +159,7 @@ function activeProjectRulesSection(
     dependencyRefs: sectionDependencyRefs(
       ["repo-snapshot", "worktree-state"],
       [
-        ...ruleExcerpts.map((excerpt) => sourceDependencyRefForExcerpt(excerpt.sourceRef, dependencies)),
+        ...ruleExcerpts.map((excerpt) => sourceDependencyRefForSourceRef(excerpt.sourceRef, dependencies)),
         ...ruleExcerpts.map((excerpt) => sourceProofDependencyId(excerpt.proofId))
       ].filter((ref): ref is string => Boolean(ref))
     ),
@@ -213,11 +215,8 @@ function exactSourceEvidenceBody(
     .join("\n\n");
 }
 
-function sourceDependencyRefForExcerpt(
-  sourceRef: string,
-  dependencies: readonly InMemoryContextDependencyShape[]
-): string | undefined {
-  return dependencies.find((dependency) => dependency.ref === sourceRef)?.id;
+function preferredSourceRefs(input: CompileRepositoryContextArtifactInput): readonly string[] {
+  return input.taskRetrieval?.selectedSourceRefs ?? [];
 }
 
 function sectionDependencyRefs(
@@ -225,6 +224,13 @@ function sectionDependencyRefs(
   scopedRefs: readonly string[]
 ): string[] {
   return [...new Set([...requiredRefs, ...scopedRefs])];
+}
+
+function sourceDependencyRefForSourceRef(
+  sourceRef: string,
+  dependencies: readonly InMemoryContextDependencyShape[]
+): string | undefined {
+  return dependencies.find((dependency) => dependency.ref === sourceRef)?.id;
 }
 
 function relationshipTarget(edge: { readonly toRef?: string; readonly toSymbolId?: string }): string {
@@ -253,23 +259,4 @@ function blindSpotSection(input: CompileRepositoryContextArtifactInput): InMemor
     pinned: input.taskType === "refactor" || input.riskOverlays.length > 0,
     exactRequired: false
   });
-}
-
-function section(
-  input: Omit<InMemoryContextSectionShape, "contentHash" | "redactionStatus" | "proofRefs" | "sourceRefs"> & {
-    readonly sourceRefs?: readonly string[];
-    readonly proofRefs?: readonly string[];
-  }
-): InMemoryContextSectionShape {
-  const sectionWithoutHash = {
-    ...input,
-    sourceRefs: [...(input.sourceRefs ?? [])],
-    proofRefs: [...(input.proofRefs ?? [])],
-    contentHash: "0".repeat(64),
-    redactionStatus: "clean" as const
-  };
-  return {
-    ...sectionWithoutHash,
-    contentHash: repositoryContextSectionHash(sectionWithoutHash)
-  };
 }
