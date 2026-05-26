@@ -97,6 +97,7 @@ for (const entry of manifestEntries) {
 }
 
 const firstMigration = read("src/core/storage/migrations/0001_alpha_storage_subset.sql");
+const allMigrations = files.map((file) => read(`src/core/storage/migrations/${file}`)).join("\n");
 expect(firstMigration.includes("PRAGMA foreign_keys = ON;"), "first migration must enable foreign key enforcement");
 expect(firstMigration.includes("checksum_sha256 TEXT NOT NULL"), "schema_migrations must store checksums");
 expect(firstMigration.includes("applied_at TEXT NOT NULL"), "schema_migrations must store applied timestamps");
@@ -118,6 +119,15 @@ for (const table of forbiddenTableNames) {
 expect(
   (firstMigration.match(/CREATE INDEX IF NOT EXISTS/g) ?? []).length >= 5,
   "first migration should define basic lookup indexes"
+);
+
+expect(
+  allMigrations.includes("CREATE TABLE IF NOT EXISTS fts_entries ("),
+  "migrations must define canonical fts_entries metadata table"
+);
+expect(
+  allMigrations.includes("CREATE VIRTUAL TABLE IF NOT EXISTS fts_entry_text USING fts5"),
+  "migrations must define an FTS5 text table for lexical search"
 );
 
 for (const required of [

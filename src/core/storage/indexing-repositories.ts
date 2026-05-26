@@ -1,6 +1,10 @@
 import type { DatabaseSync } from "node:sqlite";
 
 import { applySqliteConnectionPolicy } from "./sqlite-policy.js";
+import {
+  createFtsEntriesRepository,
+  type FtsEntriesRepository
+} from "./fts-repositories.js";
 
 export type SymbolKind =
   | "function"
@@ -69,6 +73,7 @@ export interface SymbolEdgeRecord {
 }
 
 export interface IndexingStorageRepositories {
+  readonly ftsEntries: FtsEntriesRepository;
   readonly symbolNodes: {
     insertOrIgnore(record: SymbolNodeRecord): boolean;
     get(symbolId: string): SymbolNodeRecord | undefined;
@@ -85,6 +90,7 @@ export function createIndexingStorageRepositories(database: DatabaseSync): Index
   applySqliteConnectionPolicy(database);
 
   return {
+    ftsEntries: createFtsEntriesRepository(database),
     symbolNodes: {
       insertOrIgnore(record) {
         const result = database

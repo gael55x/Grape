@@ -46,6 +46,8 @@ Rejected ignored/private paths are persisted only as path-level `source_rejectio
 
 The current file-indexing foundation reads only files already present in the allowed snapshot file manifest. Before extracting symbols/imports it rejects symlinks, binary files, oversized files, unreadable files, and files whose current bytes no longer match the snapshot hash. It stores module/symbol names, import refs, hashes, line numbers, confidence, and discovery method, but not source excerpts or file contents.
 
+The current FTS foundation reads only already-allowed source records, reuses the same path, size, symlink, binary, and source-hash guards as file indexing, and skips secret-looking text before inserting FTS rows. FTS result records expose source refs and hashes, not indexed bodies.
+
 The current CLI compile path runs a basic artifact-level secret scan before writing JSON or Markdown artifacts. The scanner blocks obvious raw secret assignments, private-key blocks, and AWS access-key IDs. This is a baseline guard for scaffold artifacts, not a complete redaction engine or proof-span scanner.
 
 Exact source evidence excerpts are read only from source records that were already allowed by Git ignore and local privacy ignore filtering. The local reader rejects unsafe repo-relative paths, verifies the current bytes still match the stored source hash, skips binary-looking content, and bounds excerpt size before the artifact-level secret scan runs.

@@ -75,8 +75,9 @@ function withGitRepo(fn) {
         ""
       ].join("\n")
     );
+    writeFileSync(path.join(dir, "src", "secret.ts"), "export const leaked = 'TOKEN=value';\n");
     writeFileSync(path.join(dir, "private.ts"), "export const privateToken = 'PRIVATE=value';\n");
-    execGit(dir, ["add", ".aiignore", "src/lib.ts", "src/app.ts", "private.ts"]);
+    execGit(dir, ["add", ".aiignore", "src/lib.ts", "src/app.ts", "src/secret.ts", "private.ts"]);
     execGit(dir, [
       "-c",
       "user.name=Grape Test",
@@ -116,12 +117,20 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
 
       const nodes = indexingRepositories.symbolNodes.listBySnapshot(result.snapshotId);
       const edges = indexingRepositories.symbolEdges.listBySnapshot(result.snapshotId);
+      const ftsEntries = indexingRepositories.ftsEntries.listBySnapshot(result.snapshotId);
+      const ftsMatches = indexingRepositories.ftsEntries.searchSnapshot(result.snapshotId, "calculateDiscount");
+      const secretMatches = indexingRepositories.ftsEntries.searchSnapshot(result.snapshotId, "TOKEN");
       const nodeByPathAndName = new Map(nodes.map((node) => [`${node.path}:${node.name}`, node]));
       const appModule = nodeByPathAndName.get("src/app.ts:src/app.ts");
       const libModule = nodeByPathAndName.get("src/lib.ts:src/lib.ts");
 
       assert.equal(result.index.nodesInserted, nodes.length);
       assert.equal(result.index.edgesInserted, edges.length);
+      assert.equal(result.index.ftsEntriesInserted, ftsEntries.length);
+      assert.equal(ftsEntries.some((entry) => entry.sourceRef === "src/app.ts"), true);
+      assert.equal(ftsEntries.some((entry) => entry.sourceRef === "src/secret.ts"), false);
+      assert.equal(ftsMatches.some((entry) => entry.sourceRef === "src/app.ts"), true);
+      assert.equal(secretMatches.length, 0);
       assert.equal(appModule?.symbolKind, "module");
       assert.equal(libModule?.symbolKind, "module");
       assert.equal(nodeByPathAndName.get("src/app.ts:runApp")?.symbolKind, "function");
@@ -161,6 +170,7 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
 
       const persistedText = JSON.stringify({ nodes, edges });
       assert.equal(persistedText.includes("PRIVATE=value"), false);
+      assert.equal(JSON.stringify({ ftsEntries, ftsMatches, secretMatches }).includes("TOKEN=value"), false);
     });
   });
 });
@@ -298,6 +308,7 @@ test("snapshot file indexing is idempotent for unchanged snapshots", () => {
 
       assert.equal(second.index.nodesInserted, 0);
       assert.equal(second.index.edgesInserted, 0);
+      assert.equal(second.index.ftsEntriesInserted, 0);
     });
   });
 });

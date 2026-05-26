@@ -1,7 +1,9 @@
 import type { RepoSnapshot } from "../core/git/index.js";
-import { buildFileIndex } from "../core/indexing/index.js";
+import { buildFileIndex, buildFtsIndex } from "../core/indexing/index.js";
 import type {
   EvidenceStorageRepositories,
+  FtsEntryRecord,
+  FtsEntryInsertRecord,
   IndexingStorageRepositories,
   SymbolEdgeRecord,
   SymbolNodeRecord
@@ -20,7 +22,10 @@ export interface PersistFileIndexResult {
   readonly nodesInserted: number;
   readonly edgesSeen: number;
   readonly edgesInserted: number;
+  readonly ftsEntriesSeen: number;
+  readonly ftsEntriesInserted: number;
   readonly skippedFiles: number;
+  readonly ftsSkippedSources: number;
 }
 
 export function persistFileIndex(input: PersistFileIndexInput): PersistFileIndexResult {
@@ -40,9 +45,18 @@ export function persistFileIndex(input: PersistFileIndexInput): PersistFileIndex
     }),
     createdAt: input.now
   });
+  const ftsIndex = buildFtsIndex({
+    projectId: input.projectId,
+    repoId: input.snapshot.repoId,
+    snapshotId: input.snapshot.snapshotId,
+    rootPath: input.snapshot.rootPath,
+    sources,
+    createdAt: input.now
+  });
 
   let nodesInserted = 0;
   let edgesInserted = 0;
+  let ftsEntriesInserted = 0;
 
   for (const node of index.nodes) {
     const record: SymbolNodeRecord = {
@@ -68,13 +82,44 @@ export function persistFileIndex(input: PersistFileIndexInput): PersistFileIndex
     }
   }
 
+  for (const entry of ftsIndex.entries) {
+    const record: FtsEntryInsertRecord = {
+      ...entry,
+      metadataJson: JSON.stringify(entry.metadata)
+    };
+    if (input.indexingRepositories.ftsEntries.insertOrIgnore(record)) {
+      ftsEntriesInserted += 1;
+    } else {
+      assertMatchingFtsEntry(input.indexingRepositories.ftsEntries.get(record.ftsEntryId), record);
+    }
+  }
+
   return {
     nodesSeen: index.nodes.length,
     nodesInserted,
     edgesSeen: index.edges.length,
     edgesInserted,
-    skippedFiles: index.skipped.length
+    ftsEntriesSeen: ftsIndex.entries.length,
+    ftsEntriesInserted,
+    skippedFiles: index.skipped.length,
+    ftsSkippedSources: ftsIndex.skipped.length
   };
+}
+
+function assertMatchingFtsEntry(existing: FtsEntryRecord | undefined, next: FtsEntryInsertRecord): void {
+  if (!existing) {
+    throw new Error(`fts entry insert conflict without stored row: ${next.ftsEntryId}`);
+  }
+
+  assertField("fts entry project", existing.projectId, next.projectId);
+  assertField("fts entry repo", existing.repoId, next.repoId);
+  assertField("fts entry snapshot", existing.snapshotId, next.snapshotId);
+  assertField("fts entry source", existing.sourceId, next.sourceId);
+  assertField("fts entry ref", existing.sourceRef, next.sourceRef);
+  assertField("fts entry source type", existing.sourceType, next.sourceType);
+  assertField("fts entry source hash", existing.sourceHash, next.sourceHash);
+  assertField("fts entry text hash", existing.textHash, next.textHash);
+  assertField("fts entry metadata", existing.metadataJson, next.metadataJson);
 }
 
 function assertMatchingNode(existing: SymbolNodeRecord | undefined, next: SymbolNodeRecord): void {
