@@ -67,3 +67,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Hardened omitted-context restore validation so proof dependencies are checked against persisted proof rows before omitted bodies are returned.
 - Added the first high-risk exact-context compiler policy. Risk overlays now fail closed with `risk_overlay_missing_exact_context` unless task retrieval or seed refs select proof-backed exact source/config/rule evidence.
 - Added narrow durable source-excerpt claim persistence plus CLI/MCP active-claim inspection. These claims only prove selected exact source excerpts exist and do not prove behavior or correctness.
+- Added current-valid narrow source-excerpt claims to compiled context artifacts as `active_claim` sections with claim/proof dependency refs.

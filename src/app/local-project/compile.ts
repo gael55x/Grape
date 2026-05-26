@@ -30,6 +30,7 @@ import {
 import { detectRiskOverlaysForTask, mergeRiskOverlays } from "./compile-risk.js";
 import { prepareLocalCompileProofs } from "./compile-proofs.js";
 import { ensureCompileSession } from "./compile-session.js";
+import { resolveLocalCurrentValidClaims } from "./claim-resolution.js";
 import { initializeLocalProject } from "./initialize.js";
 import { resolveLocalTaskRetrieval } from "./task-retrieval.js";
 import { withMigratedLocalDatabase } from "./storage.js";
@@ -135,6 +136,12 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         worktreeHash: snapshotResult.snapshot.worktreeHash,
         now
       });
+      const currentValidClaims = resolveLocalCurrentValidClaims({
+        claims: claimRepositories.claims,
+        proofs: proofRepositories.proofs,
+        sources: evidenceRepositories.sources,
+        snapshot: snapshotResult.snapshot
+      });
       const artifact = compileRepositoryContextArtifact({
         projectId: config.project.projectId,
         sessionId,
@@ -148,6 +155,14 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sourceExcerpts: proofs.sourceExcerpts,
         symbolNodes,
         symbolEdges,
+        activeClaims: currentValidClaims.activeClaims.map((claim) => ({
+          claimId: claim.claimId,
+          claimType: claim.claimType,
+          claimText: claim.claimText,
+          scopeHash: claim.scopeHash,
+          sourceRefs: claim.sourceRefs,
+          proofRefs: claim.proofRefs
+        })),
         taskRetrieval: proofs.taskRetrieval,
         createdAt: now
       });

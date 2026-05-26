@@ -57,3 +57,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Hardened omitted-context restore so stale proof dependencies reject restore tokens before content is returned.
 - Added high-risk exact-context gating so risk overlays only compile safely when task-selected proof-backed exact evidence exists.
 - Added CLI `grape claims --active` and MCP `grape_get_claims` for current-valid narrow source-excerpt claim inspection.
+- Compiled current-valid narrow source-excerpt claims into context artifacts with claim/proof dependencies.

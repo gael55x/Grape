@@ -67,6 +67,15 @@ export interface RepositoryArtifactTaskRetrievalInput {
   readonly warnings: readonly string[];
 }
 
+export interface RepositoryArtifactActiveClaimInput {
+  readonly claimId: string;
+  readonly claimType: string;
+  readonly claimText: string;
+  readonly scopeHash: string;
+  readonly sourceRefs: readonly string[];
+  readonly proofRefs: readonly string[];
+}
+
 export interface CompileRepositoryContextArtifactInput {
   readonly projectId: string;
   readonly sessionId: string;
@@ -80,6 +89,7 @@ export interface CompileRepositoryContextArtifactInput {
   readonly sourceExcerpts: readonly RepositoryArtifactSourceExcerptInput[];
   readonly symbolNodes: readonly RepositoryArtifactSymbolNodeInput[];
   readonly symbolEdges: readonly RepositoryArtifactSymbolEdgeInput[];
+  readonly activeClaims?: readonly RepositoryArtifactActiveClaimInput[];
   readonly taskRetrieval?: RepositoryArtifactTaskRetrievalInput;
   readonly createdAt: string;
 }

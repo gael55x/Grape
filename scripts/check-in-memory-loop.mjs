@@ -174,8 +174,8 @@ function checkCurrentValid() {
   const source = read("src/core/retrieval/current-valid.ts");
 
   for (const required of [
-    "import type { NonEmptyArray, ScopeMatchResult, VerificationStatus } from \"../../shared/index.js\";",
-    "proofRefs: NonEmptyArray<string>",
+    "import type { ScopeMatchResult, VerificationStatus } from \"../../shared/index.js\";",
+    "proofRefs: string[]",
     "resolveInMemoryCurrentValidCandidates",
     'candidate.verificationStatus !== "verified"',
     "candidate.proofRefs.length === 0",

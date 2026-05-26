@@ -66,6 +66,22 @@ export function dependencyManifest(
     });
   }
 
+  for (const claim of input.activeClaims ?? []) {
+    dependencies.push({
+      id: claimDependencyId(claim.claimId),
+      kind: "claim",
+      ref: claim.claimId,
+      hash: claim.scopeHash,
+      scope: {
+        branch: input.snapshot.branch,
+        commit: input.snapshot.commit,
+        claimType: claim.claimType,
+        sourceRefs: claim.sourceRefs,
+        proofRefs: claim.proofRefs
+      }
+    });
+  }
+
   for (const node of selectedSymbolNodes(input.symbolNodes, preferredSourceRefs)) {
     dependencies.push({
       id: symbolDependencyId(node.symbolId),
@@ -115,4 +131,8 @@ function sourceDependencyId(source: RepositoryArtifactSourceInput): string {
 
 function symbolDependencyId(symbolId: string): string {
   return `symbol:${symbolId.replace(/^symbol(?:_edge)?:/, "")}`;
+}
+
+export function claimDependencyId(claimId: string): string {
+  return `claim:${claimId.replace(/^claim:/, "")}`;
 }

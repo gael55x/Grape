@@ -1,4 +1,4 @@
-import type { NonEmptyArray, ScopeMatchResult, VerificationStatus } from "../../shared/index.js";
+import type { ScopeMatchResult, VerificationStatus } from "../../shared/index.js";
 
 export type HashGateStatus = "match" | "mismatch" | "unknown";
 export type ContradictionStatus = "none" | "active";
@@ -9,7 +9,7 @@ export interface CurrentValidCandidate {
   id: string;
   text: string;
   sourceRefs: string[];
-  proofRefs: NonEmptyArray<string>;
+  proofRefs: string[];
   verificationStatus: VerificationStatus;
   scopeResult: ScopeMatchResult;
   sourceHashStatus: HashGateStatus;

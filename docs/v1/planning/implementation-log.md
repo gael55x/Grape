@@ -301,3 +301,10 @@ Keep entries simple:
 - Summary: local compile now creates claim candidates from validated exact-source proof rows, promotes only the narrow `repository_source_excerpt_exists` claim type, links proof rows to accepted claims, and exposes active claims through CLI `grape claims --active` and MCP `grape_get_claims`.
 - Checks run: focused source-claim, CLI, and MCP behavior tests before full verification.
 - Risks/follow-ups: durable claims are inspection-only for now and are not yet used as the primary artifact retrieval input. Broader claim types, contradiction/supersession, and artifact sections over current-valid claims remain pending.
+
+### 2026-05-26 - Current-Valid Claim Artifact Section
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: factored current-valid claim resolution into an app helper and fed active narrow source-excerpt claims into the repository artifact compiler. Artifacts now include a `current-valid-claims` `active_claim` section with claim/proof refs and claim dependencies when active claims exist.
+- Checks run: focused repository-artifact, CLI, and MCP behavior tests before full verification.
+- Risks/follow-ups: only the first narrow claim type is rendered. Broader claim retrieval, contradiction/supersession, and parsed rule claims remain pending.

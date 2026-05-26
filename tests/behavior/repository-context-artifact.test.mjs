@@ -149,6 +149,7 @@ function compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, ind
     }),
     symbolNodes: indexingRepositories.symbolNodes.listBySnapshot(snapshotId),
     symbolEdges: indexingRepositories.symbolEdges.listBySnapshot(snapshotId),
+    activeClaims: overrides.activeClaims,
     taskRetrieval,
     createdAt: overrides.createdAt ?? now
   });
@@ -287,6 +288,47 @@ test("repository artifact compiler projects scaffold output to the V1 ContextArt
       assert.equal(exactEvidence?.itemRefs.some((ref) => ref.kind === "proof"), true);
       assert.equal(inputRef?.dependencyStrength, "direct");
       assert.equal(inputRef?.scope.repoId, "repo-1");
+    });
+  });
+});
+
+test("repository artifact compiler renders current-valid claim sections with claim dependencies", () => {
+  withGitRepo((repoPath) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
+        activeClaims: [
+          {
+            claimId: "claim:source-excerpt",
+            claimType: "repository_source_excerpt_exists",
+            claimText: "Source src/app.ts contains the selected exact excerpt.",
+            scopeHash: "c".repeat(64),
+            sourceRefs: ["src/app.ts"],
+            proofRefs: ["proof:source-excerpt"]
+          }
+        ]
+      });
+      const activeClaims = artifact.sections.find((section) => section.id === "current-valid-claims");
+      const claimDependency = artifact.dependencyManifest.dependencies.find(
+        (dependency) => dependency.ref === "claim:source-excerpt"
+      );
+
+      assert.equal(activeClaims?.type, "active_claim");
+      assert.equal(activeClaims?.exactRequired, true);
+      assert.deepEqual(activeClaims?.proofRefs, ["proof:source-excerpt"]);
+      assert.match(activeClaims?.body ?? "", /repository_source_excerpt_exists/);
+      assert.equal(claimDependency?.kind, "claim");
+      assert.equal(claimDependency?.hash, "c".repeat(64));
     });
   });
 });
