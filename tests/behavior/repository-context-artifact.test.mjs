@@ -1,0 +1,288 @@
+import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
+import test from "node:test";
+
+import { persistGitRepoSnapshot } from "../../.tmp/build/src/app/index.js";
+import { compileRepositoryContextArtifact } from "../../.tmp/build/src/core/compiler/index.js";
+import {
+  applyStorageMigrations,
+  createEvidenceStorageRepositories,
+  createIndexingStorageRepositories,
+  createStorageRepositories,
+  storageMigrationReferences
+} from "../../.tmp/build/src/core/storage/index.js";
+
+const now = "2026-05-24T00:00:00.000Z";
+
+function migrationSources() {
+  return storageMigrationReferences.map((migration) => ({
+    ...migration,
+    sql: readFileSync(
+      path.join(process.cwd(), "src/core/storage/migrations", migration.filename),
+      "utf8"
+    )
+  }));
+}
+
+function withMigratedDatabase(fn) {
+  const dir = mkdtempSync(path.join(tmpdir(), "grape-repository-artifact-db-"));
+  const database = new DatabaseSync(path.join(dir, "grape.db"));
+
+  try {
+    applyStorageMigrations(database, migrationSources(), () => now);
+    fn(
+      database,
+      createStorageRepositories(database),
+      createEvidenceStorageRepositories(database),
+      createIndexingStorageRepositories(database)
+    );
+  } finally {
+    database.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function withGitRepo(fn) {
+  const dir = mkdtempSync(path.join(tmpdir(), "grape-repository-artifact-repo-"));
+
+  try {
+    execGit(dir, ["init", "-b", "main"]);
+    mkdirSync(path.join(dir, "src"), { recursive: true });
+    writeFileSync(path.join(dir, ".aiignore"), "private.ts\n");
+    writeFileSync(path.join(dir, "package.json"), "{\"name\":\"artifact-fixture\"}\n");
+    writeFileSync(path.join(dir, "package-lock.json"), "{\"lockfileVersion\":3}\n");
+    writeFileSync(
+      path.join(dir, "src", "lib.ts"),
+      ["export class Calculator {}", "export function calculateDiscount() { return 10; }", ""].join("\n")
+    );
+    writeFileSync(
+      path.join(dir, "src", "app.ts"),
+      [
+        "import { calculateDiscount } from './lib';",
+        "const localValue = calculateDiscount();",
+        "export function runApp() { return localValue; }",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(path.join(dir, "private.ts"), "export const privateToken = 'PRIVATE=value';\n");
+    execGit(dir, ["add", ".aiignore", "package.json", "package-lock.json", "src/app.ts", "src/lib.ts", "private.ts"]);
+    execGit(dir, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "initial fixture"
+    ]);
+
+    fn(dir);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function withEmptyGitRepo(fn) {
+  const dir = mkdtempSync(path.join(tmpdir(), "grape-repository-artifact-empty-"));
+
+  try {
+    execGit(dir, ["init", "-b", "main"]);
+    execGit(dir, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "--allow-empty",
+      "-m",
+      "initial empty fixture"
+    ]);
+
+    fn(dir);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function execGit(repoPath, args) {
+  return execFileSync("git", ["-C", repoPath, ...args], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"]
+  }).trim();
+}
+
+function compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories, overrides = {}) {
+  const snapshotId = snapshotResult.snapshotId;
+  return compileRepositoryContextArtifact({
+    projectId: "project-1",
+    sessionId: overrides.sessionId ?? "session-1",
+    taskId: overrides.taskId ?? "task-1",
+    taskType: overrides.taskType ?? "analysis",
+    riskOverlays: overrides.riskOverlays ?? [],
+    userRequestHash: overrides.userRequestHash ?? "u".repeat(64),
+    snapshot: snapshotResult.snapshot,
+    worktreeStateId: snapshotResult.worktreeStateId,
+    sources: evidenceRepositories.sources.listBySnapshot(snapshotId),
+    symbolNodes: indexingRepositories.symbolNodes.listBySnapshot(snapshotId),
+    symbolEdges: indexingRepositories.symbolEdges.listBySnapshot(snapshotId),
+    createdAt: now
+  });
+}
+
+test("repository artifact compiler derives a dependency-backed context artifact from persisted repo inputs", () => {
+  withGitRepo((repoPath) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+
+      const artifact = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories);
+      const dependencyKinds = new Set(artifact.dependencyManifest.dependencies.map((dependency) => dependency.kind));
+      const repoState = artifact.sections.find((section) => section.id === "repo-state");
+      const sourceManifest = artifact.sections.find((section) => section.id === "source-manifest");
+      const symbolSummary = artifact.sections.find((section) => section.id === "symbol-summary");
+      const blindSpots = artifact.sections.find((section) => section.id === "index-blind-spots");
+
+      assert.equal(artifact.input.branch, "main");
+      assert.equal(artifact.input.commit, snapshotResult.snapshot.commit);
+      assert.equal(artifact.input.worktreeHash, snapshotResult.snapshot.worktreeHash);
+      assert.equal(artifact.dependencyManifest.hashAlgorithm, "sha256");
+      assert.ok(artifact.dependencyManifest.manifestHash.length > 0);
+      assert.ok(dependencyKinds.has("repo_snapshot"));
+      assert.ok(dependencyKinds.has("worktree_state"));
+      assert.ok(dependencyKinds.has("source_file"));
+      assert.ok(dependencyKinds.has("config"));
+      assert.ok(dependencyKinds.has("lockfile"));
+      assert.ok(dependencyKinds.has("symbol"));
+
+      assert.equal(repoState?.pinned, true);
+      assert.equal(repoState?.dependencyRefs.includes("repo-snapshot"), true);
+      assert.equal(sourceManifest?.sourceRefs.includes("src/app.ts"), true);
+      assert.equal(sourceManifest?.dependencyRefs.includes("repo-snapshot"), true);
+      assert.match(sourceManifest?.body ?? "", /package-lock\.json/);
+      assert.match(symbolSummary?.body ?? "", /src\/app\.ts :: runApp/);
+      assert.match(symbolSummary?.body ?? "", /imports: .* -> src\/lib\.ts/);
+      assert.equal(
+        artifact.dependencyManifest.dependencies
+          .filter((dependency) => dependency.kind === "symbol")
+          .every((dependency) => dependency.scope.path || dependency.scope.fromSymbolId),
+        true
+      );
+      assert.equal(blindSpots?.pinned, false);
+      assert.equal(artifact.warnings.includes("repository_artifact_uses_lightweight_index"), true);
+      assert.equal(JSON.stringify(artifact).includes("PRIVATE=value"), false);
+    });
+  });
+});
+
+test("repository artifact compiler is deterministic for unchanged persisted inputs", () => {
+  withGitRepo((repoPath) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+
+      const first = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories);
+      const second = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories);
+      const differentRisk = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories, {
+        riskOverlays: ["security"]
+      });
+      const differentRequest = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories, {
+        userRequestHash: "v".repeat(64)
+      });
+
+      assert.equal(second.artifactId, first.artifactId);
+      assert.equal(second.artifactHash, first.artifactHash);
+      assert.equal(second.dependencyManifest.manifestHash, first.dependencyManifest.manifestHash);
+      assert.deepEqual(second.sections, first.sections);
+      assert.notEqual(differentRisk.artifactId, first.artifactId);
+      assert.notEqual(differentRequest.artifactId, first.artifactId);
+    });
+  });
+});
+
+test("repository artifact compiler keeps empty repos inspectable with fallback dependencies", () => {
+  withEmptyGitRepo((repoPath) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+
+      const artifact = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories);
+      const sourceManifest = artifact.sections.find((section) => section.id === "source-manifest");
+      const symbolSummary = artifact.sections.find((section) => section.id === "symbol-summary");
+
+      assert.equal(snapshotResult.snapshot.files.length, 0);
+      assert.equal(sourceManifest?.sourceRefs.length, 0);
+      assert.deepEqual(sourceManifest?.dependencyRefs, ["repo-snapshot", "worktree-state"]);
+      assert.deepEqual(symbolSummary?.dependencyRefs, ["repo-snapshot", "worktree-state"]);
+      assert.match(sourceManifest?.body ?? "", /Allowed source records: 0/);
+      assert.match(symbolSummary?.body ?? "", /Indexed symbol nodes: 0/);
+      assert.equal(artifact.unsafeReasons.length, 0);
+    });
+  });
+});
+
+test("repository artifact compiler marks risky or dirty context explicitly", () => {
+  withGitRepo((repoPath) => {
+    writeFileSync(
+      path.join(repoPath, "src", "app.ts"),
+      [
+        "import { calculateDiscount } from './lib';",
+        "const localValue = calculateDiscount();",
+        "export function runApp() { return localValue + 1; }",
+        ""
+      ].join("\n")
+    );
+
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+
+      const artifact = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories, {
+        taskType: "refactor",
+        riskOverlays: ["security"]
+      });
+      const blindSpots = artifact.sections.find((section) => section.id === "index-blind-spots");
+      const repoState = artifact.sections.find((section) => section.id === "repo-state");
+
+      assert.equal(snapshotResult.snapshot.worktreeStatus, "dirty");
+      assert.equal(artifact.warnings.includes("dirty_worktree_context"), true);
+      assert.equal(blindSpots?.pinned, true);
+      assert.match(repoState?.body ?? "", /src\/app\.ts/);
+    });
+  });
+});

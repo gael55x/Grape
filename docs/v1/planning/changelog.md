@@ -48,3 +48,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added the V1 implementation status matrix at `docs/v1/planning/implementation-status.md`.
 - Added dedicated evidence storage repositories and snapshot source ingestion so setup/snapshot persistence stores allowed source records plus privacy-safe ignored/private source rejections.
 - Added the first persisted file-indexing foundation with module/symbol nodes and `contains`/`imports` edges for allowed snapshot files.
+- Added a repository-derived artifact compiler foundation that builds deterministic in-memory context artifacts from persisted snapshots, source evidence, and file relationship indexes.
