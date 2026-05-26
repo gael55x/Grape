@@ -53,6 +53,8 @@ Trust and scope:
 
 - `no_proof_rejects_durable_claim`
 - `summary_as_proof_rejected`
+- `validated_source_proof_rows_persist_idempotently`
+- `invalid_source_proof_hash_is_rejected`
 - `partially_verified_not_current_valid_by_default`
 - `scope_resolution_precedes_current_valid_filter`
 - `branch_invalid_claim_excluded`

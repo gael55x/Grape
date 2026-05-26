@@ -113,6 +113,8 @@ FTS persistence reads only existing allowed source records, reuses the same path
 - The first repository slice in `src/core/storage/repositories.ts` covers only the tables needed to prove persisted session-scoped omission: project/repo/snapshot/worktree setup, context sessions, artifacts, dependencies, sent items, and omitted items.
 - Evidence source storage is split into `src/core/storage/evidence-repositories.ts` so source/source-rejection persistence does not expand the session-ledger repository file.
 - Evidence repositories persist already-classified records from `src/core/evidence/`; they do not decide trust, privacy policy, source relevance, or proof validity.
+- Proof storage is split into `src/core/storage/proof-repositories.ts` so validated proof rows are persisted without expanding session-ledger or evidence repositories.
+- Proof repositories persist already-validated proof records only; validation stays in `src/core/proofs/` and orchestration stays in `src/app/`.
 - Alpha source storage keeps branch, commit, repo ID, project ID, worktree hash, and worktree state ID inside `metadata_json` until a later migration promotes the final `Source` shape fields that the compiler and MCP surface will query directly.
 - Indexing storage is split between `src/core/storage/indexing-repositories.ts` for aggregate wiring, `src/core/storage/fts-repositories.ts` for FTS rows/search, and symbol repository ownership for `symbol_nodes` and `symbol_edges` SQL and typed row mapping.
 - Repository tests must prove session-scoped sent/omitted ledgers and fail-closed foreign-key behavior before app services rely on those tables.
@@ -188,3 +190,5 @@ The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` 
 - `file_index_persistence_is_idempotent`
 - `path_normalization_handles_windows_separators`
 - `fts_entries_do_not_store_raw_secrets`
+- `validated_source_proof_rows_persist_idempotently`
+- `invalid_source_proof_hash_is_rejected`

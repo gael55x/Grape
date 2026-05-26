@@ -12,6 +12,7 @@ import { assertArtifactTextHasNoSecrets } from "../../core/security/index.js";
 import {
   createEvidenceStorageRepositories,
   createIndexingStorageRepositories,
+  createProofStorageRepositories,
   createStorageRepositories
 } from "../../core/storage/index.js";
 import { ensureLocalProjectLayout, readLocalProjectConfig } from "./config.js";
@@ -25,9 +26,9 @@ import {
   taskIdFor
 } from "./compile-ids.js";
 import { detectRiskOverlaysForTask, mergeRiskOverlays } from "./compile-risk.js";
+import { prepareLocalCompileProofs } from "./compile-proofs.js";
 import { ensureCompileSession } from "./compile-session.js";
 import { initializeLocalProject } from "./initialize.js";
-import { readLocalSourceExcerpts } from "./source-excerpts.js";
 import { resolveLocalTaskRetrieval } from "./task-retrieval.js";
 import { withMigratedLocalDatabase } from "./storage.js";
 import type { CompileLocalContextInput, CompileLocalContextResult } from "./types.js";
@@ -71,6 +72,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
       const repositories = createStorageRepositories(database);
       const evidenceRepositories = createEvidenceStorageRepositories(database);
       const indexingRepositories = createIndexingStorageRepositories(database);
+      const proofRepositories = createProofStorageRepositories(database);
       const snapshotResult = persistGitRepoSnapshot({
         database,
         repositories,
@@ -112,10 +114,13 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         seedSymbols: input.seedSymbols,
         seedTests: input.seedTests
       });
-      const sourceExcerpts = readLocalSourceExcerpts({
+      const proofs = prepareLocalCompileProofs({
+        database,
+        proofRepositories,
         rootPath: snapshot.rootPath,
         sources,
-        preferredSourceRefs: taskRetrieval.selectedSourceRefs
+        taskRetrieval,
+        now
       });
       const artifact = compileRepositoryContextArtifact({
         projectId: config.project.projectId,
@@ -127,10 +132,10 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         snapshot: snapshotResult.snapshot,
         worktreeStateId: snapshotResult.worktreeStateId,
         sources,
-        sourceExcerpts,
+        sourceExcerpts: proofs.sourceExcerpts,
         symbolNodes,
         symbolEdges,
-        taskRetrieval,
+        taskRetrieval: proofs.taskRetrieval,
         createdAt: now
       });
 

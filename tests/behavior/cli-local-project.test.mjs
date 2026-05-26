@@ -200,6 +200,7 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     const scaffoldJson = JSON.parse(readFileSync(scaffoldJsonPath, "utf8"));
     assert.equal(scaffoldJson.artifact.artifactId, first.artifactId);
     assert.equal(localContextArtifactCount(repoPath), 1);
+    assert.equal(localProofCount(repoPath) > 0, true);
 
     const second = runCliJson(repoPath, [
       "compile",
@@ -526,6 +527,15 @@ function localContextArtifactCount(repoPath) {
   const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
   try {
     return Number(database.prepare("SELECT count(*) AS count FROM context_artifacts").get().count);
+  } finally {
+    database.close();
+  }
+}
+
+function localProofCount(repoPath) {
+  const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
+  try {
+    return Number(database.prepare("SELECT count(*) AS count FROM proofs").get().count);
   } finally {
     database.close();
   }
