@@ -38,3 +38,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added conservative local privacy ignore filtering for repo snapshots before file bytes are read.
 - Added snapshot source evidence persistence for allowed repository files and privacy-safe ignored/private rejections during local bootstrap.
 - Added lightweight file/symbol relationship indexing for allowed snapshot files during local bootstrap.
+- Added a repository-derived context artifact compiler foundation from persisted snapshot, source, and relationship-index inputs.

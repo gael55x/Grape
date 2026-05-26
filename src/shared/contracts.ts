@@ -144,10 +144,15 @@ export interface InMemoryContextDependencyShape {
   kind:
     | "repo_snapshot"
     | "worktree_state"
+    | "source"
     | "source_file"
+    | "config"
+    | "lockfile"
     | "proof"
     | "claim"
     | "rule"
+    | "symbol"
+    | "test"
     | "compression_artifact"
     | "session_ledger";
   ref: string;

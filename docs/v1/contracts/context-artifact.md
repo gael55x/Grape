@@ -71,10 +71,15 @@ interface InMemoryContextDependencyShape {
   kind:
     | "repo_snapshot"
     | "worktree_state"
+    | "source"
     | "source_file"
+    | "config"
+    | "lockfile"
     | "proof"
     | "claim"
     | "rule"
+    | "symbol"
+    | "test"
     | "compression_artifact"
     | "session_ledger";
   ref: string;
@@ -132,6 +137,18 @@ A final V1 context artifact is invalid unless it is:
 - redaction-scanned
 
 An in-memory artifact shape is not a final V1 artifact. It is valid only as a scaffold when its name remains `InMemoryContextArtifactShape` and its output is not persisted or exposed as MCP/CLI product output.
+
+## Current Repository-Derived Compiler Foundation
+
+The current compiler foundation can build an `InMemoryContextArtifactShape` from persisted repo inputs:
+
+- repo snapshot and worktree state records
+- snapshot-derived source records
+- persisted lightweight symbol nodes and relationship edges
+
+It emits task, repository-state, allowed-source-manifest, file-relationship, and index-confidence sections. Its dependency manifest includes repo snapshot, worktree state, selected source/config/lockfile records, and selected symbol relationships. Aggregate source/index sections retain repo snapshot and worktree dependencies so empty or all-unindexed repositories still produce inspectable partial context. Relationship summaries render repository paths when known, with symbol IDs kept as supporting identities.
+
+This is not yet the final V1 artifact product. It does not yet write `.grape/artifacts/ctx_*.json`, render product Markdown, select exact spans for high-risk overlays, or expose MCP/CLI context retrieval.
 
 ## Section Rules
 
