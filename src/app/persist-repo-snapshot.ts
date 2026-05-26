@@ -51,7 +51,10 @@ export interface PersistGitRepoSnapshotResult {
     readonly nodesSeen: number;
     readonly edgesInserted: number;
     readonly edgesSeen: number;
+    readonly ftsEntriesInserted: number;
+    readonly ftsEntriesSeen: number;
     readonly skippedFiles: number;
+    readonly ftsSkippedSources: number;
   };
 }
 

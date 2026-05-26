@@ -95,6 +95,13 @@ Migration `0002_indexing_foundation.sql` implements the first indexing-specific 
 
 This is intentionally a foundation, not a complete code intelligence graph. The current extractor is deterministic and regex-based for common JavaScript/TypeScript symbols and imports. It records confidence and discovery method so downstream compiler logic cannot mistake the index for a complete impact graph.
 
+Migration `0003_fts_entries.sql` adds the first FTS5 lexical index foundation:
+
+- `fts_entries` stores source-linked lexical entry metadata, hashes, and repo/snapshot refs.
+- `fts_entry_text` is the FTS5 virtual table that indexes text for allowed source records.
+
+FTS persistence reads only existing allowed source records, reuses the same path/hash/binary/symlink guards as file indexing, skips secret-looking text before inserting FTS rows, and stores search results through repository methods rather than direct SQL outside storage. This is a lexical index foundation only; V1 task retrieval still needs current-valid filtering and final compiler policy before FTS can drive context selection.
+
 ## Repository Boundary
 
 - Every table must have an owning repository module.
@@ -107,7 +114,7 @@ This is intentionally a foundation, not a complete code intelligence graph. The 
 - Evidence source storage is split into `src/core/storage/evidence-repositories.ts` so source/source-rejection persistence does not expand the session-ledger repository file.
 - Evidence repositories persist already-classified records from `src/core/evidence/`; they do not decide trust, privacy policy, source relevance, or proof validity.
 - Alpha source storage keeps branch, commit, repo ID, project ID, worktree hash, and worktree state ID inside `metadata_json` until a later migration promotes the final `Source` shape fields that the compiler and MCP surface will query directly.
-- Indexing storage is split into `src/core/storage/indexing-repositories.ts`; it owns only `symbol_nodes` and `symbol_edges` SQL and typed row mapping.
+- Indexing storage is split between `src/core/storage/indexing-repositories.ts` for aggregate wiring, `src/core/storage/fts-repositories.ts` for FTS rows/search, and symbol repository ownership for `symbol_nodes` and `symbol_edges` SQL and typed row mapping.
 - Repository tests must prove session-scoped sent/omitted ledgers and fail-closed foreign-key behavior before app services rely on those tables.
 
 ## SQLite Policy

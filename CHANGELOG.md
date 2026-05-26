@@ -47,3 +47,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added bounded exact-source evidence sections with deterministic proof refs to repository-derived scaffold context artifacts.
 - Added session reset recovery through CLI `--reset-session` and MCP `resetSession: true`, returning `INVALIDATE_PREVIOUS` and forcing full current resend for reused sessions.
 - Added pinned active project rules from trusted rule files to repository-derived scaffold context artifacts.
+- Added safe FTS5 lexical index persistence for allowed source records as an indexing foundation.

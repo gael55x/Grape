@@ -1,5 +1,3 @@
-import { lstatSync, readFileSync } from "node:fs";
-
 import type {
   SymbolConfidence,
   SymbolDiscoveryMethod,
@@ -7,7 +5,8 @@ import type {
   SymbolKind
 } from "../storage/index.js";
 import { hashStableParts, sha256 } from "./index-hash.js";
-import { languageForPath, safeAbsolutePath } from "./index-paths.js";
+import { languageForPath } from "./index-paths.js";
+import { readIndexableText } from "./indexable-source-reader.js";
 import { importSpecifiers, resolveLocalImport } from "./import-resolution.js";
 import { detectSymbolOnLine } from "./symbol-detection.js";
 
@@ -72,7 +71,6 @@ export interface FileIndexSkip {
   readonly reason: "unsupported_kind" | "too_large" | "binary" | "unreadable" | "symlink" | "hash_mismatch";
 }
 
-const maxIndexedBytes = 512 * 1024;
 const sourceLikeKinds = new Set<FileIndexSource["sourceKind"]>(["source", "test", "config", "package", "rule"]);
 
 export function buildFileIndex(input: FileIndexInput): FileIndexResult {
@@ -83,15 +81,18 @@ export function buildFileIndex(input: FileIndexInput): FileIndexResult {
   const skipped: FileIndexSkip[] = [];
 
   for (const file of files) {
-    const content = readIndexableText(input.rootPath, file, skipped);
-    if (!content) continue;
+    const readResult = readIndexableText(input.rootPath, file);
+    if (readResult.status === "skipped") {
+      skipped.push({ path: file.path, reason: readResult.reason });
+      continue;
+    }
 
     const moduleNode = moduleNodeForFile(input, file);
     nodes.push(moduleNode);
-    const symbols = detectSymbols(input, file, content);
+    const symbols = detectSymbols(input, file, readResult.text);
     nodes.push(...symbols);
     edges.push(...symbols.map((symbol) => containsEdge(input, moduleNode.symbolId, symbol.symbolId, symbol.name)));
-    edges.push(...detectImportEdges(input, file, moduleNode.symbolId, content, filePaths));
+    edges.push(...detectImportEdges(input, file, moduleNode.symbolId, readResult.text, filePaths));
   }
 
   return { nodes, edges, skipped };
@@ -219,40 +220,6 @@ function containsEdge(
     metadata: { name },
     createdAt: input.createdAt
   };
-}
-
-function readIndexableText(
-  rootPath: string,
-  file: FileIndexSource,
-  skipped: FileIndexSkip[]
-): string | undefined {
-  try {
-    const absolutePath = safeAbsolutePath(rootPath, file.path);
-    const stat = lstatSync(absolutePath);
-    if (stat.isSymbolicLink()) {
-      skipped.push({ path: file.path, reason: "symlink" });
-      return undefined;
-    }
-    if (stat.size > maxIndexedBytes) {
-      skipped.push({ path: file.path, reason: "too_large" });
-      return undefined;
-    }
-
-    const bytes = readFileSync(absolutePath);
-    if (bytes.includes(0)) {
-      skipped.push({ path: file.path, reason: "binary" });
-      return undefined;
-    }
-    if (sha256(bytes) !== file.sha256) {
-      skipped.push({ path: file.path, reason: "hash_mismatch" });
-      return undefined;
-    }
-
-    return bytes.toString("utf8");
-  } catch {
-    skipped.push({ path: file.path, reason: "unreadable" });
-    return undefined;
-  }
 }
 
 function moduleSymbolId(input: FileIndexInput, repoPath: string): string {

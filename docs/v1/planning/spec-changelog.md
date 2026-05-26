@@ -42,3 +42,4 @@ Each entry should include:
 - Clarified exact-source scaffold evidence: repository-derived artifacts may include bounded exact excerpts from selected allowed sources with deterministic proof refs and proof dependency hashes, but these refs do not promote durable claims or satisfy high-risk task policies by themselves.
 - Clarified session reset recovery for the scaffold product slice: explicit reset requests invalidate active prior sent context and force current sections to be resent instead of relying on omitted unchanged context.
 - Clarified active rule handling for the scaffold product slice: trusted rule files can be rendered as pinned exact-context sections before parsed durable project-rule records exist.
+- Clarified FTS storage foundation behavior: lexical FTS rows may be persisted for allowed source records only after source-hash verification and secret-looking text rejection; FTS-backed task retrieval remains pending compiler policy work.

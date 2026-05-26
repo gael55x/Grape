@@ -231,3 +231,10 @@ Keep entries simple:
 - Summary: repository-derived scaffold artifacts now include a pinned `active-project-rules` section when trusted rule files are present. Rule file excerpts use the same source-hash verification, proof refs, and dependency refs as exact-source evidence, and scanner classification now covers `AGENTS.md`, `.cursor/rules`, `.cursorrules`, `.aiassistant/rules`, `.junie/guidelines.md`, and `.grape/` rule paths when they are Git-visible and privacy-allowed.
 - Checks run: focused source-excerpt, repo-snapshot, repository-artifact, and CLI behavior tests; `npm run check`; `npm run build`; `git diff --check`.
 - Risks/follow-ups: this renders exact rule text as pinned context only. Parsed `project_rules`, conflicts, nested scope resolution, candidate/generated rules, and rule-specific MCP/CLI inspection remain pending.
+
+### 2026-05-26 - Safe FTS Index Foundation
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added `fts_entries` metadata rows plus an FTS5 text table for allowed source records. FTS persistence now reuses source-hash/path/binary/symlink guards, skips secret-looking text, exposes source-linked search results through storage repositories, and remains separate from compiler selection policy.
+- Checks run: focused file-index and storage-runtime behavior tests; `npm run check`; `npm run build`; `git diff --check`.
+- Risks/follow-ups: FTS rows are persisted and searchable, but task-specific retrieval does not use them yet. Current-valid filtering, task-policy ranking, and final compiler integration remain pending.
