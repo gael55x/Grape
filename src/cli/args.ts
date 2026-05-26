@@ -8,7 +8,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   const [command = "", ...rest] = argv;
   const flags = new Set<string>();
   const values = new Map<string, string>();
-  const valueOptions = new Set(["--repo", "--task", "--task-type", "--risk", "--session"]);
+  const valueOptions = new Set(["--repo", "--task", "--task-type", "--risk", "--session", "--token"]);
 
   for (let index = 0; index < rest.length; index += 1) {
     const arg = rest[index];

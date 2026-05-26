@@ -138,6 +138,15 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE"), true);
     assert.equal(localContextArtifactCount(repoPath), 2);
+
+    const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE").restoreToken;
+    const omitted = runCliJson(repoPath, ["omitted", "--session", "session-test"]);
+    assert.equal(omitted.omittedItems.some((item) => item.restoreId === restoreToken), true);
+
+    const restored = runCliJson(repoPath, ["omitted", "--session", "session-test", "--token", restoreToken]);
+    assert.equal(restored.status, "restored");
+    assert.equal(restored.sectionId, "task");
+    assert.match(restored.body, /Task type/);
   });
 });
 
@@ -156,6 +165,72 @@ test("cli compile marks risk overlays unsafe until exact spans exist", () => {
     assert.deepEqual(parsed.riskOverlays, ["auth"]);
     assert.deepEqual(parsed.unsafeReasons, ["risk_overlay_exact_spans_not_implemented"]);
     assert.ok(parsed.warnings.includes("risk_overlay_requires_exact_context"));
+  });
+});
+
+test("cli omitted rejects stale restore tokens after repository changes", () => {
+  withGitRepo((repoPath) => {
+    const { restoreToken } = createRestorableOmission(repoPath, "stale-restore-session");
+
+    writeFileSync(path.join(repoPath, "README.md"), "# Fixture changed\n");
+    const restore = runCli(repoPath, [
+      "omitted",
+      "--session",
+      "stale-restore-session",
+      "--token",
+      restoreToken,
+      "--json"
+    ]);
+
+    assert.equal(restore.status, 3, restore.stderr);
+    const parsed = JSON.parse(restore.stdout);
+    assert.equal(parsed.status, "stale");
+    assert.ok(parsed.warnings.includes("restore_token_rejects_stale_dependency"));
+  });
+});
+
+test("cli omitted rejects tampered artifact body before restoring context", () => {
+  withGitRepo((repoPath) => {
+    const { artifactJsonPath, restoreToken } = createRestorableOmission(repoPath, "tamper-restore-session");
+    updateArtifactJson(artifactJsonPath, (artifactPack) => {
+      artifactPack.artifact.sections.find((section) => section.id === "task").body = "Task type: tampered";
+    });
+
+    const restore = runCli(repoPath, [
+      "omitted",
+      "--session",
+      "tamper-restore-session",
+      "--token",
+      restoreToken,
+      "--json"
+    ]);
+
+    assert.equal(restore.status, 4);
+    assert.equal(restore.stdout, "");
+    assert.match(restore.stderr, /content hash does not match actual body/);
+    assert.doesNotMatch(restore.stderr, /Task type: tampered/);
+  });
+});
+
+test("cli omitted rejects blocked-redaction artifact sections before restoring context", () => {
+  withGitRepo((repoPath) => {
+    const { artifactJsonPath, restoreToken } = createRestorableOmission(repoPath, "redaction-restore-session");
+    updateArtifactJson(artifactJsonPath, (artifactPack) => {
+      artifactPack.artifact.sections.find((section) => section.id === "task").redactionStatus = "blocked";
+    });
+
+    const restore = runCli(repoPath, [
+      "omitted",
+      "--session",
+      "redaction-restore-session",
+      "--token",
+      restoreToken,
+      "--json"
+    ]);
+
+    assert.equal(restore.status, 4);
+    assert.equal(restore.stdout, "");
+    assert.match(restore.stderr, /blocked redaction status/);
   });
 });
 
@@ -215,6 +290,35 @@ function localContextArtifactCount(repoPath) {
   }
 }
 
+function createRestorableOmission(repoPath, sessionId) {
+  runCliJson(repoPath, [
+    "compile",
+    "--task",
+    "Explain the repository entry points",
+    "--session",
+    sessionId
+  ]);
+  const second = runCliJson(repoPath, [
+    "compile",
+    "--task",
+    "Explain the repository entry points",
+    "--session",
+    sessionId
+  ]);
+  const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE")?.restoreToken;
+  assert.ok(restoreToken);
+  return {
+    artifactJsonPath: second.artifactJsonPath,
+    restoreToken
+  };
+}
+
+function updateArtifactJson(artifactJsonPath, mutate) {
+  const artifactPack = JSON.parse(readFileSync(artifactJsonPath, "utf8"));
+  mutate(artifactPack);
+  writeFileSync(artifactJsonPath, `${JSON.stringify(artifactPack, null, 2)}\n`);
+}
+
 function setContextSessionLocked(repoPath, sessionId) {
   const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
   try {
@@ -241,7 +345,7 @@ test("cli mcp --print-config emits the V1 stdio connection contract", () => {
       args: ["mcp", "--stdio", "--repo", repoPath],
       cwd: repoPath,
       transport: "stdio",
-      tools: ["grape_get_context", "grape_get_status"],
+      tools: ["grape_get_context", "grape_get_omitted_item", "grape_get_status"],
       note: "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
     });
   });

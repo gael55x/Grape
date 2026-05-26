@@ -130,7 +130,7 @@ export function toOmittedContextItem(
     reasonOmitted: "unchanged_restorable",
     canRestore: true,
     restoreId: restoreToken,
-    restoreCommand: `grape restore ${restoreToken}`,
+    restoreCommand: `grape omitted --session ${input.sessionId} --token ${restoreToken}`,
     omittedAt: input.now,
     sendCount: 1,
     tokenCount: estimateTextTokens(section.body)
@@ -220,7 +220,7 @@ function itemRefForSection(section: InMemoryContextSectionShape): string {
   return section.sourceRefs[0] ?? section.proofRefs[0] ?? section.id;
 }
 
-function toStorageDependencyKind(dependency: InMemoryContextDependencyShape): ContextDependencyKind {
+export function toStorageDependencyKind(dependency: InMemoryContextDependencyShape): ContextDependencyKind {
   switch (dependency.kind) {
     case "source_file":
       return "file";

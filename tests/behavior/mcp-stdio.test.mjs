@@ -92,10 +92,66 @@ test("mcp stdio lists implemented Grape tools", () => {
     assert.equal(responses[0].result.serverInfo.name, "grape");
     assert.deepEqual(
       responses[1].result.tools.map((tool) => tool.name),
-      ["grape_get_context", "grape_get_status"]
+      ["grape_get_context", "grape_get_omitted_item", "grape_get_status"]
     );
     const contextTool = responses[1].result.tools.find((tool) => tool.name === "grape_get_context");
     assert.deepEqual(contextTool.inputSchema.anyOf, [{ required: ["sessionId"] }, { required: ["agentSessionId"] }]);
+  });
+});
+
+test("mcp grape_get_omitted_item restores a restorable omitted context item", () => {
+  withGitRepo((repoPath) => {
+    const { restoreToken } = createMcpRestorableOmission(repoPath, "mcp-restore-session");
+
+    const restored = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_omitted_item",
+          arguments: {
+            sessionId: "mcp-restore-session",
+            restoreToken
+          }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(restored.isError, false);
+    assert.equal(restored.structuredContent.status, "restored");
+    assert.equal(Object.hasOwn(restored.structuredContent, "rootPath"), false);
+    assert.equal(restored.content[0].text.includes(repoPath), false);
+    assert.equal(restored.structuredContent.sectionId, "task");
+    assert.match(restored.structuredContent.body, /Task type/);
+  });
+});
+
+test("mcp grape_get_omitted_item rejects stale restore tokens without returning a body", () => {
+  withGitRepo((repoPath) => {
+    const { restoreToken } = createMcpRestorableOmission(repoPath, "mcp-stale-restore-session");
+    writeFileSync(path.join(repoPath, "README.md"), "# Fixture changed\n");
+
+    const stale = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_omitted_item",
+          arguments: {
+            sessionId: "mcp-stale-restore-session",
+            restoreToken
+          }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(stale.isError, true);
+    assert.equal(stale.structuredContent.status, "stale");
+    assert.equal(Object.hasOwn(stale.structuredContent, "rootPath"), false);
+    assert.equal(stale.structuredContent.body, undefined);
+    assert.ok(stale.structuredContent.warnings.includes("restore_token_rejects_stale_dependency"));
   });
 });
 
@@ -341,3 +397,37 @@ test("mcp grape_get_context rejects unsupported arguments", () => {
     assert.match(toolResult.content[0].text, /unsupported grape_get_context argument: riskOverlays/);
   });
 });
+
+function createMcpRestorableOmission(repoPath, sessionId) {
+  runMcp(repoPath, [
+    {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: {
+        name: "grape_get_context",
+        arguments: {
+          query: "Explain the repository entry points",
+          sessionId
+        }
+      }
+    }
+  ]);
+  const second = runMcp(repoPath, [
+    {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: {
+        name: "grape_get_context",
+        arguments: {
+          query: "Explain the repository entry points",
+          sessionId
+        }
+      }
+    }
+  ])[0].result.structuredContent;
+  const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE")?.restoreToken;
+  assert.ok(restoreToken);
+  return { restoreToken };
+}

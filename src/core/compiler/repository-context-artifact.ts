@@ -5,6 +5,10 @@ import type {
 import { assertInMemoryContextArtifactShape } from "./in-memory-context-artifact.js";
 import { dependencyManifest } from "./repository-context-dependencies.js";
 import { hashStableJson, hashStableParts } from "./repository-context-hash.js";
+import {
+  repositoryContextArtifactHash,
+  repositoryContextManifestHash
+} from "./repository-context-integrity.js";
 import { maxListedEdges, maxListedSources, maxListedSymbols } from "./repository-context-selection.js";
 import { contextSections } from "./repository-context-sections.js";
 import type { CompileRepositoryContextArtifactInput } from "./repository-context-types.js";
@@ -14,7 +18,7 @@ export function compileRepositoryContextArtifact(
 ): InMemoryContextArtifactShape {
   const dependencies = dependencyManifest(input);
   const sections = contextSections(input, dependencies);
-  const manifestHash = hashStableJson({
+  const manifestHash = repositoryContextManifestHash({
     dependencies,
     snapshotId: input.snapshot.snapshotId,
     worktreeStateId: input.worktreeStateId
@@ -29,7 +33,7 @@ export function compileRepositoryContextArtifact(
     hashAlgorithm: "sha256" as const,
     manifestHash
   };
-  const artifactHash = hashStableJson({
+  const artifactHash = repositoryContextArtifactHash({
     input: request,
     sections,
     dependencyManifest: {

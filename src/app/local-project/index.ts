@@ -4,6 +4,7 @@ export * from "./compile-risk.js";
 export * from "./doctor.js";
 export * from "./initialize.js";
 export * from "./mcp-guide.js";
+export * from "./omitted.js";
 export * from "./status.js";
 export * from "./storage.js";
 export * from "./types.js";

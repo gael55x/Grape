@@ -108,7 +108,7 @@ The current implementation goal proves only the in-memory part of the diff contr
 - pinned sections are resent instead of omitted
 - unsafe omission count must stay zero
 
-Full restore lookup, branch switching behavior, and transport-facing session recovery belong to the later Alpha Product Slice. The current durable build proof persists the sent and omitted ledgers needed to prove first-turn/second-turn omission behavior.
+The in-memory loop only proves restore metadata shape. The current product slice adds restore lookup for persisted scaffold artifacts through CLI and MCP, while branch switching behavior and transport-facing session recovery remain pending.
 
 ## Durable Build Proof
 
@@ -129,8 +129,9 @@ This proof does not perform MCP transport, CLI rendering, broad repository index
 
 1. Diff engine omits an unchanged item only after writing an `OmittedContextItem`.
 2. MCP or CLI returns `RESTORE_AVAILABLE` with `restoreToken` when applicable.
-3. `grape_get_omitted_item` validates session ID, token, artifact hash, dependency manifest, and redaction status.
-4. If dependencies changed, restore returns an invalidation instead of stale content.
+3. `grape omitted --session <id>` lists omitted rows for a session.
+4. `grape omitted --session <id> --token <restoreToken>` and `grape_get_omitted_item` validate session ID, token, stored artifact identity, artifact hash, stored dependency rows, section content hash, dependency manifest, branch, head commit, worktree hash, source/config/lockfile/rule dependency hashes, and redaction status.
+5. If dependencies changed, restore returns stale metadata instead of stale content.
 
 ## Required Tests
 
