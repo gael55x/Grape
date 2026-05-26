@@ -439,7 +439,7 @@ test("mcp grape_get_context exposes unsafe compile mode for risk overlays", () =
     assert.equal(toolResult.isError, true);
     assert.equal(toolResult.structuredContent.compileMode, "cannot_compile_safely");
     assert.deepEqual(toolResult.structuredContent.riskOverlays, ["auth"]);
-    assert.deepEqual(toolResult.structuredContent.unsafeReasons, ["risk_overlay_exact_spans_not_implemented"]);
+    assert.deepEqual(toolResult.structuredContent.unsafeReasons, ["risk_overlay_missing_exact_context"]);
   });
 });
 

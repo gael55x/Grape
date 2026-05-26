@@ -131,6 +131,7 @@ function execGit(repoPath, args) {
 function compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, overrides = {}) {
   const snapshotId = snapshotResult.snapshotId;
   const sources = evidenceRepositories.sources.listBySnapshot(snapshotId);
+  const taskRetrieval = overrides.taskRetrieval;
   return compileRepositoryContextArtifact({
     projectId: "project-1",
     sessionId: overrides.sessionId ?? "session-1",
@@ -141,9 +142,14 @@ function compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, ind
     snapshot: snapshotResult.snapshot,
     worktreeStateId: snapshotResult.worktreeStateId,
     sources,
-    sourceExcerpts: readLocalSourceExcerpts({ rootPath: repoPath, sources }),
+    sourceExcerpts: readLocalSourceExcerpts({
+      rootPath: repoPath,
+      sources,
+      preferredSourceRefs: taskRetrieval?.selectedSourceRefs
+    }),
     symbolNodes: indexingRepositories.symbolNodes.listBySnapshot(snapshotId),
     symbolEdges: indexingRepositories.symbolEdges.listBySnapshot(snapshotId),
+    taskRetrieval,
     createdAt: overrides.createdAt ?? now
   });
 }
@@ -390,9 +396,45 @@ test("repository artifact compiler marks risky or dirty context explicitly", () 
       assert.equal(snapshotResult.snapshot.worktreeStatus, "dirty");
       assert.equal(artifact.warnings.includes("dirty_worktree_context"), true);
       assert.equal(artifact.warnings.includes("risk_overlay_requires_exact_context"), true);
-      assert.deepEqual(artifact.unsafeReasons, ["risk_overlay_exact_spans_not_implemented"]);
+      assert.deepEqual(artifact.unsafeReasons, ["risk_overlay_missing_exact_context"]);
       assert.equal(blindSpots?.pinned, true);
       assert.match(repoState?.body ?? "", /src\/app\.ts/);
+    });
+  });
+});
+
+test("repository risk policy accepts task-selected exact source spans", () => {
+  withGitRepo((repoPath) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
+        riskOverlays: ["auth"],
+        taskRetrieval: {
+          selectedSourceRefs: ["src/app.ts"],
+          explicitSourceRefs: [],
+          symbolSourceRefs: ["src/app.ts"],
+          ftsSourceRefs: [],
+          queryTerms: ["auth"],
+          warnings: []
+        }
+      });
+      const exactEvidence = artifact.sections.find((section) => section.id === "exact-source-evidence");
+
+      assert.equal(artifact.warnings.includes("risk_overlay_requires_exact_context"), true);
+      assert.deepEqual(artifact.unsafeReasons, []);
+      assert.deepEqual(exactEvidence?.sourceRefs, ["src/app.ts"]);
+      assert.equal(exactEvidence?.exactRequired, true);
+      assert.equal(exactEvidence?.proofRefs.length, 1);
     });
   });
 });
