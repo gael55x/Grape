@@ -3,6 +3,7 @@ export * from "./claims.js";
 export * from "./get-context.js";
 export * from "./omitted.js";
 export * from "./protocol.js";
+export * from "./rules.js";
 export * from "./session.js";
 export * from "./stale.js";
 export * from "./status.js";

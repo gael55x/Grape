@@ -72,3 +72,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added `grape sessions` for CLI-first inspection of context sessions, lock state, branch/head scope, session events, and diff ledger counts.
 - Added `grape stale` for CLI-first inspection of emitted `INVALIDATE_PREVIOUS` rows, prior sent item refs, stale reasons, and previous branch/head metadata.
 - Added MCP `grape_get_stale_items` so external agents can inspect emitted stale-context invalidations without shelling out or receiving context bodies.
+- Added MCP `grape_get_rules` so external agents can inspect current Git-visible, hash-verified, secret-scanned project rule excerpts without shelling out or receiving absolute root paths.

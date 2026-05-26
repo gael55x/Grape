@@ -112,6 +112,7 @@ test("mcp stdio lists implemented Grape tools", () => {
         "grape_get_artifact",
         "grape_get_claims",
         "grape_get_proofs",
+        "grape_get_rules",
         "grape_get_omitted_item",
         "grape_get_stale_items",
         "grape_get_status"
@@ -121,6 +122,97 @@ test("mcp stdio lists implemented Grape tools", () => {
     assert.deepEqual(contextTool.inputSchema.anyOf, [{ required: ["sessionId"] }, { required: ["agentSessionId"] }]);
     assert.equal(contextTool.inputSchema.properties.tokenBudget.type, "integer");
     assert.equal(contextTool.inputSchema.properties.tokenBudget.minimum, 1);
+  });
+});
+
+test("mcp grape_get_rules returns active rule excerpts without root paths", () => {
+  withGitRepo((repoPath) => {
+    writeFileSync(path.join(repoPath, "AGENTS.md"), "Prefer exact proof before changing code.\n");
+    execGit(repoPath, ["add", "AGENTS.md"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add agent rules"
+    ]);
+
+    runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-rules-session"
+          }
+        }
+      }
+    ]);
+
+    const rules = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_rules",
+          arguments: {}
+        }
+      }
+    ])[0].result;
+
+    assert.equal(rules.isError, false);
+    assert.equal(Object.hasOwn(rules.structuredContent, "rootPath"), false);
+    assert.equal(rules.content[0].text.includes(repoPath), false);
+    assert.equal(rules.structuredContent.rules.length, 1);
+    assert.equal(rules.structuredContent.rules[0].sourceRef, "AGENTS.md");
+    assert.match(rules.structuredContent.rules[0].body, /Prefer exact proof/);
+    assert.match(rules.structuredContent.rules[0].proofId, /^proof:/);
+  });
+});
+
+test("mcp grape_get_rules rejects secret-looking rule excerpts", () => {
+  withGitRepo((repoPath) => {
+    writeFileSync(path.join(repoPath, "AGENTS.md"), "API_KEY=example-value\nPrefer exact proof before changing code.\n");
+    execGit(repoPath, ["add", "AGENTS.md"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add unsafe agent rules"
+    ]);
+
+    const init = spawnSync(process.execPath, [cliPath, "init", "--connect", "--repo", repoPath], {
+      cwd: repoPath,
+      encoding: "utf8"
+    });
+    assert.equal(init.status, 0, init.stderr);
+
+    const rules = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_rules",
+          arguments: {}
+        }
+      }
+    ])[0].result;
+
+    assert.equal(rules.isError, false);
+    assert.equal(rules.structuredContent.rules.length, 0);
+    assert.deepEqual(rules.structuredContent.rejectedRuleRefs, ["AGENTS.md"]);
+    assert.deepEqual(rules.structuredContent.warnings, ["rule_file_excerpt_rejected"]);
+    assert.equal(rules.content[0].text.includes("example-value"), false);
   });
 });
 

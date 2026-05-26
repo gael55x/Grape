@@ -3,6 +3,7 @@ import { runGrapeGetClaimsTool } from "./claims.js";
 import { runGrapeGetContextTool } from "./get-context.js";
 import { runGrapeGetOmittedItemTool } from "./omitted.js";
 import { runGrapeGetProofsTool } from "./proofs.js";
+import { runGrapeGetRulesTool } from "./rules.js";
 import { runGrapeGetStaleItemsTool } from "./stale.js";
 import { runGrapeGetStatusTool } from "./status.js";
 
@@ -93,6 +94,15 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
         }
       },
       {
+        name: "grape_get_rules",
+        description: "Inspect current Git-visible project rule excerpts after source-hash and secret-scan checks.",
+        inputSchema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {}
+        }
+      },
+      {
         name: "grape_get_omitted_item",
         description: "Restore an omitted context item by session and restore token.",
         inputSchema: {
@@ -153,6 +163,8 @@ export function callMcpTool(params: ToolCallParams, rootPath: string): McpToolRe
         return toolResult(runGrapeGetClaimsTool(params.arguments ?? {}, rootPath), false);
       case "grape_get_proofs":
         return toolResult(runGrapeGetProofsTool(params.arguments ?? {}, rootPath), false);
+      case "grape_get_rules":
+        return toolResult(runGrapeGetRulesTool(params.arguments ?? {}, rootPath), false);
       case "grape_get_omitted_item": {
         const output = runGrapeGetOmittedItemTool(params.arguments ?? {}, rootPath);
         return toolResult(output, output.status === "stale");

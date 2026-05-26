@@ -11,6 +11,7 @@ export * from "./initialize.js";
 export * from "./mcp-guide.js";
 export * from "./omitted.js";
 export * from "./proofs.js";
+export * from "./rules.js";
 export * from "./sessions.js";
 export * from "./source-excerpts.js";
 export * from "./stale.js";
