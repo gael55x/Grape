@@ -6,7 +6,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
-import { persistGitRepoSnapshot } from "../../.tmp/build/src/app/index.js";
+import { persistGitRepoSnapshot, readLocalSourceExcerpts } from "../../.tmp/build/src/app/index.js";
 import { compileRepositoryContextArtifact } from "../../.tmp/build/src/core/compiler/index.js";
 import {
   applyStorageMigrations,
@@ -115,8 +115,9 @@ function execGit(repoPath, args) {
   }).trim();
 }
 
-function compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories, overrides = {}) {
+function compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, overrides = {}) {
   const snapshotId = snapshotResult.snapshotId;
+  const sources = evidenceRepositories.sources.listBySnapshot(snapshotId);
   return compileRepositoryContextArtifact({
     projectId: "project-1",
     sessionId: overrides.sessionId ?? "session-1",
@@ -126,7 +127,8 @@ function compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepos
     userRequestHash: overrides.userRequestHash ?? "u".repeat(64),
     snapshot: snapshotResult.snapshot,
     worktreeStateId: snapshotResult.worktreeStateId,
-    sources: evidenceRepositories.sources.listBySnapshot(snapshotId),
+    sources,
+    sourceExcerpts: readLocalSourceExcerpts({ rootPath: repoPath, sources }),
     symbolNodes: indexingRepositories.symbolNodes.listBySnapshot(snapshotId),
     symbolEdges: indexingRepositories.symbolEdges.listBySnapshot(snapshotId),
     createdAt: overrides.createdAt ?? now
@@ -147,10 +149,11 @@ test("repository artifact compiler derives a dependency-backed context artifact 
         now
       });
 
-      const artifact = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories);
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories);
       const dependencyKinds = new Set(artifact.dependencyManifest.dependencies.map((dependency) => dependency.kind));
       const repoState = artifact.sections.find((section) => section.id === "repo-state");
       const sourceManifest = artifact.sections.find((section) => section.id === "source-manifest");
+      const exactEvidence = artifact.sections.find((section) => section.id === "exact-source-evidence");
       const symbolSummary = artifact.sections.find((section) => section.id === "symbol-summary");
       const blindSpots = artifact.sections.find((section) => section.id === "index-blind-spots");
 
@@ -171,6 +174,16 @@ test("repository artifact compiler derives a dependency-backed context artifact 
       assert.equal(sourceManifest?.sourceRefs.includes("src/app.ts"), true);
       assert.equal(sourceManifest?.dependencyRefs.includes("repo-snapshot"), true);
       assert.match(sourceManifest?.body ?? "", /package-lock\.json/);
+      assert.equal(exactEvidence?.type, "code_span");
+      assert.equal(exactEvidence?.exactRequired, true);
+      assert.equal(exactEvidence?.sourceRefs.includes("src/app.ts"), true);
+      assert.equal(exactEvidence?.proofRefs.every((proofRef) => proofRef.startsWith("proof:")), true);
+      assert.equal(
+        exactEvidence?.dependencyRefs.some((dependencyRef) => dependencyRef.startsWith("proof:")),
+        true
+      );
+      assert.match(exactEvidence?.body ?? "", /Proof: proof:/);
+      assert.match(exactEvidence?.body ?? "", /export function runApp/);
       assert.match(symbolSummary?.body ?? "", /src\/app\.ts :: runApp/);
       assert.match(symbolSummary?.body ?? "", /imports: .* -> src\/lib\.ts/);
       assert.equal(
@@ -200,15 +213,15 @@ test("repository artifact compiler is deterministic for unchanged persisted inpu
         now
       });
 
-      const first = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories);
-      const second = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories);
-      const differentRisk = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories, {
+      const first = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories);
+      const second = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories);
+      const differentRisk = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
         riskOverlays: ["security"]
       });
-      const differentRequest = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories, {
+      const differentRequest = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
         userRequestHash: "v".repeat(64)
       });
-      const later = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories, {
+      const later = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
         createdAt: "2026-05-24T00:00:01.000Z"
       });
 
@@ -239,12 +252,15 @@ test("repository artifact compiler keeps empty repos inspectable with fallback d
         now
       });
 
-      const artifact = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories);
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories);
       const sourceManifest = artifact.sections.find((section) => section.id === "source-manifest");
+      const exactEvidence = artifact.sections.find((section) => section.id === "exact-source-evidence");
       const symbolSummary = artifact.sections.find((section) => section.id === "symbol-summary");
 
       assert.equal(snapshotResult.snapshot.files.length, 0);
       assert.equal(sourceManifest?.sourceRefs.length, 0);
+      assert.equal(exactEvidence?.sourceRefs.length, 0);
+      assert.equal(exactEvidence?.exactRequired, false);
       assert.deepEqual(sourceManifest?.dependencyRefs, ["repo-snapshot", "worktree-state"]);
       assert.deepEqual(symbolSummary?.dependencyRefs, ["repo-snapshot", "worktree-state"]);
       assert.match(sourceManifest?.body ?? "", /Allowed source records: 0/);
@@ -278,7 +294,7 @@ test("repository artifact compiler marks risky or dirty context explicitly", () 
         now
       });
 
-      const artifact = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories, {
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
         taskType: "refactor",
         riskOverlays: ["security"]
       });

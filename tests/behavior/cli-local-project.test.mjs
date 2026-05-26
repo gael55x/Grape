@@ -137,10 +137,18 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(first.sessionId, "session-test");
     assert.equal(first.contextPackItems.some((item) => item.state === "NEW"), true);
     assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /# Grape Context Pack/);
+    assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Exact Source Evidence/);
+    assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Proof: proof:/);
 
     const artifactJson = JSON.parse(readFileSync(first.artifactJsonPath, "utf8"));
     assert.equal(artifactJson.artifact.artifactId, first.artifactId);
     assert.equal(artifactJson.contextPackItems.length, first.contextPackItems.length);
+    assert.equal(
+      artifactJson.artifact.sections.some(
+        (section) => section.id === "exact-source-evidence" && section.proofRefs.length > 0
+      ),
+      true
+    );
     assert.equal(localContextArtifactCount(repoPath), 1);
 
     const second = runCliJson(repoPath, [

@@ -5,10 +5,12 @@ import type {
 import { repositoryContextSectionHash } from "./repository-context-integrity.js";
 import {
   selectedSources,
+  selectedSourceExcerpts,
   selectedSymbolEdges,
   selectedSymbolNodes,
   sourceTypeCounts
 } from "./repository-context-selection.js";
+import { sourceProofDependencyId, sourceProofRefs } from "./repository-source-proofs.js";
 import type { CompileRepositoryContextArtifactInput } from "./repository-context-types.js";
 
 export function contextSections(
@@ -19,6 +21,7 @@ export function contextSections(
     taskSection(input),
     repoStateSection(input),
     sourceManifestSection(input, dependencies),
+    exactSourceEvidenceSection(input, dependencies),
     symbolSummarySection(input, dependencies),
     blindSpotSection(input)
   ];
@@ -109,6 +112,65 @@ function symbolSummarySection(
     pinned: false,
     exactRequired: false
   });
+}
+
+function exactSourceEvidenceSection(
+  input: CompileRepositoryContextArtifactInput,
+  dependencies: readonly InMemoryContextDependencyShape[]
+): InMemoryContextSectionShape {
+  const excerpts = selectedSourceExcerpts(input.sourceExcerpts);
+  return section({
+    id: "exact-source-evidence",
+    type: "code_span",
+    title: "Exact Source Evidence",
+    body: exactSourceEvidenceBody(excerpts),
+    sourceRefs: excerpts.map((excerpt) => excerpt.sourceRef),
+    proofRefs: sourceProofRefs(excerpts),
+    dependencyRefs: sectionDependencyRefs(
+      ["repo-snapshot", "worktree-state"],
+      [
+        ...excerpts.map((excerpt) => sourceDependencyRefForExcerpt(excerpt.sourceRef, dependencies)),
+        ...excerpts.map((excerpt) => sourceProofDependencyId(excerpt.proofId))
+      ].filter((ref): ref is string => Boolean(ref))
+    ),
+    pinned: false,
+    exactRequired: excerpts.length > 0
+  });
+}
+
+function exactSourceEvidenceBody(
+  excerpts: ReturnType<typeof selectedSourceExcerpts>
+): string {
+  if (excerpts.length === 0) {
+    return [
+      "No exact source excerpts were selected for this scaffold artifact.",
+      "Use source manifest and relationship sections for orientation only."
+    ].join("\n");
+  }
+
+  return excerpts
+    .map((excerpt) =>
+      [
+        `Source: ${excerpt.sourceRef}`,
+        `Type: ${excerpt.sourceType}`,
+        `Scope: ${excerpt.sourceScope}`,
+        `Lines: ${excerpt.startLine}-${excerpt.endLine}${excerpt.truncated ? " (truncated)" : ""}`,
+        `Proof: ${excerpt.proofId}`,
+        `Source hash: ${excerpt.sourceHash}`,
+        `Excerpt hash: ${excerpt.excerptHash}`,
+        "```",
+        excerpt.excerpt,
+        "```"
+      ].join("\n")
+    )
+    .join("\n\n");
+}
+
+function sourceDependencyRefForExcerpt(
+  sourceRef: string,
+  dependencies: readonly InMemoryContextDependencyShape[]
+): string | undefined {
+  return dependencies.find((dependency) => dependency.ref === sourceRef)?.id;
 }
 
 function sectionDependencyRefs(

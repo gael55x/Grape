@@ -146,11 +146,13 @@ The current compiler foundation can build an `InMemoryContextArtifactShape` from
 - snapshot-derived source records
 - persisted lightweight symbol nodes and relationship edges
 
-It emits task, repository-state, allowed-source-manifest, file-relationship, and index-confidence sections. Its dependency manifest includes repo snapshot, worktree state, selected source/config/lockfile records, and selected symbol relationships. Aggregate source/index sections retain repo snapshot and worktree dependencies so empty or all-unindexed repositories still produce inspectable partial context. Relationship summaries render repository paths when known, with symbol IDs kept as supporting identities.
+It emits task, repository-state, allowed-source-manifest, exact-source-evidence, file-relationship, and index-confidence sections. Its dependency manifest includes repo snapshot, worktree state, selected source/config/lockfile records, selected exact source proof refs, and selected symbol relationships. Aggregate source/index sections retain repo snapshot and worktree dependencies so empty or all-unindexed repositories still produce inspectable partial context. Relationship summaries render repository paths when known, with symbol IDs kept as supporting identities.
+
+The exact-source-evidence section is a scaffold proof foundation: it reads only already-allowed source records, verifies the current file/symlink bytes still match the stored source hash, truncates a bounded excerpt, records a deterministic proof ref, stores the excerpt hash as a proof dependency, and includes the exact excerpt in the artifact. This proves that the excerpt exists in the current source input. It does not promote durable claims or prove runtime behavior.
 
 `grape compile --task <text>` now writes this scaffold as inspectable JSON and Markdown under `.grape/artifacts/ctx_<id>.json` and `.grape/artifacts/ctx_<id>.md`, after a basic artifact-level secret scan. These files are useful for CLI review and session-diff testing, but they are still marked as `InMemoryContextArtifactShape` scaffold output. The artifact ID identifies a compile output instance; the artifact hash is the deterministic content identity and excludes `createdAt` and instance IDs.
 
-Risk overlays currently mark the scaffold artifact unsafe with `risk_overlay_exact_spans_not_implemented`, because V1 still needs exact source-span selection before high-risk compiles can be reported as safe.
+Risk overlays currently mark the scaffold artifact unsafe with `risk_overlay_exact_spans_not_implemented`, because V1 still needs task-policy-specific exact source-span selection before high-risk compiles can be reported as safe.
 
 `grape artifacts --artifact <id>` and MCP `grape_get_artifact` expose stored scaffold artifact metadata, dependency rows, and repo-relative artifact file refs for inspection. They do not return a final V1 artifact schema and do not promote scaffold summaries to proof.
 
@@ -159,7 +161,7 @@ This is not yet the final V1 artifact product. It does not yet implement the fin
 ## Section Rules
 
 - `pinned_rule`, `risk_warning`, `stale_warning`, `contradiction`, and high-risk exact sections must not be replaced by compression.
-- High-risk overlays require exact code/config/rule spans for required context.
+- High-risk overlays require exact code/config/rule spans for required context. Bounded scaffold excerpts are useful evidence, but they do not satisfy the high-risk policy until task-specific required spans are selected.
 - A section with `redactionStatus: "blocked"` cannot be returned or persisted as a context pack item.
 - A section with `exactRequired: true` must include at least one source ref and, for durable claims, at least one proof ref.
 - `compression_orientation` may help navigation only. It cannot satisfy required proof, exact code, warning, or pinned context.

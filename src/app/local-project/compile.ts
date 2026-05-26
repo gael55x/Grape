@@ -27,6 +27,7 @@ import {
 import { detectRiskOverlaysForTask, mergeRiskOverlays } from "./compile-risk.js";
 import { ensureCompileSession } from "./compile-session.js";
 import { initializeLocalProject } from "./initialize.js";
+import { readLocalSourceExcerpts } from "./source-excerpts.js";
 import { withMigratedLocalDatabase } from "./storage.js";
 import type { CompileLocalContextInput, CompileLocalContextResult } from "./types.js";
 import type { LocalArtifactWriteResult } from "./artifact-files.js";
@@ -97,6 +98,11 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
       });
       if (!session.existed) repositories.contextSessions.insert(session.record);
 
+      const sources = evidenceRepositories.sources.listBySnapshot(snapshotResult.snapshotId);
+      const sourceExcerpts = readLocalSourceExcerpts({
+        rootPath: snapshot.rootPath,
+        sources
+      });
       const artifact = compileRepositoryContextArtifact({
         projectId: config.project.projectId,
         sessionId,
@@ -106,7 +112,8 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         userRequestHash: sha256(input.task),
         snapshot: snapshotResult.snapshot,
         worktreeStateId: snapshotResult.worktreeStateId,
-        sources: evidenceRepositories.sources.listBySnapshot(snapshotResult.snapshotId),
+        sources,
+        sourceExcerpts,
         symbolNodes: indexingRepositories.symbolNodes.listBySnapshot(snapshotResult.snapshotId),
         symbolEdges: indexingRepositories.symbolEdges.listBySnapshot(snapshotResult.snapshotId),
         createdAt: now
