@@ -158,6 +158,8 @@ The exact-source-evidence section is a scaffold proof foundation: it reads only 
 
 `grape compile --task <text>` now writes this scaffold as inspectable JSON and Markdown under `.grape/artifacts/ctx_<id>.json` and `.grape/artifacts/ctx_<id>.md`, after a basic artifact-level secret scan. These files are useful for CLI review and session-diff testing, but they are still marked as `InMemoryContextArtifactShape` scaffold output. The artifact ID identifies a compile output instance; the artifact hash is the deterministic content identity and excludes `createdAt` and instance IDs.
 
+When `--token-budget` or MCP `tokenBudget` is supplied, the rendered JSON/Markdown includes budget status, estimated pack tokens, required context tokens, warnings, and unsafe reasons. V1 scaffold budget handling evaluates fit only; it does not prune context yet. Required context means pinned, exact/safety-critical, and invalidation items. If required context is larger than the requested budget, output is marked unsafe with `token_budget_below_required_context`.
+
 Risk overlays currently mark the scaffold artifact unsafe with `risk_overlay_exact_spans_not_implemented`, because V1 still needs task-policy-specific exact source-span selection before high-risk compiles can be reported as safe.
 
 `grape artifacts --artifact <id>` and MCP `grape_get_artifact` expose stored scaffold artifact metadata, dependency rows, and repo-relative artifact file refs for inspection. They do not return a final V1 artifact schema and do not promote scaffold summaries to proof.

@@ -78,7 +78,7 @@ When the same MCP session identity is reused after a Git branch switch for the s
 
 When `resetSession: true` is supplied for an existing MCP session, the compile service records a `session_reset` invalidation event, returns `INVALIDATE_PREVIOUS` items for active prior sent context, and forces full resend of current scaffold artifact sections instead of omitting unchanged sections.
 
-Current limitation: the returned `contextPackItems` now use the V1 `ContextPackItem` output shape, but the stored artifact body is still the scaffold repository-derived artifact rather than the final V1 `ContextArtifact` schema. The current implementation requires `sessionId` or `agentSessionId` so session-scoped diffing cannot collapse across independent agents. Seed `files`, `symbols`, and `tests` participate in risk-overlay detection and source retrieval, but retrieval is still a conservative source-selection foundation over allowed snapshot records rather than final durable current-valid claim retrieval. Non-local `environmentScope`, `agentName`, `agentSessionId`, `resetSession`, and `tokenBudget` are accepted for contract compatibility; unsupported budget/environment behavior produces explicit warnings and `compileMode: "partial_with_risk"` unless a stronger unsafe condition applies. Detected risk overlays return `compileMode: "cannot_compile_safely"` until exact-span high-risk policies are implemented. Artifact file refs returned over MCP are repo-relative paths, not absolute local paths.
+Current limitation: the returned `contextPackItems` now use the V1 `ContextPackItem` output shape, but the stored artifact body is still the scaffold repository-derived artifact rather than the final V1 `ContextArtifact` schema. The current implementation requires `sessionId` or `agentSessionId` so session-scoped diffing cannot collapse across independent agents. Seed `files`, `symbols`, and `tests` participate in risk-overlay detection and source retrieval, but retrieval is still a conservative source-selection foundation over allowed snapshot records rather than final durable current-valid claim retrieval. `tokenBudget` is evaluated without pruning pinned, exact, or invalidation context; if required context exceeds the budget, `compileMode` is `cannot_compile_safely`. Non-local `environmentScope`, `agentName`, `agentSessionId`, and `resetSession` are accepted for contract compatibility; unsupported environment behavior produces explicit warnings and `compileMode: "partial_with_risk"` unless a stronger unsafe condition applies. Detected risk overlays return `compileMode: "cannot_compile_safely"` until exact-span high-risk policies are implemented. Artifact file refs returned over MCP are repo-relative paths, not absolute local paths.
 
 `grape_get_artifact` returns stored scaffold artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative artifact file refs for one `artifactId`. It does not return raw artifact bodies and does not claim the scaffold JSON is the final V1 artifact schema. MCP output omits absolute local root paths.
 
@@ -96,7 +96,7 @@ interface GrapeGetContextInput {
   symbols?: string[];
   tests?: string[];
   environmentScope?: "local" | "test" | "ci" | "staging" | "production" | "unknown";
-  tokenBudget?: number;
+  tokenBudget?: number; // positive integer
   sessionId?: string;
   agentName?: string;
   agentSessionId?: string;
@@ -105,6 +105,8 @@ interface GrapeGetContextInput {
 
 interface GrapeGetContextOutput {
   artifactId: string;
+  artifactHash: string;
+  dependencyManifestHash: string;
   sessionId: string;
   branch: string;
   headCommit: string;
@@ -123,8 +125,21 @@ interface GrapeGetContextOutput {
     restoreAvailableItems: number;
   };
   warnings: string[];
+  unsafeReasons: string[];
+  budget: {
+    status: "not_requested" | "within_budget" | "over_budget" | "required_context_exceeds_budget";
+    tokenBudget?: number;
+    estimatedPackTokens: number;
+    requiredContextTokens: number;
+    warnings: string[];
+    unsafeReasons: string[];
+  };
   sessionResetId?: string;
   restoreAvailable: boolean;
+  artifactFiles: {
+    json: string;
+    markdown: string;
+  };
 }
 ```
 

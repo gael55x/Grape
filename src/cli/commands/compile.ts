@@ -5,7 +5,16 @@ import { exitCodes } from "../exit-codes.js";
 export async function runCompile(parsed: ParsedArgs): Promise<number> {
   const flag = unsupportedFlag(
     parsed,
-    new Set(["--json", "--repo", "--task", "--task-type", "--risk", "--session", "--reset-session"])
+    new Set([
+      "--json",
+      "--repo",
+      "--task",
+      "--task-type",
+      "--risk",
+      "--session",
+      "--reset-session",
+      "--token-budget"
+    ])
   );
   if (flag) {
     writeError(`Unsupported option for grape ${parsed.command}: ${flag}`);
@@ -26,6 +35,7 @@ export async function runCompile(parsed: ParsedArgs): Promise<number> {
       taskType: parsed.values.get("--task-type"),
       riskOverlays: parsed.values.get("--risk"),
       sessionId: parsed.values.get("--session"),
+      tokenBudget: parseTokenBudget(parsed.values.get("--token-budget")),
       resetSession: parsed.flags.has("--reset-session")
     });
 
@@ -45,6 +55,7 @@ export async function runCompile(parsed: ParsedArgs): Promise<number> {
       `Pack items: ${result.contextPackItems.length}`,
       `Sent items: ${result.sentItemCount}`,
       `Omitted unchanged: ${result.omittedItemCount}`,
+      result.budget.status !== "not_requested" ? `Token budget: ${result.budget.status}` : undefined,
       result.sessionResetId ? `Session reset: ${result.sessionResetId}` : undefined,
       `Warnings: ${result.warnings.length === 0 ? "none" : result.warnings.join(", ")}`,
       "",
@@ -65,9 +76,19 @@ function compileErrorExitCode(error: unknown): number {
   if (message.startsWith("unsupported task type") || message.startsWith("unsupported risk overlay")) {
     return exitCodes.usage;
   }
+  if (message.startsWith("token budget must")) return exitCodes.usage;
   if (message.includes("may only contain letters")) return exitCodes.usage;
   if (message.includes("secret scan blocked")) return exitCodes.unsafe;
   if (message.includes("session is locked")) return exitCodes.lock;
   if (message.includes("config root path does not match")) return exitCodes.stale;
   return exitCodes.storage;
+}
+
+function parseTokenBudget(value: string | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error("token budget must be a positive integer");
+  }
+  return parsed;
 }

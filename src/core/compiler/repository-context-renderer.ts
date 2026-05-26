@@ -1,7 +1,8 @@
 import type {
   ContextPackItemShape,
-  InMemoryContextArtifactShape,
+  InMemoryContextArtifactShape
 } from "../../shared/index.js";
+import type { ContextPackBudgetResult } from "./context-budget.js";
 
 export interface RepositoryContextRenderTokenMetric {
   readonly naiveTokens: number;
@@ -14,6 +15,7 @@ export interface RepositoryContextRenderInput {
   readonly contextPackItems: readonly ContextPackItemShape[];
   readonly omittedItems: readonly { readonly sectionId: string; readonly restoreId?: string }[];
   readonly tokenMetric: RepositoryContextRenderTokenMetric;
+  readonly budget?: ContextPackBudgetResult;
 }
 
 export function renderRepositoryContextPackJson(input: RepositoryContextRenderInput): string {
@@ -25,7 +27,8 @@ export function renderRepositoryContextPackJson(input: RepositoryContextRenderIn
       artifact: input.artifact,
       contextPackItems: input.contextPackItems,
       omittedItems: input.omittedItems,
-      tokenMetric: input.tokenMetric
+      tokenMetric: input.tokenMetric,
+      budget: input.budget
     },
     null,
     2
@@ -61,8 +64,24 @@ export function renderRepositoryContextPackMarkdown(input: RepositoryContextRend
     `Naive resend tokens: ${input.tokenMetric.naiveTokens}`,
     `Grape context pack tokens: ${input.tokenMetric.grapeTokens}`,
     `Reduction: ${input.tokenMetric.reductionPercent}%`,
+    ...renderBudget(input.budget),
     ""
   ].join("\n");
+}
+
+function renderBudget(budget: ContextPackBudgetResult | undefined): string[] {
+  if (!budget || budget.status === "not_requested") return [];
+  return [
+    "",
+    "## Token Budget",
+    "",
+    `Budget: ${budget.tokenBudget}`,
+    `Estimated pack tokens: ${budget.estimatedPackTokens}`,
+    `Required context tokens: ${budget.requiredContextTokens}`,
+    `Status: ${budget.status}`,
+    `Warnings: ${budget.warnings.length === 0 ? "none" : budget.warnings.join(", ")}`,
+    `Unsafe reasons: ${budget.unsafeReasons.length === 0 ? "none" : budget.unsafeReasons.join(", ")}`
+  ];
 }
 
 function renderPackItem(item: ContextPackItemShape): string[] {

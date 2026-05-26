@@ -188,7 +188,7 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: added the first MCP stdio adapter with framed JSON-RPC handling, `initialize`, `tools/list`, `tools/call`, `grape_get_context`, and `grape_get_status`. The MCP adapter is thin: `grape_get_context` calls the local compile service and returns structured context-pack items plus Markdown, while `grape_get_status` calls the local status service.
 - Checks run: `npm run typecheck`; `npm run build:test`; focused CLI/MCP behavior tests.
-- Risks/follow-ups: this is not the complete V1 MCP surface. The current `grape_get_context` path requires `sessionId` or `agentSessionId` to preserve session-scoped diffing and still needs the final ContextArtifact schema plus restricted write tools. Later slices added seed-aware source retrieval; token-budget behavior remains partial.
+- Risks/follow-ups: this is not the complete V1 MCP surface. The current `grape_get_context` path requires `sessionId` or `agentSessionId` to preserve session-scoped diffing and still needs the final ContextArtifact schema plus restricted write tools. Later slices added seed-aware source retrieval and token-budget evaluation.
 
 ### 2026-05-26 - Omitted Context Restore Lookup
 
@@ -251,4 +251,11 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: scaffold context compilation now resolves task source hints from task terms, MCP seed file/symbol/test refs, safe FTS rows, and symbol/path metadata. Selected source refs are surfaced in a `task-retrieval` section and prioritized across source manifests, dependency manifests, symbol summaries, and bounded exact-source evidence.
 - Checks run: focused retrieval/source-excerpt/CLI/MCP/repository-artifact behavior tests before full verification.
-- Risks/follow-ups: retrieval is still source selection over allowed snapshot records. Durable current-valid claim retrieval, final ContextArtifact schema, token-budget planning, and high-risk exact-span policies remain pending.
+- Risks/follow-ups: retrieval is still source selection over allowed snapshot records. Durable current-valid claim retrieval, final ContextArtifact schema, budget pruning/compression policy, and high-risk exact-span policies remain pending.
+
+### 2026-05-26 - Token Budget Safety Evaluation
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: CLI `grape compile --token-budget <tokens>` and MCP `tokenBudget` now evaluate whether the generated context pack fits the requested budget. The evaluator reports estimated pack tokens, required context tokens, warnings, and unsafe reasons; it fails closed with `token_budget_below_required_context` when pinned/exact/invalidation context cannot fit.
+- Checks run: focused budget/CLI/MCP behavior tests before full verification.
+- Risks/follow-ups: this slice evaluates budget fit only. It deliberately does not prune or compress context yet, because V1 still needs final task policy and compression-cache rules before safe budget pruning.

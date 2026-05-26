@@ -44,6 +44,7 @@ export interface GrapeGetContextToolOutput {
   };
   readonly warnings: readonly string[];
   readonly unsafeReasons: readonly string[];
+  readonly budget: CompileLocalContextResult["budget"];
   readonly sessionResetId?: string;
   readonly restoreAvailable: boolean;
   readonly artifactFiles: {
@@ -63,6 +64,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     seedFiles: parsed.files,
     seedSymbols: parsed.symbols,
     seedTests: parsed.tests,
+    tokenBudget: parsed.tokenBudget,
     sessionId,
     resetSession: parsed.resetSession
   });
@@ -85,6 +87,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     diffSummary: summarizeDiff(result.contextPackItems),
     warnings,
     unsafeReasons: result.unsafeReasons,
+    budget: result.budget,
     sessionResetId: result.sessionResetId,
     restoreAvailable: result.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE" || item.restoreId),
     artifactFiles: {
@@ -117,7 +120,7 @@ function parseInput(input: unknown): GrapeGetContextToolInput {
     symbols: optionalStringArray(input.symbols, "symbols"),
     tests: optionalStringArray(input.tests, "tests"),
     environmentScope: optionalEnvironmentScope(input.environmentScope),
-    tokenBudget: optionalNumber(input.tokenBudget, "tokenBudget"),
+    tokenBudget: optionalPositiveInteger(input.tokenBudget, "tokenBudget"),
     sessionId: optionalString(input.sessionId, "sessionId"),
     agentName: optionalString(input.agentName, "agentName"),
     agentSessionId: optionalString(input.agentSessionId, "agentSessionId"),
@@ -138,9 +141,11 @@ function optionalString(value: unknown, field: string): string | undefined {
   return value;
 }
 
-function optionalNumber(value: unknown, field: string): number | undefined {
+function optionalPositiveInteger(value: unknown, field: string): number | undefined {
   if (value === undefined) return undefined;
-  if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`${field} must be a finite number`);
+  if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+    throw new Error(`${field} must be a positive integer`);
+  }
   return value;
 }
 
@@ -207,7 +212,6 @@ function countState(items: readonly ContextPackItemShape[], state: DiffState): n
 
 function unsupportedInputWarnings(input: GrapeGetContextToolInput): string[] {
   const warnings: string[] = [];
-  if (input.tokenBudget !== undefined) warnings.push("mcp_token_budget_not_enforced_in_scaffold_compile");
   if (input.environmentScope && input.environmentScope !== "local") {
     warnings.push("mcp_environment_scope_not_applied_in_scaffold_compile");
   }
