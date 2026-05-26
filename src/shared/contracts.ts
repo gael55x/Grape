@@ -56,6 +56,22 @@ export const sourceTypes = [
 
 export type SourceType = (typeof sourceTypes)[number];
 
+export const sourceScopes = ["committed", "staged", "unstaged", "untracked", "external"] as const;
+
+export type SourceScope = (typeof sourceScopes)[number];
+
+export const sourceTrustClasses = ["trusted", "temporary", "untrusted"] as const;
+
+export type SourceTrustClass = (typeof sourceTrustClasses)[number];
+
+export const privacyStatuses = ["allowed", "ignored", "private", "blocked_secret"] as const;
+
+export type PrivacyStatus = (typeof privacyStatuses)[number];
+
+export const sourceRedactionStatuses = ["not_needed", "redacted", "blocked"] as const;
+
+export type SourceRedactionStatus = (typeof sourceRedactionStatuses)[number];
+
 export const verificationStatuses = [
   "verified",
   "partially_verified",

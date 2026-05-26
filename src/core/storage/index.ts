@@ -1,3 +1,4 @@
+export * from "./evidence-repositories.js";
 export * from "./migrations.js";
 export * from "./migration-plan.js";
 export * from "./repositories.js";

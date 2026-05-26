@@ -13,6 +13,12 @@ export interface SnapshotFileHash {
   sourceKind: "source" | "test" | "rule" | "config" | "package" | "doc";
 }
 
+export interface SnapshotFileRejection {
+  path: string;
+  reason: "git_ignored" | "privacy_ignored" | "unreadable";
+  privacyStatus: "ignored" | "private";
+}
+
 export interface RepoSnapshot {
   snapshotId: string;
   repoId: string;
@@ -24,6 +30,7 @@ export interface RepoSnapshot {
   snapshotHash: string;
   dirtyPaths: string[];
   files: SnapshotFileHash[];
+  rejectedFiles: SnapshotFileRejection[];
   hashAlgorithm: "sha256";
   createdAt: string;
 }
@@ -38,12 +45,16 @@ export interface RepoSnapshotInput {
   snapshotHash?: string;
   dirtyPaths?: string[];
   files: SnapshotFileHash[];
+  rejectedFiles?: SnapshotFileRejection[];
   createdAt: string;
 }
 
 export function createRepoSnapshotShape(input: RepoSnapshotInput): RepoSnapshot {
   const dirtyPaths = [...(input.dirtyPaths ?? [])].sort();
   const files = [...input.files].sort((left, right) => left.path.localeCompare(right.path));
+  const rejectedFiles = [...(input.rejectedFiles ?? [])].sort((left, right) =>
+    `${left.path}:${left.reason}`.localeCompare(`${right.path}:${right.reason}`)
+  );
   const snapshotHash =
     input.snapshotHash ??
     hashStableParts([
@@ -54,7 +65,8 @@ export function createRepoSnapshotShape(input: RepoSnapshotInput): RepoSnapshot 
       input.worktreeStatus,
       input.worktreeHash,
       ...dirtyPaths,
-      ...files.map((file) => `${file.path}:${file.sha256}:${file.sourceKind}`)
+      ...files.map((file) => `${file.path}:${file.sha256}:${file.sourceKind}`),
+      ...rejectedFiles.map((file) => `${file.path}:${file.reason}:${file.privacyStatus}`)
     ]);
 
   return {
@@ -68,6 +80,7 @@ export function createRepoSnapshotShape(input: RepoSnapshotInput): RepoSnapshot 
     snapshotHash,
     dirtyPaths,
     files,
+    rejectedFiles,
     hashAlgorithm: "sha256",
     createdAt: input.createdAt
   };
@@ -97,7 +110,8 @@ export function createGitRepoSnapshot(input: GitRepoSnapshotInput): RepoSnapshot
   const commit = runGit(rootPath, gitBinary, ["rev-parse", "HEAD"]);
   const privacyPolicy = loadPrivacyIgnorePolicy(rootPath);
   const dirtyPaths = readDirtyPaths(rootPath, gitBinary, privacyPolicy);
-  const files = readGitVisibleFileHashes(rootPath, gitBinary, privacyPolicy);
+  const fileManifest = readGitVisibleFileManifest(rootPath, gitBinary, privacyPolicy);
+  const files = fileManifest.files;
   const worktreeStatus: WorktreeStatus = dirtyPaths.length === 0 ? "clean" : "dirty";
   const worktreeHash = hashStableParts([
     branch,
@@ -116,6 +130,7 @@ export function createGitRepoSnapshot(input: GitRepoSnapshotInput): RepoSnapshot
     worktreeHash,
     dirtyPaths,
     files,
+    rejectedFiles: fileManifest.rejectedFiles,
     createdAt: input.createdAt
   });
 }
@@ -159,11 +174,14 @@ function readDirtyPaths(
     .sort();
 }
 
-function readGitVisibleFileHashes(
+function readGitVisibleFileManifest(
   rootPath: string,
   gitBinary: string,
   privacyPolicy: ReturnType<typeof loadPrivacyIgnorePolicy>
-): SnapshotFileHash[] {
+): {
+  files: SnapshotFileHash[];
+  rejectedFiles: SnapshotFileRejection[];
+} {
   const repoPaths = runGit(rootPath, gitBinary, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
     .split("\0")
     .filter(Boolean)
@@ -171,31 +189,41 @@ function readGitVisibleFileHashes(
     .sort();
   const gitIgnored = readGitIgnoredPaths(rootPath, gitBinary, repoPaths);
 
-  return repoPaths
-    .filter((repoPath) => !gitIgnored.has(repoPath))
-    .filter((repoPath) => !isIgnoredByPrivacyPolicy(repoPath, privacyPolicy))
-    .flatMap((repoPath): SnapshotFileHash[] => {
-      const absolutePath = path.join(rootPath, repoPath);
+  const rejectedFiles: SnapshotFileRejection[] = [];
+  const files = repoPaths.flatMap((repoPath): SnapshotFileHash[] => {
+    if (gitIgnored.has(repoPath)) {
+      rejectedFiles.push({ path: repoPath, reason: "git_ignored", privacyStatus: "ignored" });
+      return [];
+    }
+    if (isIgnoredByPrivacyPolicy(repoPath, privacyPolicy)) {
+      rejectedFiles.push({ path: repoPath, reason: "privacy_ignored", privacyStatus: "private" });
+      return [];
+    }
 
-      try {
-        const stat = lstatSync(absolutePath);
-        if (!stat.isFile() && !stat.isSymbolicLink()) return [];
+    const absolutePath = path.join(rootPath, repoPath);
 
-        const bytes = stat.isSymbolicLink()
-          ? Buffer.from(`symlink:${readlinkSync(absolutePath)}`)
-          : readFileSync(absolutePath);
+    try {
+      const stat = lstatSync(absolutePath);
+      if (!stat.isFile() && !stat.isSymbolicLink()) return [];
 
-        return [
-          {
-            path: repoPath,
-            sha256: sha256(bytes),
-            sourceKind: classifySourceKind(repoPath)
-          }
-        ];
-      } catch {
-        return [];
-      }
-    });
+      const bytes = stat.isSymbolicLink()
+        ? Buffer.from(`symlink:${readlinkSync(absolutePath)}`)
+        : readFileSync(absolutePath);
+
+      return [
+        {
+          path: repoPath,
+          sha256: sha256(bytes),
+          sourceKind: classifySourceKind(repoPath)
+        }
+      ];
+    } catch {
+      rejectedFiles.push({ path: repoPath, reason: "unreadable", privacyStatus: "private" });
+      return [];
+    }
+  });
+
+  return { files, rejectedFiles };
 }
 
 function readGitIgnoredPaths(rootPath: string, gitBinary: string, repoPaths: readonly string[]): Set<string> {

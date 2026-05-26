@@ -3,7 +3,10 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
+
+import { createEvidenceStorageRepositories } from "../../.tmp/build/src/core/storage/index.js";
 
 const cliPath = path.join(process.cwd(), ".tmp/build/src/cli/index.js");
 
@@ -74,6 +77,7 @@ test("cli init --connect bootstraps local .grape state and keeps it out of git s
     assert.equal(existsSync(path.join(repoPath, ".grape", "grape.db")), true);
     assert.match(readFileSync(path.join(repoPath, ".git", "info", "exclude"), "utf8"), /\.grape\//);
     assert.equal(execGit(repoPath, ["status", "--porcelain=v1"]), "");
+    assert.deepEqual(localSourceRejectionRefs(repoPath).filter((sourceRef) => sourceRef.startsWith(".grape/")), []);
 
     const status = runCliJson(repoPath, ["status"]);
     assert.equal(status.initialized, true);
@@ -92,6 +96,15 @@ test("cli init --connect bootstraps local .grape state and keeps it out of git s
     assert.equal(JSON.parse(subdirStatus.stdout).initialized, true);
   });
 });
+
+function localSourceRejectionRefs(repoPath) {
+  const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
+  try {
+    return createEvidenceStorageRepositories(database).sourceRejections.listAll().map((row) => row.sourceRef);
+  } finally {
+    database.close();
+  }
+}
 
 test("cli mcp --print-config emits the V1 stdio connection contract", () => {
   const result = spawnSync(process.execPath, [cliPath, "mcp", "--print-config"], {

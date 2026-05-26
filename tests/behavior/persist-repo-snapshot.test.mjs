@@ -9,6 +9,7 @@ import test from "node:test";
 import { persistGitRepoSnapshot } from "../../.tmp/build/src/app/index.js";
 import {
   applyStorageMigrations,
+  createEvidenceStorageRepositories,
   createStorageRepositories,
   storageMigrationReferences
 } from "../../.tmp/build/src/core/storage/index.js";
@@ -31,7 +32,7 @@ function withMigratedDatabase(fn) {
 
   try {
     applyStorageMigrations(database, migrationSources(), () => now);
-    fn(database, createStorageRepositories(database));
+    fn(database, createStorageRepositories(database), createEvidenceStorageRepositories(database));
   } finally {
     database.close();
     rmSync(dir, { recursive: true, force: true });
@@ -76,10 +77,11 @@ function execGit(repoPath, args) {
 
 test("persist git repo snapshot stores project, repo, snapshot, and worktree state idempotently", () => {
   withGitRepo((repoPath) => {
-    withMigratedDatabase((database, repositories) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories) => {
       const first = persistGitRepoSnapshot({
         database,
         repositories,
+        evidenceRepositories,
         rootPath: repoPath,
         projectId: "project-1",
         repoId: "repo-1",
@@ -88,6 +90,7 @@ test("persist git repo snapshot stores project, repo, snapshot, and worktree sta
       const second = persistGitRepoSnapshot({
         database,
         repositories,
+        evidenceRepositories,
         rootPath: repoPath,
         projectId: "project-1",
         repoId: "repo-1",
@@ -111,6 +114,8 @@ test("persist git repo snapshot stores project, repo, snapshot, and worktree sta
       assert.equal(repositories.repoSnapshots.get(first.snapshotId)?.snapshotHash, first.snapshot.snapshotHash);
       assert.equal(repositories.worktreeStates.get(first.worktreeStateId)?.dirtyPathsJson, "[]");
       assert.equal(database.prepare("SELECT count(*) AS count FROM repo_snapshots").get().count, 1);
+      assert.equal(evidenceRepositories.sources.listBySnapshot(first.snapshotId).length, first.snapshot.files.length);
+      assert.equal(second.evidence.sourcesInserted, 0);
     });
   });
 });
@@ -120,10 +125,11 @@ test("persist git repo snapshot stores dirty paths without ignored files", () =>
     writeFileSync(path.join(repoPath, "src", "calculateDiscount.ts"), "export const discount = 20;\n");
     writeFileSync(path.join(repoPath, "ignored.env"), "SECRET=changed\n");
 
-    withMigratedDatabase((_database, repositories) => {
+    withMigratedDatabase((_database, repositories, evidenceRepositories) => {
       const result = persistGitRepoSnapshot({
         database: _database,
         repositories,
+        evidenceRepositories,
         rootPath: repoPath,
         projectId: "project-1",
         repoId: "repo-1",
@@ -139,7 +145,7 @@ test("persist git repo snapshot stores dirty paths without ignored files", () =>
 
 test("persist git repo snapshot rolls back when existing project identity conflicts", () => {
   withGitRepo((repoPath) => {
-    withMigratedDatabase((database, repositories) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories) => {
       repositories.projects.insert({
         projectId: "project-1",
         rootPath: "/wrong/root",
@@ -153,6 +159,7 @@ test("persist git repo snapshot rolls back when existing project identity confli
           persistGitRepoSnapshot({
             database,
             repositories,
+            evidenceRepositories,
             rootPath: repoPath,
             projectId: "project-1",
             repoId: "repo-1",

@@ -1,7 +1,10 @@
 import path from "node:path";
 
 import { createGitRepoSnapshot } from "../../core/git/index.js";
-import { createStorageRepositories } from "../../core/storage/index.js";
+import {
+  createEvidenceStorageRepositories,
+  createStorageRepositories
+} from "../../core/storage/index.js";
 import { persistGitRepoSnapshot } from "../persist-repo-snapshot.js";
 import {
   defaultLocalProjectConfig,
@@ -41,9 +44,11 @@ export function initializeLocalProject(
     now: () => now,
     operation(database) {
       const repositories = createStorageRepositories(database);
+      const evidenceRepositories = createEvidenceStorageRepositories(database);
       return persistGitRepoSnapshot({
         database,
         repositories,
+        evidenceRepositories,
         rootPath: snapshot.rootPath,
         projectId,
         repoId: snapshot.repoId,
