@@ -82,6 +82,7 @@ Compression:
 MCP and CLI:
 
 - `mcp_get_context_returns_structured_items`
+- `mcp_get_proofs_does_not_show_raw_secret`
 - `mcp_write_tool_cannot_promote_claim`
 - `agent_reported_test_result_is_temporary`
 - `user_decision_requires_direct_confirmation_hashes`

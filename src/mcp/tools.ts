@@ -1,6 +1,7 @@
 import { runGrapeGetArtifactTool } from "./artifact.js";
 import { runGrapeGetContextTool } from "./get-context.js";
 import { runGrapeGetOmittedItemTool } from "./omitted.js";
+import { runGrapeGetProofsTool } from "./proofs.js";
 import { runGrapeGetStatusTool } from "./status.js";
 
 export interface McpToolResult {
@@ -67,6 +68,18 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
         }
       },
       {
+        name: "grape_get_proofs",
+        description: "Inspect persisted exact-source proof rows without returning proof excerpts or raw source text.",
+        inputSchema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            proofId: { type: "string", minLength: 1 },
+            sourceId: { type: "string", minLength: 1 }
+          }
+        }
+      },
+      {
         name: "grape_get_omitted_item",
         description: "Restore an omitted context item by session and restore token.",
         inputSchema: {
@@ -112,6 +125,8 @@ export function callMcpTool(params: ToolCallParams, rootPath: string): McpToolRe
       }
       case "grape_get_artifact":
         return toolResult(runGrapeGetArtifactTool(params.arguments ?? {}, rootPath), false);
+      case "grape_get_proofs":
+        return toolResult(runGrapeGetProofsTool(params.arguments ?? {}, rootPath), false);
       case "grape_get_omitted_item": {
         const output = runGrapeGetOmittedItemTool(params.arguments ?? {}, rootPath);
         return toolResult(output, output.status === "stale");

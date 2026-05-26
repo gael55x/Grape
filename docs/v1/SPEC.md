@@ -2750,6 +2750,9 @@ Inspection/debugging:
 grape sessions
 grape artifacts
 grape claims --active
+grape proofs
+grape proofs --proof <proof_id>
+grape proofs --source <source_id>
 grape proofs <claim_id>
 grape stale
 grape conflicts

@@ -24,6 +24,7 @@ export function helpText(): string {
     "  grape init --connect        Initialize local .grape state and show MCP guidance",
     "  grape compile --task <text> Compile a task context pack",
     "  grape artifacts             Inspect compiled context artifacts",
+    "  grape proofs               Inspect persisted proof rows",
     "  grape omitted --session <id> Inspect or restore omitted context",
     "  grape status                Inspect local project/bootstrap state",
     "  grape doctor                Run setup and privacy diagnostics",
@@ -40,6 +41,8 @@ export function helpText(): string {
     "  --token-budget <tokens>     Evaluate whether compile output fits a token budget",
     "  --token <restore_token>     Restore an omitted context item",
     "  --artifact <id>             Inspect one context artifact",
+    "  --proof <id>                Inspect one persisted proof row",
+    "  --source <id>               Filter proof rows by source id",
     "  --json                      Emit machine-readable JSON"
   ].join("\n");
 }

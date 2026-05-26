@@ -82,6 +82,7 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.match(result.stdout, /grape init --connect/);
   assert.match(result.stdout, /grape compile --task <text>/);
   assert.match(result.stdout, /grape artifacts/);
+  assert.match(result.stdout, /grape proofs/);
   assert.match(result.stdout, /grape status/);
   assert.match(result.stdout, /grape doctor/);
   assert.match(result.stdout, /grape mcp --print-config/);
@@ -201,6 +202,18 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(scaffoldJson.artifact.artifactId, first.artifactId);
     assert.equal(localContextArtifactCount(repoPath), 1);
     assert.equal(localProofCount(repoPath) > 0, true);
+    const proofs = runCliJson(repoPath, ["proofs"]);
+    assert.equal(proofs.proofs.length > 0, true);
+    const proof = proofs.proofs[0];
+    assert.equal(proof.supportStatus, "direct");
+    assert.equal(proof.proofType, "exact_source_excerpt");
+    assert.equal("excerpt" in proof, false);
+    assert.equal("body" in proof, false);
+    const proofDetail = runCliJson(repoPath, ["proofs", "--proof", proof.proofId]);
+    assert.equal(proofDetail.proofs.length, 1);
+    assert.equal(proofDetail.proofs[0].proofId, proof.proofId);
+    const sourceProofs = runCliJson(repoPath, ["proofs", "--source", proof.sourceId]);
+    assert.equal(sourceProofs.proofs.every((sourceProof) => sourceProof.sourceId === proof.sourceId), true);
 
     const second = runCliJson(repoPath, [
       "compile",
@@ -617,7 +630,13 @@ test("cli mcp --print-config emits the V1 stdio connection contract", () => {
       args: ["mcp", "--stdio", "--repo", repoPath],
       cwd: repoPath,
       transport: "stdio",
-      tools: ["grape_get_context", "grape_get_artifact", "grape_get_omitted_item", "grape_get_status"],
+      tools: [
+        "grape_get_context",
+        "grape_get_artifact",
+        "grape_get_proofs",
+        "grape_get_omitted_item",
+        "grape_get_status"
+      ],
       note: "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
     });
   });

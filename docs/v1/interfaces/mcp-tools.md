@@ -59,7 +59,13 @@ The current implementation includes the first stdio MCP server:
     "args": ["mcp", "--stdio", "--repo", "<repo-root>"],
     "cwd": "<repo-root>",
     "transport": "stdio",
-    "tools": ["grape_get_context", "grape_get_artifact", "grape_get_omitted_item", "grape_get_status"],
+    "tools": [
+      "grape_get_context",
+      "grape_get_artifact",
+      "grape_get_proofs",
+      "grape_get_omitted_item",
+      "grape_get_status"
+    ],
     "note": "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
   }
 }
@@ -69,6 +75,7 @@ The current implementation includes the first stdio MCP server:
 
 - `grape_get_context`
 - `grape_get_artifact`
+- `grape_get_proofs`
 - `grape_get_omitted_item`
 - `grape_get_status`
 
@@ -81,6 +88,8 @@ When `resetSession: true` is supplied for an existing MCP session, the compile s
 Current limitation: the returned `contextArtifact` and public artifact JSON use the V1 `ContextArtifact` envelope, but their sections are still projected from the repository-derived scaffold rather than final durable current-valid claim retrieval. The current implementation requires `sessionId` or `agentSessionId` so session-scoped diffing cannot collapse across independent agents. Seed `files`, `symbols`, and `tests` participate in risk-overlay detection and source retrieval, but retrieval is still a conservative source-selection foundation over allowed snapshot records. `tokenBudget` is evaluated without pruning pinned, exact, or invalidation context; if required context exceeds the budget, `compileMode` is `cannot_compile_safely`. Non-local `environmentScope`, `agentName`, `agentSessionId`, and `resetSession` are accepted for contract compatibility; unsupported environment behavior produces explicit warnings and `compileMode: "partial_with_risk"` unless a stronger unsafe condition applies. Detected risk overlays return `compileMode: "cannot_compile_safely"` until exact-span high-risk policies are implemented. Artifact file refs returned over MCP are repo-relative paths, not absolute local paths.
 
 `grape_get_artifact` returns stored artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative public artifact file refs for one `artifactId`. It does not return raw scaffold sidecar bodies. MCP output omits absolute local root paths.
+
+`grape_get_proofs` returns persisted proof row metadata, optionally filtered by `proofId` or `sourceId`. It returns proof IDs, source IDs/refs, proof type, support status, source hashes, excerpt hashes, and optional claim IDs. It does not return raw proof excerpts or source file bodies. MCP output omits absolute local root paths.
 
 `grape_get_omitted_item` restores one omitted context item by `sessionId` and `restoreToken`. It validates the token against the session, stored scaffold artifact metadata, stored dependency rows, artifact hash, section content hash, dependency manifest, redaction status, branch, head commit, worktree hash, and source/config/lockfile/rule dependency hashes before returning the omitted body. Stale restore attempts return `status: "stale"` with an error result rather than returning stale content. MCP output omits absolute local root paths.
 
@@ -200,6 +209,35 @@ interface GrapeGetArtifactOutput {
     ref: string;
     hash: string;
     scope: Record<string, unknown>;
+  }>;
+}
+```
+
+```ts
+interface GrapeGetProofsInput {
+  proofId?: string;
+  sourceId?: string;
+}
+
+interface GrapeGetProofsOutput {
+  filter: {
+    proofId?: string;
+    sourceId?: string;
+  };
+  proofs: Array<{
+    proofId: string;
+    claimId?: string;
+    sourceId: string;
+    sourceType?: string;
+    sourceRef?: string;
+    sourceScope?: string;
+    proofType: string;
+    sourceHash: string;
+    excerptHash: string;
+    supportStatus: string;
+    privacyStatus?: string;
+    redactionStatus?: string;
+    createdAt: string;
   }>;
 }
 ```

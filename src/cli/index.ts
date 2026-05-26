@@ -2,6 +2,7 @@
 import { runArtifacts } from "./commands/artifacts.js";
 import { runCompile } from "./commands/compile.js";
 import { runOmitted } from "./commands/omitted.js";
+import { runProofs } from "./commands/proofs.js";
 import { exitCodes } from "./exit-codes.js";
 import { parseArgs, repoPath, unsupportedFlag, type ParsedArgs } from "./args.js";
 import {
@@ -54,6 +55,8 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
       return runMcp(parsed);
     case "omitted":
       return runOmitted(parsed);
+    case "proofs":
+      return runProofs(parsed);
     default:
       writeError(`Unknown command: ${parsed.command}`);
       writeError("Run grape help for available commands.");
@@ -200,6 +203,7 @@ async function runMcp(parsed: ParsedArgs): Promise<number> {
     "Tools:",
     "  grape_get_context",
     "  grape_get_artifact",
+    "  grape_get_proofs",
     "  grape_get_omitted_item",
     "  grape_get_status"
   ].join("\n"));

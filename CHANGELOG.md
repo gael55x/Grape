@@ -53,3 +53,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added conservative token-budget evaluation for CLI `--token-budget` and MCP `tokenBudget`, including unsafe output when required context cannot fit.
 - Added public V1 `ContextArtifact` JSON projection for compile artifacts while keeping scaffold restore data in an internal sidecar.
 - Added validated exact source proof-row persistence during local compile, while keeping durable claim promotion deferred.
+- Added proof-row inspection through CLI `grape proofs` and MCP `grape_get_proofs`.

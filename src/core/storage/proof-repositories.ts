@@ -19,6 +19,7 @@ export interface ProofStorageRepositories {
   readonly proofs: {
     insertOrIgnore(record: ProofRecord): boolean;
     get(proofId: string): ProofRecord | undefined;
+    list(): readonly ProofRecord[];
     listBySource(sourceId: string): readonly ProofRecord[];
   };
 }
@@ -58,6 +59,13 @@ export function createProofStorageRepositories(database: DatabaseSync): ProofSto
             .prepare("SELECT * FROM proofs WHERE proof_id = ?")
             .get(proofId) as Record<string, unknown> | undefined
         );
+      },
+      list() {
+        return (
+          database
+            .prepare("SELECT * FROM proofs ORDER BY created_at DESC, proof_id ASC")
+            .all() as Array<Record<string, unknown>>
+        ).map(mapRequiredProof);
       },
       listBySource(sourceId) {
         return (
