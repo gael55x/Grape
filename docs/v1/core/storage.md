@@ -95,6 +95,9 @@ Tables outside this subset stay documented for V1, but they require explicit imp
 - `runStorageTransaction` is the storage helper for one explicit writer transaction; app services decide the state transition, storage only guarantees commit/rollback.
 - Storage repositories do not decide trust, relevance, compression policy, or redaction policy.
 - The first repository slice in `src/core/storage/repositories.ts` covers only the tables needed to prove persisted session-scoped omission: project/repo/snapshot/worktree setup, context sessions, artifacts, dependencies, sent items, and omitted items.
+- Evidence source storage is split into `src/core/storage/evidence-repositories.ts` so source/source-rejection persistence does not expand the session-ledger repository file.
+- Evidence repositories persist already-classified records from `src/core/evidence/`; they do not decide trust, privacy policy, source relevance, or proof validity.
+- Alpha source storage keeps branch, commit, repo ID, project ID, worktree hash, and worktree state ID inside `metadata_json` until a later migration promotes the final `Source` shape fields that the compiler and MCP surface will query directly.
 - Repository tests must prove session-scoped sent/omitted ledgers and fail-closed foreign-key behavior before app services rely on those tables.
 
 ## SQLite Policy
@@ -138,6 +141,7 @@ The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` 
 - Preserve case in stored paths. Case-fold only for comparison on case-insensitive filesystems.
 - Hash file content with SHA-256.
 - Hash redacted excerpts separately from source content; never use a redacted excerpt hash as proof that the original source is unchanged.
+- Snapshot-derived `source_id` and `source_rejection_id` values are deterministic for the repo, snapshot, path, and relevant hash or rejection reason so repeated bootstrap/sync runs are idempotent.
 
 ## Required Tests
 
@@ -153,5 +157,8 @@ The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` 
 - `storage_transaction_rolls_back_partial_state`
 - `durable_context_build_persists_first_turn_pack`
 - `durable_context_build_rolls_back_partial_state`
+- `snapshot_evidence_persists_allowed_sources`
+- `snapshot_evidence_persists_private_rejections_without_raw_content`
+- `snapshot_evidence_persistence_is_idempotent`
 - `path_normalization_handles_windows_separators`
 - `fts_entries_do_not_store_raw_secrets`

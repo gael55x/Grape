@@ -82,9 +82,14 @@ test("git repo snapshot excludes ignored files and classifies visible files", ()
 
     const snapshot = createGitRepoSnapshot({ rootPath: repoPath, repoId: "repo-1", createdAt: now });
     const fileKinds = new Map(snapshot.files.map((file) => [file.path, file.sourceKind]));
+    const rejected = new Map(snapshot.rejectedFiles.map((file) => [file.path, file]));
 
     assert.equal(fileKinds.has("ignored.env"), false);
     assert.equal(fileKinds.has("private.txt"), false);
+    assert.equal(rejected.get("ignored.env")?.reason, "git_ignored");
+    assert.equal(rejected.get("ignored.env")?.privacyStatus, "ignored");
+    assert.equal(rejected.get("private.txt")?.reason, "privacy_ignored");
+    assert.equal(rejected.get("private.txt")?.privacyStatus, "private");
     assert.equal(fileKinds.get(".grape/rules.md"), "rule");
     assert.equal(fileKinds.get("src/calculateDiscount.ts"), "source");
     assert.equal(fileKinds.get("src/calculateDiscount.test.ts"), "test");

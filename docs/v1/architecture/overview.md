@@ -165,7 +165,7 @@ Split a module when any of these happen:
 - a future agent cannot inspect the whole file quickly before editing
 - tests for the module need unrelated fixture setup paths
 
-Current pressure point: `src/core/storage/repositories.ts` is intentionally boring but already large. Do not add new table families to it without splitting storage repositories by ownership area.
+Current pressure point: `src/core/storage/repositories.ts` is intentionally boring but already large. Do not add new table families to it without splitting storage repositories by ownership area. Evidence source/source-rejection persistence now lives in `src/core/storage/evidence-repositories.ts`; future claim/proof/indexing table families should follow the same ownership split instead of expanding the session-ledger repository file.
 
 The local setup path is split under `src/app/local-project/` by use case: config/layout, migration-backed local storage, Git exclusion, initialization, status, doctor diagnostics, and MCP guidance. CLI command handlers must keep calling those app services rather than taking ownership of filesystem, Git, storage, or diagnostic policy.
 

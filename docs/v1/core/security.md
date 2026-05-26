@@ -42,6 +42,8 @@ Before editing security-sensitive code, agents must verify:
 
 Current implementation note: Git repo snapshots filter paths through Git ignore rules and local privacy ignore files before reading file bytes for hashes. The local privacy ignore baseline currently covers `.ignore`, `.cursorignore`, `.aiignore`, and `.grapeignore` with conservative pattern support. Negated unignore rules are intentionally not supported in this slice because false inclusion is riskier than skipping an extra file.
 
+Rejected ignored/private paths are persisted only as path-level `source_rejections` with reason, privacy status, repo snapshot identity, and hashes of allowed inputs. Grape does not read or persist the rejected file contents. Git-ignored untracked files and directories are skipped by default rather than enumerated, which avoids storing local-only path names such as ignored environment files, dependency folders, and `.grape/` runtime files.
+
 ## Redaction And Hash Rules
 
 - Source hashes are computed from original source bytes.
@@ -65,7 +67,9 @@ V1 must not send repository content, proofs, artifacts, embeddings, telemetry, o
 ## Required Tests
 
 - `ignored_file_not_indexed_without_approval`
+- `ignored_file_rejection_does_not_store_raw_content`
 - `private_file_approval_is_scoped`
+- `private_file_rejection_does_not_store_raw_content`
 - `one_time_approval_not_durable`
 - `raw_env_value_not_in_artifact`
 - `redacted_display_hash_not_used_as_proof`

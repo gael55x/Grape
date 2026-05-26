@@ -4,6 +4,7 @@ import type { DatabaseSync } from "node:sqlite";
 import type { RepoSnapshot } from "../core/git/index.js";
 import { createGitRepoSnapshot } from "../core/git/index.js";
 import type {
+  EvidenceStorageRepositories,
   ProjectRecord,
   RepoRecord,
   RepoSnapshotRecord,
@@ -11,10 +12,12 @@ import type {
   WorktreeStateRecord
 } from "../core/storage/index.js";
 import { runStorageTransaction } from "../core/storage/index.js";
+import { persistSnapshotEvidence } from "./persist-snapshot-evidence.js";
 
 export interface PersistGitRepoSnapshotInput {
   readonly database: DatabaseSync;
   readonly repositories: StorageRepositories;
+  readonly evidenceRepositories: EvidenceStorageRepositories;
   readonly rootPath: string;
   readonly now: string;
   readonly projectId?: string;
@@ -33,6 +36,12 @@ export interface PersistGitRepoSnapshotResult {
     readonly repo: boolean;
     readonly repoSnapshot: boolean;
     readonly worktreeState: boolean;
+  };
+  readonly evidence: {
+    readonly sourcesInserted: number;
+    readonly sourceRejectionsInserted: number;
+    readonly sourcesSeen: number;
+    readonly sourceRejectionsSeen: number;
   };
 }
 
@@ -54,6 +63,13 @@ export function persistGitRepoSnapshot(input: PersistGitRepoSnapshotInput): Pers
       input.repositories,
       worktreeStateRecord(snapshot, worktreeStateId, input.now)
     );
+    const evidence = persistSnapshotEvidence({
+      repositories: input.evidenceRepositories,
+      projectId,
+      worktreeStateId,
+      snapshot,
+      now: input.now
+    });
 
     return {
       projectId,
@@ -66,7 +82,8 @@ export function persistGitRepoSnapshot(input: PersistGitRepoSnapshotInput): Pers
         repo,
         repoSnapshot,
         worktreeState
-      }
+      },
+      evidence
     };
   });
 }

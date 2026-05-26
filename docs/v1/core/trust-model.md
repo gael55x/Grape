@@ -98,6 +98,8 @@ interface ProofRef {
 | `runtime_log` / `ci_job` | Runtime or CI evidence. | Yes, when locally observed or imported with verifiable hashes. | Scope must include environment. |
 | `git_diff` / `commit_message` | VCS evidence. | Partial only unless backed by exact source proof. | Useful for orientation, not behavior proof. |
 
+Current implementation note: repo snapshot source ingestion persists allowed repository files, rule files, config files, lockfiles, and migration files as trusted source records only when they pass Git ignore and local privacy ignore filtering. Git-visible ignored paths, privacy-ignored paths, and unreadable paths become `source_rejections` and are not proof material. Ignored untracked paths are skipped rather than enumerated. Dirty snapshot files are currently scoped as `unstaged` from the dirty-path manifest; staged and untracked source scopes are not split yet and must not be treated as branch-global proof.
+
 ## Promotion Rules
 
 - No proof means no durable claim.

@@ -36,3 +36,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added the first durable context build proof for persisted first-turn send, second-turn omission, stale manifest invalidation, and rollback behavior.
 - Added the first local setup CLI slice with `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`.
 - Added conservative local privacy ignore filtering for repo snapshots before file bytes are read.
+- Added snapshot source evidence persistence for allowed repository files and privacy-safe ignored/private rejections during local bootstrap.

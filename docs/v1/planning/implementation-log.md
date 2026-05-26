@@ -161,3 +161,10 @@ Keep entries simple:
 - Summary: added the first product-shaped setup slice. The package now exposes the future `grape` binary, `grape init --connect` creates local `.grape/` state, applies migrations, persists a Git snapshot, writes config, and locally excludes `.grape/`; `grape status`, `grape doctor`, and `grape mcp --print-config` provide setup inspection and explicit MCP contract-only guidance. The app setup code is split by local-project responsibility to keep CLI handlers thin, and repo snapshots now filter Git ignored and local privacy ignored paths before reading file bytes.
 - Checks run: `npm run check`.
 - Risks/follow-ups: this is not yet the full V1 context pipeline. MCP stdio, evidence ingestion, proof validation, current-valid retrieval, repository-derived artifact compilation, artifact files, restore lookup, and richer inspection commands remain required.
+
+### 2026-05-25 - Snapshot Evidence Store Baseline
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added dedicated source/source-rejection storage repositories, a pure repo snapshot evidence collector, and app-level persistence so Git snapshots now store trusted allowed source records and privacy-safe rejection records for ignored/private/unreadable paths in the same snapshot transaction. Rejected file bytes are not read or persisted.
+- Checks run: `npm run typecheck`; `npm run test:behavior`; `npm run check`; `npm run build`.
+- Risks/follow-ups: dirty files are currently scoped from the dirty-path manifest as `unstaged`; staged and untracked source-scope splitting, proof-span validation, candidate extraction, and current-valid retrieval remain required.
