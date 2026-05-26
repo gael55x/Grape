@@ -336,3 +336,10 @@ Keep entries simple:
 - Summary: added MCP `grape_get_stale_items` as a read-only adapter over the local stale app service. It optionally filters by session, removes `rootPath` from MCP output, and returns invalidation metadata without context bodies.
 - Checks run: focused MCP/CLI behavior tests before full verification.
 - Risks/follow-ups: this mirrors emitted invalidation rows only. Predictive stale analysis and conflict inspection remain pending.
+
+### 2026-05-26 - MCP Rules Inspection Tool
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added MCP `grape_get_rules` as a read-only adapter over a local rules app service. It captures the current Git snapshot, classifies trusted rule files, verifies source hashes before reading bounded excerpts, applies the artifact secret scan, removes `rootPath` from MCP output, and reports rejected rule refs without persisting parsed durable rules.
+- Checks run: focused MCP/CLI behavior tests before full verification.
+- Risks/follow-ups: this exposes current rule excerpts only. Parsed durable `project_rules`, nested scope resolution, generated/candidate rules, and conflict handling remain pending.
