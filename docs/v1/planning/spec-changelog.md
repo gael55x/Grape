@@ -54,3 +54,4 @@ Each entry should include:
 - Clarified artifact behavior for first durable claims: active `repository_source_excerpt_exists` claims may be rendered in a `current-valid-claims` artifact section with claim/proof dependencies, while broader durable claim retrieval remains pending.
 - Clarified the first compression cache behavior: deterministic `symbol_outline` artifacts are derived cache with stored input hashes and artifact dependencies, may render as orientation, and cannot provide proof or replace high-risk exact context.
 - Clarified the session inspection surface: `grape sessions` is implemented as a read-only CLI debug command over context session and diff ledger metadata.
+- Clarified the stale inspection surface: `grape stale` is implemented as a read-only CLI debug command over emitted `INVALIDATE_PREVIOUS` pack ledger rows, not as predictive stale analysis.

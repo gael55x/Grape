@@ -103,7 +103,7 @@ Implemented today:
 - compiled current-valid narrow source-excerpt claims in context artifacts with claim/proof dependencies
 - deterministic `symbol_outline` compression cache records with input hashes and non-proof artifact orientation sections
 - artifact inspection through `grape artifacts`, `grape artifacts --artifact <id>`, and MCP `grape_get_artifact`
-- session debugging through `grape sessions`
+- session and stale-invalidation debugging through `grape sessions` and `grape stale`
 - active narrow claim inspection through `grape claims --active` and MCP `grape_get_claims`
 - proof inspection through `grape proofs`, `grape proofs --proof <id>`, and MCP `grape_get_proofs`
 - first MCP stdio server: `grape mcp --stdio` supports `initialize`, `tools/list`, `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_omitted_item`, and `grape_get_status` over framed stdio
@@ -207,7 +207,7 @@ grape stale
 grape conflicts
 ```
 
-`grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, and `grape omitted` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, omitted-context restore, and the first MCP context retrieval path. Stale, conflict, final artifact schema, claim-linked proof inspection, and the full MCP read/write surface are not implemented yet.
+`grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape sessions`, `grape stale`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, and `grape omitted` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, stale-invalidation inspection, omitted-context restore, and the first MCP context retrieval path. Conflict inspection, final artifact schema hardening, claim-linked proof inspection, and the full MCP read/write surface are not implemented yet.
 
 ## Development
 

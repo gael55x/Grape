@@ -84,6 +84,7 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.match(result.stdout, /grape compile --task <text>/);
   assert.match(result.stdout, /grape artifacts/);
   assert.match(result.stdout, /grape sessions/);
+  assert.match(result.stdout, /grape stale/);
   assert.match(result.stdout, /grape claims --active/);
   assert.match(result.stdout, /grape proofs/);
   assert.match(result.stdout, /grape status/);
@@ -229,6 +230,9 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(sessions.sessions[0].artifactCount, 1);
     assert.equal(sessions.sessions[0].sentItemCount > 0, true);
     assert.equal(sessions.sessions[0].packItemCount > 0, true);
+    const stale = runCliJson(repoPath, ["stale"]);
+    assert.equal(stale.inspectedSessionCount, 1);
+    assert.equal(stale.staleItems.length, 0);
     const claims = runCliJson(repoPath, ["claims", "--active"]);
     assert.equal(claims.claims.length > 0, true);
     assert.equal(claims.claims[0].claimType, "repository_source_excerpt_exists");
@@ -400,6 +404,11 @@ test("cli compile invalidates prior sent context when a session switches branche
     assert.equal(branchSession?.branchName, "feature/context");
     assert.ok(["branch_changed", "durable_context_build"].includes(branchSession?.lastEventReason ?? ""));
     assert.equal(branchSession?.eventCount > 0, true);
+    const stale = runCliJson(repoPath, ["stale", "--session", "branch-session"]);
+    assert.equal(stale.inspectedSessionCount, 1);
+    assert.equal(stale.staleItems.some((item) => item.staleReason === "branch_changed"), true);
+    assert.equal(stale.staleItems.every((item) => item.invalidatesSentItemId.length > 0), true);
+    assert.equal(stale.staleItems.every((item) => item.previousBranchName === "main"), true);
 
     const event = localSessionEvents(repoPath, "branch-session").find(
       (candidate) => candidate.eventType === "session_invalidated"

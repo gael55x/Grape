@@ -25,6 +25,7 @@ export function helpText(): string {
     "  grape compile --task <text> Compile a task context pack",
     "  grape artifacts             Inspect compiled context artifacts",
     "  grape sessions              Inspect context sessions and diff ledgers",
+    "  grape stale                 Inspect stale-context invalidations",
     "  grape claims --active       Inspect current-valid durable claims",
     "  grape proofs               Inspect persisted proof rows",
     "  grape omitted --session <id> Inspect or restore omitted context",

@@ -13,6 +13,7 @@ export * from "./omitted.js";
 export * from "./proofs.js";
 export * from "./sessions.js";
 export * from "./source-excerpts.js";
+export * from "./stale.js";
 export * from "./status.js";
 export * from "./storage.js";
 export * from "./types.js";
