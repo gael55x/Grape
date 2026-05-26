@@ -329,3 +329,10 @@ Keep entries simple:
 - Summary: added `grape stale` backed by a local-project app service. The command reports emitted `INVALIDATE_PREVIOUS` ledger rows, prior sent item refs, stale reason classification, previous branch/head metadata, and dependency ref counts without returning context bodies.
 - Checks run: focused CLI behavior tests before full verification.
 - Risks/follow-ups: this is an invalidation-ledger inspector only. Predictive stale analysis for claims, rules, and compression inputs remains pending until those stale records are product-facing.
+
+### 2026-05-26 - MCP Stale Invalidation Tool
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added MCP `grape_get_stale_items` as a read-only adapter over the local stale app service. It optionally filters by session, removes `rootPath` from MCP output, and returns invalidation metadata without context bodies.
+- Checks run: focused MCP/CLI behavior tests before full verification.
+- Risks/follow-ups: this mirrors emitted invalidation rows only. Predictive stale analysis and conflict inspection remain pending.

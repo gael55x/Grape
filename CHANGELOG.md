@@ -61,3 +61,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added deterministic `symbol_outline` compression cache records and non-proof artifact orientation sections.
 - Added `grape sessions` for session/diff ledger inspection.
 - Added `grape stale` for CLI inspection of emitted stale-context invalidations without returning context bodies.
+- Added MCP `grape_get_stale_items` for stale invalidation inspection without returning context bodies or absolute root paths.

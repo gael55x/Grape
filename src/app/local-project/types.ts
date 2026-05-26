@@ -77,6 +77,7 @@ export interface McpConnectionGuide {
     "grape_get_claims",
     "grape_get_proofs",
     "grape_get_omitted_item",
+    "grape_get_stale_items",
     "grape_get_status"
   ];
   readonly note: string;
