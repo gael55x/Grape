@@ -2,7 +2,7 @@ import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
 } from "../../shared/index.js";
-import { hashStableParts } from "./repository-context-hash.js";
+import { repositoryContextSectionHash } from "./repository-context-integrity.js";
 import {
   selectedSources,
   selectedSymbolEdges,
@@ -146,11 +146,15 @@ function section(
     readonly proofRefs?: readonly string[];
   }
 ): InMemoryContextSectionShape {
-  return {
+  const sectionWithoutHash = {
     ...input,
     sourceRefs: [...(input.sourceRefs ?? [])],
     proofRefs: [...(input.proofRefs ?? [])],
-    contentHash: hashStableParts([input.id, input.title, input.body, ...input.dependencyRefs]),
-    redactionStatus: "clean"
+    contentHash: "0".repeat(64),
+    redactionStatus: "clean" as const
+  };
+  return {
+    ...sectionWithoutHash,
+    contentHash: repositoryContextSectionHash(sectionWithoutHash)
   };
 }

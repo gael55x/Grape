@@ -248,6 +248,7 @@ export interface StorageRepositories {
   readonly omittedContextItems: {
     insert(record: OmittedContextItemRecord): void;
     listBySession(sessionId: string): readonly OmittedContextItemRecord[];
+    getBySessionAndRestoreId(sessionId: string, restoreId: string): OmittedContextItemRecord | undefined;
   };
   readonly contextPackItems: {
     insert(record: ContextPackItemRecord): void;
@@ -636,6 +637,20 @@ export function createStorageRepositories(database: DatabaseSync): StorageReposi
             .prepare("SELECT * FROM omitted_context_items WHERE session_id = ? ORDER BY omitted_item_id ASC")
             .all(sessionId) as Array<Record<string, unknown>>
         ).map(mapOmittedContextItem);
+      },
+      getBySessionAndRestoreId(sessionId, restoreId) {
+        return mapOmittedContextItemOptional(
+          database
+            .prepare(
+              [
+                "SELECT * FROM omitted_context_items",
+                "WHERE session_id = ? AND restore_id = ?",
+                "ORDER BY omitted_at DESC, omitted_item_id DESC",
+                "LIMIT 1"
+              ].join(" ")
+            )
+            .get(sessionId, restoreId) as Record<string, unknown> | undefined
+        );
       }
     },
     contextPackItems: {
@@ -831,6 +846,12 @@ function mapOmittedContextItem(row: Record<string, unknown>): OmittedContextItem
     sendCount: numberField(row, "send_count"),
     tokenCount: numberField(row, "token_count")
   };
+}
+
+function mapOmittedContextItemOptional(
+  row: Record<string, unknown> | undefined
+): OmittedContextItemRecord | undefined {
+  return row ? mapOmittedContextItem(row) : undefined;
 }
 
 function mapSessionEvent(row: Record<string, unknown>): SessionEventRecord {

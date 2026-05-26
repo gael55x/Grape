@@ -55,11 +55,93 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
       return runDoctor(parsed);
     case "mcp":
       return runMcp(parsed);
+    case "omitted":
+      return runOmitted(parsed);
     default:
       writeError(`Unknown command: ${parsed.command}`);
       writeError("Run grape help for available commands.");
       return exitCodes.usage;
   }
+}
+
+async function runOmitted(parsed: ParsedArgs): Promise<number> {
+  const usageError = rejectUnsupportedFlags(parsed, new Set(["--json", "--repo", "--session", "--token"]));
+  if (usageError) return usageError;
+
+  const sessionId = parsed.values.get("--session");
+  if (!sessionId) {
+    writeError("grape omitted requires --session <id>");
+    return exitCodes.usage;
+  }
+
+  try {
+    const token = parsed.values.get("--token");
+    if (token) {
+      const { restoreOmittedContext } = await import("../app/local-project/omitted.js");
+      const result = restoreOmittedContext({
+        rootPath: repoPath(parsed),
+        sessionId,
+        restoreToken: token
+      });
+      if (parsed.flags.has("--json")) {
+        writeJson(result);
+        return result.status === "restored" ? exitCodes.ok : exitCodes.stale;
+      }
+
+      if (result.status === "stale") {
+        write([
+          "Omitted context is stale.",
+          "",
+          `Session: ${result.sessionId}`,
+          `Artifact: ${result.artifactId}`,
+          `Section: ${result.sectionId}`,
+          `Reason: ${result.reason}`
+        ].join("\n"));
+        return exitCodes.stale;
+      }
+
+      write([
+        `# ${result.title}`,
+        "",
+        `Session: ${result.sessionId}`,
+        `Artifact: ${result.artifactId}`,
+        `Section: ${result.sectionId}`,
+        `Content hash: ${result.contentHash}`,
+        "",
+        result.body
+      ].join("\n"));
+      return exitCodes.ok;
+    }
+
+    const { listOmittedContext } = await import("../app/local-project/omitted.js");
+    const result = listOmittedContext({ rootPath: repoPath(parsed), sessionId });
+    if (parsed.flags.has("--json")) {
+      writeJson(result);
+      return exitCodes.ok;
+    }
+
+    write([
+      `Omitted context for session ${result.sessionId}: ${result.omittedItems.length}`,
+      "",
+      ...result.omittedItems.map(
+        (item) => `${item.restoreId}  ${item.sectionId}  ${item.reasonOmitted}  ${item.tokenCount} tokens`
+      )
+    ].join("\n"));
+    return exitCodes.ok;
+  } catch (error) {
+    writeError(`grape omitted failed: ${errorMessage(error)}`);
+    return omittedErrorExitCode(error);
+  }
+}
+
+function omittedErrorExitCode(error: unknown): number {
+  const message = errorMessage(error);
+  if (message.includes("requires --session")) return exitCodes.usage;
+  if (message.includes("not found")) return exitCodes.usage;
+  if (message.includes("stale")) return exitCodes.stale;
+  if (message.includes("secret")) return exitCodes.unsafe;
+  if (message.includes("config root path does not match")) return exitCodes.stale;
+  return exitCodes.storage;
 }
 
 async function runCompile(parsed: ParsedArgs): Promise<number> {

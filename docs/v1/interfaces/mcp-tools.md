@@ -59,7 +59,7 @@ The current implementation includes the first stdio MCP server:
     "args": ["mcp", "--stdio", "--repo", "<repo-root>"],
     "cwd": "<repo-root>",
     "transport": "stdio",
-    "tools": ["grape_get_context", "grape_get_status"],
+    "tools": ["grape_get_context", "grape_get_omitted_item", "grape_get_status"],
     "note": "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
   }
 }
@@ -68,11 +68,14 @@ The current implementation includes the first stdio MCP server:
 `grape mcp --stdio` implements framed JSON-RPC stdio handling for `initialize`, `tools/list`, `tools/call`, and `ping`. The implemented Grape tools are:
 
 - `grape_get_context`
+- `grape_get_omitted_item`
 - `grape_get_status`
 
 `grape_get_context` calls the same local-project compile service used by `grape compile --task <text>`. It auto-bootstraps local `.grape/` state when needed, captures the current repo snapshot, persists source/index inputs, compiles a repository-derived scaffold artifact, persists session diff rows, writes JSON/Markdown artifacts under `.grape/artifacts/`, and returns structured context-pack items plus rendered Markdown.
 
 Current limitation: the returned `contextPackItems` are the scaffold `InMemoryContextPackItemShape`, not the final V1 `ContextPackItem` schema. The current implementation requires `sessionId` or `agentSessionId` so session-scoped diffing cannot collapse across independent agents. Seed `files`, `symbols`, `tests`, non-local `environmentScope`, `agentName`, `agentSessionId`, and `tokenBudget` are accepted for contract compatibility; unsupported retrieval/budget behavior produces explicit warnings and `compileMode: "partial_with_risk"` unless a stronger unsafe condition applies. Seed names do participate in risk-overlay detection, but they do not yet narrow retrieval. Detected risk overlays return `compileMode: "cannot_compile_safely"` until exact-span high-risk policies are implemented. Artifact file refs returned over MCP are repo-relative paths, not absolute local paths.
+
+`grape_get_omitted_item` restores one omitted context item by `sessionId` and `restoreToken`. It validates the token against the session, stored scaffold artifact metadata, stored dependency rows, artifact hash, section content hash, dependency manifest, redaction status, branch, head commit, worktree hash, and source/config/lockfile/rule dependency hashes before returning the omitted body. Stale restore attempts return `status: "stale"` with an error result rather than returning stale content. MCP output omits absolute local root paths.
 
 The remaining V1 read tools and restricted write tools are still pending. They must reuse app services and storage/trust modules rather than embedding business logic in the MCP adapter.
 
@@ -114,6 +117,35 @@ interface GrapeGetContextOutput {
   warnings: string[];
   restoreAvailable: boolean;
 }
+```
+
+```ts
+interface GrapeGetOmittedItemInput {
+  sessionId: string;
+  restoreToken: string;
+}
+
+type GrapeGetOmittedItemOutput =
+  | {
+      status: "restored";
+      sessionId: string;
+      restoreToken: string;
+      artifactId: string;
+      sectionId: string;
+      title: string;
+      body: string;
+      contentHash: string;
+      warnings: string[];
+    }
+  | {
+      status: "stale";
+      sessionId: string;
+      restoreToken: string;
+      artifactId: string;
+      sectionId: string;
+      reason: string;
+      warnings: string[];
+    };
 ```
 
 Rules:

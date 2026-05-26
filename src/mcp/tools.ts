@@ -1,4 +1,5 @@
 import { runGrapeGetContextTool } from "./get-context.js";
+import { runGrapeGetOmittedItemTool } from "./omitted.js";
 import { runGrapeGetStatusTool } from "./status.js";
 
 export interface McpToolResult {
@@ -49,6 +50,19 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
         }
       },
       {
+        name: "grape_get_omitted_item",
+        description: "Restore an omitted context item by session and restore token.",
+        inputSchema: {
+          type: "object",
+          required: ["sessionId", "restoreToken"],
+          additionalProperties: false,
+          properties: {
+            sessionId: { type: "string", minLength: 1 },
+            restoreToken: { type: "string", minLength: 1 }
+          }
+        }
+      },
+      {
         name: "grape_get_status",
         description: "Inspect local Grape bootstrap, migration, and repository state for the current working directory.",
         inputSchema: {
@@ -78,6 +92,10 @@ export function callMcpTool(params: ToolCallParams, rootPath: string): McpToolRe
       case "grape_get_context": {
         const output = runGrapeGetContextTool(params.arguments ?? {}, rootPath);
         return toolResult(output, output.unsafeReasons.length > 0);
+      }
+      case "grape_get_omitted_item": {
+        const output = runGrapeGetOmittedItemTool(params.arguments ?? {}, rootPath);
+        return toolResult(output, output.status === "stale");
       }
       case "grape_get_status":
         assertEmptyArguments(params.arguments, "grape_get_status");

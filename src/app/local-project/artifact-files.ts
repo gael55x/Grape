@@ -26,6 +26,6 @@ export function writeLocalArtifactFiles(input: LocalArtifactWriteInput): LocalAr
   return { jsonPath, markdownPath };
 }
 
-function artifactFileBaseName(artifactId: string): string {
+export function artifactFileBaseName(artifactId: string): string {
   return `ctx_${artifactId.replace(/^artifact:/, "").replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 }
