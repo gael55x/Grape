@@ -224,3 +224,10 @@ Keep entries simple:
 - Summary: added explicit session reset recovery for the scaffold diff path. CLI `grape compile --reset-session` and MCP `grape_get_context` with `resetSession: true` now record `session_reset` invalidation events, emit `INVALIDATE_PREVIOUS` for active prior sent items, and force current scaffold sections to be resent instead of omitted.
 - Checks run: focused durable/CLI/MCP behavior tests before full verification.
 - Risks/follow-ups: reset recovery still operates on scaffold `InMemoryContextPackItemShape` rows. Final V1 `ContextPackItem` schema mapping and durable claim/proof invalidation remain pending.
+
+### 2026-05-26 - Pinned Active Project Rules
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: repository-derived scaffold artifacts now include a pinned `active-project-rules` section when trusted rule files are present. Rule file excerpts use the same source-hash verification, proof refs, and dependency refs as exact-source evidence, and scanner classification now covers `AGENTS.md`, `.cursor/rules`, `.cursorrules`, `.aiassistant/rules`, `.junie/guidelines.md`, and `.grape/` rule paths when they are Git-visible and privacy-allowed.
+- Checks run: focused source-excerpt, repo-snapshot, repository-artifact, and CLI behavior tests; `npm run check`; `npm run build`; `git diff --check`.
+- Risks/follow-ups: this renders exact rule text as pinned context only. Parsed `project_rules`, conflicts, nested scope resolution, candidate/generated rules, and rule-specific MCP/CLI inspection remain pending.

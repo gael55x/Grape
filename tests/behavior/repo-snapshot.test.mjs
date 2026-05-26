@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { createGitRepoSnapshot } from "../../.tmp/build/src/core/git/index.js";
+import { classifySourceKind, createGitRepoSnapshot } from "../../.tmp/build/src/core/git/index.js";
 
 const now = "2026-05-24T00:00:00.000Z";
 
@@ -16,9 +16,11 @@ function withGitRepo(fn) {
     execGit(dir, ["init", "-b", "main"]);
     writeFileSync(path.join(dir, ".gitignore"), "ignored.env\n");
     mkdirSync(path.join(dir, ".grape"), { recursive: true });
+    mkdirSync(path.join(dir, ".cursor"), { recursive: true });
     mkdirSync(path.join(dir, "src"), { recursive: true });
     mkdirSync(path.join(dir, "docs"), { recursive: true });
     writeFileSync(path.join(dir, ".grape", "rules.md"), "Never store raw secrets.\n");
+    writeFileSync(path.join(dir, ".cursor", "rules"), "Use the repo's local test command.\n");
     writeFileSync(path.join(dir, "src", "calculateDiscount.ts"), "export const discount = 10;\n");
     writeFileSync(path.join(dir, "src", "calculateDiscount.test.ts"), "import './calculateDiscount';\n");
     writeFileSync(path.join(dir, "package.json"), "{\"name\":\"fixture\"}\n");
@@ -91,12 +93,23 @@ test("git repo snapshot excludes ignored files and classifies visible files", ()
     assert.equal(rejected.get("private.txt")?.reason, "privacy_ignored");
     assert.equal(rejected.get("private.txt")?.privacyStatus, "private");
     assert.equal(fileKinds.get(".grape/rules.md"), "rule");
+    assert.equal(fileKinds.get(".cursor/rules"), "rule");
     assert.equal(fileKinds.get("src/calculateDiscount.ts"), "source");
     assert.equal(fileKinds.get("src/calculateDiscount.test.ts"), "test");
     assert.equal(fileKinds.get("package.json"), "package");
     assert.equal(fileKinds.get("docs/README.md"), "doc");
     assert.ok(snapshot.files.every((file) => /^[a-f0-9]{64}$/.test(file.sha256)));
   });
+});
+
+test("source kind classifier recognizes local agent rule files", () => {
+  assert.equal(classifySourceKind("AGENTS.md"), "rule");
+  assert.equal(classifySourceKind(".cursorrules"), "rule");
+  assert.equal(classifySourceKind(".cursor/rules"), "rule");
+  assert.equal(classifySourceKind(".cursor/rules/project.md"), "rule");
+  assert.equal(classifySourceKind(".aiassistant/rules/team.md"), "rule");
+  assert.equal(classifySourceKind(".junie/guidelines.md"), "rule");
+  assert.equal(classifySourceKind(".grape/rules.md"), "rule");
 });
 
 test("git repo snapshot marks dirty worktree and changes worktree hash", () => {

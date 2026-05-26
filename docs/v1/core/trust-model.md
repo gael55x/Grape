@@ -100,7 +100,7 @@ interface ProofRef {
 
 Current implementation note: repo snapshot source ingestion persists allowed repository files, rule files, config files, lockfiles, and migration files as trusted source records only when they pass Git ignore and local privacy ignore filtering. Git-visible ignored paths, privacy-ignored paths, and unreadable paths become `source_rejections` and are not proof material. Ignored untracked paths are skipped rather than enumerated. Dirty snapshot files are currently scoped as `unstaged` from the dirty-path manifest; staged and untracked source scopes are not split yet and must not be treated as branch-global proof.
 
-The repository-derived scaffold compiler now attaches bounded exact source proof refs for selected allowed source records. The local reader verifies the current source bytes still match the stored source hash before creating an excerpt hash and proof ref. These proof refs support exact source evidence sections only; they do not create durable claims, do not prove runtime behavior, and do not bypass the Trust Kernel promotion rules.
+The repository-derived scaffold compiler now attaches bounded exact source proof refs for selected allowed source records. The local reader verifies the current source bytes still match the stored source hash before creating an excerpt hash and proof ref. Trusted `rule_file` excerpts are also rendered as pinned active-project-rules context. These proof refs support scaffold exact source/rule sections only; they do not create durable claims, do not prove runtime behavior, and do not bypass the Trust Kernel promotion rules.
 
 ## Promotion Rules
 

@@ -4,6 +4,7 @@ import type {
 } from "../../shared/index.js";
 import { repositoryContextSectionHash } from "./repository-context-integrity.js";
 import {
+  selectedRuleSourceExcerpts,
   selectedSources,
   selectedSourceExcerpts,
   selectedSymbolEdges,
@@ -17,14 +18,15 @@ export function contextSections(
   input: CompileRepositoryContextArtifactInput,
   dependencies: readonly InMemoryContextDependencyShape[]
 ): InMemoryContextSectionShape[] {
-  return [
+  return compactSections([
     taskSection(input),
     repoStateSection(input),
     sourceManifestSection(input, dependencies),
+    activeProjectRulesSection(input, dependencies),
     exactSourceEvidenceSection(input, dependencies),
     symbolSummarySection(input, dependencies),
     blindSpotSection(input)
-  ];
+  ]);
 }
 
 function taskSection(input: CompileRepositoryContextArtifactInput): InMemoryContextSectionShape {
@@ -138,6 +140,51 @@ function exactSourceEvidenceSection(
   });
 }
 
+function activeProjectRulesSection(
+  input: CompileRepositoryContextArtifactInput,
+  dependencies: readonly InMemoryContextDependencyShape[]
+): InMemoryContextSectionShape | undefined {
+  const ruleExcerpts = selectedRuleSourceExcerpts(input.sourceExcerpts);
+  if (ruleExcerpts.length === 0) return undefined;
+
+  return section({
+    id: "active-project-rules",
+    type: "pinned_rule",
+    title: "Active Project Rules",
+    body: activeProjectRulesBody(ruleExcerpts),
+    sourceRefs: ruleExcerpts.map((excerpt) => excerpt.sourceRef),
+    proofRefs: sourceProofRefs(ruleExcerpts),
+    dependencyRefs: sectionDependencyRefs(
+      ["repo-snapshot", "worktree-state"],
+      [
+        ...ruleExcerpts.map((excerpt) => sourceDependencyRefForExcerpt(excerpt.sourceRef, dependencies)),
+        ...ruleExcerpts.map((excerpt) => sourceProofDependencyId(excerpt.proofId))
+      ].filter((ref): ref is string => Boolean(ref))
+    ),
+    pinned: true,
+    exactRequired: true
+  });
+}
+
+function activeProjectRulesBody(
+  excerpts: ReturnType<typeof selectedRuleSourceExcerpts>
+): string {
+  return excerpts
+    .map((excerpt) =>
+      [
+        `Rule source: ${excerpt.sourceRef}`,
+        `Scope: ${excerpt.sourceScope}`,
+        `Proof: ${excerpt.proofId}`,
+        `Source hash: ${excerpt.sourceHash}`,
+        `Excerpt hash: ${excerpt.excerptHash}`,
+        "```",
+        excerpt.excerpt,
+        "```"
+      ].join("\n")
+    )
+    .join("\n\n");
+}
+
 function exactSourceEvidenceBody(
   excerpts: ReturnType<typeof selectedSourceExcerpts>
 ): string {
@@ -183,6 +230,12 @@ function sectionDependencyRefs(
 function relationshipTarget(edge: { readonly toRef?: string; readonly toSymbolId?: string }): string {
   if (edge.toRef && edge.toSymbolId) return `${edge.toRef} (${edge.toSymbolId})`;
   return edge.toRef ?? edge.toSymbolId ?? "unresolved";
+}
+
+function compactSections(
+  sections: readonly (InMemoryContextSectionShape | undefined)[]
+): InMemoryContextSectionShape[] {
+  return sections.filter((section): section is InMemoryContextSectionShape => section !== undefined);
 }
 
 function blindSpotSection(input: CompileRepositoryContextArtifactInput): InMemoryContextSectionShape {
