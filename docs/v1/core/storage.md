@@ -109,6 +109,8 @@ Migration `0004_compression_cache.sql` adds the first deterministic compression 
 
 The current implementation writes only `symbol_outline` records from the lightweight symbol index. Compression repositories persist derived cache records only; they do not decide compiler policy, trust, proof validity, or whether a summary can replace context.
 
+MCP command/test observation writes currently use the existing `sources` table with `source_type = 'command_run'` or `source_type = 'test_run'`, `trust_class = 'temporary'`, and `redaction_status = 'redacted'`. This avoids a premature `command_runs` / `test_runs` migration while preserving the V1 rule that agent-reported execution evidence is scratch evidence, not durable proof. Raw command, stdout, and stderr bodies are not stored; only hashes and scoped metadata are persisted.
+
 ## Repository Boundary
 
 - Every table must have an owning repository module.

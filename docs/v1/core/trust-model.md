@@ -115,6 +115,8 @@ After proof validation, local compile creates claim candidates for the narrow cl
 - Branch-invalid, stale, contradicted, rejected, ignored, or secret-blocked claims must not be active context.
 - MCP write tools can record evidence candidates. They cannot call durable promotion directly.
 
+Current implementation note: MCP `grape_record_command_result` and `grape_record_test_result` persist agent-reported command/test observations as temporary `sources` rows only. They require an existing current context session, reject agent-minted Grape-observed run IDs, store command/output hashes and scoped metadata, and intentionally do not persist raw command/stdout/stderr bodies or create proof/claim rows.
+
 ## Current-Valid Preconditions
 
 A claim is eligible for current-valid retrieval only when:

@@ -67,7 +67,9 @@ The current implementation includes the first stdio MCP server:
       "grape_get_rules",
       "grape_get_omitted_item",
       "grape_get_stale_items",
-      "grape_get_status"
+      "grape_get_status",
+      "grape_record_command_result",
+      "grape_record_test_result"
     ],
     "note": "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
   }
@@ -84,6 +86,8 @@ The current implementation includes the first stdio MCP server:
 - `grape_get_omitted_item`
 - `grape_get_stale_items`
 - `grape_get_status`
+- `grape_record_command_result`
+- `grape_record_test_result`
 
 `grape_get_context` calls the same local-project compile service used by `grape compile --task <text>`. It auto-bootstraps local `.grape/` state when needed, captures the current repo snapshot, persists source/index inputs, resolves task source hints from lexical task terms plus `files`, `symbols`, and `tests` seed refs, persists deterministic `symbol_outline` compression cache records, compiles a repository-derived scaffold artifact with pinned active project rules, non-proof compression orientation, and bounded exact-source evidence prioritized toward selected allowed sources, projects it to the public V1 `ContextArtifact` shape, persists session diff rows, writes JSON/Markdown artifacts under `.grape/artifacts/`, and returns structured context-pack items plus rendered Markdown.
 
@@ -104,6 +108,8 @@ Current limitation: the returned `contextArtifact` and public artifact JSON use 
 `grape_get_omitted_item` restores one omitted context item by `sessionId` and `restoreToken`. It validates the token against the session, stored scaffold artifact metadata, stored dependency rows, artifact hash, section content hash, dependency manifest, redaction status, branch, head commit, worktree hash, source/config/lockfile/rule dependency hashes, and proof dependency rows/hashes before returning the omitted body. Stale restore attempts return `status: "stale"` with an error result rather than returning stale content. MCP output omits absolute local root paths.
 
 `grape_get_stale_items` returns emitted stale-context invalidation metadata, optionally filtered by `sessionId`. It reuses the same local app service as `grape stale`, removes `rootPath` from MCP output, and does not return context bodies.
+
+`grape_record_command_result` and `grape_record_test_result` persist agent-reported command/test observations as temporary `command_run` / `test_run` source evidence rows scoped to the current repo snapshot and an existing current context session. The adapter accepts the raw command only to verify `commandHash`; raw command, stdout, and stderr bodies are not persisted or returned. MCP callers cannot mint `observedRunId`, cannot self-declare `observedByGrape`, and cannot promote these rows to durable claims or proofs.
 
 The remaining V1 read tools and restricted write tools are still pending. They must reuse app services and storage/trust modules rather than embedding business logic in the MCP adapter.
 
@@ -320,7 +326,6 @@ Write tools record evidence candidates or request direct confirmation. They cann
 
 ```ts
 interface GrapeRecordCommandResultInput {
-  repoPath: string;
   sessionId: string;
   command: string;
   commandHash: string;
@@ -330,13 +335,27 @@ interface GrapeRecordCommandResultInput {
   stderrHash: string;
   startedAt: string;
   endedAt: string;
-  reportedBy: "agent";
+  reportedBy?: "agent";
 }
 
 interface GrapeRecordTestResultInput extends GrapeRecordCommandResultInput {
   testFramework?: string;
   testFiles?: string[];
   passed: boolean;
+}
+
+interface GrapeRecordObservationOutput {
+  evidenceId: string;
+  sourceId: string;
+  sourceType: "command_run" | "test_run";
+  sourceRef: string;
+  sourceHash: string;
+  trustClass: "temporary";
+  durable: false;
+  observedBy: "agent_reported";
+  inserted: boolean;
+  redactedFields: Array<"command" | "stdout" | "stderr">;
+  warnings: string[];
 }
 
 interface GrapeRecordUserDecisionInput {
@@ -353,8 +372,10 @@ interface GrapeRecordUserDecisionInput {
 
 Write rules:
 
-- MCP command/test write tools are agent-reported by definition and remain temporary scratch evidence.
+- MCP command/test write tools are agent-reported by definition and remain temporary scratch evidence in `sources`.
 - MCP callers cannot self-declare Grape-observed authority or mint `observedRunId`.
+- MCP command/test write tools require an existing current context session, so callers should call `grape_get_context` first.
+- Raw command, stdout, and stderr bodies are not persisted; only hashes and scoped metadata are stored.
 - Only a local Grape command runner may create Grape-observed command/test evidence with an observed run ID.
 - A Grape-observed run must include command hash, cwd, exit code, stdout/stderr hashes, and timestamps, and it must be created outside the MCP adapter.
 - User decisions require direct confirmation with prompt hash, response hash, timestamp, and confirmation channel.

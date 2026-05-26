@@ -57,3 +57,4 @@ Each entry should include:
 - Clarified the stale inspection surface: `grape stale` is implemented as a read-only CLI debug command over emitted `INVALIDATE_PREVIOUS` pack ledger rows, not as predictive stale analysis.
 - Clarified the MCP stale inspection surface: `grape_get_stale_items` exposes the same emitted invalidation metadata without `rootPath` or context bodies.
 - Clarified the MCP rules inspection surface: `grape_get_rules` exposes current Git-visible rule excerpts after source-hash verification and artifact secret scanning, without parsed durable `project_rules` or absolute local root paths.
+- Clarified the first restricted MCP write behavior: `grape_record_command_result` and `grape_record_test_result` store agent-reported command/test observations as temporary source evidence with hashes only, require an existing current context session, reject MCP-minted observed-run authority, and do not promote durable claims.

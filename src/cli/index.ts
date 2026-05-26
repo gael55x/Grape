@@ -217,7 +217,9 @@ async function runMcp(parsed: ParsedArgs): Promise<number> {
     "  grape_get_rules",
     "  grape_get_omitted_item",
     "  grape_get_stale_items",
-    "  grape_get_status"
+    "  grape_get_status",
+    "  grape_record_command_result",
+    "  grape_record_test_result"
   ].join("\n"));
   return exitCodes.ok;
 }

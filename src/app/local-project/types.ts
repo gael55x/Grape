@@ -79,7 +79,9 @@ export interface McpConnectionGuide {
     "grape_get_rules",
     "grape_get_omitted_item",
     "grape_get_stale_items",
-    "grape_get_status"
+    "grape_get_status",
+    "grape_record_command_result",
+    "grape_record_test_result"
   ];
   readonly note: string;
 }

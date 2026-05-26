@@ -2,6 +2,7 @@ import { runGrapeGetArtifactTool } from "./artifact.js";
 import { runGrapeGetClaimsTool } from "./claims.js";
 import { runGrapeGetContextTool } from "./get-context.js";
 import { runGrapeGetOmittedItemTool } from "./omitted.js";
+import { runGrapeRecordCommandResultTool, runGrapeRecordTestResultTool } from "./observations.js";
 import { runGrapeGetProofsTool } from "./proofs.js";
 import { runGrapeGetRulesTool } from "./rules.js";
 import { runGrapeGetStaleItemsTool } from "./stale.js";
@@ -134,6 +135,52 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
           additionalProperties: false,
           properties: {}
         }
+      },
+      {
+        name: "grape_record_command_result",
+        description: "Record agent-reported command-result evidence as temporary, non-promoted local evidence.",
+        inputSchema: {
+          type: "object",
+          required: [
+            "sessionId",
+            "command",
+            "commandHash",
+            "cwd",
+            "exitCode",
+            "stdoutHash",
+            "stderrHash",
+            "startedAt",
+            "endedAt"
+          ],
+          additionalProperties: false,
+          properties: observationProperties()
+        }
+      },
+      {
+        name: "grape_record_test_result",
+        description: "Record agent-reported test-result evidence as temporary, non-promoted local evidence.",
+        inputSchema: {
+          type: "object",
+          required: [
+            "sessionId",
+            "command",
+            "commandHash",
+            "cwd",
+            "exitCode",
+            "stdoutHash",
+            "stderrHash",
+            "startedAt",
+            "endedAt",
+            "passed"
+          ],
+          additionalProperties: false,
+          properties: {
+            ...observationProperties(),
+            passed: { type: "boolean" },
+            testFramework: { type: "string", minLength: 1 },
+            testFiles: { type: "array", items: { type: "string", minLength: 1 } }
+          }
+        }
       }
     ]
   };
@@ -174,6 +221,10 @@ export function callMcpTool(params: ToolCallParams, rootPath: string): McpToolRe
       case "grape_get_status":
         assertEmptyArguments(params.arguments, "grape_get_status");
         return toolResult(runGrapeGetStatusTool(rootPath), false);
+      case "grape_record_command_result":
+        return toolResult(runGrapeRecordCommandResultTool(params.arguments ?? {}, rootPath), false);
+      case "grape_record_test_result":
+        return toolResult(runGrapeRecordTestResultTool(params.arguments ?? {}, rootPath), false);
       default:
         return toolError(`Unknown Grape MCP tool: ${params.name}`);
     }
@@ -200,6 +251,25 @@ function toolError(message: string): McpToolResult {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function observationProperties(): Record<string, unknown> {
+  return {
+    sessionId: { type: "string", minLength: 1 },
+    command: {
+      type: "string",
+      minLength: 1,
+      description: "Raw command used only to verify commandHash; it is not persisted."
+    },
+    commandHash: { type: "string", pattern: "^[A-Fa-f0-9]{64}$" },
+    cwd: { type: "string", minLength: 1 },
+    exitCode: { type: "integer" },
+    stdoutHash: { type: "string", pattern: "^[A-Fa-f0-9]{64}$" },
+    stderrHash: { type: "string", pattern: "^[A-Fa-f0-9]{64}$" },
+    startedAt: { type: "string", minLength: 1 },
+    endedAt: { type: "string", minLength: 1 },
+    reportedBy: { type: "string", enum: ["agent"] }
+  };
 }
 
 function assertEmptyArguments(value: unknown, toolName: string): void {

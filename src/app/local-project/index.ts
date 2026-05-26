@@ -10,6 +10,7 @@ export * from "./doctor.js";
 export * from "./initialize.js";
 export * from "./mcp-guide.js";
 export * from "./omitted.js";
+export * from "./observations.js";
 export * from "./proofs.js";
 export * from "./rules.js";
 export * from "./sessions.js";
