@@ -2,9 +2,11 @@ import type { InMemoryContextDependencyShape } from "../../shared/index.js";
 import { hashStableJson } from "./repository-context-hash.js";
 import {
   selectedSources,
+  selectedSourceExcerpts,
   selectedSymbolEdges,
   selectedSymbolNodes
 } from "./repository-context-selection.js";
+import { sourceProofDependencyId } from "./repository-source-proofs.js";
 import type {
   CompileRepositoryContextArtifactInput,
   RepositoryArtifactSourceInput
@@ -40,6 +42,25 @@ export function dependencyManifest(
         branch: input.snapshot.branch,
         commit: input.snapshot.commit,
         sourceScope: source.sourceScope
+      }
+    });
+  }
+
+  for (const excerpt of selectedSourceExcerpts(input.sourceExcerpts)) {
+    dependencies.push({
+      id: sourceProofDependencyId(excerpt.proofId),
+      kind: "proof",
+      ref: excerpt.proofId,
+      hash: excerpt.excerptHash,
+      scope: {
+        branch: input.snapshot.branch,
+        commit: input.snapshot.commit,
+        sourceId: excerpt.sourceId,
+        sourceHash: excerpt.sourceHash,
+        sourceRef: excerpt.sourceRef,
+        sourceScope: excerpt.sourceScope,
+        startLine: excerpt.startLine,
+        endLine: excerpt.endLine
       }
     });
   }

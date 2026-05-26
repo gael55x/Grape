@@ -22,6 +22,20 @@ export interface RepositoryArtifactSourceInput {
   readonly redactionStatus: "not_needed" | "redacted" | "blocked";
 }
 
+export interface RepositoryArtifactSourceExcerptInput {
+  readonly proofId: string;
+  readonly sourceId: string;
+  readonly sourceType: SourceType;
+  readonly sourceRef: string;
+  readonly sourceHash: string;
+  readonly sourceScope: "committed" | "staged" | "unstaged" | "untracked" | "external";
+  readonly excerpt: string;
+  readonly excerptHash: string;
+  readonly startLine: number;
+  readonly endLine: number;
+  readonly truncated: boolean;
+}
+
 export interface RepositoryArtifactSymbolNodeInput {
   readonly symbolId: string;
   readonly sourceId: string;
@@ -54,6 +68,7 @@ export interface CompileRepositoryContextArtifactInput {
   readonly snapshot: RepositoryArtifactSnapshotInput;
   readonly worktreeStateId: string;
   readonly sources: readonly RepositoryArtifactSourceInput[];
+  readonly sourceExcerpts: readonly RepositoryArtifactSourceExcerptInput[];
   readonly symbolNodes: readonly RepositoryArtifactSymbolNodeInput[];
   readonly symbolEdges: readonly RepositoryArtifactSymbolEdgeInput[];
   readonly createdAt: string;

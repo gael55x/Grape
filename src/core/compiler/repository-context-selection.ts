@@ -1,6 +1,7 @@
 import type { SourceType } from "../../shared/index.js";
 import type {
   RepositoryArtifactSourceInput,
+  RepositoryArtifactSourceExcerptInput,
   RepositoryArtifactSymbolEdgeInput,
   RepositoryArtifactSymbolNodeInput
 } from "./repository-context-types.js";
@@ -8,6 +9,7 @@ import type {
 export const maxListedSources = 50;
 export const maxListedSymbols = 50;
 export const maxListedEdges = 50;
+export const maxExactSourceExcerpts = 5;
 
 export function selectedSources(
   sources: readonly RepositoryArtifactSourceInput[]
@@ -16,6 +18,23 @@ export function selectedSources(
     .filter((source) => source.privacyStatus === "allowed" && source.redactionStatus !== "blocked")
     .sort((left, right) => left.sourceRef.localeCompare(right.sourceRef))
     .slice(0, maxListedSources);
+}
+
+export function selectedExactSourceSources(
+  sources: readonly RepositoryArtifactSourceInput[]
+): readonly RepositoryArtifactSourceInput[] {
+  return selectedSources(sources)
+    .filter((source) => source.trustClass === "trusted")
+    .filter((source) => sourceTypeCanSupportExactExcerpt(source.sourceType))
+    .slice(0, maxExactSourceExcerpts);
+}
+
+export function selectedSourceExcerpts(
+  excerpts: readonly RepositoryArtifactSourceExcerptInput[]
+): readonly RepositoryArtifactSourceExcerptInput[] {
+  return [...excerpts]
+    .sort((left, right) => left.sourceRef.localeCompare(right.sourceRef))
+    .slice(0, maxExactSourceExcerpts);
 }
 
 export function selectedSymbolNodes(
@@ -40,4 +59,14 @@ export function sourceTypeCounts(sources: readonly RepositoryArtifactSourceInput
     counts.set(source.sourceType, (counts.get(source.sourceType) ?? 0) + 1);
   }
   return new Map([...counts.entries()].sort(([left], [right]) => left.localeCompare(right)));
+}
+
+function sourceTypeCanSupportExactExcerpt(sourceType: SourceType): boolean {
+  return (
+    sourceType === "repository_file" ||
+    sourceType === "rule_file" ||
+    sourceType === "config_file" ||
+    sourceType === "lockfile" ||
+    sourceType === "migration_file"
+  );
 }

@@ -210,3 +210,10 @@ Keep entries simple:
 - Summary: explicit session reuse across Git branches now updates session compile state under the durable build lock, records `session_invalidated` events with `reason: "branch_changed"`, and emits `INVALIDATE_PREVIOUS` context pack items for stale previous-branch context through CLI and MCP.
 - Checks run: `npm run typecheck`; focused CLI/MCP/storage behavior tests; full checks before commit.
 - Risks/follow-ups: branch/global distinction still depends on future durable claim scope filtering, and explicit session reset recovery remains pending.
+
+### 2026-05-26 - Exact Source Evidence Scaffold
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: repository-derived scaffold artifacts now include bounded exact-source evidence for selected allowed source records. The local reader verifies source hashes before creating deterministic proof refs and excerpt hashes, and the compiler records proof dependencies alongside source dependencies.
+- Checks run: full checks before commit.
+- Risks/follow-ups: this is a scaffold proof foundation. Durable claim promotion, task-specific high-risk exact spans, and final V1 artifact schema remain pending.
