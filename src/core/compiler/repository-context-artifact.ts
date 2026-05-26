@@ -76,6 +76,7 @@ function compileWarnings(input: CompileRepositoryContextArtifactInput): string[]
   if (input.symbolEdges.length > maxListedEdges) warnings.push("symbol_edges_truncated");
   if (input.snapshot.worktreeStatus !== "clean") warnings.push("dirty_worktree_context");
   if (input.riskOverlays.length > 0) warnings.push("risk_overlay_requires_exact_context");
+  warnings.push(...(input.taskRetrieval?.warnings ?? []));
   return warnings;
 }
 

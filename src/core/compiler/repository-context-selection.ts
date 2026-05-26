@@ -12,24 +12,27 @@ export const maxListedEdges = 50;
 export const maxExactSourceExcerpts = 5;
 
 export function selectedSources(
-  sources: readonly RepositoryArtifactSourceInput[]
+  sources: readonly RepositoryArtifactSourceInput[],
+  preferredSourceRefs: readonly string[] = []
 ): readonly RepositoryArtifactSourceInput[] {
-  return selectableSources(sources).slice(0, maxListedSources);
+  return orderByPreferredRefs(selectableSources(sources), preferredSourceRefs).slice(0, maxListedSources);
 }
 
 export function selectedExactSourceSources(
-  sources: readonly RepositoryArtifactSourceInput[]
+  sources: readonly RepositoryArtifactSourceInput[],
+  preferredSourceRefs: readonly string[] = []
 ): readonly RepositoryArtifactSourceInput[] {
   return uniqueSources([
-    ...selectedGenericExactSourceSources(sources),
+    ...selectedGenericExactSourceSources(sources, preferredSourceRefs),
     ...selectedRuleSources(sources)
   ]);
 }
 
 function selectedGenericExactSourceSources(
-  sources: readonly RepositoryArtifactSourceInput[]
+  sources: readonly RepositoryArtifactSourceInput[],
+  preferredSourceRefs: readonly string[]
 ): readonly RepositoryArtifactSourceInput[] {
-  return exactSourceCandidates(sources)
+  return orderByPreferredRefs(exactSourceCandidates(sources), preferredSourceRefs)
     .filter((source) => source.sourceType !== "rule_file")
     .slice(0, maxExactSourceExcerpts);
 }
@@ -51,11 +54,11 @@ function exactSourceCandidates(
 }
 
 export function selectedSourceExcerpts(
-  excerpts: readonly RepositoryArtifactSourceExcerptInput[]
+  excerpts: readonly RepositoryArtifactSourceExcerptInput[],
+  preferredSourceRefs: readonly string[] = []
 ): readonly RepositoryArtifactSourceExcerptInput[] {
-  return [...excerpts]
+  return orderByPreferredRefs([...excerpts], preferredSourceRefs)
     .filter((excerpt) => excerpt.sourceType !== "rule_file")
-    .sort((left, right) => left.sourceRef.localeCompare(right.sourceRef))
     .slice(0, maxExactSourceExcerpts);
 }
 
@@ -69,19 +72,20 @@ export function selectedRuleSourceExcerpts(
 }
 
 export function selectedProofSourceExcerpts(
-  excerpts: readonly RepositoryArtifactSourceExcerptInput[]
+  excerpts: readonly RepositoryArtifactSourceExcerptInput[],
+  preferredSourceRefs: readonly string[] = []
 ): readonly RepositoryArtifactSourceExcerptInput[] {
   return uniqueExcerpts([
-    ...selectedSourceExcerpts(excerpts),
+    ...selectedSourceExcerpts(excerpts, preferredSourceRefs),
     ...selectedRuleSourceExcerpts(excerpts)
   ]);
 }
 
 export function selectedSymbolNodes(
-  nodes: readonly RepositoryArtifactSymbolNodeInput[]
+  nodes: readonly RepositoryArtifactSymbolNodeInput[],
+  preferredSourceRefs: readonly string[] = []
 ): readonly RepositoryArtifactSymbolNodeInput[] {
-  return [...nodes]
-    .sort((left, right) => `${left.path}:${left.name}`.localeCompare(`${right.path}:${right.name}`))
+  return orderByPreferredPath([...nodes], preferredSourceRefs)
     .slice(0, maxListedSymbols);
 }
 
@@ -117,6 +121,36 @@ function selectableSources(
   return [...sources]
     .filter((source) => source.privacyStatus === "allowed" && source.redactionStatus !== "blocked")
     .sort((left, right) => left.sourceRef.localeCompare(right.sourceRef));
+}
+
+function orderByPreferredRefs<T extends { readonly sourceRef: string }>(
+  values: readonly T[],
+  preferredSourceRefs: readonly string[]
+): readonly T[] {
+  const preference = preferenceMap(preferredSourceRefs);
+  return [...values].sort((left, right) => {
+    const leftRank = preference.get(left.sourceRef) ?? Number.POSITIVE_INFINITY;
+    const rightRank = preference.get(right.sourceRef) ?? Number.POSITIVE_INFINITY;
+    if (leftRank !== rightRank) return leftRank - rightRank;
+    return left.sourceRef.localeCompare(right.sourceRef);
+  });
+}
+
+function orderByPreferredPath<T extends { readonly path: string; readonly name: string }>(
+  values: readonly T[],
+  preferredSourceRefs: readonly string[]
+): readonly T[] {
+  const preference = preferenceMap(preferredSourceRefs);
+  return [...values].sort((left, right) => {
+    const leftRank = preference.get(left.path) ?? Number.POSITIVE_INFINITY;
+    const rightRank = preference.get(right.path) ?? Number.POSITIVE_INFINITY;
+    if (leftRank !== rightRank) return leftRank - rightRank;
+    return `${left.path}:${left.name}`.localeCompare(`${right.path}:${right.name}`);
+  });
+}
+
+function preferenceMap(preferredSourceRefs: readonly string[]): Map<string, number> {
+  return new Map(preferredSourceRefs.map((sourceRef, index) => [sourceRef, index]));
 }
 
 function uniqueSources(

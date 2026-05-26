@@ -231,6 +231,52 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
   });
 });
 
+test("cli compile uses task retrieval to prioritize matching exact source evidence", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "src"));
+    for (let index = 0; index < 6; index += 1) {
+      writeFileSync(path.join(repoPath, "src", `a-${index}.ts`), `export const filler${index} = true;\n`);
+    }
+    writeFileSync(
+      path.join(repoPath, "src", "z-billing.ts"),
+      [
+        "// billing refund invoice workflow",
+        "export function refundInvoice() {",
+        "  return 'refund issued';",
+        "}",
+        ""
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "src"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add retrieval fixture"
+    ]);
+
+    const result = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Fix refundInvoice behavior",
+      "--session",
+      "retrieval-session"
+    ]);
+    const artifactJson = JSON.parse(readFileSync(result.artifactJsonPath, "utf8"));
+    const retrievalSection = artifactJson.artifact.sections.find((section) => section.id === "task-retrieval");
+    const exactEvidence = artifactJson.artifact.sections.find((section) => section.id === "exact-source-evidence");
+
+    assert.equal(retrievalSection.sourceRefs.includes("src/z-billing.ts"), true);
+    assert.match(retrievalSection.body, /FTS-matched refs:/);
+    assert.match(exactEvidence.body, /Source: src\/z-billing\.ts/);
+    assert.match(exactEvidence.body, /refundInvoice/);
+    assert.equal(result.warnings.includes("task_retrieval_no_source_matches"), false);
+  });
+});
+
 test("cli compile invalidates prior sent context when a session switches branches", () => {
   withGitRepo((repoPath) => {
     const first = runCliJson(repoPath, [

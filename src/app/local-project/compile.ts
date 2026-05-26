@@ -29,6 +29,7 @@ import { detectRiskOverlaysForTask, mergeRiskOverlays } from "./compile-risk.js"
 import { ensureCompileSession } from "./compile-session.js";
 import { initializeLocalProject } from "./initialize.js";
 import { readLocalSourceExcerpts } from "./source-excerpts.js";
+import { resolveLocalTaskRetrieval } from "./task-retrieval.js";
 import { withMigratedLocalDatabase } from "./storage.js";
 import type { CompileLocalContextInput, CompileLocalContextResult } from "./types.js";
 import type { LocalArtifactWriteResult } from "./artifact-files.js";
@@ -100,9 +101,22 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
       if (!session.existed) repositories.contextSessions.insert(session.record);
 
       const sources = evidenceRepositories.sources.listBySnapshot(snapshotResult.snapshotId);
+      const symbolNodes = indexingRepositories.symbolNodes.listBySnapshot(snapshotResult.snapshotId);
+      const symbolEdges = indexingRepositories.symbolEdges.listBySnapshot(snapshotResult.snapshotId);
+      const taskRetrieval = resolveLocalTaskRetrieval({
+        task: input.task,
+        snapshotId: snapshotResult.snapshotId,
+        sources,
+        symbolNodes,
+        indexingRepositories,
+        seedFiles: input.seedFiles,
+        seedSymbols: input.seedSymbols,
+        seedTests: input.seedTests
+      });
       const sourceExcerpts = readLocalSourceExcerpts({
         rootPath: snapshot.rootPath,
-        sources
+        sources,
+        preferredSourceRefs: taskRetrieval.selectedSourceRefs
       });
       const artifact = compileRepositoryContextArtifact({
         projectId: config.project.projectId,
@@ -115,8 +129,9 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         worktreeStateId: snapshotResult.worktreeStateId,
         sources,
         sourceExcerpts,
-        symbolNodes: indexingRepositories.symbolNodes.listBySnapshot(snapshotResult.snapshotId),
-        symbolEdges: indexingRepositories.symbolEdges.listBySnapshot(snapshotResult.snapshotId),
+        symbolNodes,
+        symbolEdges,
+        taskRetrieval,
         createdAt: now
       });
 

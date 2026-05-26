@@ -15,6 +15,7 @@ import type {
 export function dependencyManifest(
   input: CompileRepositoryContextArtifactInput
 ): InMemoryContextDependencyShape[] {
+  const preferredSourceRefs = input.taskRetrieval?.selectedSourceRefs ?? [];
   const dependencies: InMemoryContextDependencyShape[] = [
     {
       id: "repo-snapshot",
@@ -32,7 +33,7 @@ export function dependencyManifest(
     }
   ];
 
-  for (const source of selectedSources(input.sources)) {
+  for (const source of selectedSources(input.sources, preferredSourceRefs)) {
     dependencies.push({
       id: sourceDependencyId(source),
       kind: sourceDependencyKind(source),
@@ -46,7 +47,7 @@ export function dependencyManifest(
     });
   }
 
-  for (const excerpt of selectedProofSourceExcerpts(input.sourceExcerpts)) {
+  for (const excerpt of selectedProofSourceExcerpts(input.sourceExcerpts, preferredSourceRefs)) {
     dependencies.push({
       id: sourceProofDependencyId(excerpt.proofId),
       kind: "proof",
@@ -65,7 +66,7 @@ export function dependencyManifest(
     });
   }
 
-  for (const node of selectedSymbolNodes(input.symbolNodes)) {
+  for (const node of selectedSymbolNodes(input.symbolNodes, preferredSourceRefs)) {
     dependencies.push({
       id: symbolDependencyId(node.symbolId),
       kind: "symbol",

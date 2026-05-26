@@ -85,6 +85,9 @@ export interface CompileLocalContextInput {
   readonly taskType?: string;
   readonly riskOverlays?: string;
   readonly riskSeedRefs?: readonly string[];
+  readonly seedFiles?: readonly string[];
+  readonly seedSymbols?: readonly string[];
+  readonly seedTests?: readonly string[];
   readonly sessionId?: string;
   readonly resetSession?: boolean;
   readonly now?: string;
