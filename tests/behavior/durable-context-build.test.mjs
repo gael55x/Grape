@@ -242,6 +242,30 @@ test("durable context build invalidates stale dependency manifests before resend
         .listBySession("session-1")
         .some((item) => item.diffState === "INVALIDATE_PREVIOUS" && item.invalidatesSentItemId)
     );
+
+    const repeated = build(database, repositories, artifact("artifact-3", { manifestHash: hashC }), 3);
+    assert.equal(repeated.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), false);
+    assert.deepEqual(
+      repeated.contextPackItems.map((item) => item.state),
+      ["PINNED", "OMIT_UNCHANGED", "RESTORE_AVAILABLE"]
+    );
+  });
+});
+
+test("durable context build does not reuse sent items after invalidating them", () => {
+  withMigratedDatabase((database, repositories) => {
+    insertBaseGraph(repositories);
+    build(database, repositories, artifact("artifact-1"), 1);
+    build(database, repositories, artifact("artifact-2", { manifestHash: hashC }), 2);
+
+    const result = build(database, repositories, artifact("artifact-3"), 3);
+
+    assert.equal(result.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), false);
+    assert.ok(result.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"));
+    assert.deepEqual(
+      result.contextPackItems.slice(-2).map((item) => item.state),
+      ["PINNED", "NEW"]
+    );
   });
 });
 

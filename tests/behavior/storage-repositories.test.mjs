@@ -377,6 +377,51 @@ test("storage session locks coordinate with compare-and-set updates", () => {
   });
 });
 
+test("storage context sessions update compile state without changing lock ownership", () => {
+  withMigratedDatabase((_database, repositories) => {
+    insertBaseGraph(repositories);
+    insertSession(repositories, "session-1", { lockStatus: "locked", lockToken: "token-a" });
+    repositories.repoSnapshots.insert({
+      snapshotId: "snapshot-feature",
+      repoId: "repo-1",
+      branch: "feature/context",
+      commitSha: "def456",
+      worktreeHash: hashB,
+      snapshotHash: hashA,
+      dirtyState: "clean",
+      createdAt: now
+    });
+    repositories.worktreeStates.insert({
+      worktreeStateId: "worktree-feature",
+      snapshotId: "snapshot-feature",
+      state: "clean",
+      dirtyPathsJson: "[]",
+      createdAt: now
+    });
+
+    assert.equal(
+      repositories.contextSessions.updateCompileState({
+        sessionId: "session-1",
+        repoSnapshotId: "snapshot-feature",
+        worktreeStateId: "worktree-feature",
+        branchName: "feature/context",
+        baseCommitSha: "def456",
+        headCommitSha: "def456",
+        status: "active",
+        now
+      }),
+      true
+    );
+
+    const session = repositories.contextSessions.get("session-1");
+    assert.equal(session?.branchName, "feature/context");
+    assert.equal(session?.baseCommitSha, "def456");
+    assert.equal(session?.headCommitSha, "def456");
+    assert.equal(session?.lockStatus, "locked");
+    assert.equal(session?.lockToken, "token-a");
+  });
+});
+
 test("storage transactions roll back multi-record writes", () => {
   withMigratedDatabase((database, repositories) => {
     assert.throws(

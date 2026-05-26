@@ -204,6 +204,17 @@ export interface SessionLockExpireUpdate {
   readonly now: string;
 }
 
+export interface ContextSessionCompileStateUpdate {
+  readonly sessionId: string;
+  readonly repoSnapshotId: string;
+  readonly worktreeStateId: string;
+  readonly branchName: string;
+  readonly baseCommitSha?: string;
+  readonly headCommitSha: string;
+  readonly status: "active" | "paused" | "completed" | "invalidated";
+  readonly now: string;
+}
+
 export interface StorageRepositories {
   readonly projects: {
     insert(record: ProjectRecord): void;
@@ -228,6 +239,7 @@ export interface StorageRepositories {
     renewLock(update: SessionLockUpdate): boolean;
     releaseLock(update: SessionLockUpdate): boolean;
     expireLock(update: SessionLockExpireUpdate): boolean;
+    updateCompileState(update: ContextSessionCompileStateUpdate): boolean;
   };
   readonly sessionEvents: {
     insert(record: SessionEventRecord): void;
@@ -459,6 +471,31 @@ export function createStorageRepositories(database: DatabaseSync): StorageReposi
             ].join(" ")
           )
           .run(...params);
+        return result.changes === 1;
+      },
+      updateCompileState(update) {
+        const result = database
+          .prepare(
+            [
+              "UPDATE context_sessions",
+              [
+                "SET repo_snapshot_id = ?, worktree_state_id = ?, branch_name = ?,",
+                "base_commit_sha = ?, head_commit_sha = ?, status = ?, last_seen_at = ?, updated_at = ?"
+              ].join(" "),
+              "WHERE session_id = ?"
+            ].join(" ")
+          )
+          .run(
+            update.repoSnapshotId,
+            update.worktreeStateId,
+            update.branchName,
+            sqlNullable(update.baseCommitSha),
+            update.headCommitSha,
+            update.status,
+            update.now,
+            update.now,
+            update.sessionId
+          );
         return result.changes === 1;
       }
     },

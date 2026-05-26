@@ -19,23 +19,43 @@ export interface EnsureCompileSessionInput {
 export interface EnsuredCompileSession {
   readonly existed: boolean;
   readonly record: ContextSessionRecord;
+  readonly branchChanged: boolean;
+  readonly previousBranch?: string;
+  readonly previousHeadCommit?: string;
 }
 
 export function ensureCompileSession(input: EnsureCompileSessionInput): EnsuredCompileSession {
   if (input.existing) {
     assertSessionMatch("project", input.existing.projectId, input.projectId);
     assertSessionMatch("repo", input.existing.repoId, input.repoId);
-    assertSessionMatch("branch", input.existing.branchName, input.branch);
     assertSessionMatch("task", input.existing.taskId, input.taskId);
     assertSessionMatch("task type", input.existing.taskType, input.taskType);
     if (input.existing.lockStatus === "locked" && input.existing.lockToken !== input.lockToken) {
       throw new Error(`context session is locked: ${input.sessionId}`);
     }
-    return { existed: true, record: input.existing };
+    const branchChanged = input.existing.branchName !== input.branch;
+    return {
+      existed: true,
+      branchChanged,
+      previousBranch: branchChanged ? input.existing.branchName : undefined,
+      previousHeadCommit: branchChanged ? input.existing.headCommitSha : undefined,
+      record: {
+        ...input.existing,
+        repoSnapshotId: input.snapshotId,
+        worktreeStateId: input.worktreeStateId,
+        branchName: input.branch,
+        baseCommitSha: branchChanged ? input.commit : input.existing.baseCommitSha,
+        headCommitSha: input.commit,
+        status: "active",
+        lastSeenAt: input.now,
+        updatedAt: input.now
+      }
+    };
   }
 
   return {
     existed: false,
+    branchChanged: false,
     record: {
       sessionId: input.sessionId,
       projectId: input.projectId,

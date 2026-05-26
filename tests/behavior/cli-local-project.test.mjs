@@ -8,7 +8,8 @@ import test from "node:test";
 
 import {
   createEvidenceStorageRepositories,
-  createIndexingStorageRepositories
+  createIndexingStorageRepositories,
+  createStorageRepositories
 } from "../../.tmp/build/src/core/storage/index.js";
 
 const cliPath = path.join(process.cwd(), ".tmp/build/src/cli/index.js");
@@ -40,6 +41,21 @@ function execGit(repoPath, args) {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"]
   }).trim();
+}
+
+function switchToFeatureBranch(repoPath) {
+  execGit(repoPath, ["checkout", "-b", "feature/context"]);
+  writeFileSync(path.join(repoPath, "README.md"), "# Feature branch\n");
+  execGit(repoPath, ["add", "README.md"]);
+  execGit(repoPath, [
+    "-c",
+    "user.name=Grape Test",
+    "-c",
+    "user.email=grape@example.test",
+    "commit",
+    "-m",
+    "feature branch change"
+  ]);
 }
 
 function runCli(repoPath, args, cwd = repoPath) {
@@ -159,6 +175,77 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(artifactDetail.dependencies.length > 0, true);
     assert.match(artifactDetail.artifactFiles.json, /^\.grape\//);
     assert.equal(path.isAbsolute(artifactDetail.artifactFiles.json), false);
+  });
+});
+
+test("cli compile invalidates prior sent context when a session switches branches", () => {
+  withGitRepo((repoPath) => {
+    const first = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository entry points",
+      "--session",
+      "branch-session"
+    ]);
+
+    switchToFeatureBranch(repoPath);
+
+    const second = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository entry points",
+      "--session",
+      "branch-session"
+    ]);
+
+    assert.equal(second.branch, "feature/context");
+    assert.equal(second.sessionId, "branch-session");
+    assert.equal(second.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), true);
+    assert.equal(second.contextPackItems.some((item) => item.state === "NEW"), true);
+    assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), false);
+
+    const session = localContextSession(repoPath, "branch-session");
+    assert.equal(session.branchName, "feature/context");
+    assert.equal(session.headCommitSha, second.headCommit);
+
+    const event = localSessionEvents(repoPath, "branch-session").find(
+      (candidate) => candidate.eventType === "session_invalidated"
+    );
+    assert.ok(event);
+    assert.equal(event.reason, "branch_changed");
+    assert.deepEqual(JSON.parse(event.metadataJson), {
+      reason: "branch_changed",
+      previousBranch: "main",
+      nextBranch: "feature/context",
+      previousHeadCommit: first.headCommit,
+      nextHeadCommit: second.headCommit
+    });
+
+    const third = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository entry points",
+      "--session",
+      "branch-session"
+    ]);
+
+    assert.equal(third.branch, "feature/context");
+    assert.equal(third.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), false);
+    assert.equal(third.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), true);
+
+    execGit(repoPath, ["checkout", "main"]);
+    const backOnMain = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository entry points",
+      "--session",
+      "branch-session"
+    ]);
+
+    assert.equal(backOnMain.branch, "main");
+    assert.equal(backOnMain.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), true);
+    assert.equal(backOnMain.contextPackItems.some((item) => item.state === "NEW"), true);
+    assert.equal(backOnMain.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), false);
   });
 });
 
@@ -297,6 +384,26 @@ function localContextArtifactCount(repoPath) {
   const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
   try {
     return Number(database.prepare("SELECT count(*) AS count FROM context_artifacts").get().count);
+  } finally {
+    database.close();
+  }
+}
+
+function localContextSession(repoPath, sessionId) {
+  const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
+  try {
+    const session = createStorageRepositories(database).contextSessions.get(sessionId);
+    assert.ok(session);
+    return session;
+  } finally {
+    database.close();
+  }
+}
+
+function localSessionEvents(repoPath, sessionId) {
+  const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
+  try {
+    return createStorageRepositories(database).sessionEvents.listBySession(sessionId);
   } finally {
     database.close();
   }

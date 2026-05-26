@@ -96,7 +96,7 @@ The canonical states and constraints come from `docs/v1/SPEC.md`. This file make
 
 ## Durable Build Implementation Note
 
-The current persisted proof implements the `context_artifact_compiled` -> `session_active` -> `context_diff_generated` -> `context_pack_sent` path for an already-built artifact. It intentionally does not implement evidence collection, trust promotion, current-valid retrieval, MCP transport, or compression. Those states remain documented contracts until their owning goals are implemented.
+The current persisted proof implements the `context_artifact_compiled` -> `session_active` -> `context_diff_generated` -> `context_pack_sent` path for an already-built artifact. When an existing session moves branches, the durable build records `session_active` -> `session_invalidated` with `reason: "branch_changed"` and emits `previous_context_invalidated` pack items for stale sent context before sending the new pack. It intentionally does not implement trust promotion, full current-valid retrieval, or compression. Those states remain documented contracts until their owning goals are implemented.
 
 ## Lifecycle Diagram
 

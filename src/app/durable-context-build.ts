@@ -3,6 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { calculateInMemoryTokenSavings, createInMemoryContextDiff } from "../core/diff/index.js";
 import type { InMemoryTokenSavingsMetric } from "../core/diff/index.js";
 import type {
+  ContextSessionCompileStateUpdate,
   ContextSentItemRecord,
   OmittedContextItemRecord,
   StorageRepositories
@@ -32,7 +33,17 @@ export interface DurableContextBuildInput {
   readonly fixture: string;
   readonly turn: number;
   readonly now: string;
+  readonly sessionUpdate?: ContextSessionCompileStateUpdate;
+  readonly sessionInvalidation?: DurableSessionInvalidation;
   readonly prepareOutput?: (preview: DurableContextBuildPreview) => void;
+}
+
+export interface DurableSessionInvalidation {
+  readonly reason: "branch_changed";
+  readonly previousBranch: string;
+  readonly nextBranch: string;
+  readonly previousHeadCommit: string;
+  readonly nextHeadCommit: string;
 }
 
 export interface DurableContextBuildResult {
@@ -65,6 +76,21 @@ export function buildDurableContext(input: DurableContextBuildInput): DurableCon
       throw new Error(`context build requires an active session lock: ${input.sessionId}`);
     }
 
+    if (input.sessionUpdate && !input.repositories.contextSessions.updateCompileState(input.sessionUpdate)) {
+      throw new Error(`context session compile state could not be updated: ${input.sessionId}`);
+    }
+
+    if (input.sessionInvalidation) {
+      input.repositories.sessionEvents.insert({
+        eventId: `${input.artifact.artifactId}:session_invalidated`,
+        sessionId: input.sessionId,
+        eventType: "session_invalidated",
+        reason: input.sessionInvalidation.reason,
+        metadataJson: JSON.stringify(input.sessionInvalidation),
+        createdAt: input.now
+      });
+    }
+
     input.repositories.sessionEvents.insert({
       eventId: `${input.artifact.artifactId}:build_started`,
       sessionId: input.sessionId,
@@ -75,10 +101,15 @@ export function buildDurableContext(input: DurableContextBuildInput): DurableCon
     });
 
     const priorSentItems = input.repositories.contextSentItems.listBySession(input.sessionId);
-    const stalePriorItems = priorSentItems.filter(
-      (item) => item.dependencyManifestHash !== input.artifact.dependencyManifest.manifestHash
+    const alreadyInvalidatedSentItemIds = listAlreadyInvalidatedSentItemIds(input);
+    const activePriorItems = priorSentItems.filter(
+      (item) => !alreadyInvalidatedSentItemIds.has(item.sentItemId)
     );
-    const currentPriorItems = priorSentItems.filter(
+    const stalePriorItems = activePriorItems.filter(
+      (item) =>
+        item.dependencyManifestHash !== input.artifact.dependencyManifest.manifestHash
+    );
+    const currentPriorItems = activePriorItems.filter(
       (item) => item.dependencyManifestHash === input.artifact.dependencyManifest.manifestHash
     );
 
@@ -153,4 +184,14 @@ function assertArtifactMatchesSession(input: DurableContextBuildInput): void {
   if (input.artifact.input.sessionId !== input.sessionId) {
     throw new Error("context build artifact session does not match build session");
   }
+}
+
+function listAlreadyInvalidatedSentItemIds(input: DurableContextBuildInput): Set<string> {
+  const invalidatedIds = new Set<string>();
+  for (const item of input.repositories.contextPackItems.listBySession(input.sessionId)) {
+    if (item.diffState === "INVALIDATE_PREVIOUS" && item.invalidatesSentItemId) {
+      invalidatedIds.add(item.invalidatesSentItemId);
+    }
+  }
+  return invalidatedIds;
 }
