@@ -22,6 +22,7 @@ export function helpText(): string {
     "",
     "Usage:",
     "  grape init --connect        Initialize local .grape state and show MCP guidance",
+    "  grape compile --task <text> Compile a task context pack",
     "  grape status                Inspect local project/bootstrap state",
     "  grape doctor                Run setup and privacy diagnostics",
     "  grape mcp --print-config    Print MCP client configuration",
@@ -29,6 +30,9 @@ export function helpText(): string {
     "",
     "Options:",
     "  --repo <path>               Run against a repository path",
+    "  --task-type <type>          Set task type for compile (default: analysis)",
+    "  --risk <a,b>                Add compile risk overlays",
+    "  --session <id>              Reuse a context session for diffing",
     "  --json                      Emit machine-readable JSON"
   ].join("\n");
 }

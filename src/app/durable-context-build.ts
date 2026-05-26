@@ -32,6 +32,7 @@ export interface DurableContextBuildInput {
   readonly fixture: string;
   readonly turn: number;
   readonly now: string;
+  readonly prepareOutput?: (preview: DurableContextBuildPreview) => void;
 }
 
 export interface DurableContextBuildResult {
@@ -43,6 +44,8 @@ export interface DurableContextBuildResult {
   readonly tokenMetric: InMemoryTokenSavingsMetric;
   readonly unsafeOmissions: number;
 }
+
+export interface DurableContextBuildPreview extends DurableContextBuildResult {}
 
 export function buildDurableContext(input: DurableContextBuildInput): DurableContextBuildResult {
   assertArtifactMatchesSession(input);
@@ -130,8 +133,7 @@ export function buildDurableContext(input: DurableContextBuildInput): DurableCon
       contextPackItems,
       unsafeOmissions: diff.unsafeOmissions
     });
-
-    return {
+    const preview = {
       sessionId: input.sessionId,
       artifactId: input.artifact.artifactId,
       contextPackItems,
@@ -140,6 +142,10 @@ export function buildDurableContext(input: DurableContextBuildInput): DurableCon
       tokenMetric,
       unsafeOmissions: diff.unsafeOmissions
     };
+
+    input.prepareOutput?.(preview);
+
+    return preview;
   });
 }
 

@@ -148,7 +148,11 @@ The current compiler foundation can build an `InMemoryContextArtifactShape` from
 
 It emits task, repository-state, allowed-source-manifest, file-relationship, and index-confidence sections. Its dependency manifest includes repo snapshot, worktree state, selected source/config/lockfile records, and selected symbol relationships. Aggregate source/index sections retain repo snapshot and worktree dependencies so empty or all-unindexed repositories still produce inspectable partial context. Relationship summaries render repository paths when known, with symbol IDs kept as supporting identities.
 
-This is not yet the final V1 artifact product. It does not yet write `.grape/artifacts/ctx_*.json`, render product Markdown, select exact spans for high-risk overlays, or expose MCP/CLI context retrieval.
+`grape compile --task <text>` now writes this scaffold as inspectable JSON and Markdown under `.grape/artifacts/ctx_<id>.json` and `.grape/artifacts/ctx_<id>.md`, after a basic artifact-level secret scan. These files are useful for CLI review and session-diff testing, but they are still marked as `InMemoryContextArtifactShape` scaffold output. The artifact ID identifies a compile output instance; the artifact hash is the deterministic content identity and excludes `createdAt` and instance IDs.
+
+Risk overlays currently mark the scaffold artifact unsafe with `risk_overlay_exact_spans_not_implemented`, because V1 still needs exact source-span selection before high-risk compiles can be reported as safe.
+
+This is not yet the final V1 artifact product. It does not yet implement the final V1 JSON schema, select exact spans for high-risk overlays, or expose MCP context retrieval.
 
 ## Section Rules
 

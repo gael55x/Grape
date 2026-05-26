@@ -1,3 +1,4 @@
+export * from "./compile.js";
 export * from "./config.js";
 export * from "./doctor.js";
 export * from "./initialize.js";

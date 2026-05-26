@@ -63,7 +63,7 @@ The first setup slice implements `grape mcp --print-config` as a CLI-delivered M
 }
 ```
 
-This is deliberately not a drop-in MCP client config yet. The stdio MCP server and `grape_get_context` tool are not implemented yet. They remain required V1 work and must call app services instead of owning storage, trust, retrieval, or compiler behavior.
+This is deliberately not a drop-in MCP client config yet. The stdio MCP server and `grape_get_context` tool are not implemented yet. The CLI `grape compile --task <text>` path now exercises the app-level compile, durable diff, and artifact rendering service that `grape_get_context` should call later instead of duplicating storage, trust, retrieval, or compiler behavior.
 
 ## Read Tool Contract
 

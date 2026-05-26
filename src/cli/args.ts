@@ -8,13 +8,14 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   const [command = "", ...rest] = argv;
   const flags = new Set<string>();
   const values = new Map<string, string>();
+  const valueOptions = new Set(["--repo", "--task", "--task-type", "--risk", "--session"]);
 
   for (let index = 0; index < rest.length; index += 1) {
     const arg = rest[index];
-    if (arg === "--repo") {
+    if (valueOptions.has(arg)) {
       const value = rest[index + 1];
-      if (!value) throw new Error("--repo requires a path");
-      values.set("--repo", value);
+      if (!value) throw new Error(`${arg} requires a value`);
+      values.set(arg, value);
       index += 1;
       continue;
     }

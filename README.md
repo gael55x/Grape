@@ -99,6 +99,7 @@ Implemented today:
 - durable SQLite session-ledger storage
 - durable context build proof for first-turn send, second-turn omission, stale manifest invalidation, and rollback
 - first local setup CLI slice: `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`
+- first CLI context compile fallback: `grape compile --task <text>` auto-bootstraps local state, compiles from real repo inputs, persists session diff rows, and writes inspectable `.grape/artifacts/ctx_*.json` and `.md` scaffold artifacts
 - TypeScript, behavior tests, storage checks, docs checks, and architecture-boundary checks
 
 Not released yet:
@@ -182,6 +183,7 @@ grape_get_context
 Inspection and debugging commands are planned:
 
 ```bash
+grape compile --task "Explain the files I need to edit"
 grape status
 grape doctor
 grape mcp --print-config
@@ -191,7 +193,7 @@ grape conflicts
 grape omitted
 ```
 
-`grape status`, `grape doctor`, and `grape mcp --print-config` are implemented for setup inspection. `grape mcp --print-config` is explicitly marked `contract_only` until the stdio MCP server is implemented. Artifact, stale, conflict, omitted, and full MCP context commands are not implemented yet.
+`grape compile --task <text>`, `grape status`, `grape doctor`, and `grape mcp --print-config` are implemented for local inspection and CLI-first fallback context generation. `grape mcp --print-config` is explicitly marked `contract_only` until the stdio MCP server is implemented. Artifact-listing, stale, conflict, omitted, and full MCP context commands are not implemented yet.
 
 ## Development
 

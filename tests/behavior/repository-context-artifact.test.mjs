@@ -129,7 +129,7 @@ function compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepos
     sources: evidenceRepositories.sources.listBySnapshot(snapshotId),
     symbolNodes: indexingRepositories.symbolNodes.listBySnapshot(snapshotId),
     symbolEdges: indexingRepositories.symbolEdges.listBySnapshot(snapshotId),
-    createdAt: now
+    createdAt: overrides.createdAt ?? now
   });
 }
 
@@ -208,6 +208,9 @@ test("repository artifact compiler is deterministic for unchanged persisted inpu
       const differentRequest = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories, {
         userRequestHash: "v".repeat(64)
       });
+      const later = compileFromSnapshot(snapshotResult, evidenceRepositories, indexingRepositories, {
+        createdAt: "2026-05-24T00:00:01.000Z"
+      });
 
       assert.equal(second.artifactId, first.artifactId);
       assert.equal(second.artifactHash, first.artifactHash);
@@ -215,6 +218,9 @@ test("repository artifact compiler is deterministic for unchanged persisted inpu
       assert.deepEqual(second.sections, first.sections);
       assert.notEqual(differentRisk.artifactId, first.artifactId);
       assert.notEqual(differentRequest.artifactId, first.artifactId);
+      assert.notEqual(later.artifactId, first.artifactId);
+      assert.equal(later.artifactHash, first.artifactHash);
+      assert.equal(later.dependencyManifest.manifestHash, first.dependencyManifest.manifestHash);
     });
   });
 });
@@ -281,6 +287,8 @@ test("repository artifact compiler marks risky or dirty context explicitly", () 
 
       assert.equal(snapshotResult.snapshot.worktreeStatus, "dirty");
       assert.equal(artifact.warnings.includes("dirty_worktree_context"), true);
+      assert.equal(artifact.warnings.includes("risk_overlay_requires_exact_context"), true);
+      assert.deepEqual(artifact.unsafeReasons, ["risk_overlay_exact_spans_not_implemented"]);
       assert.equal(blindSpots?.pinned, true);
       assert.match(repoState?.body ?? "", /src\/app\.ts/);
     });

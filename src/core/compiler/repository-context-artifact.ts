@@ -20,7 +20,7 @@ export function compileRepositoryContextArtifact(
     worktreeStateId: input.worktreeStateId
   });
   const request = artifactInput(input);
-  const artifactIdentityHash = hashStableJson({ request, manifestHash });
+  const artifactIdentityHash = hashStableJson({ request, manifestHash, createdAt: input.createdAt });
   const artifactId = `artifact:${hashStableParts([artifactIdentityHash]).slice(0, 24)}`;
   const manifest = {
     manifestId: `manifest:${artifactId.slice("artifact:".length)}`,
@@ -32,7 +32,11 @@ export function compileRepositoryContextArtifact(
   const artifactHash = hashStableJson({
     input: request,
     sections,
-    dependencyManifest: manifest
+    dependencyManifest: {
+      dependencies: manifest.dependencies,
+      hashAlgorithm: manifest.hashAlgorithm,
+      manifestHash: manifest.manifestHash
+    }
   });
 
   return assertInMemoryContextArtifactShape({
@@ -41,7 +45,7 @@ export function compileRepositoryContextArtifact(
     sections,
     dependencyManifest: manifest,
     warnings: compileWarnings(input),
-    unsafeReasons: [],
+    unsafeReasons: unsafeReasons(input),
     createdAt: input.createdAt,
     artifactHash
   });
@@ -67,5 +71,11 @@ function compileWarnings(input: CompileRepositoryContextArtifactInput): string[]
   if (input.symbolNodes.length > maxListedSymbols) warnings.push("symbol_nodes_truncated");
   if (input.symbolEdges.length > maxListedEdges) warnings.push("symbol_edges_truncated");
   if (input.snapshot.worktreeStatus !== "clean") warnings.push("dirty_worktree_context");
+  if (input.riskOverlays.length > 0) warnings.push("risk_overlay_requires_exact_context");
   return warnings;
+}
+
+function unsafeReasons(input: CompileRepositoryContextArtifactInput): string[] {
+  if (input.riskOverlays.length === 0) return [];
+  return ["risk_overlay_exact_spans_not_implemented"];
 }

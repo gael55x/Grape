@@ -64,6 +64,7 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stderr, "");
   assert.match(result.stdout, /grape init --connect/);
+  assert.match(result.stdout, /grape compile --task <text>/);
   assert.match(result.stdout, /grape status/);
   assert.match(result.stdout, /grape doctor/);
   assert.match(result.stdout, /grape mcp --print-config/);
@@ -101,6 +102,87 @@ test("cli init --connect bootstraps local .grape state and keeps it out of git s
   });
 });
 
+test("cli compile auto-bootstraps and writes inspectable context artifact files", () => {
+  withGitRepo((repoPath) => {
+    const first = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository entry points",
+      "--session",
+      "session-test"
+    ]);
+
+    assert.equal(existsSync(path.join(repoPath, ".grape", "config.json")), true);
+    assert.equal(existsSync(path.join(repoPath, ".grape", "grape.db")), true);
+    assert.equal(existsSync(first.artifactJsonPath), true);
+    assert.equal(existsSync(first.artifactMarkdownPath), true);
+    assert.equal(first.sessionId, "session-test");
+    assert.equal(first.contextPackItems.some((item) => item.state === "NEW"), true);
+    assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /# Grape Context Pack/);
+
+    const artifactJson = JSON.parse(readFileSync(first.artifactJsonPath, "utf8"));
+    assert.equal(artifactJson.artifact.artifactId, first.artifactId);
+    assert.equal(artifactJson.contextPackItems.length, first.contextPackItems.length);
+    assert.equal(localContextArtifactCount(repoPath), 1);
+
+    const second = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository entry points",
+      "--session",
+      "session-test"
+    ]);
+
+    assert.equal(second.sessionId, "session-test");
+    assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), true);
+    assert.equal(second.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE"), true);
+    assert.equal(localContextArtifactCount(repoPath), 2);
+  });
+});
+
+test("cli compile marks risk overlays unsafe until exact spans exist", () => {
+  withGitRepo((repoPath) => {
+    const result = runCli(repoPath, [
+      "compile",
+      "--task",
+      "Review authentication changes",
+      "--risk",
+      "security",
+      "--json"
+    ]);
+
+    assert.equal(result.status, 2, result.stderr);
+    assert.equal(result.stderr, "");
+    const parsed = JSON.parse(result.stdout);
+    assert.deepEqual(parsed.unsafeReasons, ["risk_overlay_exact_spans_not_implemented"]);
+    assert.ok(parsed.warnings.includes("risk_overlay_requires_exact_context"));
+  });
+});
+
+test("cli compile reports contended session locks", () => {
+  withGitRepo((repoPath) => {
+    const first = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository entry points",
+      "--session",
+      "session-test"
+    ]);
+    setContextSessionLocked(repoPath, first.sessionId);
+
+    const second = runCli(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository entry points",
+      "--session",
+      "session-test"
+    ]);
+
+    assert.equal(second.status, 5);
+    assert.match(second.stderr, /context session is locked/);
+  });
+});
+
 function localSourceRejectionRefs(repoPath) {
   const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
   try {
@@ -119,6 +201,26 @@ function localIndexedPaths(repoPath) {
     const snapshotId = rows[0]?.snapshot_id;
     if (!snapshotId) return [];
     return createIndexingStorageRepositories(database).symbolNodes.listBySnapshot(String(snapshotId)).map((row) => row.path);
+  } finally {
+    database.close();
+  }
+}
+
+function localContextArtifactCount(repoPath) {
+  const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
+  try {
+    return Number(database.prepare("SELECT count(*) AS count FROM context_artifacts").get().count);
+  } finally {
+    database.close();
+  }
+}
+
+function setContextSessionLocked(repoPath, sessionId) {
+  const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
+  try {
+    database
+      .prepare("UPDATE context_sessions SET lock_status = 'locked', lock_token = 'other-lock' WHERE session_id = ?")
+      .run(sessionId);
   } finally {
     database.close();
   }
@@ -149,6 +251,15 @@ test("cli rejects unsupported flags instead of pretending commands are implement
 
     assert.equal(result.status, 1);
     assert.match(result.stderr, /Unsupported option/);
+  });
+});
+
+test("cli compile reports invalid task policy as usage errors", () => {
+  withGitRepo((repoPath) => {
+    const result = runCli(repoPath, ["compile", "--task", "Check risk", "--risk", "made_up_risk"]);
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /unsupported risk overlay/);
   });
 });
 
