@@ -60,3 +60,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Compiled current-valid narrow source-excerpt claims into context artifacts with claim/proof dependencies.
 - Added deterministic `symbol_outline` compression cache records and non-proof artifact orientation sections.
 - Added `grape sessions` for session/diff ledger inspection.
+- Added `grape stale` for CLI inspection of emitted stale-context invalidations without returning context bodies.

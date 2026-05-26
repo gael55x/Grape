@@ -322,3 +322,10 @@ Keep entries simple:
 - Summary: added `grape sessions` backed by a local-project app service. The command reports session status, lock status, branch/head scope, task metadata, artifact/sent/omitted/pack counts, event counts, and last event reason without returning context bodies.
 - Checks run: focused CLI behavior tests before full verification.
 - Risks/follow-ups: stale/conflict-specific inspection commands remain pending until broader stale claim/conflict records exist.
+
+### 2026-05-26 - Stale Invalidation CLI
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added `grape stale` backed by a local-project app service. The command reports emitted `INVALIDATE_PREVIOUS` ledger rows, prior sent item refs, stale reason classification, previous branch/head metadata, and dependency ref counts without returning context bodies.
+- Checks run: focused CLI behavior tests before full verification.
+- Risks/follow-ups: this is an invalidation-ledger inspector only. Predictive stale analysis for claims, rules, and compression inputs remains pending until those stale records are product-facing.
