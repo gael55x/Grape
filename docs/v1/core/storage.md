@@ -102,6 +102,13 @@ Migration `0003_fts_entries.sql` adds the first FTS5 lexical index foundation:
 
 FTS persistence reads only existing allowed source records, reuses the same path/hash/binary/symlink guards as file indexing, skips secret-looking text before inserting FTS rows, and stores search results through repository methods rather than direct SQL outside storage. The local compile service now uses these rows, explicit seed file refs, and symbol/path matches to prioritize scaffold source evidence and to satisfy the first high-risk exact-context policy only when a proof-backed exact excerpt is selected for the task. This is still a source-selection foundation only; durable current-valid claim retrieval remains pending.
 
+Migration `0004_compression_cache.sql` adds the first deterministic compression cache tables:
+
+- `compression_artifacts` stores cache metadata for V1 deterministic `symbol_outline`, `rule_digest`, and `context_pack_summary` records.
+- `compression_inputs` stores each input ref and input hash used to derive a compression artifact.
+
+The current implementation writes only `symbol_outline` records from the lightweight symbol index. Compression repositories persist derived cache records only; they do not decide compiler policy, trust, proof validity, or whether a summary can replace context.
+
 ## Repository Boundary
 
 - Every table must have an owning repository module.
@@ -119,6 +126,7 @@ FTS persistence reads only existing allowed source records, reuses the same path
 - Proof repositories persist already-validated proof records only and can link a proof row to an accepted claim. Validation stays in `src/core/proofs/`; claim gating stays out of storage.
 - Alpha source storage keeps branch, commit, repo ID, project ID, worktree hash, and worktree state ID inside `metadata_json` until a later migration promotes the final `Source` shape fields that the compiler and MCP surface will query directly.
 - Indexing storage is split between `src/core/storage/indexing-repositories.ts` for aggregate wiring, `src/core/storage/fts-repositories.ts` for FTS rows/search, and symbol repository ownership for `symbol_nodes` and `symbol_edges` SQL and typed row mapping.
+- Compression cache storage is split into `src/core/storage/compression-repositories.ts` so deterministic cache metadata and input hashes do not expand the session-ledger repository file.
 - Repository tests must prove session-scoped sent/omitted ledgers and fail-closed foreign-key behavior before app services rely on those tables.
 
 ## SQLite Policy
@@ -196,3 +204,5 @@ The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` 
 - `invalid_source_proof_hash_is_rejected`
 - `validated_source_claims_persist_after_proofs`
 - `source_claim_candidate_rejected_without_proof`
+- `compression_artifact_requires_input_hashes`
+- `compression_dependency_is_in_artifact_manifest`

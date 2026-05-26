@@ -101,6 +101,7 @@ Implemented today:
 - first local setup CLI slice: `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`
 - first CLI context compile fallback: `grape compile --task <text>` auto-bootstraps local state, compiles from real repo inputs, evaluates optional token budgets, persists session diff rows, and writes inspectable V1 `.grape/artifacts/ctx_*.json` and `.md` context-pack artifacts
 - compiled current-valid narrow source-excerpt claims in context artifacts with claim/proof dependencies
+- deterministic `symbol_outline` compression cache records with input hashes and non-proof artifact orientation sections
 - artifact inspection through `grape artifacts`, `grape artifacts --artifact <id>`, and MCP `grape_get_artifact`
 - active narrow claim inspection through `grape claims --active` and MCP `grape_get_claims`
 - proof inspection through `grape proofs`, `grape proofs --proof <id>`, and MCP `grape_get_proofs`

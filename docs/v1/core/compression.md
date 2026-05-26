@@ -103,6 +103,12 @@ flowchart TD
 - The diff engine must invalidate previously sent items if their compression dependency becomes stale.
 - Token savings from compression must be measured separately from token savings from diff omission.
 
+## Current Implementation
+
+The first implemented compression slice persists deterministic `symbol_outline` artifacts in SQLite through `compression_artifacts` and `compression_inputs`. Local compile builds the outline from the current snapshot's lightweight symbol nodes and relationship edges, stores every symbol input hash, adds a `compression_artifact` dependency row, and renders a `compression-orientation` section.
+
+This section is orientation only. It has no proof refs, is not pinned, is not exact-required, cannot satisfy high-risk exact context, and cannot promote durable claims. `rule_digest` and `context_pack_summary` remain pending V1 work, as do budget pruning and stale compression invalidation events.
+
 ## Required Tests
 
 - `compression_artifact_requires_input_hashes`

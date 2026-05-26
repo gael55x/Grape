@@ -76,6 +76,18 @@ export interface RepositoryArtifactActiveClaimInput {
   readonly proofRefs: readonly string[];
 }
 
+export interface RepositoryArtifactCompressionInput {
+  readonly compressionId: string;
+  readonly type: "symbol_outline" | "rule_digest" | "context_pack_summary";
+  readonly summaryText: string;
+  readonly inputRefs: readonly string[];
+  readonly inputHashes: readonly string[];
+  readonly inputHash: string;
+  readonly policyHash: string;
+  readonly scopeHash: string;
+  readonly outputHash: string;
+}
+
 export interface CompileRepositoryContextArtifactInput {
   readonly projectId: string;
   readonly sessionId: string;
@@ -90,6 +102,7 @@ export interface CompileRepositoryContextArtifactInput {
   readonly symbolNodes: readonly RepositoryArtifactSymbolNodeInput[];
   readonly symbolEdges: readonly RepositoryArtifactSymbolEdgeInput[];
   readonly activeClaims?: readonly RepositoryArtifactActiveClaimInput[];
+  readonly compressionArtifacts?: readonly RepositoryArtifactCompressionInput[];
   readonly taskRetrieval?: RepositoryArtifactTaskRetrievalInput;
   readonly createdAt: string;
 }

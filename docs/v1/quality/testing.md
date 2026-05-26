@@ -81,6 +81,8 @@ Compression:
 
 - `compression_artifact_requires_input_hashes`
 - `compression_artifact_never_valid_proof`
+- `context_pack_summary_is_deterministic`
+- `compression_dependency_is_in_artifact_manifest`
 - `high_risk_overlay_forbids_summary_replacement`
 - `stale_compression_emits_invalidated_previous_when_sent`
 

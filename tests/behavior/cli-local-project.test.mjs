@@ -7,6 +7,7 @@ import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
 import {
+  createCompressionStorageRepositories,
   createEvidenceStorageRepositories,
   createIndexingStorageRepositories,
   createStorageRepositories
@@ -206,12 +207,21 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(currentValidClaims?.itemRefs.some((ref) => ref.kind === "claim"), true);
     assert.equal(currentValidClaims?.itemRefs.some((ref) => ref.kind === "proof"), true);
     assert.equal(first.contextPackItems.some((item) => item.itemKind === "claim"), true);
+    const compressionOrientation = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "compression-orientation"
+    );
+    assert.equal(compressionOrientation?.type, "compression_summary");
+    assert.equal(compressionOrientation?.requiresExactCode, false);
+    assert.equal(compressionOrientation?.itemRefs.some((ref) => ref.kind === "compression_artifact"), true);
+    assert.equal(artifactJson.contextArtifact.compressionArtifactRefs.length > 0, true);
+    assert.equal(first.contextPackItems.some((item) => item.itemKind === "compression_artifact"), true);
     assert.equal(existsSync(scaffoldJsonPath), true);
     const scaffoldJson = JSON.parse(readFileSync(scaffoldJsonPath, "utf8"));
     assert.equal(scaffoldJson.artifact.artifactId, first.artifactId);
     assert.equal(localContextArtifactCount(repoPath), 1);
     assert.equal(localProofCount(repoPath) > 0, true);
     assert.equal(localClaimCount(repoPath) > 0, true);
+    assert.equal(localCompressionArtifactCount(repoPath) > 0, true);
     const claims = runCliJson(repoPath, ["claims", "--active"]);
     assert.equal(claims.claims.length > 0, true);
     assert.equal(claims.claims[0].claimType, "repository_source_excerpt_exists");
@@ -642,6 +652,17 @@ function localClaimCount(repoPath) {
   const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
   try {
     return Number(database.prepare("SELECT count(*) AS count FROM claims").get().count);
+  } finally {
+    database.close();
+  }
+}
+
+function localCompressionArtifactCount(repoPath) {
+  const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
+  try {
+    return createCompressionStorageRepositories(database).compressionArtifacts.listBySnapshot(
+      String(database.prepare("SELECT snapshot_id FROM repo_snapshots ORDER BY created_at DESC LIMIT 1").get().snapshot_id)
+    ).length;
   } finally {
     database.close();
   }

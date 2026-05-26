@@ -58,3 +58,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added high-risk exact-context gating so risk overlays only compile safely when task-selected proof-backed exact evidence exists.
 - Added CLI `grape claims --active` and MCP `grape_get_claims` for current-valid narrow source-excerpt claim inspection.
 - Compiled current-valid narrow source-excerpt claims into context artifacts with claim/proof dependencies.
+- Added deterministic `symbol_outline` compression cache records and non-proof artifact orientation sections.

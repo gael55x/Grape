@@ -23,6 +23,12 @@ export const storageMigrationReferences = [
     filename: "0003_fts_entries.sql",
     checksumSha256: "e23937d27051cb573f7e31264607ee4930e8cc8347ab62c183ae0807c06994d1",
     description: "Create safe FTS5 lexical source entry refs and text index rows."
+  },
+  {
+    id: "0004",
+    filename: "0004_compression_cache.sql",
+    checksumSha256: "9f712aaacc32972c8e2d694197745b1e9c97bd49ca655679b9fc912caf64589e",
+    description: "Create deterministic compression artifact and input hash cache tables."
   }
 ] as const satisfies readonly StorageMigrationReference[];
 
