@@ -74,6 +74,7 @@ export interface McpConnectionGuide {
   readonly tools: readonly [
     "grape_get_context",
     "grape_get_artifact",
+    "grape_get_proofs",
     "grape_get_omitted_item",
     "grape_get_status"
   ];
@@ -233,4 +234,38 @@ export interface GetLocalArtifactInput {
 export interface GetLocalArtifactResult extends LocalArtifactSummary {
   readonly rootPath: string;
   readonly dependencies: readonly LocalArtifactDependencySummary[];
+}
+
+export interface LocalProofSummary {
+  readonly proofId: string;
+  readonly claimId?: string;
+  readonly sourceId: string;
+  readonly sourceType?: string;
+  readonly sourceRef?: string;
+  readonly sourceScope?: string;
+  readonly proofType: string;
+  readonly sourceHash: string;
+  readonly excerptHash: string;
+  readonly supportStatus: string;
+  readonly privacyStatus?: string;
+  readonly redactionStatus?: string;
+  readonly createdAt: string;
+}
+
+export interface ListLocalProofsInput {
+  readonly rootPath: string;
+  readonly proofId?: string;
+  readonly sourceId?: string;
+  readonly now?: string;
+  readonly gitBinary?: string;
+  readonly migrationsDir?: string;
+}
+
+export interface ListLocalProofsResult {
+  readonly rootPath: string;
+  readonly filter: {
+    readonly proofId?: string;
+    readonly sourceId?: string;
+  };
+  readonly proofs: readonly LocalProofSummary[];
 }

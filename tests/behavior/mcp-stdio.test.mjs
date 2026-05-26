@@ -107,12 +107,77 @@ test("mcp stdio lists implemented Grape tools", () => {
     assert.equal(responses[0].result.serverInfo.name, "grape");
     assert.deepEqual(
       responses[1].result.tools.map((tool) => tool.name),
-      ["grape_get_context", "grape_get_artifact", "grape_get_omitted_item", "grape_get_status"]
+      [
+        "grape_get_context",
+        "grape_get_artifact",
+        "grape_get_proofs",
+        "grape_get_omitted_item",
+        "grape_get_status"
+      ]
     );
     const contextTool = responses[1].result.tools.find((tool) => tool.name === "grape_get_context");
     assert.deepEqual(contextTool.inputSchema.anyOf, [{ required: ["sessionId"] }, { required: ["agentSessionId"] }]);
     assert.equal(contextTool.inputSchema.properties.tokenBudget.type, "integer");
     assert.equal(contextTool.inputSchema.properties.tokenBudget.minimum, 1);
+  });
+});
+
+test("mcp grape_get_proofs returns proof metadata without raw excerpts or root paths", () => {
+  withGitRepo((repoPath) => {
+    const context = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-proofs-session"
+          }
+        }
+      }
+    ])[0].result.structuredContent;
+
+    assert.equal(context.artifactId.length > 0, true);
+
+    const proofs = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_proofs",
+          arguments: {}
+        }
+      }
+    ])[0].result;
+
+    assert.equal(proofs.isError, false);
+    assert.equal(Object.hasOwn(proofs.structuredContent, "rootPath"), false);
+    assert.equal(proofs.content[0].text.includes(repoPath), false);
+    assert.equal(proofs.structuredContent.proofs.length > 0, true);
+    const proof = proofs.structuredContent.proofs[0];
+    assert.equal(proof.proofType, "exact_source_excerpt");
+    assert.equal(proof.supportStatus, "direct");
+    assert.equal("excerpt" in proof, false);
+    assert.equal("body" in proof, false);
+
+    const proofDetail = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_proofs",
+          arguments: { proofId: proof.proofId }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(proofDetail.isError, false);
+    assert.equal(proofDetail.structuredContent.proofs.length, 1);
+    assert.equal(proofDetail.structuredContent.proofs[0].proofId, proof.proofId);
   });
 });
 

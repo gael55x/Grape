@@ -16,7 +16,9 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     "--session",
     "--token-budget",
     "--token",
-    "--artifact"
+    "--artifact",
+    "--proof",
+    "--source"
   ]);
 
   for (let index = 0; index < rest.length; index += 1) {

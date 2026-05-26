@@ -101,7 +101,8 @@ Implemented today:
 - first local setup CLI slice: `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`
 - first CLI context compile fallback: `grape compile --task <text>` auto-bootstraps local state, compiles from real repo inputs, evaluates optional token budgets, persists session diff rows, and writes inspectable V1 `.grape/artifacts/ctx_*.json` and `.md` context-pack artifacts
 - artifact inspection through `grape artifacts`, `grape artifacts --artifact <id>`, and MCP `grape_get_artifact`
-- first MCP stdio server: `grape mcp --stdio` supports `initialize`, `tools/list`, `grape_get_context`, `grape_get_artifact`, `grape_get_omitted_item`, and `grape_get_status` over framed stdio
+- proof inspection through `grape proofs`, `grape proofs --proof <id>`, and MCP `grape_get_proofs`
+- first MCP stdio server: `grape mcp --stdio` supports `initialize`, `tools/list`, `grape_get_context`, `grape_get_artifact`, `grape_get_proofs`, `grape_get_omitted_item`, and `grape_get_status` over framed stdio
 - omitted context restore lookup through `grape omitted --session <id> --token <restoreToken>` and `grape_get_omitted_item`
 - TypeScript, behavior tests, storage checks, docs checks, and architecture-boundary checks
 
@@ -190,6 +191,8 @@ grape compile --task "Explain the files I need to edit"
 grape compile --task "Explain the files I need to edit" --token-budget 4000
 grape artifacts
 grape artifacts --artifact <id>
+grape proofs
+grape proofs --proof <id>
 grape status
 grape doctor
 grape mcp --print-config
@@ -200,7 +203,7 @@ grape stale
 grape conflicts
 ```
 
-`grape compile --task <text>`, `grape artifacts`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, and `grape omitted` are implemented for local inspection, CLI-first fallback context generation, omitted-context restore, and the first MCP context retrieval path. Stale, conflict, final artifact schema, and the full MCP read/write surface are not implemented yet.
+`grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, and `grape omitted` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, omitted-context restore, and the first MCP context retrieval path. Stale, conflict, final artifact schema, claim-linked proof inspection, and the full MCP read/write surface are not implemented yet.
 
 ## Development
 

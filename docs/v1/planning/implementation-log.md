@@ -273,3 +273,10 @@ Keep entries simple:
 - Summary: local compile now validates bounded exact source and rule excerpts against trusted allowed source records, persists accepted direct proof rows in `proofs`, rejects invalid excerpt hashes, and compiles only from accepted proof excerpts. The proof storage repository, proof validator, and app orchestration remain split by ownership.
 - Checks run: focused proof-store and CLI behavior tests before full verification.
 - Risks/follow-ups: persisted proof rows are scaffold proof material only. Durable claim candidates, belief gating, current-valid claim retrieval, and proof/claim stale invalidation remain pending.
+
+### 2026-05-26 - Proof Inspection Surface
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added `grape proofs`, `grape proofs --proof <id>`, `grape proofs --source <sourceId>`, and MCP `grape_get_proofs` so persisted proof rows are inspectable without raw excerpts or absolute root paths. The service is app-owned; CLI and MCP adapters only parse and render.
+- Checks run: focused CLI/MCP behavior tests before full verification.
+- Risks/follow-ups: this inspects claimless scaffold proof rows. Claim-linked `grape proofs <claim_id>` remains pending until durable claims exist.
