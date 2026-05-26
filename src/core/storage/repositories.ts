@@ -235,6 +235,7 @@ export interface StorageRepositories {
   readonly contextSessions: {
     insert(record: ContextSessionRecord): void;
     get(sessionId: string): ContextSessionRecord | undefined;
+    list(): readonly ContextSessionRecord[];
     acquireLock(update: SessionLockUpdate): boolean;
     renewLock(update: SessionLockUpdate): boolean;
     releaseLock(update: SessionLockUpdate): boolean;
@@ -419,6 +420,13 @@ export function createStorageRepositories(database: DatabaseSync): StorageReposi
             .prepare("SELECT * FROM context_sessions WHERE session_id = ?")
             .get(sessionId) as Record<string, unknown> | undefined
         );
+      },
+      list() {
+        return (
+          database
+            .prepare("SELECT * FROM context_sessions ORDER BY updated_at DESC, session_id ASC")
+            .all() as Array<Record<string, unknown>>
+        ).map(mapContextSessionRequired);
       },
       acquireLock(update) {
         const result = database
@@ -802,6 +810,10 @@ function mapWorktreeState(row: Record<string, unknown> | undefined): WorktreeSta
 
 function mapContextSession(row: Record<string, unknown> | undefined): ContextSessionRecord | undefined {
   if (!row) return undefined;
+  return mapContextSessionRequired(row);
+}
+
+function mapContextSessionRequired(row: Record<string, unknown>): ContextSessionRecord {
   return {
     sessionId: stringField(row, "session_id"),
     projectId: stringField(row, "project_id"),

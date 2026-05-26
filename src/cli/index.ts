@@ -4,6 +4,7 @@ import { runClaims } from "./commands/claims.js";
 import { runCompile } from "./commands/compile.js";
 import { runOmitted } from "./commands/omitted.js";
 import { runProofs } from "./commands/proofs.js";
+import { runSessions } from "./commands/sessions.js";
 import { exitCodes } from "./exit-codes.js";
 import { parseArgs, repoPath, unsupportedFlag, type ParsedArgs } from "./args.js";
 import {
@@ -60,6 +61,8 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
       return runOmitted(parsed);
     case "proofs":
       return runProofs(parsed);
+    case "sessions":
+      return runSessions(parsed);
     default:
       writeError(`Unknown command: ${parsed.command}`);
       writeError("Run grape help for available commands.");

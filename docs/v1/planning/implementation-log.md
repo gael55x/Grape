@@ -315,3 +315,10 @@ Keep entries simple:
 - Summary: added `compression_artifacts` and `compression_inputs` storage, a deterministic `symbol_outline` builder, local compile persistence, compiler dependency refs, and a non-proof compression orientation section in public artifacts.
 - Checks run: focused compression-cache, repository-artifact, CLI, and storage-runtime behavior tests before full verification.
 - Risks/follow-ups: this is the first compression cache foundation only. `rule_digest`, `context_pack_summary`, stale compression invalidation events, and safe budget pruning remain pending.
+
+### 2026-05-26 - Session Inspection CLI
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added `grape sessions` backed by a local-project app service. The command reports session status, lock status, branch/head scope, task metadata, artifact/sent/omitted/pack counts, event counts, and last event reason without returning context bodies.
+- Checks run: focused CLI behavior tests before full verification.
+- Risks/follow-ups: stale/conflict-specific inspection commands remain pending until broader stale claim/conflict records exist.

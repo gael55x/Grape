@@ -50,6 +50,7 @@ The current implementation includes the first CLI setup/debugging slice:
 - `grape init --connect`
 - `grape compile --task <text>`
 - `grape compile --task <text> --reset-session`
+- `grape sessions`
 - `grape artifacts`
 - `grape artifacts --artifact <id>`
 - `grape proofs`
@@ -71,6 +72,8 @@ When an explicit `--session` is reused after switching Git branches for the same
 When `--reset-session` is supplied for an existing compile session, `grape compile` records a session reset event, emits `INVALIDATE_PREVIOUS` rows for active prior sent items, and forces the current scaffold artifact sections to be resent instead of using `OMIT_UNCHANGED`. This is the recovery path for agents that lost prior context.
 
 `grape artifacts` lists stored context artifacts from local SQLite metadata. `grape artifacts --session <id>` filters that list to one context session. `grape artifacts --artifact <id>` returns artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative public `.grape/artifacts/` file refs. It is an inspection command and does not return internal scaffold sidecar bodies.
+
+`grape sessions` lists context sessions, branch/head state, task metadata, lock status, artifact/sent/omitted/pack counts, event counts, and the last event reason. It is a debug command for session-scoped diff behavior and does not return context bodies.
 
 `grape claims --active` lists current-valid durable claims from local SQLite metadata. Current V1 implementation exposes only the narrow `repository_source_excerpt_exists` claim type created from validated exact-source proof rows. It returns claim IDs, subjects, claim text, scope metadata, proof refs, source refs, and current-valid rejection counts. It does not return raw proof excerpts or source file bodies.
 
@@ -117,6 +120,7 @@ The CLI must call application services. It must not:
 ## Command Notes
 
 - `grape claims --active` shows current-valid durable claims and proof refs without source bodies.
+- `grape sessions` shows session and ledger counts without context bodies.
 - `grape proofs --proof <id>` shows proof refs, source refs, support status, and hashes. It must not show raw secrets. Claim-linked `grape proofs <claim_id>` remains pending until broader claim-linked proof inspection exists.
 - `grape bench` runs scripted benchmarks only. It must not use ad hoc baselines.
 - `grape add-decision` records a user decision candidate and requires direct confirmation before it can become durable evidence.
