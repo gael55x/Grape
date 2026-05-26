@@ -56,3 +56,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added proof-row inspection through CLI `grape proofs` and MCP `grape_get_proofs`.
 - Hardened omitted-context restore so stale proof dependencies reject restore tokens before content is returned.
 - Added high-risk exact-context gating so risk overlays only compile safely when task-selected proof-backed exact evidence exists.
+- Added CLI `grape claims --active` and MCP `grape_get_claims` for current-valid narrow source-excerpt claim inspection.

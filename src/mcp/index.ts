@@ -1,4 +1,5 @@
 export * from "./artifact.js";
+export * from "./claims.js";
 export * from "./get-context.js";
 export * from "./omitted.js";
 export * from "./protocol.js";

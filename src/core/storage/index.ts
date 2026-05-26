@@ -1,5 +1,6 @@
 export * from "./evidence-repositories.js";
 export * from "./fts-repositories.js";
+export * from "./claim-repositories.js";
 export * from "./indexing-repositories.js";
 export * from "./migrations.js";
 export * from "./migration-plan.js";

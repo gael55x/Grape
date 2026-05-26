@@ -74,6 +74,7 @@ export interface McpConnectionGuide {
   readonly tools: readonly [
     "grape_get_context",
     "grape_get_artifact",
+    "grape_get_claims",
     "grape_get_proofs",
     "grape_get_omitted_item",
     "grape_get_status"
@@ -268,4 +269,33 @@ export interface ListLocalProofsResult {
     readonly sourceId?: string;
   };
   readonly proofs: readonly LocalProofSummary[];
+}
+
+export interface LocalClaimSummary {
+  readonly claimId: string;
+  readonly subject: string;
+  readonly claimType: string;
+  readonly claimText: string;
+  readonly verificationStatus: string;
+  readonly scope: Record<string, unknown>;
+  readonly proofRefs: readonly string[];
+  readonly sourceRefs: readonly string[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface ListLocalClaimsInput {
+  readonly rootPath: string;
+  readonly activeOnly?: boolean;
+  readonly now?: string;
+  readonly gitBinary?: string;
+  readonly migrationsDir?: string;
+}
+
+export interface ListLocalClaimsResult {
+  readonly rootPath: string;
+  readonly activeOnly: boolean;
+  readonly claims: readonly LocalClaimSummary[];
+  readonly rejectedCount: number;
+  readonly warnings: readonly string[];
 }

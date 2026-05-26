@@ -12,6 +12,7 @@ export function mcpConnectionGuide(rootPath = process.cwd()): McpConnectionGuide
     tools: [
       "grape_get_context",
       "grape_get_artifact",
+      "grape_get_claims",
       "grape_get_proofs",
       "grape_get_omitted_item",
       "grape_get_status"

@@ -18,8 +18,10 @@ export interface ProofRecord {
 export interface ProofStorageRepositories {
   readonly proofs: {
     insertOrIgnore(record: ProofRecord): boolean;
+    attachClaim(input: { readonly proofId: string; readonly claimId: string }): boolean;
     get(proofId: string): ProofRecord | undefined;
     list(): readonly ProofRecord[];
+    listByClaim(claimId: string): readonly ProofRecord[];
     listBySource(sourceId: string): readonly ProofRecord[];
   };
 }
@@ -50,7 +52,18 @@ export function createProofStorageRepositories(database: DatabaseSync): ProofSto
             record.excerptHash,
             record.supportStatus,
             record.createdAt
-          );
+        );
+        return result.changes === 1;
+      },
+      attachClaim(input) {
+        const result = database
+          .prepare(
+            [
+              "UPDATE proofs SET claim_id = ?",
+              "WHERE proof_id = ? AND (claim_id IS NULL OR claim_id = ?)"
+            ].join(" ")
+          )
+          .run(input.claimId, input.proofId, input.claimId);
         return result.changes === 1;
       },
       get(proofId) {
@@ -65,6 +78,13 @@ export function createProofStorageRepositories(database: DatabaseSync): ProofSto
           database
             .prepare("SELECT * FROM proofs ORDER BY created_at DESC, proof_id ASC")
             .all() as Array<Record<string, unknown>>
+        ).map(mapRequiredProof);
+      },
+      listByClaim(claimId) {
+        return (
+          database
+            .prepare("SELECT * FROM proofs WHERE claim_id = ? ORDER BY proof_id ASC")
+            .all(claimId) as Array<Record<string, unknown>>
         ).map(mapRequiredProof);
       },
       listBySource(sourceId) {
