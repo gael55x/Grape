@@ -198,6 +198,14 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
       ),
       true
     );
+    const currentValidClaims = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "current-valid-claims"
+    );
+    assert.equal(currentValidClaims?.type, "claim");
+    assert.equal(currentValidClaims?.requiresExactCode, true);
+    assert.equal(currentValidClaims?.itemRefs.some((ref) => ref.kind === "claim"), true);
+    assert.equal(currentValidClaims?.itemRefs.some((ref) => ref.kind === "proof"), true);
+    assert.equal(first.contextPackItems.some((item) => item.itemKind === "claim"), true);
     assert.equal(existsSync(scaffoldJsonPath), true);
     const scaffoldJson = JSON.parse(readFileSync(scaffoldJsonPath, "utf8"));
     assert.equal(scaffoldJson.artifact.artifactId, first.artifactId);

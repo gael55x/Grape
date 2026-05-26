@@ -168,6 +168,8 @@ The active-project-rules section is pinned. It is compiled from trusted `rule_fi
 
 The exact-source-evidence section is a scaffold proof foundation: it reads only already-allowed non-rule source records, verifies the current file/symlink bytes still match the stored source hash, truncates a bounded excerpt, records a deterministic proof ref, stores the excerpt hash as a proof dependency, and includes the exact excerpt in the artifact. This proves that the excerpt exists in the current source input. It does not promote durable claims or prove runtime behavior.
 
+Local compile also resolves current-valid durable claims and renders a `current-valid-claims` `active_claim` section when verified narrow source-excerpt claims are active for the current branch, commit, source hash, and proof hash. The section includes claim refs, proof refs, source refs, and claim dependency rows. Current active claims only use `repository_source_excerpt_exists`; broader behavior, rule, test, command, and decision claims remain pending.
+
 `grape compile --task <text>` now writes an inspectable V1 context-pack JSON and Markdown under `.grape/artifacts/ctx_<id>.json` and `.grape/artifacts/ctx_<id>.md`, after a basic artifact-level secret scan. The public JSON contains the V1 `ContextArtifact` projection plus the diffed `ContextPackItem[]`; the internal scaffold sidecar remains available only so restore can verify section hashes against the original scaffold source. The artifact ID identifies a compile output instance; the artifact hash is the deterministic scaffold content identity and excludes `createdAt` and instance IDs.
 
 When `--token-budget` or MCP `tokenBudget` is supplied, the rendered JSON/Markdown includes budget status, estimated pack tokens, required context tokens, warnings, and unsafe reasons. V1 scaffold budget handling evaluates fit only; it does not prune context yet. Required context means pinned, exact/safety-critical, and invalidation items. If required context is larger than the requested budget, output is marked unsafe with `token_budget_below_required_context`.
@@ -176,7 +178,7 @@ Risk overlays now require task-selected exact source/config/rule evidence. If ta
 
 `grape artifacts --artifact <id>` and MCP `grape_get_artifact` expose stored artifact metadata, dependency rows, and repo-relative public artifact file refs for inspection. They do not return raw scaffold sidecar bodies and do not promote scaffold summaries to proof.
 
-This is still a projection from the repository-derived scaffold rather than durable current-valid claim retrieval. It now uses the V1 `ContextArtifact` JSON envelope and enforces the first task-specific high-risk exact-span policy, but it does not yet promote durable claims.
+This is still a projection from the repository-derived scaffold rather than the final broad durable-claim retrieval system. It now uses the V1 `ContextArtifact` JSON envelope, enforces the first task-specific high-risk exact-span policy, and can render current-valid narrow source-excerpt claims, but broader durable claim types are not yet promoted.
 
 ## Section Rules
 

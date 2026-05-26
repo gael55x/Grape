@@ -278,6 +278,7 @@ export interface LocalClaimSummary {
   readonly claimText: string;
   readonly verificationStatus: string;
   readonly scope: Record<string, unknown>;
+  readonly scopeHash: string;
   readonly proofRefs: readonly string[];
   readonly sourceRefs: readonly string[];
   readonly createdAt: string;

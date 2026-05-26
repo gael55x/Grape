@@ -2,6 +2,7 @@ import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
 } from "../../shared/index.js";
+import { activeClaimsSection } from "./repository-context-active-claims-section.js";
 import { repositoryContextSection as section } from "./repository-context-section-factory.js";
 import {
   selectedRuleSourceExcerpts,
@@ -25,6 +26,7 @@ export function contextSections(
     repoStateSection(input),
     sourceManifestSection(input, dependencies),
     activeProjectRulesSection(input, dependencies),
+    activeClaimsSection(input, dependencies),
     exactSourceEvidenceSection(input, dependencies),
     symbolSummarySection(input, dependencies),
     blindSpotSection(input)
