@@ -224,6 +224,35 @@ test("durable context build omits unchanged non-pinned sections on second turn",
   });
 });
 
+test("durable context build reset invalidates active sent items and forces full resend", () => {
+  withMigratedDatabase((database, repositories) => {
+    insertBaseGraph(repositories);
+    build(database, repositories, artifact("artifact-1"), 1);
+    build(database, repositories, artifact("artifact-2"), 2);
+
+    const result = build(database, repositories, artifact("artifact-3"), 3, {
+      sessionReset: {
+        resetId: "reset:artifact-3",
+        reason: "agent_session_reset"
+      }
+    });
+
+    assert.equal(result.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), true);
+    assert.equal(result.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), false);
+    assert.deepEqual(
+      result.contextPackItems.slice(-2).map((item) => item.state),
+      ["PINNED", "NEW"]
+    );
+    assert.equal(result.omittedItems.length, 0);
+    assert.equal(result.sentItems.every((item) => item.sessionResetId === "reset:artifact-3"), true);
+    assert.ok(
+      repositories.sessionEvents
+        .listBySession("session-1")
+        .some((event) => event.eventType === "session_invalidated" && event.reason === "session_reset")
+    );
+  });
+});
+
 test("durable context build invalidates stale dependency manifests before resending", () => {
   withMigratedDatabase((database, repositories) => {
     insertBaseGraph(repositories);

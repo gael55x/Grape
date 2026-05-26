@@ -86,6 +86,7 @@ export interface CompileLocalContextInput {
   readonly riskOverlays?: string;
   readonly riskSeedRefs?: readonly string[];
   readonly sessionId?: string;
+  readonly resetSession?: boolean;
   readonly now?: string;
   readonly gitBinary?: string;
   readonly migrationsDir?: string;
@@ -112,6 +113,7 @@ export interface CompileLocalContextResult {
   readonly unsafeReasons: readonly string[];
   readonly artifactJsonPath: string;
   readonly artifactMarkdownPath: string;
+  readonly sessionResetId?: string;
 }
 
 export interface OmittedContextSummary {

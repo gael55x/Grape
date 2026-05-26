@@ -49,6 +49,7 @@ The current implementation includes the first CLI setup/debugging slice:
 - `grape help`
 - `grape init --connect`
 - `grape compile --task <text>`
+- `grape compile --task <text> --reset-session`
 - `grape artifacts`
 - `grape artifacts --artifact <id>`
 - `grape omitted --session <id>`
@@ -60,9 +61,11 @@ The current implementation includes the first CLI setup/debugging slice:
 
 `grape init --connect` creates the local `.grape/` layout, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures and persists the first Git repo snapshot, persists allowed source records plus privacy-safe source rejections, persists lightweight file/symbol relationship index rows, and adds `.grape/` to `.git/info/exclude` so local Grape state is not committed.
 
-`grape compile --task <text>` auto-bootstraps local `.grape/` state if needed, captures the current Git snapshot, persists source evidence and the lightweight file index, compiles a repository-derived context artifact with bounded exact-source evidence for selected allowed sources, runs session diffing, persists the durable context build, and writes inspectable JSON and Markdown under `.grape/artifacts/`. Supported options are `--task-type <type>`, `--risk <overlay,overlay>`, `--session <id>`, `--repo <path>`, and `--json`. Risk overlays can be detected from the task text or supplied explicitly through `--risk`; they currently return exit code `2` with an explicit unsafe reason until task-policy-specific exact-span high-risk policies are implemented.
+`grape compile --task <text>` auto-bootstraps local `.grape/` state if needed, captures the current Git snapshot, persists source evidence and the lightweight file index, compiles a repository-derived context artifact with bounded exact-source evidence for selected allowed sources, runs session diffing, persists the durable context build, and writes inspectable JSON and Markdown under `.grape/artifacts/`. Supported options are `--task-type <type>`, `--risk <overlay,overlay>`, `--session <id>`, `--reset-session`, `--repo <path>`, and `--json`. Risk overlays can be detected from the task text or supplied explicitly through `--risk`; they currently return exit code `2` with an explicit unsafe reason until task-policy-specific exact-span high-risk policies are implemented.
 
 When an explicit `--session` is reused after switching Git branches for the same task, `grape compile` keeps the session but treats the branch change as a session invalidation event. It updates the session's current branch/head metadata under the durable build lock, emits `INVALIDATE_PREVIOUS` rows for stale branch-scoped context, and does not emit `OMIT_UNCHANGED` for the previous branch's context.
+
+When `--reset-session` is supplied for an existing compile session, `grape compile` records a session reset event, emits `INVALIDATE_PREVIOUS` rows for active prior sent items, and forces the current scaffold artifact sections to be resent instead of using `OMIT_UNCHANGED`. This is the recovery path for agents that lost prior context.
 
 `grape artifacts` lists stored scaffold context artifacts from local SQLite metadata. `grape artifacts --session <id>` filters that list to one context session. `grape artifacts --artifact <id>` returns artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative `.grape/artifacts/` file refs. It is an inspection command; it does not claim the scaffold JSON is the final V1 artifact schema.
 

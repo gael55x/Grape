@@ -209,7 +209,7 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: explicit session reuse across Git branches now updates session compile state under the durable build lock, records `session_invalidated` events with `reason: "branch_changed"`, and emits `INVALIDATE_PREVIOUS` context pack items for stale previous-branch context through CLI and MCP.
 - Checks run: `npm run typecheck`; focused CLI/MCP/storage behavior tests; full checks before commit.
-- Risks/follow-ups: branch/global distinction still depends on future durable claim scope filtering, and explicit session reset recovery remains pending.
+- Risks/follow-ups: branch/global distinction still depends on future durable claim scope filtering.
 
 ### 2026-05-26 - Exact Source Evidence Scaffold
 
@@ -217,3 +217,10 @@ Keep entries simple:
 - Summary: repository-derived scaffold artifacts now include bounded exact-source evidence for selected allowed source records. The local reader verifies source hashes before creating deterministic proof refs and excerpt hashes, and the compiler records proof dependencies alongside source dependencies.
 - Checks run: full checks before commit.
 - Risks/follow-ups: this is a scaffold proof foundation. Durable claim promotion, task-specific high-risk exact spans, and final V1 artifact schema remain pending.
+
+### 2026-05-26 - Session Reset Recovery
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added explicit session reset recovery for the scaffold diff path. CLI `grape compile --reset-session` and MCP `grape_get_context` with `resetSession: true` now record `session_reset` invalidation events, emit `INVALIDATE_PREVIOUS` for active prior sent items, and force current scaffold sections to be resent instead of omitted.
+- Checks run: focused durable/CLI/MCP behavior tests before full verification.
+- Risks/follow-ups: reset recovery still operates on scaffold `InMemoryContextPackItemShape` rows. Final V1 `ContextPackItem` schema mapping and durable claim/proof invalidation remain pending.

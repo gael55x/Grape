@@ -109,7 +109,7 @@ The current implementation goal proves only the in-memory part of the diff contr
 - pinned sections are resent instead of omitted
 - unsafe omission count must stay zero
 
-The in-memory loop only proves restore metadata shape. The current product slice adds restore lookup for persisted scaffold artifacts through CLI and MCP. Explicit session reuse across a branch switch now updates the session's compile state, records a `session_invalidated` event with `reason: "branch_changed"`, and emits `INVALIDATE_PREVIOUS` for stale prior sent items instead of omitting them. Session reset recovery remains pending.
+The in-memory loop only proves restore metadata shape. The current product slice adds restore lookup for persisted scaffold artifacts through CLI and MCP. Explicit session reuse across a branch switch now updates the session's compile state, records a `session_invalidated` event with `reason: "branch_changed"`, and emits `INVALIDATE_PREVIOUS` for stale prior sent items instead of omitting them. Explicit session reset through CLI `--reset-session` or MCP `resetSession: true` records a `session_invalidated` event with `reason: "session_reset"`, invalidates active prior sent items once, and forces current sections to be resent.
 
 ## Durable Build Proof
 
@@ -119,6 +119,7 @@ The current persisted build proof adds a narrow app-level build service:
 - it renews or acquires the session lock
 - it persists the artifact dependency manifest
 - it compares against the same-session sent ledger
+- it can ignore the same-session sent ledger after an explicit reset and invalidate active prior sent items
 - it persists structured context pack items
 - it persists sent and omitted ledger rows
 - it emits `INVALIDATE_PREVIOUS` for stale dependency manifests
@@ -139,6 +140,7 @@ This proof does not perform MCP transport, CLI rendering, broad repository index
 
 - `diff_is_session_scoped`
 - `unknown_session_forces_full_resend`
+- `agent_session_reset_forces_full_resend`
 - `pinned_context_is_resent`
 - `omit_unchanged_requires_restore_or_safe_reason`
 - `cross_session_artifact_ledger_rows_fail_closed`

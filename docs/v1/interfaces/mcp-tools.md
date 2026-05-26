@@ -76,7 +76,9 @@ The current implementation includes the first stdio MCP server:
 
 When the same MCP session identity is reused after a Git branch switch for the same task, the compile service updates the session's branch/head metadata under the session lock, records a `branch_changed` session invalidation event, and returns `INVALIDATE_PREVIOUS` items for stale branch-scoped context instead of `OMIT_UNCHANGED` items from the previous branch.
 
-Current limitation: the returned `contextPackItems` are the scaffold `InMemoryContextPackItemShape`, not the final V1 `ContextPackItem` schema. The current implementation requires `sessionId` or `agentSessionId` so session-scoped diffing cannot collapse across independent agents. Seed `files`, `symbols`, `tests`, non-local `environmentScope`, `agentName`, `agentSessionId`, and `tokenBudget` are accepted for contract compatibility; unsupported retrieval/budget behavior produces explicit warnings and `compileMode: "partial_with_risk"` unless a stronger unsafe condition applies. Seed names do participate in risk-overlay detection, but they do not yet narrow retrieval. Detected risk overlays return `compileMode: "cannot_compile_safely"` until exact-span high-risk policies are implemented. Artifact file refs returned over MCP are repo-relative paths, not absolute local paths.
+When `resetSession: true` is supplied for an existing MCP session, the compile service records a `session_reset` invalidation event, returns `INVALIDATE_PREVIOUS` items for active prior sent context, and forces full resend of current scaffold artifact sections instead of omitting unchanged sections.
+
+Current limitation: the returned `contextPackItems` are the scaffold `InMemoryContextPackItemShape`, not the final V1 `ContextPackItem` schema. The current implementation requires `sessionId` or `agentSessionId` so session-scoped diffing cannot collapse across independent agents. Seed `files`, `symbols`, `tests`, non-local `environmentScope`, `agentName`, `agentSessionId`, `resetSession`, and `tokenBudget` are accepted for contract compatibility; unsupported retrieval/budget behavior produces explicit warnings and `compileMode: "partial_with_risk"` unless a stronger unsafe condition applies. Seed names do participate in risk-overlay detection, but they do not yet narrow retrieval. Detected risk overlays return `compileMode: "cannot_compile_safely"` until exact-span high-risk policies are implemented. Artifact file refs returned over MCP are repo-relative paths, not absolute local paths.
 
 `grape_get_artifact` returns stored scaffold artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative artifact file refs for one `artifactId`. It does not return raw artifact bodies and does not claim the scaffold JSON is the final V1 artifact schema. MCP output omits absolute local root paths.
 
@@ -98,6 +100,7 @@ interface GrapeGetContextInput {
   sessionId?: string;
   agentName?: string;
   agentSessionId?: string;
+  resetSession?: boolean;
 }
 
 interface GrapeGetContextOutput {
@@ -120,6 +123,7 @@ interface GrapeGetContextOutput {
     restoreAvailableItems: number;
   };
   warnings: string[];
+  sessionResetId?: string;
   restoreAvailable: boolean;
 }
 ```

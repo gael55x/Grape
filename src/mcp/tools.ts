@@ -46,7 +46,11 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
             tokenBudget: { type: "number" },
             sessionId: { type: "string", minLength: 1 },
             agentName: { type: "string", minLength: 1 },
-            agentSessionId: { type: "string", minLength: 1 }
+            agentSessionId: { type: "string", minLength: 1 },
+            resetSession: {
+              type: "boolean",
+              description: "Force full resend for this session because the agent lost prior context."
+            }
           }
         }
       },

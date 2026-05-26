@@ -18,6 +18,7 @@ export interface GrapeGetContextToolInput {
   readonly sessionId?: string;
   readonly agentName?: string;
   readonly agentSessionId?: string;
+  readonly resetSession?: boolean;
 }
 
 export interface GrapeGetContextToolOutput {
@@ -43,6 +44,7 @@ export interface GrapeGetContextToolOutput {
   };
   readonly warnings: readonly string[];
   readonly unsafeReasons: readonly string[];
+  readonly sessionResetId?: string;
   readonly restoreAvailable: boolean;
   readonly artifactFiles: {
     readonly json: string;
@@ -58,7 +60,8 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     task: parsed.query,
     taskType: parsed.taskType,
     riskSeedRefs: [...(parsed.files ?? []), ...(parsed.symbols ?? []), ...(parsed.tests ?? [])],
-    sessionId
+    sessionId,
+    resetSession: parsed.resetSession
   });
 
   const warningSet = new Set([...result.warnings, ...unsupportedInputWarnings(parsed)]);
@@ -79,6 +82,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     diffSummary: summarizeDiff(result.contextPackItems),
     warnings,
     unsafeReasons: result.unsafeReasons,
+    sessionResetId: result.sessionResetId,
     restoreAvailable: result.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE" || item.restoreToken),
     artifactFiles: {
       json: relativeArtifactPath(result.rootPath, result.artifactJsonPath),
@@ -99,7 +103,8 @@ function parseInput(input: unknown): GrapeGetContextToolInput {
     "tokenBudget",
     "sessionId",
     "agentName",
-    "agentSessionId"
+    "agentSessionId",
+    "resetSession"
   ]);
   const query = requiredString(input.query, "query");
   return {
@@ -112,7 +117,8 @@ function parseInput(input: unknown): GrapeGetContextToolInput {
     tokenBudget: optionalNumber(input.tokenBudget, "tokenBudget"),
     sessionId: optionalString(input.sessionId, "sessionId"),
     agentName: optionalString(input.agentName, "agentName"),
-    agentSessionId: optionalString(input.agentSessionId, "agentSessionId")
+    agentSessionId: optionalString(input.agentSessionId, "agentSessionId"),
+    resetSession: optionalBoolean(input.resetSession, "resetSession")
   };
 }
 
@@ -132,6 +138,12 @@ function optionalString(value: unknown, field: string): string | undefined {
 function optionalNumber(value: unknown, field: string): number | undefined {
   if (value === undefined) return undefined;
   if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`${field} must be a finite number`);
+  return value;
+}
+
+function optionalBoolean(value: unknown, field: string): boolean | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "boolean") throw new Error(`${field} must be a boolean`);
   return value;
 }
 
