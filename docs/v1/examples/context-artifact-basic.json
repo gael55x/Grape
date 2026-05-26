@@ -1,0 +1,163 @@
+{
+  "_example": {
+    "scenario": "clean TypeScript app first compile",
+    "fixture": "clean-typescript-app",
+    "expectedState": "first context pack includes NEW and PINNED items",
+    "expectedWarnings": [
+      "repository_artifact_uses_lightweight_index"
+    ],
+    "relatedTests": [
+      "repository artifact compiler projects scaffold output to the V1 ContextArtifact shape",
+      "cli compile auto-bootstraps and writes inspectable context artifact files"
+    ]
+  },
+  "artifactFormat": "grape.context-pack.v1",
+  "artifactFormatVersion": 1,
+  "contextArtifact": {
+    "id": "artifact:example",
+    "projectId": "project:example",
+    "repoId": "repo:example",
+    "repoSnapshotId": "snapshot:example",
+    "worktreeStateId": "worktree:example",
+    "sessionId": "session:example",
+    "taskId": "task:example",
+    "artifactFormatVersion": 1,
+    "taskType": "analysis",
+    "compileMode": "partial_with_risk",
+    "riskOverlays": [],
+    "branch": "main",
+    "headCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "dirtyWorktree": false,
+    "environmentScope": "local",
+    "inputRefs": [
+      {
+        "id": "repo-snapshot",
+        "kind": "repo_snapshot",
+        "ref": "snapshot:example",
+        "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "scope": {
+          "repoId": "repo:example",
+          "branch": "main",
+          "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taskId": "task:example",
+          "sessionId": "session:example"
+        },
+        "dependencyStrength": "direct",
+        "requiredForSafety": true
+      }
+    ],
+    "compressionArtifactRefs": [],
+    "outputSections": [
+      {
+        "id": "repo-state",
+        "type": "repo_state",
+        "title": "Repository State",
+        "text": "Branch: main\nCommit: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nWorktree: clean",
+        "itemRefs": [
+          {
+            "kind": "repo_snapshot",
+            "ref": "snapshot:example",
+            "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        ],
+        "riskOverlays": [],
+        "tokenCount": 22,
+        "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "pinned": true,
+        "safetyCritical": true,
+        "requiresExactCode": false,
+        "canCompress": false,
+        "containsActiveContradiction": false,
+        "containsStaleInvalidationWarning": false,
+        "containsMissingVerificationWarning": false,
+        "restoreable": false
+      }
+    ],
+    "compressionArtifactsUsed": [],
+    "dependencyManifest": {
+      "manifestVersion": 1,
+      "artifactId": "artifact:example",
+      "dependencies": [
+        {
+          "id": "repo-snapshot",
+          "kind": "repo_snapshot",
+          "ref": "snapshot:example",
+          "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "scope": {
+            "repoId": "repo:example",
+            "branch": "main",
+            "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "taskId": "task:example",
+            "sessionId": "session:example"
+          },
+          "strength": "direct",
+          "requiredForSafety": true,
+          "invalidates": [
+            "section",
+            "artifact",
+            "sent_item"
+          ]
+        }
+      ],
+      "inputHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "generatedAt": "2026-05-26T00:00:00.000Z"
+    },
+    "confidence": "medium",
+    "graphConfidence": "low",
+    "impactCandidateSetTooLarge": false,
+    "missingContext": [],
+    "unverifiedAssumptions": [
+      "repository_artifact_uses_lightweight_index"
+    ],
+    "activeContradictions": [],
+    "blindSpots": [],
+    "criticalBlindSpots": [],
+    "omittedRequired": [],
+    "omittedDueToBudget": [],
+    "tokenCost": 200,
+    "contentHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "createdAt": "2026-05-26T00:00:00.000Z"
+  },
+  "contextPackItemShape": "ContextPackItem",
+  "contextPackItems": [
+    {
+      "id": "item:example",
+      "state": "PINNED",
+      "itemKind": "context_summary",
+      "itemRef": "repo-state",
+      "sectionId": "repo-state",
+      "title": "Repository State",
+      "content": "Branch: main\nCommit: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nWorktree: clean",
+      "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "tokenCount": 22,
+      "pinned": true,
+      "safetyCritical": true,
+      "inputRefs": [
+        {
+          "id": "repo-snapshot",
+          "kind": "repo_snapshot",
+          "ref": "snapshot:example",
+          "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "scope": {
+            "branch": "main",
+            "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        }
+      ],
+      "warnings": []
+    }
+  ],
+  "omittedItems": [],
+  "tokenMetric": {
+    "naiveTokens": 400,
+    "grapeTokens": 200,
+    "reductionPercent": 50
+  },
+  "budget": {
+    "status": "not_requested",
+    "estimatedPackTokens": 200,
+    "requiredContextTokens": 22,
+    "warnings": [],
+    "unsafeReasons": []
+  }
+}

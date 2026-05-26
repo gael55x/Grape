@@ -179,7 +179,7 @@ Keep entries simple:
 ### 2026-05-26 - Repository Artifact Compile Path
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: added a repository-derived context artifact compiler and CLI fallback path. `grape compile --task <text>` now auto-bootstraps local state, captures/persists the current repo snapshot, compiles from source evidence and lightweight relationship indexes, prepares artifact files before durable send ledgers are committed, persists session-scoped diff rows, writes scaffold JSON/Markdown artifacts under `.grape/artifacts/`, and blocks obvious raw secrets before artifact output.
+- Summary: added a repository-derived context artifact compiler and CLI fallback path. `grape compile --task <text>` now auto-bootstraps local state, captures/persists the current repo snapshot, compiles from source evidence and lightweight relationship indexes, prepares artifact files before durable send ledgers are committed, persists session-scoped diff rows, writes artifact files under `.grape/artifacts/`, and blocks obvious raw secrets before artifact output. Later slices changed public JSON to a V1 `ContextArtifact` projection with an internal scaffold sidecar.
 - Checks run: `npm run typecheck`; focused behavior tests; `npm run check`; `npm run build`.
 - Risks/follow-ups: the JSON/Markdown files are still scaffold `InMemoryContextArtifactShape` outputs, not final V1 artifact schema. MCP stdio, exact-span high-risk policies, stronger secret/redaction scanning, restore lookup, and broader inspection commands remain required. Risk overlays intentionally return unsafe output until exact spans exist.
 
@@ -195,12 +195,12 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: added product-facing restore lookup for session-scoped omitted context. `grape omitted --session <id>` lists omitted rows, `grape omitted --session <id> --token <restoreToken>` validates and restores an omitted scaffold section, and `grape_get_omitted_item` exposes the same app service over MCP stdio.
 - Checks run: `npm run typecheck`; `npm run build:test`; focused CLI/MCP behavior tests.
-- Risks/follow-ups: restore currently targets scaffold artifact files, not the final V1 artifact schema. Branch-switch/session-reset recovery and the remaining MCP read/write tools still need implementation. The restore path fails closed on tampered scaffold artifact bodies, blocked redaction status, stale dependencies, and mismatched stored artifact/dependency metadata.
+- Risks/follow-ups: restore currently verifies internal scaffold sidecar files while public JSON exposes the V1 projection. Branch-switch/session-reset recovery and the remaining MCP read/write tools still need implementation. The restore path fails closed on tampered scaffold artifact bodies, blocked redaction status, stale dependencies, and mismatched stored artifact/dependency metadata.
 
 ### 2026-05-26 - Artifact Inspection Surface
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: added metadata-first artifact inspection through `grape artifacts`, `grape artifacts --artifact <id>`, and MCP `grape_get_artifact`. The surface returns stored scaffold artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative file refs without exposing absolute roots over MCP.
+- Summary: added metadata-first artifact inspection through `grape artifacts`, `grape artifacts --artifact <id>`, and MCP `grape_get_artifact`. The surface returns stored artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative public file refs without exposing absolute roots over MCP.
 - Checks run: `npm run typecheck`; `npm run build:test`; focused CLI/MCP behavior tests.
 - Risks/follow-ups: this is an inspection surface over the scaffold artifact shape. Final V1 artifact schema, exact-span policies, and the remaining MCP read/write tools are still pending.
 
@@ -259,3 +259,10 @@ Keep entries simple:
 - Summary: CLI `grape compile --token-budget <tokens>` and MCP `tokenBudget` now evaluate whether the generated context pack fits the requested budget. The evaluator reports estimated pack tokens, required context tokens, warnings, and unsafe reasons; it fails closed with `token_budget_below_required_context` when pinned/exact/invalidation context cannot fit.
 - Checks run: focused budget/CLI/MCP behavior tests before full verification.
 - Risks/follow-ups: this slice evaluates budget fit only. It deliberately does not prune or compress context yet, because V1 still needs final task policy and compression-cache rules before safe budget pruning.
+
+### 2026-05-26 - Public V1 ContextArtifact Projection
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: public compile JSON now exposes `artifactFormat: "grape.context-pack.v1"`, a V1 `contextArtifact` projection, V1-shaped context pack items, omitted metadata, token metrics, and budget status. CLI `--json` and MCP `grape_get_context` also return the projected `contextArtifact`. Internal scaffold artifact bodies are now written to `.scaffold.json` sidecars so omitted restore can still validate section hashes without making the scaffold body the public contract.
+- Checks run: focused repository-artifact, CLI, and MCP behavior tests before full verification.
+- Risks/follow-ups: the V1 `ContextArtifact` is still projected from the repository-derived scaffold. Durable current-valid claim retrieval, task-policy-specific exact spans, and final high-risk safe compile remain pending.

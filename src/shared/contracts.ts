@@ -1,3 +1,5 @@
+import type { ContextInputKind } from "./context-artifact-contract.js";
+
 export const taskTypes = [
   "bug_fix",
   "security_fix",
@@ -186,7 +188,7 @@ export interface InMemoryContextDependencyManifestShape {
 
 export interface ContextInputRefShape {
   id: string;
-  kind: InMemoryContextDependencyShape["kind"];
+  kind: ContextInputKind;
   ref: string;
   hash: string;
   scope: Record<string, unknown>;

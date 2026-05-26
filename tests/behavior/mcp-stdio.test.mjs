@@ -240,6 +240,8 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     assert.equal(toolResult.content[0].type, "text");
     assert.equal(toolResult.structuredContent.sessionId, "mcp-session");
     assert.equal(toolResult.structuredContent.branch, "main");
+    assert.equal(toolResult.structuredContent.contextArtifact.id, toolResult.structuredContent.artifactId);
+    assert.equal(toolResult.structuredContent.contextArtifact.artifactFormatVersion, 1);
     assert.equal(toolResult.structuredContent.contextPackItems.some((item) => item.state === "NEW"), true);
     const packItem = toolResult.structuredContent.contextPackItems[0];
     assert.equal(typeof packItem.id, "string");
@@ -248,10 +250,11 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     assert.equal("body" in packItem, false);
     assert.match(toolResult.structuredContent.contextPackMarkdown, /# Grape Context Pack/);
     assert.match(toolResult.structuredContent.artifactFiles.json, /^\.grape\//);
-    assert.equal(
-      JSON.parse(readFileSync(path.join(repoPath, toolResult.structuredContent.artifactFiles.json), "utf8")).artifact.artifactId,
-      toolResult.structuredContent.artifactId
+    const artifactJson = JSON.parse(
+      readFileSync(path.join(repoPath, toolResult.structuredContent.artifactFiles.json), "utf8")
     );
+    assert.equal(artifactJson.contextArtifact.id, toolResult.structuredContent.artifactId);
+    assert.equal("artifact" in artifactJson, false);
   });
 });
 
@@ -471,13 +474,15 @@ test("mcp seed files participate in retrieval while token budget is evaluated", 
 
     const output = responses[0].result.structuredContent;
     const artifactJson = JSON.parse(readFileSync(path.join(repoPath, output.artifactFiles.json), "utf8"));
-    const retrievalSection = artifactJson.artifact.sections.find((section) => section.id === "task-retrieval");
+    const retrievalSection = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "task-retrieval"
+    );
 
     assert.equal(output.compileMode, "partial_with_risk");
     assert.equal(output.warnings.includes("mcp_seed_files_not_used_in_scaffold_compile"), false);
     assert.equal(output.warnings.includes("mcp_token_budget_not_enforced_in_scaffold_compile"), false);
     assert.equal(output.budget.status, "within_budget");
-    assert.equal(retrievalSection.sourceRefs.includes("src/main.ts"), true);
+    assert.equal(retrievalSection.itemRefs.some((ref) => ref.ref === "src/main.ts"), true);
   });
 });
 

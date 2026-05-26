@@ -155,6 +155,10 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(typeof firstPackItem.content, "string");
     assert.equal(typeof firstPackItem.tokenCount, "number");
     assert.equal(Array.isArray(firstPackItem.inputRefs), true);
+    assert.equal(
+      first.contextPackItems.flatMap((item) => item.inputRefs).some((ref) => ref.kind === "source_file"),
+      false
+    );
     assert.equal("body" in firstPackItem, false);
     assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /# Grape Context Pack/);
     assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Active Project Rules/);
@@ -163,21 +167,38 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Proof: proof:/);
 
     const artifactJson = JSON.parse(readFileSync(first.artifactJsonPath, "utf8"));
+    const scaffoldJsonPath = first.artifactJsonPath.replace(/\.json$/, ".scaffold.json");
     assert.equal(artifactJson.contextPackItemShape, "ContextPackItem");
-    assert.equal(artifactJson.artifact.artifactId, first.artifactId);
+    assert.equal(artifactJson.artifactFormat, "grape.context-pack.v1");
+    assert.equal(artifactJson.contextArtifact.id, first.artifactId);
+    assert.equal(artifactJson.contextArtifact.artifactFormatVersion, 1);
+    assert.equal(artifactJson.contextArtifact.repoSnapshotId.length > 0, true);
+    assert.equal(
+      artifactJson.contextArtifact.outputSections.some((section) => section.type === "code_span"),
+      true
+    );
+    assert.equal("artifact" in artifactJson, false);
     assert.equal(artifactJson.contextPackItems.length, first.contextPackItems.length);
     assert.equal(
-      artifactJson.artifact.sections.some(
-        (section) => section.id === "exact-source-evidence" && section.proofRefs.length > 0
+      artifactJson.contextArtifact.outputSections.some(
+        (section) =>
+          section.id === "exact-source-evidence" &&
+          section.itemRefs.some((ref) => ref.kind === "proof")
       ),
       true
     );
     assert.equal(
-      artifactJson.artifact.sections.some(
-        (section) => section.id === "active-project-rules" && section.pinned && section.proofRefs.length > 0
+      artifactJson.contextArtifact.outputSections.some(
+        (section) =>
+          section.id === "active-project-rules" &&
+          section.pinned &&
+          section.itemRefs.some((ref) => ref.kind === "proof")
       ),
       true
     );
+    assert.equal(existsSync(scaffoldJsonPath), true);
+    const scaffoldJson = JSON.parse(readFileSync(scaffoldJsonPath, "utf8"));
+    assert.equal(scaffoldJson.artifact.artifactId, first.artifactId);
     assert.equal(localContextArtifactCount(repoPath), 1);
 
     const second = runCliJson(repoPath, [
@@ -266,13 +287,15 @@ test("cli compile uses task retrieval to prioritize matching exact source eviden
       "retrieval-session"
     ]);
     const artifactJson = JSON.parse(readFileSync(result.artifactJsonPath, "utf8"));
-    const retrievalSection = artifactJson.artifact.sections.find((section) => section.id === "task-retrieval");
-    const exactEvidence = artifactJson.artifact.sections.find((section) => section.id === "exact-source-evidence");
+    const retrievalSection = artifactJson.contextArtifact.outputSections.find((section) => section.id === "task-retrieval");
+    const exactEvidence = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "exact-source-evidence"
+    );
 
-    assert.equal(retrievalSection.sourceRefs.includes("src/z-billing.ts"), true);
-    assert.match(retrievalSection.body, /FTS-matched refs:/);
-    assert.match(exactEvidence.body, /Source: src\/z-billing\.ts/);
-    assert.match(exactEvidence.body, /refundInvoice/);
+    assert.equal(retrievalSection.itemRefs.some((ref) => ref.ref === "src/z-billing.ts"), true);
+    assert.match(retrievalSection.text, /FTS-matched refs:/);
+    assert.match(exactEvidence.text, /Source: src\/z-billing\.ts/);
+    assert.match(exactEvidence.text, /refundInvoice/);
     assert.equal(result.warnings.includes("task_retrieval_no_source_matches"), false);
   });
 });
@@ -409,8 +432,8 @@ test("cli omitted rejects stale restore tokens after repository changes", () => 
 
 test("cli omitted rejects tampered artifact body before restoring context", () => {
   withGitRepo((repoPath) => {
-    const { artifactJsonPath, restoreToken } = createRestorableOmission(repoPath, "tamper-restore-session");
-    updateArtifactJson(artifactJsonPath, (artifactPack) => {
+    const { artifactScaffoldJsonPath, restoreToken } = createRestorableOmission(repoPath, "tamper-restore-session");
+    updateArtifactJson(artifactScaffoldJsonPath, (artifactPack) => {
       artifactPack.artifact.sections.find((section) => section.id === "task").body = "Task type: tampered";
     });
 
@@ -432,8 +455,8 @@ test("cli omitted rejects tampered artifact body before restoring context", () =
 
 test("cli omitted rejects blocked-redaction artifact sections before restoring context", () => {
   withGitRepo((repoPath) => {
-    const { artifactJsonPath, restoreToken } = createRestorableOmission(repoPath, "redaction-restore-session");
-    updateArtifactJson(artifactJsonPath, (artifactPack) => {
+    const { artifactScaffoldJsonPath, restoreToken } = createRestorableOmission(repoPath, "redaction-restore-session");
+    updateArtifactJson(artifactScaffoldJsonPath, (artifactPack) => {
       artifactPack.artifact.sections.find((section) => section.id === "task").redactionStatus = "blocked";
     });
 
@@ -547,6 +570,7 @@ function createRestorableOmission(repoPath, sessionId) {
   assert.ok(restoreToken);
   return {
     artifactJsonPath: second.artifactJsonPath,
+    artifactScaffoldJsonPath: second.artifactJsonPath.replace(/\.json$/, ".scaffold.json"),
     restoreToken
   };
 }

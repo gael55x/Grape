@@ -5,8 +5,6 @@ import { persistGitRepoSnapshot } from "../persist-repo-snapshot.js";
 import {
   compileRepositoryContextArtifact,
   evaluateContextPackBudget,
-  renderRepositoryContextPackJson,
-  renderRepositoryContextPackMarkdown,
   toContextPackItems
 } from "../../core/compiler/index.js";
 import { createGitRepoSnapshot } from "../../core/git/index.js";
@@ -34,7 +32,7 @@ import { resolveLocalTaskRetrieval } from "./task-retrieval.js";
 import { withMigratedLocalDatabase } from "./storage.js";
 import type { CompileLocalContextInput, CompileLocalContextResult } from "./types.js";
 import type { LocalArtifactWriteResult } from "./artifact-files.js";
-import { writeLocalArtifactFiles } from "./artifact-files.js";
+import { projectLocalContextArtifact, writeLocalContextOutput } from "./context-output.js";
 
 export function compileLocalContext(input: CompileLocalContextInput): CompileLocalContextResult {
   const now = input.now ?? new Date().toISOString();
@@ -188,22 +186,18 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
             contextPackItems,
             estimatedPackTokens: preview.tokenMetric.grapeTokens
           });
-          const renderInput = {
-            artifact,
+          files = writeLocalContextOutput({
+            artifactDirPath: layout.artifactDirPath,
             contextPackItems,
             omittedItems: preview.omittedItems,
             tokenMetric: preview.tokenMetric,
-            budget
-          };
-          const json = renderRepositoryContextPackJson(renderInput);
-          const markdown = renderRepositoryContextPackMarkdown(renderInput);
-          assertArtifactTextHasNoSecrets(json, "context artifact JSON");
-          assertArtifactTextHasNoSecrets(markdown, "context artifact Markdown");
-          files = writeLocalArtifactFiles({
-            artifactDirPath: layout.artifactDirPath,
             artifact,
-            json,
-            markdown
+            projectId: config.project.projectId,
+            repoSnapshotId: snapshotResult.snapshotId,
+            worktreeStateId: snapshotResult.worktreeStateId,
+            dirtyWorktree: snapshotResult.snapshot.worktreeStatus !== "clean",
+            budget,
+            tokenCost: preview.tokenMetric.grapeTokens
           });
         }
       });
@@ -227,6 +221,15 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     contextPackItems,
     estimatedPackTokens: value.build.tokenMetric.grapeTokens
   });
+  const contextArtifact = projectLocalContextArtifact({
+    artifact: value.artifact,
+    projectId: config.project.projectId,
+    repoSnapshotId: value.snapshotResult.snapshotId,
+    worktreeStateId: value.snapshotResult.worktreeStateId,
+    dirtyWorktree: value.snapshotResult.snapshot.worktreeStatus !== "clean",
+    budget,
+    tokenCost: value.build.tokenMetric.grapeTokens
+  });
   return {
     rootPath: snapshot.rootPath,
     projectId: config.project.projectId,
@@ -241,6 +244,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     headCommit: value.snapshotResult.snapshot.commit,
     dirtyWorktree: value.snapshotResult.snapshot.worktreeStatus !== "clean",
     contextPackItems,
+    contextArtifact,
     omittedItemCount: value.build.omittedItems.length,
     sentItemCount: value.build.sentItems.length,
     tokenMetric: value.build.tokenMetric,

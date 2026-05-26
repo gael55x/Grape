@@ -32,6 +32,7 @@ export interface GrapeGetContextToolOutput {
   readonly taskType: TaskType;
   readonly riskOverlays: readonly RiskOverlay[];
   readonly compileMode: "safe_minimum" | "partial_with_risk" | "broad_context_required" | "cannot_compile_safely";
+  readonly contextArtifact: CompileLocalContextResult["contextArtifact"];
   readonly contextPackItems: readonly ContextPackItemShape[];
   readonly contextPackMarkdown: string;
   readonly diffSummary: {
@@ -82,6 +83,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     taskType: taskTypeFromResult(parsed.taskType),
     riskOverlays: result.riskOverlays,
     compileMode: compileModeFor(result, warnings),
+    contextArtifact: result.contextArtifact,
     contextPackItems: result.contextPackItems,
     contextPackMarkdown: readFileSync(result.artifactMarkdownPath, "utf8"),
     diffSummary: summarizeDiff(result.contextPackItems),

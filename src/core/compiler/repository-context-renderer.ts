@@ -1,4 +1,5 @@
 import type {
+  ContextArtifactShape,
   ContextPackItemShape,
   InMemoryContextArtifactShape
 } from "../../shared/index.js";
@@ -12,6 +13,7 @@ export interface RepositoryContextRenderTokenMetric {
 
 export interface RepositoryContextRenderInput {
   readonly artifact: InMemoryContextArtifactShape;
+  readonly contextArtifact: ContextArtifactShape;
   readonly contextPackItems: readonly ContextPackItemShape[];
   readonly omittedItems: readonly { readonly sectionId: string; readonly restoreId?: string }[];
   readonly tokenMetric: RepositoryContextRenderTokenMetric;
@@ -22,13 +24,25 @@ export function renderRepositoryContextPackJson(input: RepositoryContextRenderIn
   return `${JSON.stringify(
     {
       schemaVersion: 1,
-      artifactShape: "InMemoryContextArtifactShape",
+      artifactFormat: "grape.context-pack.v1",
+      artifactFormatVersion: input.contextArtifact.artifactFormatVersion,
+      contextArtifact: input.contextArtifact,
       contextPackItemShape: "ContextPackItem",
-      artifact: input.artifact,
       contextPackItems: input.contextPackItems,
       omittedItems: input.omittedItems,
       tokenMetric: input.tokenMetric,
       budget: input.budget
+    },
+    null,
+    2
+  )}\n`;
+}
+
+export function renderRepositoryScaffoldArtifactJson(artifact: InMemoryContextArtifactShape): string {
+  return `${JSON.stringify(
+    {
+      artifactShape: "InMemoryContextArtifactShape",
+      artifact
     },
     null,
     2

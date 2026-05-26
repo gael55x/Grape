@@ -7,7 +7,10 @@ import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
 import { persistGitRepoSnapshot, readLocalSourceExcerpts } from "../../.tmp/build/src/app/index.js";
-import { compileRepositoryContextArtifact } from "../../.tmp/build/src/core/compiler/index.js";
+import {
+  buildV1ContextArtifact,
+  compileRepositoryContextArtifact
+} from "../../.tmp/build/src/core/compiler/index.js";
 import {
   applyStorageMigrations,
   createEvidenceStorageRepositories,
@@ -218,6 +221,66 @@ test("repository artifact compiler derives a dependency-backed context artifact 
       assert.equal(blindSpots?.pinned, false);
       assert.equal(artifact.warnings.includes("repository_artifact_uses_lightweight_index"), true);
       assert.equal(JSON.stringify(artifact).includes("PRIVATE=value"), false);
+    });
+  });
+});
+
+test("repository artifact compiler projects scaffold output to the V1 ContextArtifact shape", () => {
+  withGitRepo((repoPath) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories);
+      const contextArtifact = buildV1ContextArtifact({
+        artifact,
+        projectId: "project-1",
+        repoSnapshotId: snapshotResult.snapshotId,
+        worktreeStateId: snapshotResult.worktreeStateId,
+        dirtyWorktree: false,
+        budget: {
+          status: "not_requested",
+          estimatedPackTokens: 100,
+          requiredContextTokens: 20,
+          warnings: [],
+          unsafeReasons: []
+        },
+        tokenCost: 100
+      });
+
+      const dependencyKinds = new Set(
+        contextArtifact.dependencyManifest.dependencies.map((dependency) => dependency.kind)
+      );
+      const repoState = contextArtifact.outputSections.find((section) => section.id === "repo-state");
+      const exactEvidence = contextArtifact.outputSections.find((section) => section.id === "exact-source-evidence");
+      const inputRef = contextArtifact.inputRefs.find((ref) => ref.ref === "src/app.ts");
+
+      assert.equal(contextArtifact.artifactFormatVersion, 1);
+      assert.equal(contextArtifact.id, artifact.artifactId);
+      assert.equal(contextArtifact.repoSnapshotId, snapshotResult.snapshotId);
+      assert.equal(contextArtifact.worktreeStateId, snapshotResult.worktreeStateId);
+      assert.equal(contextArtifact.compileMode, "partial_with_risk");
+      assert.ok(contextArtifact.contentHash.length > 0);
+      assert.ok(dependencyKinds.has("repo_snapshot"));
+      assert.ok(dependencyKinds.has("worktree_state"));
+      assert.ok(dependencyKinds.has("file"));
+      assert.ok(dependencyKinds.has("rule"));
+      assert.equal(repoState?.type, "repo_state");
+      assert.equal(repoState?.pinned, true);
+      assert.equal(repoState?.safetyCritical, true);
+      assert.equal(exactEvidence?.type, "code_span");
+      assert.equal(exactEvidence?.requiresExactCode, true);
+      assert.equal(exactEvidence?.itemRefs.some((ref) => ref.kind === "proof"), true);
+      assert.equal(inputRef?.dependencyStrength, "direct");
+      assert.equal(inputRef?.scope.repoId, "repo-1");
     });
   });
 });
