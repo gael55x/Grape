@@ -36,6 +36,21 @@ function execGit(repoPath, args) {
   }).trim();
 }
 
+function switchToFeatureBranch(repoPath) {
+  execGit(repoPath, ["checkout", "-b", "feature/context"]);
+  writeFileSync(path.join(repoPath, "README.md"), "# Feature branch\n");
+  execGit(repoPath, ["add", "README.md"]);
+  execGit(repoPath, [
+    "-c",
+    "user.name=Grape Test",
+    "-c",
+    "user.email=grape@example.test",
+    "commit",
+    "-m",
+    "feature branch change"
+  ]);
+}
+
 function requestFrame(message) {
   const body = Buffer.from(JSON.stringify(message), "utf8");
   return Buffer.concat([Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "utf8"), body]);
@@ -230,6 +245,48 @@ test("mcp grape_get_context compiles and returns structured context pack output"
       JSON.parse(readFileSync(path.join(repoPath, toolResult.structuredContent.artifactFiles.json), "utf8")).artifact.artifactId,
       toolResult.structuredContent.artifactId
     );
+  });
+});
+
+test("mcp grape_get_context invalidates prior sent context when a session switches branches", () => {
+  withGitRepo((repoPath) => {
+    runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-branch-session"
+          }
+        }
+      }
+    ]);
+
+    switchToFeatureBranch(repoPath);
+
+    const second = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-branch-session"
+          }
+        }
+      }
+    ])[0].result.structuredContent;
+
+    assert.equal(second.branch, "feature/context");
+    assert.equal(second.diffSummary.invalidatedItems > 0, true);
+    assert.equal(second.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), true);
+    assert.equal(second.contextPackItems.some((item) => item.state === "NEW"), true);
+    assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), false);
   });
 });
 

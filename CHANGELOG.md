@@ -43,3 +43,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added the first MCP stdio server with `grape_get_context` and `grape_get_status` backed by the local compile/status app services, session-scoped context identity, `--repo` launch support, and explicit partial/unsafe handling for unsupported or risky context requests.
 - Added omitted-context restore lookup through `grape omitted --session <id> --token <restoreToken>` and MCP `grape_get_omitted_item`, with stale-dependency rejection before omitted context is returned.
 - Added artifact inspection through `grape artifacts`, `grape artifacts --artifact <id>`, and MCP `grape_get_artifact`.
+- Added branch-switch invalidation for explicit session reuse in CLI and MCP context compilation, returning `INVALIDATE_PREVIOUS` for stale previous-branch context.

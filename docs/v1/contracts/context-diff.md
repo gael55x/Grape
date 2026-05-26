@@ -95,6 +95,7 @@ interface OmittedContextItem {
 - Stored sent, omitted, and pack items must reference an artifact owned by the same session.
 - `INVALIDATE_PREVIOUS` must include the prior item ID or prior section ID being invalidated.
 - A branch, worktree, dependency, or compression invalidation must invalidate sent items that relied on it.
+- A stale sent item should emit `INVALIDATE_PREVIOUS` once per session. Later packs should not repeat the same invalidation after it has already been recorded in the session pack ledger, and invalidated sent rows must not be reused as current context if a later artifact returns to the same dependency manifest.
 
 ## In-Memory Loop Proof
 
@@ -108,7 +109,7 @@ The current implementation goal proves only the in-memory part of the diff contr
 - pinned sections are resent instead of omitted
 - unsafe omission count must stay zero
 
-The in-memory loop only proves restore metadata shape. The current product slice adds restore lookup for persisted scaffold artifacts through CLI and MCP, while branch switching behavior and transport-facing session recovery remain pending.
+The in-memory loop only proves restore metadata shape. The current product slice adds restore lookup for persisted scaffold artifacts through CLI and MCP. Explicit session reuse across a branch switch now updates the session's compile state, records a `session_invalidated` event with `reason: "branch_changed"`, and emits `INVALIDATE_PREVIOUS` for stale prior sent items instead of omitting them. Session reset recovery remains pending.
 
 ## Durable Build Proof
 
@@ -121,6 +122,7 @@ The current persisted build proof adds a narrow app-level build service:
 - it persists structured context pack items
 - it persists sent and omitted ledger rows
 - it emits `INVALIDATE_PREVIOUS` for stale dependency manifests
+- it updates existing session compile state under the session lock and records branch-change invalidation events when the same session moves branches
 - it commits or rolls back the build as one storage transaction
 
 This proof does not perform MCP transport, CLI rendering, broad repository indexing, trust extraction, or compression.

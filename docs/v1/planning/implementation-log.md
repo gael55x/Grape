@@ -203,3 +203,10 @@ Keep entries simple:
 - Summary: added metadata-first artifact inspection through `grape artifacts`, `grape artifacts --artifact <id>`, and MCP `grape_get_artifact`. The surface returns stored scaffold artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative file refs without exposing absolute roots over MCP.
 - Checks run: `npm run typecheck`; `npm run build:test`; focused CLI/MCP behavior tests.
 - Risks/follow-ups: this is an inspection surface over the scaffold artifact shape. Final V1 artifact schema, exact-span policies, and the remaining MCP read/write tools are still pending.
+
+### 2026-05-26 - Branch Switch Invalidation
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: explicit session reuse across Git branches now updates session compile state under the durable build lock, records `session_invalidated` events with `reason: "branch_changed"`, and emits `INVALIDATE_PREVIOUS` context pack items for stale previous-branch context through CLI and MCP.
+- Checks run: `npm run typecheck`; focused CLI/MCP/storage behavior tests; full checks before commit.
+- Risks/follow-ups: branch/global distinction still depends on future durable claim scope filtering, and explicit session reset recovery remains pending.

@@ -124,6 +124,8 @@ This is intentionally a foundation, not a complete code intelligence graph. The 
 - `context_sent_items` and `omitted_context_items` must persist item kind/ref/hash, branch/commit identity, dependency manifest hash where applicable, token counts, restore metadata, and send counts so omission and restore decisions are auditable.
 - Sent, omitted, and pack rows must reference an artifact owned by the same session; cross-session artifact references fail closed.
 - Restorable omitted rows must include a restore ID and restore command.
+- Existing `context_sessions` rows may update their compile state only through the session repository, after the durable build has acquired or renewed the session lock. The update is limited to snapshot/worktree/branch/base/head/status timestamps and must not silently change lock ownership.
+- Branch switches are recorded in `session_events` as `eventType: "session_invalidated"` with `reason: "branch_changed"` so branch-scoped sent context invalidation is auditable.
 - Repository construction must apply the SQLite connection policy so foreign keys are not optional caller discipline.
 - Durable context builds must persist artifact, dependency, pack, sent, and omitted rows in one transaction owned by `src/app/`.
 

@@ -128,6 +128,28 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         fixture: "local-repository",
         turn,
         now,
+        sessionUpdate: session.existed
+          ? {
+              sessionId,
+              repoSnapshotId: session.record.repoSnapshotId,
+              worktreeStateId: session.record.worktreeStateId,
+              branchName: session.record.branchName,
+              baseCommitSha: session.record.baseCommitSha,
+              headCommitSha: session.record.headCommitSha,
+              status: session.record.status,
+              now
+            }
+          : undefined,
+        sessionInvalidation:
+          session.branchChanged && session.previousBranch && session.previousHeadCommit
+            ? {
+                reason: "branch_changed",
+                previousBranch: session.previousBranch,
+                nextBranch: snapshotResult.snapshot.branch,
+                previousHeadCommit: session.previousHeadCommit,
+                nextHeadCommit: snapshotResult.snapshot.commit
+              }
+            : undefined,
         prepareOutput(preview) {
           const renderInput = {
             artifact,
