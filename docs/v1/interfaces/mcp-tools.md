@@ -62,8 +62,10 @@ The current implementation includes the first stdio MCP server:
     "tools": [
       "grape_get_context",
       "grape_get_artifact",
+      "grape_get_claims",
       "grape_get_proofs",
       "grape_get_omitted_item",
+      "grape_get_stale_items",
       "grape_get_status"
     ],
     "note": "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
@@ -75,8 +77,10 @@ The current implementation includes the first stdio MCP server:
 
 - `grape_get_context`
 - `grape_get_artifact`
+- `grape_get_claims`
 - `grape_get_proofs`
 - `grape_get_omitted_item`
+- `grape_get_stale_items`
 - `grape_get_status`
 
 `grape_get_context` calls the same local-project compile service used by `grape compile --task <text>`. It auto-bootstraps local `.grape/` state when needed, captures the current repo snapshot, persists source/index inputs, resolves task source hints from lexical task terms plus `files`, `symbols`, and `tests` seed refs, persists deterministic `symbol_outline` compression cache records, compiles a repository-derived scaffold artifact with pinned active project rules, non-proof compression orientation, and bounded exact-source evidence prioritized toward selected allowed sources, projects it to the public V1 `ContextArtifact` shape, persists session diff rows, writes JSON/Markdown artifacts under `.grape/artifacts/`, and returns structured context-pack items plus rendered Markdown.
@@ -94,6 +98,8 @@ Current limitation: the returned `contextArtifact` and public artifact JSON use 
 `grape_get_proofs` returns persisted proof row metadata, optionally filtered by `proofId` or `sourceId`. It returns proof IDs, source IDs/refs, proof type, support status, source hashes, excerpt hashes, and optional claim IDs. It does not return raw proof excerpts or source file bodies. MCP output omits absolute local root paths.
 
 `grape_get_omitted_item` restores one omitted context item by `sessionId` and `restoreToken`. It validates the token against the session, stored scaffold artifact metadata, stored dependency rows, artifact hash, section content hash, dependency manifest, redaction status, branch, head commit, worktree hash, source/config/lockfile/rule dependency hashes, and proof dependency rows/hashes before returning the omitted body. Stale restore attempts return `status: "stale"` with an error result rather than returning stale content. MCP output omits absolute local root paths.
+
+`grape_get_stale_items` returns emitted stale-context invalidation metadata, optionally filtered by `sessionId`. It reuses the same local app service as `grape stale`, removes `rootPath` from MCP output, and does not return context bodies.
 
 The remaining V1 read tools and restricted write tools are still pending. They must reuse app services and storage/trust modules rather than embedding business logic in the MCP adapter.
 
@@ -239,6 +245,33 @@ interface GrapeGetProofsOutput {
     supportStatus: string;
     privacyStatus?: string;
     redactionStatus?: string;
+    createdAt: string;
+  }>;
+}
+```
+
+```ts
+interface GrapeGetStaleItemsInput {
+  sessionId?: string;
+}
+
+interface GrapeGetStaleItemsOutput {
+  sessionId?: string;
+  inspectedSessionCount: number;
+  staleItems: Array<{
+    staleItemId: string;
+    sessionId: string;
+    artifactId: string;
+    sectionId?: string;
+    itemKind: string;
+    itemRef: string;
+    invalidatesSentItemId: string;
+    staleReason: "branch_changed" | "session_reset" | "dependency_manifest_changed";
+    previousArtifactId?: string;
+    previousSectionId?: string;
+    previousBranchName?: string;
+    previousCommitSha?: string;
+    dependencyRefs: string[];
     createdAt: string;
   }>;
 }

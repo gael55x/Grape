@@ -113,6 +113,7 @@ test("mcp stdio lists implemented Grape tools", () => {
         "grape_get_claims",
         "grape_get_proofs",
         "grape_get_omitted_item",
+        "grape_get_stale_items",
         "grape_get_status"
       ]
     );
@@ -405,6 +406,27 @@ test("mcp grape_get_context invalidates prior sent context when a session switch
     assert.equal(second.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "NEW"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), false);
+
+    const stale = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_stale_items",
+          arguments: {
+            sessionId: "mcp-branch-session"
+          }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(stale.isError, false);
+    assert.equal(Object.hasOwn(stale.structuredContent, "rootPath"), false);
+    assert.equal(stale.content[0].text.includes(repoPath), false);
+    assert.equal(stale.structuredContent.inspectedSessionCount, 1);
+    assert.equal(stale.structuredContent.staleItems.some((item) => item.staleReason === "branch_changed"), true);
+    assert.equal(stale.structuredContent.staleItems.every((item) => item.invalidatesSentItemId.length > 0), true);
   });
 });
 

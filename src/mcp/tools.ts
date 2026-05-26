@@ -3,6 +3,7 @@ import { runGrapeGetClaimsTool } from "./claims.js";
 import { runGrapeGetContextTool } from "./get-context.js";
 import { runGrapeGetOmittedItemTool } from "./omitted.js";
 import { runGrapeGetProofsTool } from "./proofs.js";
+import { runGrapeGetStaleItemsTool } from "./stale.js";
 import { runGrapeGetStatusTool } from "./status.js";
 
 export interface McpToolResult {
@@ -105,6 +106,17 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
         }
       },
       {
+        name: "grape_get_stale_items",
+        description: "Inspect emitted stale-context invalidations without returning context bodies.",
+        inputSchema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            sessionId: { type: "string", minLength: 1 }
+          }
+        }
+      },
+      {
         name: "grape_get_status",
         description: "Inspect local Grape bootstrap, migration, and repository state for the current working directory.",
         inputSchema: {
@@ -145,6 +157,8 @@ export function callMcpTool(params: ToolCallParams, rootPath: string): McpToolRe
         const output = runGrapeGetOmittedItemTool(params.arguments ?? {}, rootPath);
         return toolResult(output, output.status === "stale");
       }
+      case "grape_get_stale_items":
+        return toolResult(runGrapeGetStaleItemsTool(params.arguments ?? {}, rootPath), false);
       case "grape_get_status":
         assertEmptyArguments(params.arguments, "grape_get_status");
         return toolResult(runGrapeGetStatusTool(rootPath), false);

@@ -792,6 +792,7 @@ test("cli mcp --print-config emits the V1 stdio connection contract", () => {
         "grape_get_claims",
         "grape_get_proofs",
         "grape_get_omitted_item",
+        "grape_get_stale_items",
         "grape_get_status"
       ],
       note: "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
