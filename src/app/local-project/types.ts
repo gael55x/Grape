@@ -211,6 +211,35 @@ export interface LocalArtifactDependencySummary {
   readonly scope: Record<string, unknown>;
 }
 
+export interface LocalSessionSummary {
+  readonly sessionId: string;
+  readonly status: string;
+  readonly lockStatus: string;
+  readonly taskId?: string;
+  readonly taskType?: string;
+  readonly branchName: string;
+  readonly headCommitSha: string;
+  readonly startedAt: string;
+  readonly lastSeenAt: string;
+  readonly updatedAt: string;
+  readonly artifactCount: number;
+  readonly sentItemCount: number;
+  readonly omittedItemCount: number;
+  readonly packItemCount: number;
+  readonly eventCount: number;
+  readonly lastEventReason?: string;
+}
+
+export interface ListLocalSessionsInput {
+  readonly rootPath: string;
+  readonly migrationsDir?: string;
+}
+
+export interface ListLocalSessionsResult {
+  readonly rootPath: string;
+  readonly sessions: readonly LocalSessionSummary[];
+}
+
 export interface ListLocalArtifactsInput {
   readonly rootPath: string;
   readonly sessionId?: string;

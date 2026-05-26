@@ -83,6 +83,7 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.match(result.stdout, /grape init --connect/);
   assert.match(result.stdout, /grape compile --task <text>/);
   assert.match(result.stdout, /grape artifacts/);
+  assert.match(result.stdout, /grape sessions/);
   assert.match(result.stdout, /grape claims --active/);
   assert.match(result.stdout, /grape proofs/);
   assert.match(result.stdout, /grape status/);
@@ -222,6 +223,12 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(localProofCount(repoPath) > 0, true);
     assert.equal(localClaimCount(repoPath) > 0, true);
     assert.equal(localCompressionArtifactCount(repoPath) > 0, true);
+    const sessions = runCliJson(repoPath, ["sessions"]);
+    assert.equal(sessions.sessions.length, 1);
+    assert.equal(sessions.sessions[0].sessionId, "session-test");
+    assert.equal(sessions.sessions[0].artifactCount, 1);
+    assert.equal(sessions.sessions[0].sentItemCount > 0, true);
+    assert.equal(sessions.sessions[0].packItemCount > 0, true);
     const claims = runCliJson(repoPath, ["claims", "--active"]);
     assert.equal(claims.claims.length > 0, true);
     assert.equal(claims.claims[0].claimType, "repository_source_excerpt_exists");
@@ -388,6 +395,11 @@ test("cli compile invalidates prior sent context when a session switches branche
     const session = localContextSession(repoPath, "branch-session");
     assert.equal(session.branchName, "feature/context");
     assert.equal(session.headCommitSha, second.headCommit);
+    const sessions = runCliJson(repoPath, ["sessions"]);
+    const branchSession = sessions.sessions.find((candidate) => candidate.sessionId === "branch-session");
+    assert.equal(branchSession?.branchName, "feature/context");
+    assert.ok(["branch_changed", "durable_context_build"].includes(branchSession?.lastEventReason ?? ""));
+    assert.equal(branchSession?.eventCount > 0, true);
 
     const event = localSessionEvents(repoPath, "branch-session").find(
       (candidate) => candidate.eventType === "session_invalidated"
