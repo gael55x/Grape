@@ -3,6 +3,7 @@ export * from "./fts-repositories.js";
 export * from "./indexing-repositories.js";
 export * from "./migrations.js";
 export * from "./migration-plan.js";
+export * from "./proof-repositories.js";
 export * from "./repositories.js";
 export * from "./sqlite-policy.js";
 export * from "./sqlite-runtime.js";
