@@ -308,3 +308,10 @@ Keep entries simple:
 - Summary: factored current-valid claim resolution into an app helper and fed active narrow source-excerpt claims into the repository artifact compiler. Artifacts now include a `current-valid-claims` `active_claim` section with claim/proof refs and claim dependencies when active claims exist.
 - Checks run: focused repository-artifact, CLI, and MCP behavior tests before full verification.
 - Risks/follow-ups: only the first narrow claim type is rendered. Broader claim retrieval, contradiction/supersession, and parsed rule claims remain pending.
+
+### 2026-05-26 - Deterministic Symbol Compression Cache
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added `compression_artifacts` and `compression_inputs` storage, a deterministic `symbol_outline` builder, local compile persistence, compiler dependency refs, and a non-proof compression orientation section in public artifacts.
+- Checks run: focused compression-cache, repository-artifact, CLI, and storage-runtime behavior tests before full verification.
+- Risks/follow-ups: this is the first compression cache foundation only. `rule_digest`, `context_pack_summary`, stale compression invalidation events, and safe budget pruning remain pending.

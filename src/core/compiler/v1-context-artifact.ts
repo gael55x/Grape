@@ -53,9 +53,9 @@ export function buildV1ContextArtifact(input: V1ContextArtifactInput): ContextAr
     dirtyWorktree: input.dirtyWorktree,
     environmentScope: input.environmentScope ?? "local",
     inputRefs: dependencies.map(toContextInput),
-    compressionArtifactRefs: [],
+    compressionArtifactRefs: compressionArtifactRefs(dependencies),
     outputSections: sections,
-    compressionArtifactsUsed: [],
+    compressionArtifactsUsed: compressionArtifactRefs(dependencies),
     dependencyManifest: {
       manifestVersion: 1,
       artifactId: input.artifact.artifactId,
@@ -88,6 +88,14 @@ export function buildV1ContextArtifact(input: V1ContextArtifactInput): ContextAr
     ...withoutHash,
     contentHash: hashStableJson(withoutHash)
   };
+}
+
+function compressionArtifactRefs(dependencies: readonly ContextDependencyShape[]): string[] {
+  return [...new Set(
+    dependencies
+      .filter((dependency) => dependency.kind === "compression_artifact")
+      .map((dependency) => dependency.ref)
+  )];
 }
 
 export function compileModeForContextArtifact(input: {

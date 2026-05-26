@@ -68,3 +68,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added the first high-risk exact-context compiler policy. Risk overlays now fail closed with `risk_overlay_missing_exact_context` unless task retrieval or seed refs select proof-backed exact source/config/rule evidence.
 - Added narrow durable source-excerpt claim persistence plus CLI/MCP active-claim inspection. These claims only prove selected exact source excerpts exist and do not prove behavior or correctness.
 - Added current-valid narrow source-excerpt claims to compiled context artifacts as `active_claim` sections with claim/proof dependency refs.
+- Added the first deterministic compression cache slice: local compile now persists `symbol_outline` artifacts with input hashes, includes `compression_artifact` dependency refs, and renders non-proof compression orientation sections.

@@ -150,6 +150,7 @@ function compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, ind
     symbolNodes: indexingRepositories.symbolNodes.listBySnapshot(snapshotId),
     symbolEdges: indexingRepositories.symbolEdges.listBySnapshot(snapshotId),
     activeClaims: overrides.activeClaims,
+    compressionArtifacts: overrides.compressionArtifacts,
     taskRetrieval,
     createdAt: overrides.createdAt ?? now
   });
@@ -329,6 +330,66 @@ test("repository artifact compiler renders current-valid claim sections with cla
       assert.match(activeClaims?.body ?? "", /repository_source_excerpt_exists/);
       assert.equal(claimDependency?.kind, "claim");
       assert.equal(claimDependency?.hash, "c".repeat(64));
+    });
+  });
+});
+
+test("repository artifact compiler renders compression artifacts as non-proof orientation", () => {
+  withGitRepo((repoPath) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
+        compressionArtifacts: [
+          {
+            compressionId: "compression:symbol_outline:abc",
+            type: "symbol_outline",
+            summaryText: "Deterministic symbol outline only.",
+            inputRefs: ["symbol:module"],
+            inputHashes: ["d".repeat(64)],
+            inputHash: "e".repeat(64),
+            policyHash: "f".repeat(64),
+            scopeHash: "1".repeat(64),
+            outputHash: "2".repeat(64)
+          }
+        ]
+      });
+      const compressionSection = artifact.sections.find((section) => section.id === "compression-orientation");
+      const compressionDependency = artifact.dependencyManifest.dependencies.find(
+        (dependency) => dependency.ref === "compression:symbol_outline:abc"
+      );
+      const contextArtifact = buildV1ContextArtifact({
+        artifact,
+        projectId: "project-1",
+        repoSnapshotId: snapshotResult.snapshotId,
+        worktreeStateId: snapshotResult.worktreeStateId,
+        dirtyWorktree: false,
+        budget: {
+          status: "not_requested",
+          estimatedPackTokens: 100,
+          requiredContextTokens: 20,
+          warnings: [],
+          unsafeReasons: []
+        },
+        tokenCost: 100
+      });
+
+      assert.equal(compressionSection?.type, "compression_orientation");
+      assert.equal(compressionSection?.exactRequired, false);
+      assert.deepEqual(compressionSection?.proofRefs, []);
+      assert.equal(compressionDependency?.kind, "compression_artifact");
+      assert.equal(compressionDependency?.hash, "2".repeat(64));
+      assert.deepEqual(contextArtifact.compressionArtifactRefs, ["compression:symbol_outline:abc"]);
+      assert.deepEqual(contextArtifact.compressionArtifactsUsed, ["compression:symbol_outline:abc"]);
     });
   });
 });

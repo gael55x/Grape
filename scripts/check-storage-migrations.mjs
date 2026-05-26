@@ -129,6 +129,14 @@ expect(
   allMigrations.includes("CREATE VIRTUAL TABLE IF NOT EXISTS fts_entry_text USING fts5"),
   "migrations must define an FTS5 text table for lexical search"
 );
+expect(
+  allMigrations.includes("CREATE TABLE IF NOT EXISTS compression_artifacts ("),
+  "migrations must define canonical compression_artifacts table"
+);
+expect(
+  allMigrations.includes("CREATE TABLE IF NOT EXISTS compression_inputs ("),
+  "migrations must define canonical compression_inputs table"
+);
 
 for (const required of [
   "repo_id TEXT NOT NULL REFERENCES repos(repo_id)",

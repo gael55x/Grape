@@ -82,6 +82,25 @@ export function dependencyManifest(
     });
   }
 
+  for (const artifact of input.compressionArtifacts ?? []) {
+    dependencies.push({
+      id: compressionDependencyId(artifact.compressionId),
+      kind: "compression_artifact",
+      ref: artifact.compressionId,
+      hash: artifact.outputHash,
+      scope: {
+        branch: input.snapshot.branch,
+        commit: input.snapshot.commit,
+        compressionType: artifact.type,
+        inputHash: artifact.inputHash,
+        inputRefs: artifact.inputRefs,
+        inputHashes: artifact.inputHashes,
+        policyHash: artifact.policyHash,
+        scopeHash: artifact.scopeHash
+      }
+    });
+  }
+
   for (const node of selectedSymbolNodes(input.symbolNodes, preferredSourceRefs)) {
     dependencies.push({
       id: symbolDependencyId(node.symbolId),
@@ -135,4 +154,8 @@ function symbolDependencyId(symbolId: string): string {
 
 export function claimDependencyId(claimId: string): string {
   return `claim:${claimId.replace(/^claim:/, "")}`;
+}
+
+export function compressionDependencyId(compressionId: string): string {
+  return `compression:${compressionId.replace(/^compression:/, "")}`;
 }

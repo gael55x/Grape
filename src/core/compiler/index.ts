@@ -3,6 +3,7 @@ export * from "./context-pack-items.js";
 export * from "./context-budget.js";
 export * from "./repository-context-artifact.js";
 export * from "./repository-context-active-claims-section.js";
+export * from "./repository-context-compression-section.js";
 export * from "./repository-context-integrity.js";
 export * from "./repository-context-renderer.js";
 export * from "./repository-context-risk-policy.js";

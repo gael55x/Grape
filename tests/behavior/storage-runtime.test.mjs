@@ -55,6 +55,8 @@ test("storage runtime applies migrations from an empty database", () => {
     assert.ok(database.prepare("SELECT name FROM sqlite_master WHERE name = 'symbol_nodes'").get());
     assert.ok(database.prepare("SELECT name FROM sqlite_master WHERE name = 'fts_entries'").get());
     assert.ok(database.prepare("SELECT name FROM sqlite_master WHERE name = 'fts_entry_text'").get());
+    assert.ok(database.prepare("SELECT name FROM sqlite_master WHERE name = 'compression_artifacts'").get());
+    assert.ok(database.prepare("SELECT name FROM sqlite_master WHERE name = 'compression_inputs'").get());
   });
 });
 

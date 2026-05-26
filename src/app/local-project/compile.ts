@@ -12,6 +12,7 @@ import { createGitRepoSnapshot } from "../../core/git/index.js";
 import { assertArtifactTextHasNoSecrets } from "../../core/security/index.js";
 import {
   createClaimStorageRepositories,
+  createCompressionStorageRepositories,
   createEvidenceStorageRepositories,
   createIndexingStorageRepositories,
   createProofStorageRepositories,
@@ -30,6 +31,7 @@ import {
 import { detectRiskOverlaysForTask, mergeRiskOverlays } from "./compile-risk.js";
 import { prepareLocalCompileProofs } from "./compile-proofs.js";
 import { ensureCompileSession } from "./compile-session.js";
+import { prepareLocalCompressionArtifacts } from "./compression.js";
 import { resolveLocalCurrentValidClaims } from "./claim-resolution.js";
 import { initializeLocalProject } from "./initialize.js";
 import { resolveLocalTaskRetrieval } from "./task-retrieval.js";
@@ -77,6 +79,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
       const indexingRepositories = createIndexingStorageRepositories(database);
       const proofRepositories = createProofStorageRepositories(database);
       const claimRepositories = createClaimStorageRepositories(database);
+      const compressionRepositories = createCompressionStorageRepositories(database);
       const snapshotResult = persistGitRepoSnapshot({
         database,
         repositories,
@@ -142,6 +145,16 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sources: evidenceRepositories.sources,
         snapshot: snapshotResult.snapshot
       });
+      const compressionArtifacts = prepareLocalCompressionArtifacts({
+        repositories: compressionRepositories,
+        projectId: config.project.projectId,
+        snapshotId: snapshotResult.snapshotId,
+        worktreeStateId: snapshotResult.worktreeStateId,
+        snapshot: snapshotResult.snapshot,
+        symbolNodes,
+        symbolEdges,
+        now
+      });
       const artifact = compileRepositoryContextArtifact({
         projectId: config.project.projectId,
         sessionId,
@@ -163,6 +176,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
           sourceRefs: claim.sourceRefs,
           proofRefs: claim.proofRefs
         })),
+        compressionArtifacts,
         taskRetrieval: proofs.taskRetrieval,
         createdAt: now
       });
