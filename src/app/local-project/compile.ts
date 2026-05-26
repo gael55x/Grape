@@ -4,6 +4,7 @@ import { buildDurableContext } from "../durable-context-build.js";
 import { persistGitRepoSnapshot } from "../persist-repo-snapshot.js";
 import {
   compileRepositoryContextArtifact,
+  evaluateContextPackBudget,
   renderRepositoryContextPackJson,
   renderRepositoryContextPackMarkdown,
   toContextPackItems
@@ -182,11 +183,17 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sessionReset,
         prepareOutput(preview) {
           const contextPackItems = toContextPackItems(artifact, preview.contextPackItems);
+          const budget = evaluateContextPackBudget({
+            tokenBudget: input.tokenBudget,
+            contextPackItems,
+            estimatedPackTokens: preview.tokenMetric.grapeTokens
+          });
           const renderInput = {
             artifact,
             contextPackItems,
             omittedItems: preview.omittedItems,
-            tokenMetric: preview.tokenMetric
+            tokenMetric: preview.tokenMetric,
+            budget
           };
           const json = renderRepositoryContextPackJson(renderInput);
           const markdown = renderRepositoryContextPackMarkdown(renderInput);
@@ -215,6 +222,11 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
 
   const value = databaseResult.value;
   const contextPackItems = toContextPackItems(value.artifact, value.build.contextPackItems);
+  const budget = evaluateContextPackBudget({
+    tokenBudget: input.tokenBudget,
+    contextPackItems,
+    estimatedPackTokens: value.build.tokenMetric.grapeTokens
+  });
   return {
     rootPath: snapshot.rootPath,
     projectId: config.project.projectId,
@@ -232,8 +244,9 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     omittedItemCount: value.build.omittedItems.length,
     sentItemCount: value.build.sentItems.length,
     tokenMetric: value.build.tokenMetric,
-    warnings: value.artifact.warnings,
-    unsafeReasons: value.artifact.unsafeReasons,
+    budget,
+    warnings: [...value.artifact.warnings, ...budget.warnings],
+    unsafeReasons: [...value.artifact.unsafeReasons, ...budget.unsafeReasons],
     artifactJsonPath: value.files.jsonPath,
     artifactMarkdownPath: value.files.markdownPath,
     sessionResetId: value.sessionResetId

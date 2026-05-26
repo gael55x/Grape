@@ -37,6 +37,7 @@ export function helpText(): string {
     "  --risk <a,b>                Add compile risk overlays",
     "  --session <id>              Reuse a context session for diffing",
     "  --reset-session             Force full resend for a reused compile session",
+    "  --token-budget <tokens>     Evaluate whether compile output fits a token budget",
     "  --token <restore_token>     Restore an omitted context item",
     "  --artifact <id>             Inspect one context artifact",
     "  --json                      Emit machine-readable JSON"

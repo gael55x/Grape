@@ -277,6 +277,26 @@ test("cli compile uses task retrieval to prioritize matching exact source eviden
   });
 });
 
+test("cli compile reports unsafe output when token budget cannot fit required context", () => {
+  withGitRepo((repoPath) => {
+    const result = runCli(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository",
+      "--session",
+      "budget-session",
+      "--token-budget",
+      "1",
+      "--json"
+    ]);
+
+    assert.equal(result.status, 2, result.stderr);
+    const output = JSON.parse(result.stdout);
+    assert.equal(output.budget.status, "required_context_exceeds_budget");
+    assert.ok(output.unsafeReasons.includes("token_budget_below_required_context"));
+  });
+});
+
 test("cli compile invalidates prior sent context when a session switches branches", () => {
   withGitRepo((repoPath) => {
     const first = runCliJson(repoPath, [

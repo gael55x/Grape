@@ -111,6 +111,8 @@ test("mcp stdio lists implemented Grape tools", () => {
     );
     const contextTool = responses[1].result.tools.find((tool) => tool.name === "grape_get_context");
     assert.deepEqual(contextTool.inputSchema.anyOf, [{ required: ["sessionId"] }, { required: ["agentSessionId"] }]);
+    assert.equal(contextTool.inputSchema.properties.tokenBudget.type, "integer");
+    assert.equal(contextTool.inputSchema.properties.tokenBudget.minimum, 1);
   });
 });
 
@@ -435,7 +437,7 @@ test("mcp agentSessionId maps to an isolated stable Grape session", () => {
   });
 });
 
-test("mcp seed files participate in retrieval while unsupported budget remains partial risk", () => {
+test("mcp seed files participate in retrieval while token budget is evaluated", () => {
   withGitRepo((repoPath) => {
     mkdirSync(path.join(repoPath, "src"));
     writeFileSync(path.join(repoPath, "src", "main.ts"), "export function mainEntry() { return 'main'; }\n");
@@ -473,8 +475,34 @@ test("mcp seed files participate in retrieval while unsupported budget remains p
 
     assert.equal(output.compileMode, "partial_with_risk");
     assert.equal(output.warnings.includes("mcp_seed_files_not_used_in_scaffold_compile"), false);
-    assert.ok(output.warnings.includes("mcp_token_budget_not_enforced_in_scaffold_compile"));
+    assert.equal(output.warnings.includes("mcp_token_budget_not_enforced_in_scaffold_compile"), false);
+    assert.equal(output.budget.status, "within_budget");
     assert.equal(retrievalSection.sourceRefs.includes("src/main.ts"), true);
+  });
+});
+
+test("mcp token budget below required context fails closed", () => {
+  withGitRepo((repoPath) => {
+    const responses = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository",
+            sessionId: "tiny-budget-session",
+            tokenBudget: 1
+          }
+        }
+      }
+    ]);
+
+    const output = responses[0].result.structuredContent;
+    assert.equal(output.compileMode, "cannot_compile_safely");
+    assert.equal(output.budget.status, "required_context_exceeds_budget");
+    assert.ok(output.unsafeReasons.includes("token_budget_below_required_context"));
   });
 });
 

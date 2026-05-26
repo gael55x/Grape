@@ -1,4 +1,5 @@
 import type { LocalProjectConfig } from "./config.js";
+import type { ContextPackBudgetResult } from "../../core/compiler/index.js";
 import type { InMemoryTokenSavingsMetric } from "../../core/diff/index.js";
 import type { ContextPackItemShape, RiskOverlay } from "../../shared/index.js";
 
@@ -88,6 +89,7 @@ export interface CompileLocalContextInput {
   readonly seedFiles?: readonly string[];
   readonly seedSymbols?: readonly string[];
   readonly seedTests?: readonly string[];
+  readonly tokenBudget?: number;
   readonly sessionId?: string;
   readonly resetSession?: boolean;
   readonly now?: string;
@@ -112,6 +114,7 @@ export interface CompileLocalContextResult {
   readonly omittedItemCount: number;
   readonly sentItemCount: number;
   readonly tokenMetric: InMemoryTokenSavingsMetric;
+  readonly budget: ContextPackBudgetResult;
   readonly warnings: readonly string[];
   readonly unsafeReasons: readonly string[];
   readonly artifactJsonPath: string;
