@@ -196,3 +196,10 @@ Keep entries simple:
 - Summary: added product-facing restore lookup for session-scoped omitted context. `grape omitted --session <id>` lists omitted rows, `grape omitted --session <id> --token <restoreToken>` validates and restores an omitted scaffold section, and `grape_get_omitted_item` exposes the same app service over MCP stdio.
 - Checks run: `npm run typecheck`; `npm run build:test`; focused CLI/MCP behavior tests.
 - Risks/follow-ups: restore currently targets scaffold artifact files, not the final V1 artifact schema. Branch-switch/session-reset recovery and the remaining MCP read/write tools still need implementation. The restore path fails closed on tampered scaffold artifact bodies, blocked redaction status, stale dependencies, and mismatched stored artifact/dependency metadata.
+
+### 2026-05-26 - Artifact Inspection Surface
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added metadata-first artifact inspection through `grape artifacts`, `grape artifacts --artifact <id>`, and MCP `grape_get_artifact`. The surface returns stored scaffold artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative file refs without exposing absolute roots over MCP.
+- Checks run: `npm run typecheck`; `npm run build:test`; focused CLI/MCP behavior tests.
+- Risks/follow-ups: this is an inspection surface over the scaffold artifact shape. Final V1 artifact schema, exact-span policies, and the remaining MCP read/write tools are still pending.

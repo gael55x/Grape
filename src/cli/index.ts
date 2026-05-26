@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { runArtifacts } from "./commands/artifacts.js";
+import { exitCodes } from "./exit-codes.js";
 import { parseArgs, repoPath, unsupportedFlag, type ParsedArgs } from "./args.js";
 import {
   errorMessage,
@@ -20,15 +22,6 @@ process.emitWarning = ((warning: string | Error, ...args: unknown[]) => {
   Reflect.apply(emitWarning, process, [warning, ...args]);
 }) as typeof process.emitWarning;
 
-const exitCodes = {
-  ok: 0,
-  usage: 1,
-  unsafe: 2,
-  stale: 3,
-  storage: 4,
-  lock: 5
-} as const;
-
 export async function main(argv = process.argv.slice(2)): Promise<number> {
   let parsed: ParsedArgs;
   try {
@@ -49,6 +42,8 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
       return runInit(parsed);
     case "compile":
       return runCompile(parsed);
+    case "artifacts":
+      return runArtifacts(parsed);
     case "status":
       return runStatus(parsed);
     case "doctor":
@@ -347,6 +342,8 @@ async function runMcp(parsed: ParsedArgs): Promise<number> {
     "",
     "Tools:",
     "  grape_get_context",
+    "  grape_get_artifact",
+    "  grape_get_omitted_item",
     "  grape_get_status"
   ].join("\n"));
   return exitCodes.ok;

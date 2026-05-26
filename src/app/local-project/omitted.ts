@@ -1,5 +1,3 @@
-import path from "node:path";
-
 import { createGitRepoSnapshot } from "../../core/git/index.js";
 import { assertArtifactTextHasNoSecrets } from "../../core/security/index.js";
 import { createStorageRepositories } from "../../core/storage/index.js";
@@ -11,7 +9,7 @@ import type {
   InMemoryContextArtifactShape,
   InMemoryContextDependencyShape
 } from "../../shared/index.js";
-import { ensureLocalProjectLayout, readLocalProjectConfig } from "./config.js";
+import { ensureConfiguredLocalProjectLayout } from "./configured-layout.js";
 import { loadVerifiedOmittedArtifact } from "./omitted-artifact.js";
 import { withMigratedLocalDatabase } from "./storage.js";
 import type {
@@ -27,7 +25,7 @@ export function listOmittedContext(input: ListOmittedContextInput): ListOmittedC
     rootPath: input.rootPath,
     createdAt: new Date().toISOString()
   });
-  const layout = ensureConfiguredLayout(snapshot.rootPath);
+  const { layout } = ensureConfiguredLocalProjectLayout(snapshot.rootPath);
   const databaseResult = withMigratedLocalDatabase({
     databasePath: layout.databasePath,
     migrationsDir: input.migrationsDir,
@@ -52,7 +50,7 @@ export function restoreOmittedContext(input: RestoreOmittedContextInput): Restor
     createdAt: now,
     gitBinary: input.gitBinary
   });
-  const layout = ensureConfiguredLayout(currentSnapshot.rootPath);
+  const { layout } = ensureConfiguredLocalProjectLayout(currentSnapshot.rootPath);
 
   return withMigratedLocalDatabase({
     databasePath: layout.databasePath,
@@ -96,16 +94,6 @@ export function restoreOmittedContext(input: RestoreOmittedContextInput): Restor
       };
     }
   }).value;
-}
-
-function ensureConfiguredLayout(rootPath: string): ReturnType<typeof ensureLocalProjectLayout> & { readonly rootPath: string } {
-  const layout = ensureLocalProjectLayout(rootPath);
-  const config = readLocalProjectConfig(layout.configPath);
-  if (!config) throw new Error("Grape config is missing. Run grape init --connect.");
-  if (path.resolve(config.project.rootPath) !== layout.rootPath) {
-    throw new Error("Grape config root path does not match the current repository path.");
-  }
-  return layout;
 }
 
 function requireOmittedItem(

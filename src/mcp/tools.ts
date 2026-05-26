@@ -1,3 +1,4 @@
+import { runGrapeGetArtifactTool } from "./artifact.js";
 import { runGrapeGetContextTool } from "./get-context.js";
 import { runGrapeGetOmittedItemTool } from "./omitted.js";
 import { runGrapeGetStatusTool } from "./status.js";
@@ -50,6 +51,18 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
         }
       },
       {
+        name: "grape_get_artifact",
+        description: "Inspect stored scaffold context artifact metadata and dependency rows.",
+        inputSchema: {
+          type: "object",
+          required: ["artifactId"],
+          additionalProperties: false,
+          properties: {
+            artifactId: { type: "string", minLength: 1 }
+          }
+        }
+      },
+      {
         name: "grape_get_omitted_item",
         description: "Restore an omitted context item by session and restore token.",
         inputSchema: {
@@ -93,6 +106,8 @@ export function callMcpTool(params: ToolCallParams, rootPath: string): McpToolRe
         const output = runGrapeGetContextTool(params.arguments ?? {}, rootPath);
         return toolResult(output, output.unsafeReasons.length > 0);
       }
+      case "grape_get_artifact":
+        return toolResult(runGrapeGetArtifactTool(params.arguments ?? {}, rootPath), false);
       case "grape_get_omitted_item": {
         const output = runGrapeGetOmittedItemTool(params.arguments ?? {}, rootPath);
         return toolResult(output, output.status === "stale");
