@@ -39,15 +39,20 @@ test("storage runtime applies migrations from an empty database", () => {
     const result = applyStorageMigrations(database, migrationSources(), () => "2026-05-24T00:00:00.000Z");
 
     assert.deepEqual(result.alreadyApplied, []);
-    assert.deepEqual(result.applied, [
-      { id: "0001", filename: "0001_alpha_storage_subset.sql" }
-    ]);
+    assert.deepEqual(
+      result.applied,
+      storageMigrationReferences.map((migration) => ({ id: migration.id, filename: migration.filename }))
+    );
     assert.deepEqual(result.pendingAfterApply, []);
 
     assert.equal(database.prepare("PRAGMA foreign_keys").get().foreign_keys, 1);
     assert.equal(database.prepare("PRAGMA journal_mode").get().journal_mode, "wal");
-    assert.equal(database.prepare("SELECT count(*) AS count FROM schema_migrations").get().count, 1);
+    assert.equal(
+      database.prepare("SELECT count(*) AS count FROM schema_migrations").get().count,
+      storageMigrationReferences.length
+    );
     assert.ok(database.prepare("SELECT name FROM sqlite_master WHERE name = 'context_sent_items'").get());
+    assert.ok(database.prepare("SELECT name FROM sqlite_master WHERE name = 'symbol_nodes'").get());
   });
 });
 
@@ -57,9 +62,12 @@ test("storage runtime skips already applied migrations", () => {
     applyStorageMigrations(database, sources, () => "2026-05-24T00:00:00.000Z");
     const result = applyStorageMigrations(database, sources, () => "2026-05-24T00:00:01.000Z");
 
-    assert.equal(result.alreadyApplied.length, 1);
+    assert.equal(result.alreadyApplied.length, storageMigrationReferences.length);
     assert.deepEqual(result.applied, []);
-    assert.deepEqual(readAppliedStorageMigrations(database).map((migration) => migration.id), ["0001"]);
+    assert.deepEqual(
+      readAppliedStorageMigrations(database).map((migration) => migration.id),
+      storageMigrationReferences.map((migration) => migration.id)
+    );
   });
 });
 

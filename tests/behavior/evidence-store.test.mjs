@@ -10,6 +10,7 @@ import { persistGitRepoSnapshot } from "../../.tmp/build/src/app/index.js";
 import {
   applyStorageMigrations,
   createEvidenceStorageRepositories,
+  createIndexingStorageRepositories,
   createStorageRepositories,
   storageMigrationReferences
 } from "../../.tmp/build/src/core/storage/index.js";
@@ -32,7 +33,12 @@ function withMigratedDatabase(fn) {
 
   try {
     applyStorageMigrations(database, migrationSources(), () => now);
-    fn(database, createStorageRepositories(database), createEvidenceStorageRepositories(database));
+    fn(
+      database,
+      createStorageRepositories(database),
+      createEvidenceStorageRepositories(database),
+      createIndexingStorageRepositories(database)
+    );
   } finally {
     database.close();
     rmSync(dir, { recursive: true, force: true });
@@ -91,11 +97,12 @@ function execGit(repoPath, args) {
 
 test("snapshot evidence persists allowed source records and privacy-safe rejections", () => {
   withGitRepo((repoPath) => {
-    withMigratedDatabase((database, repositories, evidenceRepositories) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
       const result = persistGitRepoSnapshot({
         database,
         repositories,
         evidenceRepositories,
+        indexingRepositories,
         rootPath: repoPath,
         projectId: "project-1",
         repoId: "repo-1",
@@ -136,11 +143,12 @@ test("snapshot evidence persists allowed source records and privacy-safe rejecti
 
 test("snapshot evidence persistence is idempotent for the same repo state", () => {
   withGitRepo((repoPath) => {
-    withMigratedDatabase((database, repositories, evidenceRepositories) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
       persistGitRepoSnapshot({
         database,
         repositories,
         evidenceRepositories,
+        indexingRepositories,
         rootPath: repoPath,
         projectId: "project-1",
         repoId: "repo-1",
@@ -150,6 +158,7 @@ test("snapshot evidence persistence is idempotent for the same repo state", () =
         database,
         repositories,
         evidenceRepositories,
+        indexingRepositories,
         rootPath: repoPath,
         projectId: "project-1",
         repoId: "repo-1",

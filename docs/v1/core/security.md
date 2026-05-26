@@ -44,6 +44,8 @@ Current implementation note: Git repo snapshots filter paths through Git ignore 
 
 Rejected ignored/private paths are persisted only as path-level `source_rejections` with reason, privacy status, repo snapshot identity, and hashes of allowed inputs. Grape does not read or persist the rejected file contents. Git-ignored untracked files and directories are skipped by default rather than enumerated, which avoids storing local-only path names such as ignored environment files, dependency folders, and `.grape/` runtime files.
 
+The current file-indexing foundation reads only files already present in the allowed snapshot file manifest. Before extracting symbols/imports it rejects symlinks, binary files, oversized files, unreadable files, and files whose current bytes no longer match the snapshot hash. It stores module/symbol names, import refs, hashes, line numbers, confidence, and discovery method, but not source excerpts or file contents.
+
 ## Redaction And Hash Rules
 
 - Source hashes are computed from original source bytes.
