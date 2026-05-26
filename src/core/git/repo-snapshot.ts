@@ -4,13 +4,14 @@ import { lstatSync, readFileSync, readlinkSync } from "node:fs";
 import path from "node:path";
 
 import { isIgnoredByPrivacyPolicy, loadPrivacyIgnorePolicy } from "../security/index.js";
+import { classifySourceKind, type SourceKind } from "./source-kind.js";
 
 export type WorktreeStatus = "clean" | "dirty" | "unknown";
 
 export interface SnapshotFileHash {
   path: string;
   sha256: string;
-  sourceKind: "source" | "test" | "rule" | "config" | "package" | "doc";
+  sourceKind: SourceKind;
 }
 
 export interface SnapshotFileRejection {
@@ -240,33 +241,6 @@ function readGitIgnoredPaths(rootPath: string, gitBinary: string, repoPaths: rea
   }
 
   return new Set(result.stdout.split("\0").filter(Boolean).map(normalizeRepoPath));
-}
-
-function classifySourceKind(repoPath: string): SnapshotFileHash["sourceKind"] {
-  const normalized = repoPath.toLowerCase();
-  const basename = path.posix.basename(normalized);
-
-  if (basename === "package.json" || basename.endsWith("-lock.json") || basename.endsWith(".lock")) {
-    return "package";
-  }
-  if (basename === "agents.md" || normalized.startsWith(".grape/")) {
-    return "rule";
-  }
-  if (normalized.includes(".test.") || normalized.includes(".spec.") || normalized.includes("__tests__/")) {
-    return "test";
-  }
-  if (
-    basename.startsWith("tsconfig") ||
-    basename.includes("config") ||
-    normalized.startsWith(".github/") ||
-    normalized.startsWith(".vscode/")
-  ) {
-    return "config";
-  }
-  if (basename.endsWith(".md") || normalized.startsWith("docs/")) {
-    return "doc";
-  }
-  return "source";
 }
 
 function runGit(rootPath: string, gitBinary: string, args: readonly string[]): string {

@@ -6,6 +6,12 @@ import path from "node:path";
 import test from "node:test";
 
 import { readLocalSourceExcerpts } from "../../.tmp/build/src/app/index.js";
+import {
+  selectedExactSourceSources,
+  selectedProofSourceExcerpts,
+  selectedRuleSourceExcerpts,
+  selectedSourceExcerpts
+} from "../../.tmp/build/src/core/compiler/index.js";
 
 test("local source excerpts require matching source bytes and safe repo paths", () => {
   const rootPath = mkdtempSync(path.join(tmpdir(), "grape-source-excerpts-"));
@@ -53,6 +59,67 @@ test("local source excerpts require matching source bytes and safe repo paths", 
     rmSync(rootPath, { recursive: true, force: true });
   }
 });
+
+test("rule excerpt selection is independent from generic exact-source excerpt cap", () => {
+  const sourceExcerpts = [
+    ...Array.from({ length: 6 }, (_, index) => sourceExcerpt(`src/source-${index}.ts`, "repository_file")),
+    sourceExcerpt("zz-rule.md", "rule_file")
+  ];
+
+  assert.deepEqual(
+    selectedSourceExcerpts(sourceExcerpts).map((excerpt) => excerpt.sourceRef),
+    ["src/source-0.ts", "src/source-1.ts", "src/source-2.ts", "src/source-3.ts", "src/source-4.ts"]
+  );
+  assert.deepEqual(
+    selectedRuleSourceExcerpts(sourceExcerpts).map((excerpt) => excerpt.sourceRef),
+    ["zz-rule.md"]
+  );
+  assert.deepEqual(
+    selectedProofSourceExcerpts(sourceExcerpts).map((excerpt) => excerpt.sourceRef),
+    ["src/source-0.ts", "src/source-1.ts", "src/source-2.ts", "src/source-3.ts", "src/source-4.ts", "zz-rule.md"]
+  );
+});
+
+test("rule source selection is independent from generic exact-source source cap", () => {
+  const sources = [
+    ...Array.from({ length: 6 }, (_, index) => sourceInput(`src/source-${index}.ts`, "repository_file")),
+    sourceInput("zz-rule.md", "rule_file")
+  ];
+
+  assert.deepEqual(
+    selectedExactSourceSources(sources).map((source) => source.sourceRef),
+    ["src/source-0.ts", "src/source-1.ts", "src/source-2.ts", "src/source-3.ts", "src/source-4.ts", "zz-rule.md"]
+  );
+});
+
+function sourceInput(sourceRef, sourceType) {
+  return {
+    sourceId: `source:${sourceRef}`,
+    sourceType,
+    sourceRef,
+    sourceHash: "a".repeat(64),
+    sourceScope: "committed",
+    trustClass: "trusted",
+    privacyStatus: "allowed",
+    redactionStatus: "not_needed"
+  };
+}
+
+function sourceExcerpt(sourceRef, sourceType) {
+  return {
+    proofId: `proof:${sourceRef}`,
+    sourceId: `source:${sourceRef}`,
+    sourceType,
+    sourceRef,
+    sourceHash: "a".repeat(64),
+    sourceScope: "committed",
+    excerpt: "content",
+    excerptHash: "b".repeat(64),
+    startLine: 1,
+    endLine: 1,
+    truncated: false
+  };
+}
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");

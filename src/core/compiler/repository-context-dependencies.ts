@@ -1,8 +1,8 @@
 import type { InMemoryContextDependencyShape } from "../../shared/index.js";
 import { hashStableJson } from "./repository-context-hash.js";
 import {
+  selectedProofSourceExcerpts,
   selectedSources,
-  selectedSourceExcerpts,
   selectedSymbolEdges,
   selectedSymbolNodes
 } from "./repository-context-selection.js";
@@ -46,7 +46,7 @@ export function dependencyManifest(
     });
   }
 
-  for (const excerpt of selectedSourceExcerpts(input.sourceExcerpts)) {
+  for (const excerpt of selectedProofSourceExcerpts(input.sourceExcerpts)) {
     dependencies.push({
       id: sourceProofDependencyId(excerpt.proofId),
       kind: "proof",

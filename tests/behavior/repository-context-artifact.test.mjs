@@ -53,6 +53,7 @@ function withGitRepo(fn) {
     execGit(dir, ["init", "-b", "main"]);
     mkdirSync(path.join(dir, "src"), { recursive: true });
     writeFileSync(path.join(dir, ".aiignore"), "private.ts\n");
+    writeFileSync(path.join(dir, "AGENTS.md"), "Always run the relevant tests before finishing.\n");
     writeFileSync(path.join(dir, "package.json"), "{\"name\":\"artifact-fixture\"}\n");
     writeFileSync(path.join(dir, "package-lock.json"), "{\"lockfileVersion\":3}\n");
     writeFileSync(
@@ -69,7 +70,16 @@ function withGitRepo(fn) {
       ].join("\n")
     );
     writeFileSync(path.join(dir, "private.ts"), "export const privateToken = 'PRIVATE=value';\n");
-    execGit(dir, ["add", ".aiignore", "package.json", "package-lock.json", "src/app.ts", "src/lib.ts", "private.ts"]);
+    execGit(dir, [
+      "add",
+      ".aiignore",
+      "AGENTS.md",
+      "package.json",
+      "package-lock.json",
+      "src/app.ts",
+      "src/lib.ts",
+      "private.ts"
+    ]);
     execGit(dir, [
       "-c",
       "user.name=Grape Test",
@@ -153,9 +163,13 @@ test("repository artifact compiler derives a dependency-backed context artifact 
       const dependencyKinds = new Set(artifact.dependencyManifest.dependencies.map((dependency) => dependency.kind));
       const repoState = artifact.sections.find((section) => section.id === "repo-state");
       const sourceManifest = artifact.sections.find((section) => section.id === "source-manifest");
+      const activeRules = artifact.sections.find((section) => section.id === "active-project-rules");
       const exactEvidence = artifact.sections.find((section) => section.id === "exact-source-evidence");
       const symbolSummary = artifact.sections.find((section) => section.id === "symbol-summary");
       const blindSpots = artifact.sections.find((section) => section.id === "index-blind-spots");
+      const dependencyIds = new Set(
+        artifact.dependencyManifest.dependencies.map((dependency) => dependency.id)
+      );
 
       assert.equal(artifact.input.branch, "main");
       assert.equal(artifact.input.commit, snapshotResult.snapshot.commit);
@@ -165,6 +179,7 @@ test("repository artifact compiler derives a dependency-backed context artifact 
       assert.ok(dependencyKinds.has("repo_snapshot"));
       assert.ok(dependencyKinds.has("worktree_state"));
       assert.ok(dependencyKinds.has("source_file"));
+      assert.ok(dependencyKinds.has("rule"));
       assert.ok(dependencyKinds.has("config"));
       assert.ok(dependencyKinds.has("lockfile"));
       assert.ok(dependencyKinds.has("symbol"));
@@ -174,9 +189,17 @@ test("repository artifact compiler derives a dependency-backed context artifact 
       assert.equal(sourceManifest?.sourceRefs.includes("src/app.ts"), true);
       assert.equal(sourceManifest?.dependencyRefs.includes("repo-snapshot"), true);
       assert.match(sourceManifest?.body ?? "", /package-lock\.json/);
+      assert.equal(activeRules?.type, "pinned_rule");
+      assert.equal(activeRules?.pinned, true);
+      assert.equal(activeRules?.exactRequired, true);
+      assert.equal(activeRules?.sourceRefs.includes("AGENTS.md"), true);
+      assert.equal(activeRules?.proofRefs.every((proofRef) => proofRef.startsWith("proof:")), true);
+      assert.equal(activeRules?.dependencyRefs.every((dependencyRef) => dependencyIds.has(dependencyRef)), true);
+      assert.match(activeRules?.body ?? "", /Always run the relevant tests/);
       assert.equal(exactEvidence?.type, "code_span");
       assert.equal(exactEvidence?.exactRequired, true);
       assert.equal(exactEvidence?.sourceRefs.includes("src/app.ts"), true);
+      assert.equal(exactEvidence?.sourceRefs.includes("AGENTS.md"), false);
       assert.equal(exactEvidence?.proofRefs.every((proofRef) => proofRef.startsWith("proof:")), true);
       assert.equal(
         exactEvidence?.dependencyRefs.some((dependencyRef) => dependencyRef.startsWith("proof:")),

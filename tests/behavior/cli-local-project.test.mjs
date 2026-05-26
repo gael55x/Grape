@@ -122,6 +122,18 @@ test("cli init --connect bootstraps local .grape state and keeps it out of git s
 
 test("cli compile auto-bootstraps and writes inspectable context artifact files", () => {
   withGitRepo((repoPath) => {
+    writeFileSync(path.join(repoPath, "AGENTS.md"), "Prefer focused tests for changed behavior.\n");
+    execGit(repoPath, ["add", "AGENTS.md"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add project rules"
+    ]);
+
     const first = runCliJson(repoPath, [
       "compile",
       "--task",
@@ -137,6 +149,8 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(first.sessionId, "session-test");
     assert.equal(first.contextPackItems.some((item) => item.state === "NEW"), true);
     assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /# Grape Context Pack/);
+    assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Active Project Rules/);
+    assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Prefer focused tests/);
     assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Exact Source Evidence/);
     assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Proof: proof:/);
 
@@ -146,6 +160,12 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(
       artifactJson.artifact.sections.some(
         (section) => section.id === "exact-source-evidence" && section.proofRefs.length > 0
+      ),
+      true
+    );
+    assert.equal(
+      artifactJson.artifact.sections.some(
+        (section) => section.id === "active-project-rules" && section.pinned && section.proofRefs.length > 0
       ),
       true
     );
