@@ -175,3 +175,10 @@ Keep entries simple:
 - Summary: added migration-backed `symbol_nodes` and `symbol_edges`, a split indexing repository, deterministic module/symbol/import extraction for allowed snapshot files, and app-level snapshot persistence for index rows. The first extractor is intentionally lightweight and records confidence/discovery method instead of claiming a complete dependency graph.
 - Checks run: `npm run typecheck`; `npm run test:behavior`; `npm run check`; `npm run build`.
 - Risks/follow-ups: broad language parsing, FTS entries, exact symbol ranges, persisted skip diagnostics, dynamic import blind-spot reporting, and compiler use of indexed relationships remain required.
+
+### 2026-05-26 - Repository Artifact Compile Path
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added a repository-derived context artifact compiler and CLI fallback path. `grape compile --task <text>` now auto-bootstraps local state, captures/persists the current repo snapshot, compiles from source evidence and lightweight relationship indexes, prepares artifact files before durable send ledgers are committed, persists session-scoped diff rows, writes scaffold JSON/Markdown artifacts under `.grape/artifacts/`, and blocks obvious raw secrets before artifact output.
+- Checks run: `npm run typecheck`; focused behavior tests; `npm run check`; `npm run build`.
+- Risks/follow-ups: the JSON/Markdown files are still scaffold `InMemoryContextArtifactShape` outputs, not final V1 artifact schema. MCP stdio, exact-span high-risk policies, stronger secret/redaction scanning, restore lookup, and broader inspection commands remain required. Risk overlays intentionally return unsafe output until exact spans exist.

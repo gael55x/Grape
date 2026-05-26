@@ -162,7 +162,7 @@ function artifact(artifactId, overrides = {}) {
   };
 }
 
-function build(database, repositories, artifactInput, turn = 1) {
+function build(database, repositories, artifactInput, turn = 1, overrides = {}) {
   return buildDurableContext({
     database,
     repositories,
@@ -172,7 +172,8 @@ function build(database, repositories, artifactInput, turn = 1) {
     artifact: artifactInput,
     fixture: "clean-typescript-app",
     turn,
-    now
+    now,
+    ...overrides
   });
 }
 
@@ -284,5 +285,26 @@ test("durable context build rolls back artifact and ledger writes on failure", (
     assert.equal(repositories.contextArtifacts.get("artifact-1"), undefined);
     assert.deepEqual(repositories.contextSentItems.listBySession("session-1"), []);
     assert.deepEqual(repositories.contextPackItems.listBySession("session-1"), []);
+  });
+});
+
+test("durable context build rolls back ledger writes when prepared output is blocked", () => {
+  withMigratedDatabase((database, repositories) => {
+    insertBaseGraph(repositories);
+
+    assert.throws(
+      () =>
+        build(database, repositories, artifact("artifact-1"), 1, {
+          prepareOutput() {
+            throw new Error("output blocked");
+          }
+        }),
+      /output blocked/
+    );
+
+    assert.equal(repositories.contextArtifacts.get("artifact-1"), undefined);
+    assert.deepEqual(repositories.contextSentItems.listBySession("session-1"), []);
+    assert.deepEqual(repositories.contextPackItems.listBySession("session-1"), []);
+    assert.deepEqual(repositories.omittedContextItems.listBySession("session-1"), []);
   });
 });

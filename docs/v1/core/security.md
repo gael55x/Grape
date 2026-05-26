@@ -46,6 +46,8 @@ Rejected ignored/private paths are persisted only as path-level `source_rejectio
 
 The current file-indexing foundation reads only files already present in the allowed snapshot file manifest. Before extracting symbols/imports it rejects symlinks, binary files, oversized files, unreadable files, and files whose current bytes no longer match the snapshot hash. It stores module/symbol names, import refs, hashes, line numbers, confidence, and discovery method, but not source excerpts or file contents.
 
+The current CLI compile path runs a basic artifact-level secret scan before writing JSON or Markdown artifacts. The scanner blocks obvious raw secret assignments, private-key blocks, and AWS access-key IDs. This is a baseline guard for scaffold artifacts, not a complete redaction engine or proof-span scanner.
+
 ## Redaction And Hash Rules
 
 - Source hashes are computed from original source bytes.

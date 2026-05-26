@@ -1,4 +1,6 @@
 import type { LocalProjectConfig } from "./config.js";
+import type { InMemoryTokenSavingsMetric } from "../../core/diff/index.js";
+import type { InMemoryContextPackItemShape } from "../../shared/index.js";
 
 export type DiagnosticStatus = "pass" | "warn" | "fail";
 
@@ -68,4 +70,37 @@ export interface McpConnectionGuide {
   readonly args: readonly ["mcp", "--stdio"];
   readonly transport: "stdio";
   readonly note: string;
+}
+
+export interface CompileLocalContextInput {
+  readonly rootPath: string;
+  readonly task: string;
+  readonly taskType?: string;
+  readonly riskOverlays?: string;
+  readonly sessionId?: string;
+  readonly now?: string;
+  readonly gitBinary?: string;
+  readonly migrationsDir?: string;
+}
+
+export interface CompileLocalContextResult {
+  readonly rootPath: string;
+  readonly projectId: string;
+  readonly repoId: string;
+  readonly sessionId: string;
+  readonly taskId: string;
+  readonly artifactId: string;
+  readonly artifactHash: string;
+  readonly dependencyManifestHash: string;
+  readonly branch: string;
+  readonly headCommit: string;
+  readonly dirtyWorktree: boolean;
+  readonly contextPackItems: readonly InMemoryContextPackItemShape[];
+  readonly omittedItemCount: number;
+  readonly sentItemCount: number;
+  readonly tokenMetric: InMemoryTokenSavingsMetric;
+  readonly warnings: readonly string[];
+  readonly unsafeReasons: readonly string[];
+  readonly artifactJsonPath: string;
+  readonly artifactMarkdownPath: string;
 }

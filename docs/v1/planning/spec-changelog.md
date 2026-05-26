@@ -34,3 +34,4 @@ Each entry should include:
 - Clarified the implementation contract for snapshot-derived evidence storage: allowed files become source records, rejected ignored/private/unreadable paths become source-rejection records, and rejected file contents remain unread.
 - Added an explicit implementation need for `symbol_nodes` and `symbol_edges` through `0002_indexing_foundation.sql` so V1 has persisted file relationship tracking before repository-derived artifact compilation.
 - Clarified the current repository-derived compiler foundation as an in-memory artifact scaffold that consumes persisted snapshot/source/index records without claiming final V1 artifact output.
+- Clarified the CLI compile scaffold output path: current JSON/Markdown files are inspectable `InMemoryContextArtifactShape` artifacts, not the final V1 artifact schema.

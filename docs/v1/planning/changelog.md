@@ -49,3 +49,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added dedicated evidence storage repositories and snapshot source ingestion so setup/snapshot persistence stores allowed source records plus privacy-safe ignored/private source rejections.
 - Added the first persisted file-indexing foundation with module/symbol nodes and `contains`/`imports` edges for allowed snapshot files.
 - Added a repository-derived artifact compiler foundation that builds deterministic in-memory context artifacts from persisted snapshots, source evidence, and file relationship indexes.
+- Added `grape compile --task <text>` as a CLI fallback path that auto-bootstraps local state, compiles a repository-derived context pack, persists session diff rows, writes scaffold JSON/Markdown artifacts, and applies a basic artifact secret scan.

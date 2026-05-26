@@ -48,11 +48,14 @@ The current implementation includes the first CLI setup/debugging slice:
 
 - `grape help`
 - `grape init --connect`
+- `grape compile --task <text>`
 - `grape status`
 - `grape doctor`
 - `grape mcp --print-config`
 
 `grape init --connect` creates the local `.grape/` layout, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures and persists the first Git repo snapshot, persists allowed source records plus privacy-safe source rejections, persists lightweight file/symbol relationship index rows, and adds `.grape/` to `.git/info/exclude` so local Grape state is not committed.
+
+`grape compile --task <text>` auto-bootstraps local `.grape/` state if needed, captures the current Git snapshot, persists source evidence and the lightweight file index, compiles a repository-derived context artifact, runs session diffing, persists the durable context build, and writes inspectable JSON and Markdown under `.grape/artifacts/`. Supported options are `--task-type <type>`, `--risk <overlay,overlay>`, `--session <id>`, `--repo <path>`, and `--json`. Risk overlays currently return exit code `2` with an explicit unsafe reason until exact-span high-risk policies are implemented.
 
 `grape status` reports initialization, config, database, migration, branch, head commit, and worktree state. `grape doctor` reports setup diagnostics, Node runtime compatibility, migration state, dirty worktree state, and whether `.grape/` is locally excluded from Git.
 
