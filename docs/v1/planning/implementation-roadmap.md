@@ -93,9 +93,9 @@ No product code should start before the Documentation Foundation is complete. In
 
 ## Current Goal
 
-Alpha setup/bootstrap foundation, then Evidence Store.
+Alpha setup/bootstrap foundation, Evidence Store, and Symbol/File Index.
 
-Documentation Foundation, In-Memory Context Loop, Project Skeleton And Tooling, SQLite Schema And Migrations, Durable Context Build Proof, and Repo Snapshot And Worktree State are complete enough for the next core data-plane goal. The first product-shaped setup slice is now in progress so `grape init --connect`, `grape status`, `grape doctor`, and MCP connection guidance can exercise the existing storage and snapshot foundations before Evidence Store work is exposed through product flows.
+Documentation Foundation, In-Memory Context Loop, Project Skeleton And Tooling, SQLite Schema And Migrations, Durable Context Build Proof, Repo Snapshot And Worktree State, Evidence Store, and the first file-indexing foundation are complete enough for the next compiler/retrieval data-plane goal. The product-shaped setup slice now exercises local storage, snapshot, evidence, and indexing foundations before final context artifact compilation is exposed through CLI/MCP product flows.
 
 Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations now uses the built-in Node 22.5+ `node:sqlite` runtime path to avoid native package compilation.
 

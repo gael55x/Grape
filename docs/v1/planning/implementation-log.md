@@ -168,3 +168,10 @@ Keep entries simple:
 - Summary: added dedicated source/source-rejection storage repositories, a pure repo snapshot evidence collector, and app-level persistence so Git snapshots now store trusted allowed source records and privacy-safe rejection records for ignored/private/unreadable paths in the same snapshot transaction. Rejected file bytes are not read or persisted.
 - Checks run: `npm run typecheck`; `npm run test:behavior`; `npm run check`; `npm run build`.
 - Risks/follow-ups: dirty files are currently scoped from the dirty-path manifest as `unstaged`; staged and untracked source-scope splitting, proof-span validation, candidate extraction, and current-valid retrieval remain required.
+
+### 2026-05-25 - File Indexing Foundation
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added migration-backed `symbol_nodes` and `symbol_edges`, a split indexing repository, deterministic module/symbol/import extraction for allowed snapshot files, and app-level snapshot persistence for index rows. The first extractor is intentionally lightweight and records confidence/discovery method instead of claiming a complete dependency graph.
+- Checks run: `npm run typecheck`; `npm run test:behavior`; `npm run check`; `npm run build`.
+- Risks/follow-ups: broad language parsing, FTS entries, exact symbol ranges, persisted skip diagnostics, dynamic import blind-spot reporting, and compiler use of indexed relationships remain required.

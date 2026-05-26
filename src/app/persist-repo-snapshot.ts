@@ -5,6 +5,7 @@ import type { RepoSnapshot } from "../core/git/index.js";
 import { createGitRepoSnapshot } from "../core/git/index.js";
 import type {
   EvidenceStorageRepositories,
+  IndexingStorageRepositories,
   ProjectRecord,
   RepoRecord,
   RepoSnapshotRecord,
@@ -12,12 +13,14 @@ import type {
   WorktreeStateRecord
 } from "../core/storage/index.js";
 import { runStorageTransaction } from "../core/storage/index.js";
+import { persistFileIndex } from "./persist-file-index.js";
 import { persistSnapshotEvidence } from "./persist-snapshot-evidence.js";
 
 export interface PersistGitRepoSnapshotInput {
   readonly database: DatabaseSync;
   readonly repositories: StorageRepositories;
   readonly evidenceRepositories: EvidenceStorageRepositories;
+  readonly indexingRepositories: IndexingStorageRepositories;
   readonly rootPath: string;
   readonly now: string;
   readonly projectId?: string;
@@ -42,6 +45,13 @@ export interface PersistGitRepoSnapshotResult {
     readonly sourceRejectionsInserted: number;
     readonly sourcesSeen: number;
     readonly sourceRejectionsSeen: number;
+  };
+  readonly index: {
+    readonly nodesInserted: number;
+    readonly nodesSeen: number;
+    readonly edgesInserted: number;
+    readonly edgesSeen: number;
+    readonly skippedFiles: number;
   };
 }
 
@@ -70,6 +80,13 @@ export function persistGitRepoSnapshot(input: PersistGitRepoSnapshotInput): Pers
       snapshot,
       now: input.now
     });
+    const index = persistFileIndex({
+      evidenceRepositories: input.evidenceRepositories,
+      indexingRepositories: input.indexingRepositories,
+      projectId,
+      snapshot,
+      now: input.now
+    });
 
     return {
       projectId,
@@ -83,7 +100,8 @@ export function persistGitRepoSnapshot(input: PersistGitRepoSnapshotInput): Pers
         repoSnapshot,
         worktreeState
       },
-      evidence
+      evidence,
+      index
     };
   });
 }

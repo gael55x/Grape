@@ -47,3 +47,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added a conservative local privacy ignore policy for repo snapshots so `.ignore`, `.cursorignore`, `.aiignore`, `.grapeignore`, and Git ignored paths are filtered before file bytes are read.
 - Added the V1 implementation status matrix at `docs/v1/planning/implementation-status.md`.
 - Added dedicated evidence storage repositories and snapshot source ingestion so setup/snapshot persistence stores allowed source records plus privacy-safe ignored/private source rejections.
+- Added the first persisted file-indexing foundation with module/symbol nodes and `contains`/`imports` edges for allowed snapshot files.

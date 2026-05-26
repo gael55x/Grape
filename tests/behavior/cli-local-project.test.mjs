@@ -6,7 +6,10 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
-import { createEvidenceStorageRepositories } from "../../.tmp/build/src/core/storage/index.js";
+import {
+  createEvidenceStorageRepositories,
+  createIndexingStorageRepositories
+} from "../../.tmp/build/src/core/storage/index.js";
 
 const cliPath = path.join(process.cwd(), ".tmp/build/src/cli/index.js");
 
@@ -78,6 +81,7 @@ test("cli init --connect bootstraps local .grape state and keeps it out of git s
     assert.match(readFileSync(path.join(repoPath, ".git", "info", "exclude"), "utf8"), /\.grape\//);
     assert.equal(execGit(repoPath, ["status", "--porcelain=v1"]), "");
     assert.deepEqual(localSourceRejectionRefs(repoPath).filter((sourceRef) => sourceRef.startsWith(".grape/")), []);
+    assert.deepEqual(localIndexedPaths(repoPath).filter((sourceRef) => sourceRef.startsWith(".grape/")), []);
 
     const status = runCliJson(repoPath, ["status"]);
     assert.equal(status.initialized, true);
@@ -101,6 +105,20 @@ function localSourceRejectionRefs(repoPath) {
   const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
   try {
     return createEvidenceStorageRepositories(database).sourceRejections.listAll().map((row) => row.sourceRef);
+  } finally {
+    database.close();
+  }
+}
+
+function localIndexedPaths(repoPath) {
+  const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
+  try {
+    const rows = database
+      .prepare("SELECT snapshot_id FROM repo_snapshots ORDER BY created_at DESC LIMIT 1")
+      .all();
+    const snapshotId = rows[0]?.snapshot_id;
+    if (!snapshotId) return [];
+    return createIndexingStorageRepositories(database).symbolNodes.listBySnapshot(String(snapshotId)).map((row) => row.path);
   } finally {
     database.close();
   }
