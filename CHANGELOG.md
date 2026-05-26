@@ -45,3 +45,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added artifact inspection through `grape artifacts`, `grape artifacts --artifact <id>`, and MCP `grape_get_artifact`.
 - Added branch-switch invalidation for explicit session reuse in CLI and MCP context compilation, returning `INVALIDATE_PREVIOUS` for stale previous-branch context.
 - Added bounded exact-source evidence sections with deterministic proof refs to repository-derived scaffold context artifacts.
+- Added session reset recovery through CLI `--reset-session` and MCP `resetSession: true`, returning `INVALIDATE_PREVIOUS` and forcing full current resend for reused sessions.

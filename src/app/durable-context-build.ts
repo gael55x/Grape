@@ -35,6 +35,7 @@ export interface DurableContextBuildInput {
   readonly now: string;
   readonly sessionUpdate?: ContextSessionCompileStateUpdate;
   readonly sessionInvalidation?: DurableSessionInvalidation;
+  readonly sessionReset?: DurableSessionReset;
   readonly prepareOutput?: (preview: DurableContextBuildPreview) => void;
 }
 
@@ -44,6 +45,11 @@ export interface DurableSessionInvalidation {
   readonly nextBranch: string;
   readonly previousHeadCommit: string;
   readonly nextHeadCommit: string;
+}
+
+export interface DurableSessionReset {
+  readonly resetId: string;
+  readonly reason: "agent_session_reset";
 }
 
 export interface DurableContextBuildResult {
@@ -91,6 +97,17 @@ export function buildDurableContext(input: DurableContextBuildInput): DurableCon
       });
     }
 
+    if (input.sessionReset) {
+      input.repositories.sessionEvents.insert({
+        eventId: `${input.artifact.artifactId}:session_reset`,
+        sessionId: input.sessionId,
+        eventType: "session_invalidated",
+        reason: "session_reset",
+        metadataJson: JSON.stringify(input.sessionReset),
+        createdAt: input.now
+      });
+    }
+
     input.repositories.sessionEvents.insert({
       eventId: `${input.artifact.artifactId}:build_started`,
       sessionId: input.sessionId,
@@ -105,18 +122,28 @@ export function buildDurableContext(input: DurableContextBuildInput): DurableCon
     const activePriorItems = priorSentItems.filter(
       (item) => !alreadyInvalidatedSentItemIds.has(item.sentItemId)
     );
-    const stalePriorItems = activePriorItems.filter(
-      (item) =>
-        item.dependencyManifestHash !== input.artifact.dependencyManifest.manifestHash
-    );
-    const currentPriorItems = activePriorItems.filter(
-      (item) => item.dependencyManifestHash === input.artifact.dependencyManifest.manifestHash
-    );
+    const stalePriorItems = input.sessionReset
+      ? activePriorItems
+      : activePriorItems.filter(
+          (item) =>
+            item.dependencyManifestHash !== input.artifact.dependencyManifest.manifestHash
+        );
+    const currentPriorItems = input.sessionReset
+      ? []
+      : activePriorItems.filter(
+          (item) => item.dependencyManifestHash === input.artifact.dependencyManifest.manifestHash
+        );
 
     persistArtifact(input);
 
     const invalidationItems = stalePriorItems.map((item) =>
-      createInvalidationPackItem(input, item.sentItemId, item.sectionId, item.contentHash)
+      createInvalidationPackItem(
+        input,
+        item.sentItemId,
+        item.sectionId,
+        item.contentHash,
+        input.sessionReset ? "session_reset" : "dependency_manifest_changed"
+      )
     );
     const diff = createInMemoryContextDiff({
       sessionId: input.sessionId,

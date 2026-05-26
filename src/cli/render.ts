@@ -36,6 +36,7 @@ export function helpText(): string {
     "  --task-type <type>          Set task type for compile (default: analysis)",
     "  --risk <a,b>                Add compile risk overlays",
     "  --session <id>              Reuse a context session for diffing",
+    "  --reset-session             Force full resend for a reused compile session",
     "  --token <restore_token>     Restore an omitted context item",
     "  --artifact <id>             Inspect one context artifact",
     "  --json                      Emit machine-readable JSON"

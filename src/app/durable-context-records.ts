@@ -57,7 +57,8 @@ export function createInvalidationPackItem(
   input: DurableContextBuildInput,
   previousItemId: string,
   sectionId: string,
-  contentHash: string
+  contentHash: string,
+  reason: "dependency_manifest_changed" | "session_reset"
 ): InMemoryContextPackItemShape {
   return {
     itemId: `${input.sessionId}:${input.artifact.artifactId}:invalidate:${previousItemId}`,
@@ -66,11 +67,14 @@ export function createInvalidationPackItem(
     sectionId,
     state: "INVALIDATE_PREVIOUS",
     title: "Invalidate previous context",
-    body: `Previously sent context item ${previousItemId} is stale for this dependency manifest.`,
+    body: invalidationBody(previousItemId, reason),
     contentHash,
     previousItemId,
     pinned: false,
-    warnings: ["previous_context_invalidated"]
+    warnings: [
+      "previous_context_invalidated",
+      reason === "session_reset" ? "session_reset_forced_full_resend" : "dependency_manifest_changed"
+    ]
   };
 }
 
@@ -99,12 +103,19 @@ export function toContextSentItem(
     lastDiffState: item.state,
     omitReason: item.safeOmissionReason,
     restoreHint: item.restoreToken,
-    sessionResetId: undefined,
+    sessionResetId: input.sessionReset?.resetId,
     firstSentAt: previous?.firstSentAt ?? input.now,
     lastSentAt: input.now,
     sendCount: (previous?.sendCount ?? 0) + 1,
     tokenCount: estimateTextTokens(item.body)
   };
+}
+
+function invalidationBody(previousItemId: string, reason: "dependency_manifest_changed" | "session_reset"): string {
+  if (reason === "session_reset") {
+    return `Previously sent context item ${previousItemId} is invalid because the agent session was reset.`;
+  }
+  return `Previously sent context item ${previousItemId} is stale for this dependency manifest.`;
 }
 
 export function toOmittedContextItem(

@@ -120,6 +120,12 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
       });
 
       assertArtifactTextHasNoSecrets(JSON.stringify(artifact), "context artifact");
+      const sessionReset = input.resetSession && session.existed
+        ? {
+            resetId: `reset:${artifact.artifactId}`,
+            reason: "agent_session_reset" as const
+          }
+        : undefined;
 
       const turn = repositories.sessionEvents
         .listBySession(sessionId)
@@ -157,6 +163,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
                 nextHeadCommit: snapshotResult.snapshot.commit
               }
             : undefined,
+        sessionReset,
         prepareOutput(preview) {
           const renderInput = {
             artifact,
@@ -183,7 +190,8 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         snapshotResult,
         build,
         artifact,
-        files
+        files,
+        sessionResetId: sessionReset?.resetId
       };
     }
   });
@@ -209,7 +217,8 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     warnings: value.artifact.warnings,
     unsafeReasons: value.artifact.unsafeReasons,
     artifactJsonPath: value.files.jsonPath,
-    artifactMarkdownPath: value.files.markdownPath
+    artifactMarkdownPath: value.files.markdownPath,
+    sessionResetId: value.sessionResetId
   };
 }
 

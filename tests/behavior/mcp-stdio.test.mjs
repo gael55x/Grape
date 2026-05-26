@@ -290,6 +290,59 @@ test("mcp grape_get_context invalidates prior sent context when a session switch
   });
 });
 
+test("mcp grape_get_context resetSession forces full resend for a reused session", () => {
+  withGitRepo((repoPath) => {
+    runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-reset-session"
+          }
+        }
+      },
+      {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-reset-session"
+          }
+        }
+      }
+    ]);
+
+    const reset = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-reset-session",
+            resetSession: true
+          }
+        }
+      }
+    ])[0].result.structuredContent;
+
+    assert.match(reset.sessionResetId, /^reset:/);
+    assert.equal(reset.diffSummary.invalidatedItems > 0, true);
+    assert.equal(reset.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), true);
+    assert.equal(reset.contextPackItems.some((item) => item.state === "NEW"), true);
+    assert.equal(reset.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), false);
+  });
+});
+
 test("mcp grape_get_context exposes unsafe compile mode for risk overlays", () => {
   withGitRepo((repoPath) => {
     const responses = runMcp(repoPath, [

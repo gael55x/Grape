@@ -183,6 +183,22 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(artifactDetail.dependencies.length > 0, true);
     assert.match(artifactDetail.artifactFiles.json, /^\.grape\//);
     assert.equal(path.isAbsolute(artifactDetail.artifactFiles.json), false);
+
+    const reset = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository entry points",
+      "--session",
+      "session-test",
+      "--reset-session"
+    ]);
+
+    assert.equal(reset.sessionId, "session-test");
+    assert.match(reset.sessionResetId, /^reset:/);
+    assert.equal(reset.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), true);
+    assert.equal(reset.contextPackItems.some((item) => item.state === "NEW"), true);
+    assert.equal(reset.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), false);
+    assert.equal(localContextArtifactCount(repoPath), 3);
   });
 });
 
