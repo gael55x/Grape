@@ -1,7 +1,9 @@
 import {
+  buildContextPackSummaryCompressionArtifact,
   buildRuleDigestCompressionArtifact,
   buildSymbolOutlineCompressionArtifact
 } from "../../core/compression/index.js";
+import type { ContextPackSummarySentItemInput } from "../../core/compression/index.js";
 import type { RepositoryArtifactCompressionInput } from "../../core/compiler/index.js";
 import type {
   CompressionStorageRepositories,
@@ -26,6 +28,23 @@ export interface PrepareLocalCompressionArtifactsInput {
   readonly symbolEdges: readonly RepositoryArtifactSymbolEdgeInput[];
   readonly now: string;
 }
+
+export interface PersistLocalContextPackSummaryCompressionInput {
+  readonly repositories: CompressionStorageRepositories;
+  readonly projectId: string;
+  readonly snapshotId: string;
+  readonly worktreeStateId: string;
+  readonly snapshot: ReturnType<typeof createGitRepoSnapshot>;
+  readonly sessionId: string;
+  readonly sentItems: readonly ContextPackSummarySentItemInput[];
+  readonly now: string;
+}
+
+type LocalCompressionArtifact = NonNullable<
+  | ReturnType<typeof buildSymbolOutlineCompressionArtifact>
+  | ReturnType<typeof buildRuleDigestCompressionArtifact>
+  | ReturnType<typeof buildContextPackSummaryCompressionArtifact>
+>;
 
 export function prepareLocalCompressionArtifacts(
   input: PrepareLocalCompressionArtifactsInput
@@ -80,11 +99,28 @@ export function prepareLocalCompressionArtifacts(
   }));
 }
 
+export function persistLocalContextPackSummaryCompressionArtifact(
+  input: PersistLocalContextPackSummaryCompressionInput
+): void {
+  const contextPackSummary = buildContextPackSummaryCompressionArtifact({
+    projectId: input.projectId,
+    repoId: input.snapshot.repoId,
+    snapshotId: input.snapshotId,
+    worktreeStateId: input.worktreeStateId,
+    sessionId: input.sessionId,
+    branch: input.snapshot.branch,
+    commit: input.snapshot.commit,
+    worktreeHash: input.snapshot.worktreeHash,
+    sentItems: input.sentItems,
+    createdAt: input.now
+  });
+
+  if (contextPackSummary) persistCompressionArtifact(input.repositories, contextPackSummary, input.now);
+}
+
 function persistCompressionArtifact(
   repositories: CompressionStorageRepositories,
-  artifact: NonNullable<
-    ReturnType<typeof buildSymbolOutlineCompressionArtifact> | ReturnType<typeof buildRuleDigestCompressionArtifact>
-  >,
+  artifact: LocalCompressionArtifact,
   now: string
 ): void {
   repositories.compressionArtifacts.upsert({

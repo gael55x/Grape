@@ -323,6 +323,13 @@ Keep entries simple:
 - Checks run: focused compression-cache and CLI behavior tests before full verification.
 - Risks/follow-ups: `context_pack_summary`, stale compression invalidation events, and safe budget pruning remain pending.
 
+### 2026-05-26 - Deterministic Context Pack Summary Cache
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added a deterministic `context_pack_summary` compression artifact builder and local compile persistence after durable pack writes. The cache is derived from latest active, non-compression sent ledger rows for the current branch/head and stores context-artifact input hashes without returning context bodies.
+- Checks run: focused compression-cache and CLI behavior tests before full verification.
+- Risks/follow-ups: the summary is cached but not rendered into artifacts until section-level compression invalidation avoids making no-change turns stale. Stale compression invalidation events and safe budget pruning remain pending.
+
 ### 2026-05-26 - Session Inspection CLI
 
 - Author/agent: Gaille Amolong / Codex

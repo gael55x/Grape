@@ -251,7 +251,11 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(localProofCount(repoPath) > 0, true);
     assert.equal(localClaimCount(repoPath) > 0, true);
     assert.equal(localCompressionArtifactCount(repoPath) > 0, true);
-    assert.deepEqual(localCompressionArtifactTypes(repoPath), ["rule_digest", "symbol_outline"]);
+    assert.deepEqual(localCompressionArtifactTypes(repoPath), [
+      "context_pack_summary",
+      "rule_digest",
+      "symbol_outline"
+    ]);
     const sessions = runCliJson(repoPath, ["sessions"]);
     assert.equal(sessions.sessions.length, 1);
     assert.equal(sessions.sessions[0].sessionId, "session-test");
@@ -294,6 +298,11 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE"), true);
     assert.equal(localContextArtifactCount(repoPath), 2);
+    assert.deepEqual(localCompressionArtifactTypes(repoPath), [
+      "context_pack_summary",
+      "rule_digest",
+      "symbol_outline"
+    ]);
 
     const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE").restoreId;
     const omitted = runCliJson(repoPath, ["omitted", "--session", "session-test"]);
@@ -730,9 +739,9 @@ function localCompressionArtifactTypes(repoPath) {
   const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
   try {
     const latestSnapshot = database.prepare("SELECT snapshot_id FROM repo_snapshots ORDER BY created_at DESC LIMIT 1").get();
-    return createCompressionStorageRepositories(database).compressionArtifacts
+    return [...new Set(createCompressionStorageRepositories(database).compressionArtifacts
       .listBySnapshot(String(latestSnapshot.snapshot_id))
-      .map((artifact) => artifact.artifactType)
+      .map((artifact) => artifact.artifactType))]
       .sort();
   } finally {
     database.close();
