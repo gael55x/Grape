@@ -195,19 +195,22 @@ async function runStatus(parsed: ParsedArgs): Promise<number> {
 }
 
 async function runDoctor(parsed: ParsedArgs): Promise<number> {
-  const usageError = rejectUnsupportedFlags(parsed, new Set(["--json", "--repo"]));
+  const usageError = rejectUnsupportedFlags(parsed, new Set(["--json", "--repo", "--privacy"]));
   if (usageError) return usageError;
 
   try {
     const { doctorLocalProject } = await import("../app/local-project/doctor.js");
-    const doctor = doctorLocalProject(repoPath(parsed));
+    const doctor = doctorLocalProject(repoPath(parsed), { privacyOnly: parsed.flags.has("--privacy") });
     if (parsed.flags.has("--json")) {
       writeJson(doctor);
       return doctor.overallStatus === "fail" ? exitCodes.stale : exitCodes.ok;
     }
 
+    const title = parsed.flags.has("--privacy")
+      ? `Grape privacy doctor: ${doctor.overallStatus}`
+      : `Grape doctor: ${doctor.overallStatus}`;
     write([
-      `Grape doctor: ${doctor.overallStatus}`,
+      title,
       "",
       ...doctor.checks.map((check) => `${statusLabel(check.status)} ${check.id}: ${check.message}`),
       ...renderProblems("Recovery", doctor.recoveryGuidance)

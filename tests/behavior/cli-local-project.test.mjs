@@ -93,6 +93,7 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.match(result.stdout, /grape proofs/);
   assert.match(result.stdout, /grape status/);
   assert.match(result.stdout, /grape doctor/);
+  assert.match(result.stdout, /grape doctor --privacy/);
   assert.match(result.stdout, /grape mcp --print-config/);
   assert.match(result.stdout, /grape mcp --stdio/);
 });
@@ -963,7 +964,7 @@ test("cli mcp --print-config emits the V1 stdio connection contract", () => {
 
 test("cli rejects unsupported flags instead of pretending commands are implemented", () => {
   withGitRepo((repoPath) => {
-    const result = runCli(repoPath, ["doctor", "--privacy"]);
+    const result = runCli(repoPath, ["doctor", "--export"]);
 
     assert.equal(result.status, 1);
     assert.match(result.stderr, /Unsupported option/);

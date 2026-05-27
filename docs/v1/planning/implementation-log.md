@@ -469,3 +469,10 @@ Keep entries simple:
 - Summary: added `grape sync` as the manual input-refresh fallback and `grape diff-context --task <text>` as the explicit compile-plus-session-diff fallback, both as thin CLI adapters over app-owned local-project services.
 - Checks run: focused CLI fallback/local-project behavior tests; `npm run check`; `npm run build`.
 - Risks/follow-ups: `grape sync` refreshes snapshot/evidence/index state but intentionally does not create artifacts, update sent ledgers, or promote durable claims.
+
+### 2026-05-27 - Privacy Doctor
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: implemented `grape doctor --privacy` as a privacy-focused diagnostic view over local-first defaults, `.grape/` Git exclusion, aggregate scanner rejection counts, ignored/private handling, and artifact secret-scan coverage without returning secret values or rejected-file bodies.
+- Checks run: focused CLI privacy/local-project behavior tests; `npm run check`; `npm run build`.
+- Risks/follow-ups: privacy export, purge, and scoped ignored-file approvals remain deferred until their data contracts are implemented.

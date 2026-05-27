@@ -75,3 +75,4 @@ Each entry should include:
 - Clarified Git source-scope behavior: allowed source evidence now distinguishes committed, staged, unstaged, and untracked files using Git porcelain status.
 - Clarified compiler section ownership: `sections/` assembles repository-derived artifact sections and `sections/builders/` owns individual section families.
 - Clarified CLI fallback behavior: `grape sync` refreshes local snapshot/evidence/index inputs without context output, and `grape diff-context --task <text>` names the explicit compile-plus-session-diff path.
+- Clarified privacy doctor behavior: `grape doctor --privacy` is a diagnostic-only command and does not approve private reads, export data, purge data, or reveal rejected-file contents.

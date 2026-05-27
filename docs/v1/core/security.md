@@ -46,6 +46,8 @@ Rejected ignored/private paths are persisted only as path-level `source_rejectio
 
 Git repo snapshots also reject oversized files and binary-looking files before they become source records. Oversized rejections store path, reason, source kind, and size only; binary rejections store path, reason, source kind, size, and a content hash, but no raw bytes. CLI setup/status output exposes aggregate scan diagnostics so developers and agents can see why files were skipped without receiving file bodies.
 
+`grape doctor --privacy` exposes the same privacy posture as diagnostics only: local-first defaults, `.grape/` Git exclusion, aggregate scanner rejection counts, ignored/private rejection handling, and artifact secret-scan coverage. It does not approve ignored/private reads, export raw local data, purge local data, or reveal rejected-file contents.
+
 The current file-indexing foundation reads only files already present in the allowed snapshot file manifest. Before extracting symbols/imports it normalizes repository separators, rejects traversal or drive-qualified repo paths, and rejects symlinks, binary files, oversized files, unreadable files, and files whose current bytes no longer match the snapshot hash. It stores module/symbol names, import refs, hashes, line numbers, confidence, and discovery method, but not source excerpts or file contents.
 
 The current FTS foundation reads only already-allowed source records, reuses the same path, size, symlink, binary, and source-hash guards as file indexing, and skips secret-looking text before inserting FTS rows. FTS result records expose source refs and hashes, not indexed bodies.

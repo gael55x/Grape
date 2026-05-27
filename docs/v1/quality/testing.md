@@ -27,7 +27,7 @@ Before editing code, agents must identify:
 
 No production behavior is complete without tests for the related state transition or invariant.
 
-The in-memory smoke harness guards file shape and obvious contract drift. Project Skeleton And Tooling adds stronger local gates: `npm run architecture:check` for import-boundary drift, `npm run storage:check` for migration-contract drift, `npm run typecheck` for TypeScript compilation, and `npm run test:behavior` for Node's built-in behavioral tests over compiled source. Contributors should install with `npm ci` so checks use the pinned toolchain from `package-lock.json`.
+The in-memory smoke harness guards file shape and obvious contract drift. Project Skeleton And Tooling adds stronger local gates: `npm run architecture:check` for import-boundary drift, `npm run storage:check` for migration-contract drift, `npm run typecheck` for TypeScript compilation, and `npm run test:behavior` for Node's built-in behavioral tests over compiled source. Behavior tests run with `--test-concurrency=1` because CLI/MCP integration tests create many temporary Git repositories and SQLite databases; deterministic storage behavior is more important than parallel test throughput. Contributors should install with `npm ci` so checks use the pinned toolchain from `package-lock.json`.
 
 ## Test Categories
 
