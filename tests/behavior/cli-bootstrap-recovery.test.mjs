@@ -128,3 +128,16 @@ test("cli compile auto-repairs repairable partial bootstrap config", () => {
     assert.equal(execGit(repoPath, ["status", "--porcelain=v1"]), "");
   });
 });
+
+test("cli init repairs project-identity-incomplete partial config", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, ".grape"), { recursive: true });
+    writeFileSync(path.join(repoPath, ".grape", "config.json"), "{}\n");
+
+    const repaired = runCliJson(repoPath, ["init", "--connect"]);
+
+    assert.equal(repaired.configStatus, "repaired");
+    assert.equal(readFileSync(repaired.configBackupPath, "utf8"), "{}\n");
+    assert.equal(JSON.parse(readFileSync(path.join(repoPath, ".grape", "config.json"), "utf8")).schemaVersion, 1);
+  });
+});

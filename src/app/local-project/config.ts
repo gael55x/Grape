@@ -180,6 +180,9 @@ export function readLocalProjectConfig(configPath: string): LocalProjectConfig |
   if (!existsSync(configPath)) return undefined;
 
   const parsed = JSON.parse(readFileSync(configPath, "utf8")) as Partial<LocalProjectConfig>;
+  if (parsed.schemaVersion === undefined) {
+    throw new Error("Grape config is missing schema version.");
+  }
   if (parsed.schemaVersion !== localProjectSchemaVersion) {
     throw new Error(`unsupported Grape config schema version: ${String(parsed.schemaVersion)}`);
   }
@@ -194,7 +197,10 @@ export function isRepairableLocalProjectConfigError(error: unknown): boolean {
   if (error instanceof SyntaxError) return true;
 
   const message = errorMessage(error);
-  return message === "Grape config is missing project identity.";
+  return (
+    message === "Grape config is missing schema version." ||
+    message === "Grape config is missing project identity."
+  );
 }
 
 export function writeLocalProjectConfig(
