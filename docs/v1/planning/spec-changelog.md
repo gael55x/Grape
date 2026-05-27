@@ -71,3 +71,4 @@ Each entry should include:
 - Clarified compiler repository ownership: dependency manifests, proof refs, integrity validation, rendering contracts, and selection logic live in focused compiler subdirectories under `src/core/compiler/repository/` while the public export boundary remains `src/core/compiler/index.ts`.
 - Clarified repo scanner safety behavior: oversized and binary-looking files are rejected before source evidence ingestion, persisted as source rejections with metadata hashes/sizes only, and summarized through setup/status scan diagnostics.
 - Clarified Git snapshot module ownership: Git orchestration remains in `repo-snapshot.ts`, while file manifest hashing, source-kind classification, and scanner rejection policy live in `file-manifest.ts`.
+- Clarified cross-platform indexing path behavior: file-index path helpers normalize separators and reject traversal or drive-qualified repo paths before file reads.
