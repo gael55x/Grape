@@ -7,7 +7,7 @@ import type {
   ContextPackItemShape
 } from "../../../../shared/index.js";
 import type { ContextPackBudgetResult } from "../../pack/context-budget.js";
-import type { RepositoryContextRenderInput } from "../render-types.js";
+import type { RepositoryContextRenderInput } from "../rendering/types.js";
 
 export function renderRepositoryContextPackMarkdown(input: RepositoryContextRenderInput): string {
   return [

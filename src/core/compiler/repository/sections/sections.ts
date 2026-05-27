@@ -11,9 +11,9 @@ import {
   selectedSymbolEdges,
   selectedSymbolNodes,
   sourceTypeCounts
-} from "../selection.js";
+} from "../selection/index.js";
 import { selectedPolicyExactSourceExcerpts } from "../policy/risk.js";
-import { sourceProofDependencyId, sourceProofRefs } from "../source-proofs.js";
+import { sourceProofDependencyId, sourceProofRefs } from "../proofs/source-proofs.js";
 import { taskRetrievalSection } from "./task-retrieval.js";
 import type { CompileRepositoryContextArtifactInput } from "../types.js";
 

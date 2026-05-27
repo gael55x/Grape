@@ -4,8 +4,8 @@ import type {
   InMemoryContextDependencyShape,
   InMemoryContextRequest,
   InMemoryContextSectionShape
-} from "../../../shared/index.js";
-import { hashStableJson, hashStableParts } from "./hash.js";
+} from "../../../../shared/index.js";
+import { hashStableJson, hashStableParts } from "../hash.js";
 
 export interface RepositoryContextArtifactIntegrityInput {
   readonly artifact: InMemoryContextArtifactShape;
