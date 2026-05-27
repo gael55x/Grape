@@ -69,3 +69,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added recovery guidance to status, doctor, unsafe compile, lock-conflict, stale, and privacy/redaction failure paths.
 - Added safe partial-bootstrap repair for malformed local `.grape/config.json`: status/doctor explain the issue, and init/compile back up the invalid config before writing a fresh one.
 - Added `grape bench --fixture <name>` for scripted fixture token-reduction benchmarking over the real local compile/diff path.
+- Hardened context-pack Markdown artifacts with artifact summary, diff counts, pack item input refs, omitted/restore metadata, artifact section summaries, dependency details, token/budget status, and warnings/safety fields.

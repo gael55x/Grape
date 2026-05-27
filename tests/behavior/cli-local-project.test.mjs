@@ -193,11 +193,20 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
       false
     );
     assert.equal("body" in firstPackItem, false);
-    assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /# Grape Context Pack/);
-    assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Active Project Rules/);
-    assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Prefer focused tests/);
-    assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Exact Source Evidence/);
-    assert.match(readFileSync(first.artifactMarkdownPath, "utf8"), /Proof: proof:/);
+    const artifactMarkdown = readFileSync(first.artifactMarkdownPath, "utf8");
+    assert.match(artifactMarkdown, /# Grape Context Pack/);
+    assert.match(artifactMarkdown, /## Artifact Summary/);
+    assert.match(artifactMarkdown, /Artifact format: grape\.context-pack\.v1/);
+    assert.match(artifactMarkdown, /Compile mode:/);
+    assert.match(artifactMarkdown, /## Diff Summary/);
+    assert.match(artifactMarkdown, /## Omitted And Restore/);
+    assert.match(artifactMarkdown, /## Artifact Sections/);
+    assert.match(artifactMarkdown, /## Warnings And Safety/);
+    assert.match(artifactMarkdown, /Input refs:/);
+    assert.match(artifactMarkdown, /Active Project Rules/);
+    assert.match(artifactMarkdown, /Prefer focused tests/);
+    assert.match(artifactMarkdown, /Exact Source Evidence/);
+    assert.match(artifactMarkdown, /Proof: proof:/);
 
     const artifactJson = JSON.parse(readFileSync(first.artifactJsonPath, "utf8"));
     const scaffoldJsonPath = first.artifactJsonPath.replace(/\.json$/, ".scaffold.json");
