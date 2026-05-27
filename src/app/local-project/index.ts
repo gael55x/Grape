@@ -23,5 +23,6 @@ export * from "./setup-types.js";
 export * from "./source-excerpts.js";
 export * from "./stale.js";
 export * from "./status.js";
+export * from "./sync.js";
 export * from "./storage.js";
 export * from "./types.js";

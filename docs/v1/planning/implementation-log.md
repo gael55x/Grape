@@ -462,3 +462,10 @@ Keep entries simple:
 - Summary: moved repository-derived compiler section builders into `src/core/compiler/repository/sections/builders/`, leaving `sections/sections.ts` as the section assembly point and `sections/dependencies.ts` as the section-local dependency-ref helper.
 - Checks run: focused compiler/artifact behavior tests; `npm run architecture:check`; `npm run docs:check`; `npm run check`; `npm run build`.
 - Risks/follow-ups: future section families should add a focused builder module instead of expanding the assembly file.
+
+### 2026-05-27 - CLI Fallback Commands
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added `grape sync` as the manual input-refresh fallback and `grape diff-context --task <text>` as the explicit compile-plus-session-diff fallback, both as thin CLI adapters over app-owned local-project services.
+- Checks run: focused CLI fallback/local-project behavior tests; `npm run check`; `npm run build`.
+- Risks/follow-ups: `grape sync` refreshes snapshot/evidence/index state but intentionally does not create artifacts, update sent ledgers, or promote durable claims.

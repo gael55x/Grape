@@ -4,10 +4,12 @@ import { runBench } from "./commands/bench.js";
 import { runClaims } from "./commands/claims.js";
 import { runCompile } from "./commands/compile.js";
 import { runConflicts } from "./commands/conflicts.js";
+import { runDiffContext } from "./commands/diff-context.js";
 import { runOmitted } from "./commands/omitted.js";
 import { runProofs } from "./commands/proofs.js";
 import { runSessions } from "./commands/sessions.js";
 import { runStale } from "./commands/stale.js";
+import { runSync } from "./commands/sync.js";
 import { exitCodes } from "./exit-codes.js";
 import { parseArgs, repoPath, unsupportedFlag, type ParsedArgs } from "./args.js";
 import {
@@ -15,6 +17,7 @@ import {
   helpText,
   initHelpText,
   renderProblems,
+  renderReasonCounts,
   statusLabel,
   write,
   writeError,
@@ -48,8 +51,12 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
       return exitCodes.ok;
     case "init":
       return runInit(parsed);
+    case "sync":
+      return runSync(parsed);
     case "compile":
       return runCompile(parsed);
+    case "diff-context":
+      return runDiffContext(parsed);
     case "artifacts":
       return runArtifacts(parsed);
     case "bench":
@@ -272,13 +279,6 @@ function renderInlineList(values: readonly string[]): string {
 function renderIndentedList(title: string, values: readonly string[]): string[] {
   if (values.length === 0) return [`${title}: none`];
   return [`${title}:`, ...values.map((value) => `    - ${value}`)];
-}
-
-function renderReasonCounts(counts: Readonly<Record<string, number>>): string {
-  const activeCounts = Object.entries(counts)
-    .filter(([, count]) => count > 0)
-    .map(([reason, count]) => `${reason}=${count}`);
-  return activeCounts.length === 0 ? "none" : activeCounts.join(", ");
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
