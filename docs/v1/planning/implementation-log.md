@@ -389,6 +389,6 @@ Keep entries simple:
 ### 2026-05-26 - Partial Bootstrap Config Repair
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: hardened local bootstrap recovery for malformed `.grape/config.json`. Status and doctor now identify repairable config damage separately from unsupported future schema versions; `grape init --connect` and compile auto-bootstrap back up repairable invalid configs before writing a fresh local config.
+- Summary: hardened local bootstrap recovery for malformed or incomplete `.grape/config.json`. Status and doctor now identify repairable config damage separately from unsupported future schema versions; `grape init --connect` and compile auto-bootstrap back up repairable invalid configs before writing a fresh local config.
 - Checks run: focused CLI behavior tests before full verification.
 - Risks/follow-ups: framework/package-manager detection, candidate rules, and broader partial-bootstrap recovery remain pending.
