@@ -215,3 +215,5 @@ This is still a projection from the repository-derived scaffold rather than the 
 - `artifact_hash_is_deterministic`
 - `manifest_hash_change_marks_artifact_dirty`
 - `mcp_context_pack_items_match_markdown_render`
+
+Current implementation coverage: `tests/behavior/context-artifact-contract.test.mjs` validates the public CLI JSON envelope, dependency manifest, artifact input refs, output section refs/content hashes, V1 context-pack item shape, absence of legacy `body` fields, and MCP Markdown parity for structured context-pack item IDs, kinds, refs, and content hashes. Existing CLI/compiler/diff tests cover high-risk exact-source gating, blocked-redaction restore prevention, deterministic artifact hashing, and manifest-hash invalidation. Broader durable-claim retrieval golden fixtures remain pending.
