@@ -122,8 +122,11 @@ test("mcp stdio lists implemented Grape tools", () => {
         "grape_get_stale_items",
         "grape_get_conflicts",
         "grape_get_status",
+        "grape_record_candidate",
         "grape_record_command_result",
-        "grape_record_test_result"
+        "grape_record_test_result",
+        "grape_record_user_decision",
+        "grape_request_user_confirmation"
       ]
     );
     const contextTool = responses[1].result.tools.find((tool) => tool.name === "grape_get_context");
@@ -189,6 +192,109 @@ test("mcp restricted write tools record temporary evidence without promoting cla
         }
       }
     ]);
+
+    const candidateText = "This repository should switch to pnpm next week";
+    const candidateResult = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_record_candidate",
+          arguments: {
+            sessionId: "mcp-write-session",
+            subject: "package-manager",
+            claimType: "manual_memory_edit",
+            claimText: candidateText,
+            scope: { branch: "main" },
+            reportedBy: "agent"
+          }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(candidateResult.isError, false);
+    assert.match(candidateResult.structuredContent.candidateId, /^candidate:/);
+    assert.equal(candidateResult.structuredContent.durable, false);
+    assert.equal(candidateResult.structuredContent.promoted, false);
+    assert.equal(Object.hasOwn(candidateResult.structuredContent, "rootPath"), false);
+    assert.equal(candidateResult.content[0].text.includes(repoPath), false);
+    assert.equal(candidateResult.content[0].text.includes(candidateText), false);
+
+    const claimsAfterCandidate = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "grape_get_claims",
+          arguments: { activeOnly: true }
+        }
+      }
+    ])[0].result;
+    assert.equal(claimsAfterCandidate.isError, false);
+    assert.equal(
+      claimsAfterCandidate.structuredContent.claims.some((claim) => claim.claimText.includes(candidateText)),
+      false
+    );
+
+    const prompt = "Should Grape treat AGENTS.md as pinned project guidance?";
+    const response = "Yes, keep AGENTS.md pinned when present.";
+    const decisionResult = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 3,
+        method: "tools/call",
+        params: {
+          name: "grape_record_user_decision",
+          arguments: {
+            sessionId: "mcp-write-session",
+            prompt,
+            promptHash: sha256(prompt),
+            response,
+            responseHash: sha256(response),
+            confirmationChannel: "mcp_user_confirmation",
+            confirmedByUser: true,
+            confirmedAt: "2026-05-26T00:00:02.000Z",
+            scope: { sourceRef: "AGENTS.md" },
+            reportedBy: "agent"
+          }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(decisionResult.isError, false);
+    assert.equal(decisionResult.structuredContent.sourceType, "user_message");
+    assert.equal(decisionResult.structuredContent.durable, false);
+    assert.deepEqual(decisionResult.structuredContent.redactedFields, ["prompt", "response"]);
+    assert.equal(decisionResult.content[0].text.includes(prompt), false);
+    assert.equal(decisionResult.content[0].text.includes(response), false);
+
+    const confirmationPrompt = "Confirm this decision before it can become durable evidence.";
+    const confirmationResult = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 4,
+        method: "tools/call",
+        params: {
+          name: "grape_request_user_confirmation",
+          arguments: {
+            sessionId: "mcp-write-session",
+            prompt: confirmationPrompt,
+            promptHash: sha256(confirmationPrompt),
+            scope: { subject: "AGENTS.md" },
+            reason: "durable decision requires direct confirmation",
+            reportedBy: "agent"
+          }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(confirmationResult.isError, false);
+    assert.match(confirmationResult.structuredContent.confirmationRequestId, /^confirmation:/);
+    assert.equal(confirmationResult.structuredContent.status, "requires_user_confirmation");
+    assert.equal(confirmationResult.structuredContent.durable, false);
+    assert.equal(confirmationResult.content[0].text.includes(confirmationPrompt), false);
 
     const command = "npm test -- --runInBand";
     const commandResult = runMcp(repoPath, [
@@ -339,6 +445,58 @@ test("mcp restricted write tools reject grape-observed authority from agents", (
 
     assert.equal(outsideCwd.isError, true);
     assert.match(outsideCwd.content[0].text, /cwd must be inside the repository root/);
+
+    const prompt = "Did the user approve this durable decision?";
+    const response = "yes";
+    const badDecision = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 3,
+        method: "tools/call",
+        params: {
+          name: "grape_record_user_decision",
+          arguments: {
+            sessionId: "mcp-observed-reject-session",
+            prompt,
+            promptHash: sha256(prompt),
+            response,
+            responseHash: sha256("different response"),
+            confirmationChannel: "mcp_user_confirmation",
+            confirmedByUser: true,
+            confirmedAt: "2026-05-26T00:00:02.000Z",
+            scope: { subject: "decision" },
+            reportedBy: "agent"
+          }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(badDecision.isError, true);
+    assert.match(badDecision.content[0].text, /responseHash does not match response/);
+    assert.equal(badDecision.content[0].text.includes(response), false);
+
+    const badCandidate = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 4,
+        method: "tools/call",
+        params: {
+          name: "grape_record_candidate",
+          arguments: {
+            sessionId: "mcp-observed-reject-session",
+            subject: "unsupported",
+            claimType: "manual_memory_edit",
+            claimText: "unsupported field must be rejected",
+            scope: {},
+            promoted: true,
+            reportedBy: "agent"
+          }
+        }
+      }
+    ])[0].result;
+
+    assert.equal(badCandidate.isError, true);
+    assert.match(badCandidate.content[0].text, /unsupported candidate argument: promoted/);
   });
 });
 

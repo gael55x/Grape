@@ -69,8 +69,11 @@ The current implementation includes the first stdio MCP server:
       "grape_get_stale_items",
       "grape_get_conflicts",
       "grape_get_status",
+      "grape_record_candidate",
       "grape_record_command_result",
-      "grape_record_test_result"
+      "grape_record_test_result",
+      "grape_record_user_decision",
+      "grape_request_user_confirmation"
     ],
     "note": "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
   }
@@ -88,8 +91,11 @@ The current implementation includes the first stdio MCP server:
 - `grape_get_stale_items`
 - `grape_get_conflicts`
 - `grape_get_status`
+- `grape_record_candidate`
 - `grape_record_command_result`
 - `grape_record_test_result`
+- `grape_record_user_decision`
+- `grape_request_user_confirmation`
 
 `grape_get_context` calls the same local-project compile service used by `grape compile --task <text>`. It auto-bootstraps local `.grape/` state when needed, captures the current repo snapshot, persists source/index inputs, resolves task source hints from lexical task terms plus `files`, `symbols`, and `tests` seed refs, persists deterministic `symbol_outline` compression cache records, compiles a repository-derived scaffold artifact with pinned active project rules, non-proof compression orientation, and bounded exact-source evidence prioritized toward selected allowed sources, projects it to the public V1 `ContextArtifact` shape, persists session diff rows, writes JSON/Markdown artifacts under `.grape/artifacts/`, and returns structured context-pack items plus rendered Markdown.
 
@@ -119,7 +125,13 @@ Unsafe or risky context outputs include `recoveryGuidance` so MCP consumers can 
 
 `grape_record_command_result` and `grape_record_test_result` persist agent-reported command/test observations as temporary `command_run` / `test_run` source evidence rows scoped to the current repo snapshot and an existing current context session. The adapter accepts the raw command only to verify `commandHash`; raw command, stdout, and stderr bodies are not persisted or returned. MCP callers cannot mint `observedRunId`, cannot self-declare `observedByGrape`, and cannot promote these rows to durable claims or proofs.
 
-The remaining V1 read tools and restricted write tools are still pending. They must reuse app services and storage/trust modules rather than embedding business logic in the MCP adapter.
+`grape_record_candidate` persists an agent-reported claim candidate as a non-durable `claim_candidates` row and links it to a temporary `assistant_response` source when the caller does not provide an existing current source. It returns candidate/source IDs only, not the raw claim text, and cannot promote the candidate to a durable claim.
+
+`grape_record_user_decision` persists direct-confirmation metadata as a temporary redacted `user_message` source row. The adapter accepts raw prompt/response text only to verify `promptHash` and `responseHash`; raw prompt and response bodies are not persisted or returned.
+
+`grape_request_user_confirmation` returns a deterministic non-durable confirmation request ID for a prompt hash and scope. It does not persist durable truth and tells the caller to collect direct user confirmation before calling `grape_record_user_decision`.
+
+The V1 MCP surface is now implemented as a local-first foundation. Remaining work is hardening final durable current-valid retrieval, broader proof types, and future Grape-observed command/test runners without allowing MCP writes to promote truth directly.
 
 ## Read Tool Contract
 
@@ -368,6 +380,27 @@ Rules:
 Write tools record evidence candidates or request direct confirmation. They cannot promote durable truth directly.
 
 ```ts
+interface GrapeRecordCandidateInput {
+  sessionId: string;
+  subject: string;
+  claimType: string;
+  claimText: string;
+  scope: Record<string, unknown>;
+  sourceId?: string;
+  reportedBy: "agent";
+}
+
+interface GrapeRecordCandidateOutput {
+  candidateId: string;
+  sourceId: string;
+  sourceType: string;
+  durable: false;
+  promoted: false;
+  inserted: boolean;
+  evidenceInserted: boolean;
+  warnings: string[];
+}
+
 interface GrapeRecordCommandResultInput {
   sessionId: string;
   command: string;
@@ -402,23 +435,58 @@ interface GrapeRecordObservationOutput {
 }
 
 interface GrapeRecordUserDecisionInput {
-  repoPath: string;
   sessionId: string;
-  subject: string;
+  prompt: string;
   promptHash: string;
+  response: string;
   responseHash: string;
-  confirmationChannel: "cli" | "mcp_prompt" | "local_ui";
+  confirmationChannel: "cli_prompt" | "mcp_user_confirmation" | "config_file" | "rule_file";
+  confirmedByUser: boolean;
   confirmedAt: string;
-  recordedBy: "direct_user_confirmation";
+  scope: Record<string, unknown>;
+  reportedBy: "agent";
+}
+
+interface GrapeRecordUserDecisionOutput {
+  evidenceId: string;
+  sourceId: string;
+  sourceType: "user_message";
+  sourceRef: string;
+  sourceHash: string;
+  durable: false;
+  observedBy: "agent_reported_user_decision";
+  inserted: boolean;
+  redactedFields: Array<"prompt" | "response">;
+  warnings: string[];
+}
+
+interface GrapeRequestUserConfirmationInput {
+  sessionId: string;
+  prompt: string;
+  promptHash: string;
+  scope: Record<string, unknown>;
+  reason?: string;
+  reportedBy: "agent";
+}
+
+interface GrapeRequestUserConfirmationOutput {
+  confirmationRequestId: string;
+  status: "requires_user_confirmation";
+  promptHash: string;
+  scope: Record<string, unknown>;
+  durable: false;
+  warnings: string[];
+  recoveryGuidance: string[];
 }
 ```
 
 Write rules:
 
+- MCP candidate writes create or link temporary evidence and persist only non-durable candidate rows.
 - MCP command/test write tools are agent-reported by definition and remain temporary scratch evidence in `sources`.
 - MCP callers cannot self-declare Grape-observed authority or mint `observedRunId`.
-- MCP command/test write tools require an existing current context session, so callers should call `grape_get_context` first.
-- Raw command, stdout, and stderr bodies are not persisted; only hashes and scoped metadata are stored.
+- MCP write tools require an existing current context session, so callers should call `grape_get_context` first.
+- Raw command, stdout, stderr, prompt, and response bodies are not persisted or returned; only hashes and scoped metadata are stored.
 - Only a local Grape command runner may create Grape-observed command/test evidence with an observed run ID.
 - A Grape-observed run must include command hash, cwd, exit code, stdout/stderr hashes, and timestamps, and it must be created outside the MCP adapter.
 - User decisions require direct confirmation with prompt hash, response hash, timestamp, and confirmation channel.

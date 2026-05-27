@@ -364,3 +364,10 @@ Keep entries simple:
 - Summary: added shared local-project recovery guidance for setup diagnostics, unsafe compile results, lock-conflict errors, stale restore paths, missing Git metadata, root mismatch, and privacy/redaction failures. CLI renders guidance in human/error output, and JSON/MCP surfaces include machine-readable guidance arrays.
 - Checks run: focused CLI/MCP behavior tests before full verification.
 - Risks/follow-ups: future privacy approval/export/purge flows and remaining MCP write tools must add matching recovery guidance when implemented.
+
+### 2026-05-26 - Restricted MCP Write Surface
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: completed the V1 restricted MCP write-tool foundation with `grape_record_candidate`, `grape_record_user_decision`, and `grape_request_user_confirmation`. Candidate writes link temporary `assistant_response` evidence to non-durable claim candidates, user decisions store redacted `user_message` evidence with prompt/response hashes only, and confirmation requests return non-durable request IDs with recovery guidance. The observation/candidate app services now share current-session validation so writes fail if the branch, head, or worktree state has changed since `grape_get_context`.
+- Checks run: typecheck before full verification.
+- Risks/follow-ups: these tools still do not promote durable truth. Grape-observed command/test runners and broader Trust Kernel promotion flows remain pending.

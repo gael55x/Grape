@@ -107,9 +107,9 @@ Implemented today:
 - active narrow claim inspection through `grape claims --active` and MCP `grape_get_claims`
 - proof inspection through `grape proofs`, `grape proofs --proof <id>`, and MCP `grape_get_proofs`
 - conflict inspection through `grape conflicts` and MCP `grape_get_conflicts`, reading recorded claim conflict edges without resolving them
-- first MCP stdio server: `grape mcp --stdio` supports `initialize`, `tools/list`, `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_rules`, `grape_get_omitted_item`, `grape_get_stale_items`, `grape_get_conflicts`, `grape_get_status`, `grape_record_command_result`, and `grape_record_test_result` over framed stdio
+- first MCP stdio server: `grape mcp --stdio` supports `initialize`, `tools/list`, `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_rules`, `grape_get_omitted_item`, `grape_get_stale_items`, `grape_get_conflicts`, `grape_get_status`, `grape_record_candidate`, `grape_record_command_result`, `grape_record_test_result`, `grape_record_user_decision`, and `grape_request_user_confirmation` over framed stdio
 - MCP rule inspection through `grape_get_rules`, returning current Git-visible, hash-verified, secret-scanned rule excerpts without absolute root paths
-- restricted MCP command/test result recording as temporary evidence rows without raw command/output bodies or durable claim promotion
+- restricted MCP candidate, command/test result, user-decision, and confirmation-request tools as temporary evidence/request surfaces without raw command/output/prompt/response persistence or durable claim promotion
 - omitted context restore lookup through `grape omitted --session <id> --token <restoreToken>` and `grape_get_omitted_item`
 - recovery guidance through `grape status`, `grape doctor`, unsafe compile output, lock-conflict errors, stale restore output, and privacy/redaction failures
 - TypeScript, behavior tests, storage checks, docs checks, and architecture-boundary checks
@@ -118,7 +118,7 @@ Not released yet:
 
 - npm package
 - full production CLI inspection surface
-- full MCP read/write tool surface
+- Grape-observed command/test runners for trusted execution evidence
 - full repository indexing
 - benchmark harness
 - compression cache implementation
@@ -211,7 +211,7 @@ grape stale
 grape conflicts
 ```
 
-`grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape sessions`, `grape stale`, `grape conflicts`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, and `grape omitted` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, stale-invalidation inspection, conflict-edge inspection, omitted-context restore, and the first MCP context retrieval path. MCP also exposes stale invalidation inspection through `grape_get_stale_items` and conflict inspection through `grape_get_conflicts`. Conflict detection/resolution, final artifact schema hardening, claim-linked proof inspection, and the full MCP write surface are not implemented yet.
+`grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape sessions`, `grape stale`, `grape conflicts`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, and `grape omitted` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, stale-invalidation inspection, conflict-edge inspection, omitted-context restore, and the first MCP context retrieval path. MCP also exposes stale invalidation inspection through `grape_get_stale_items`, conflict inspection through `grape_get_conflicts`, and the restricted V1 write surface through non-promoting candidate, command/test observation, user-decision, and confirmation-request tools. Conflict detection/resolution, final artifact schema hardening, claim-linked proof inspection, and broader durable proof types are not implemented yet.
 
 ## Development
 

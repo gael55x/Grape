@@ -4,17 +4,10 @@ import {
   buildAgentCommandObservationSource,
   buildAgentTestObservationSource
 } from "../../core/evidence/index.js";
-import { createGitRepoSnapshot } from "../../core/git/index.js";
-import {
-  createEvidenceStorageRepositories,
-  createIndexingStorageRepositories,
-  createStorageRepositories
-} from "../../core/storage/index.js";
-import { persistGitRepoSnapshot } from "../persist-repo-snapshot.js";
-import { ensureLocalProjectBootstrapped } from "./bootstrap.js";
-import { ensureLocalProjectLayout, readLocalProjectConfig } from "./config.js";
-import { assertSafeId, sha256 } from "./compile-ids.js";
-import { withMigratedLocalDatabase } from "./storage.js";
+import { assertArtifactTextHasNoSecrets } from "../../core/security/index.js";
+import { createEvidenceStorageRepositories } from "../../core/storage/index.js";
+import { sha256 } from "./compile-ids.js";
+import { withCurrentLocalContextSession } from "./write-session-context.js";
 
 export interface RecordLocalCommandResultInput {
   readonly rootPath: string;
@@ -66,71 +59,35 @@ function recordObservation(
   sourceType: "command_run" | "test_run"
 ): RecordLocalObservationResult {
   const now = input.now ?? new Date().toISOString();
-  const rootPath = path.resolve(input.rootPath);
-  assertSafeId("session id", input.sessionId);
   assertCommandInput(input);
 
-  ensureLocalProjectBootstrapped({
-    rootPath,
-    now,
-    gitBinary: input.gitBinary,
-    migrationsDir: input.migrationsDir
-  });
-
-  const snapshot = createGitRepoSnapshot({ rootPath, createdAt: now, gitBinary: input.gitBinary });
-  const layout = ensureLocalProjectLayout(snapshot.rootPath);
-  const config = readLocalProjectConfig(layout.configPath);
-  if (!config) throw new Error("Grape config is missing. Run grape init --connect.");
-  if (path.resolve(config.project.rootPath) !== snapshot.rootPath) {
-    throw new Error("Grape config root path does not match the current repository path.");
-  }
-
-  const cwd = normalizeRepoRelativePath(snapshot.rootPath, input.cwd, "cwd");
-  const testFiles =
-    sourceType === "test_run"
-      ? ((input as RecordLocalTestResultInput).testFiles ?? []).map((file) =>
-          normalizeRepoRelativePath(snapshot.rootPath, file, "test file")
-        )
-      : [];
-
-  const databaseResult = withMigratedLocalDatabase({
-    databasePath: layout.databasePath,
-    migrationsDir: input.migrationsDir,
-    now: () => now,
-    operation(database) {
-      const repositories = createStorageRepositories(database);
+  const databaseResult = withCurrentLocalContextSession(
+    {
+      rootPath: input.rootPath,
+      sessionId: input.sessionId,
+      now,
+      gitBinary: input.gitBinary,
+      migrationsDir: input.migrationsDir,
+      missingSessionMessage: "context session not found. Call grape_get_context before recording agent evidence.",
+      staleSessionMessage: "context session is stale. Call grape_get_context before recording agent evidence."
+    },
+    ({ database, context }) => {
       const evidenceRepositories = createEvidenceStorageRepositories(database);
-      const indexingRepositories = createIndexingStorageRepositories(database);
-      const snapshotResult = persistGitRepoSnapshot({
-        database,
-        repositories,
-        evidenceRepositories,
-        indexingRepositories,
-        rootPath: snapshot.rootPath,
-        projectId: config.project.projectId,
-        repoId: config.project.repoId,
-        gitBinary: input.gitBinary,
-        now
-      });
-      const session = repositories.contextSessions.get(input.sessionId);
-      if (!session) {
-        throw new Error("context session not found. Call grape_get_context before recording agent evidence.");
-      }
-      if (session.repoId !== config.project.repoId) throw new Error("context session repo does not match this project.");
-      if (
-        session.branchName !== snapshotResult.snapshot.branch ||
-        session.headCommitSha !== snapshotResult.snapshot.commit
-      ) {
-        throw new Error("context session is stale. Call grape_get_context before recording agent evidence.");
-      }
+      const cwd = normalizeRepoRelativePath(context.rootPath, input.cwd, "cwd");
+      const testFiles =
+        sourceType === "test_run"
+          ? ((input as RecordLocalTestResultInput).testFiles ?? []).map((file) =>
+              normalizeRepoRelativePath(context.rootPath, file, "test file")
+            )
+          : [];
 
       const observation =
         sourceType === "command_run"
           ? buildAgentCommandObservationSource({
-              ...baseObservationInput(input, config.project.projectId, config.project.repoId, snapshotResult, cwd, now)
+              ...baseObservationInput(input, context, cwd, now)
             })
           : buildAgentTestObservationSource({
-              ...baseObservationInput(input, config.project.projectId, config.project.repoId, snapshotResult, cwd, now),
+              ...baseObservationInput(input, context, cwd, now),
               passed: (input as RecordLocalTestResultInput).passed,
               testFramework: normalizedOptionalString((input as RecordLocalTestResultInput).testFramework),
               testFiles
@@ -138,10 +95,10 @@ function recordObservation(
       const inserted = evidenceRepositories.sources.insertOrIgnore(observation.source);
       return { observation, inserted };
     }
-  });
+  );
 
   return {
-    rootPath: snapshot.rootPath,
+    rootPath: databaseResult.context.rootPath,
     evidenceId: databaseResult.value.observation.source.sourceId,
     sourceId: databaseResult.value.observation.source.sourceId,
     sourceType,
@@ -158,20 +115,25 @@ function recordObservation(
 
 function baseObservationInput(
   input: RecordLocalCommandResultInput,
-  projectId: string,
-  repoId: string,
-  snapshotResult: ReturnType<typeof persistGitRepoSnapshot>,
+  context: {
+    readonly projectId: string;
+    readonly repoId: string;
+    readonly snapshotId: string;
+    readonly branch: string;
+    readonly commit: string;
+    readonly worktreeHash: string;
+  },
   cwd: string,
   now: string
 ) {
   return {
-    projectId,
-    repoId,
-    snapshotId: snapshotResult.snapshotId,
+    projectId: context.projectId,
+    repoId: context.repoId,
+    snapshotId: context.snapshotId,
     sessionId: input.sessionId,
-    branch: snapshotResult.snapshot.branch,
-    commit: snapshotResult.snapshot.commit,
-    worktreeHash: snapshotResult.snapshot.worktreeHash,
+    branch: context.branch,
+    commit: context.commit,
+    worktreeHash: context.worktreeHash,
     commandHash: normalizeSha256("commandHash", input.commandHash),
     cwd,
     exitCode: assertExitCode(input.exitCode),
@@ -189,6 +151,14 @@ function assertCommandInput(input: RecordLocalCommandResultInput | RecordLocalTe
   }
   const commandHash = normalizeSha256("commandHash", input.commandHash);
   if (sha256(input.command) !== commandHash) throw new Error("commandHash does not match command");
+  assertArtifactTextHasNoSecrets(
+    JSON.stringify({
+      command: input.command,
+      cwd: input.cwd,
+      testFiles: "testFiles" in input ? input.testFiles ?? [] : []
+    }),
+    "agent observation"
+  );
   normalizeSha256("stdoutHash", input.stdoutHash);
   normalizeSha256("stderrHash", input.stderrHash);
   assertExitCode(input.exitCode);

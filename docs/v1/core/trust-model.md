@@ -115,7 +115,7 @@ After proof validation, local compile creates claim candidates for the narrow cl
 - Branch-invalid, stale, contradicted, rejected, ignored, or secret-blocked claims must not be active context.
 - MCP write tools can record evidence candidates. They cannot call durable promotion directly.
 
-Current implementation note: MCP `grape_record_command_result` and `grape_record_test_result` persist agent-reported command/test observations as temporary `sources` rows only. They require an existing current context session, reject agent-minted Grape-observed run IDs, store command/output hashes and scoped metadata, and intentionally do not persist raw command/stdout/stderr bodies or create proof/claim rows.
+Current implementation note: MCP `grape_record_command_result` and `grape_record_test_result` persist agent-reported command/test observations as temporary `sources` rows only. `grape_record_candidate` creates a temporary `assistant_response` source when needed and links it to a non-durable `claim_candidates` row. `grape_record_user_decision` persists direct-confirmation metadata as a temporary redacted `user_message` source. `grape_request_user_confirmation` returns a non-durable confirmation request ID and does not persist truth. These tools require an existing current context session, reject agent-minted Grape-observed authority, store hashes/scoped metadata, and intentionally do not persist raw command/stdout/stderr/prompt/response bodies or create proof/claim rows.
 
 ## Current-Valid Preconditions
 

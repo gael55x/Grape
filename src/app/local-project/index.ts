@@ -1,4 +1,5 @@
 export * from "./artifacts.js";
+export * from "./candidates.js";
 export * from "./claim-resolution.js";
 export * from "./claims.js";
 export * from "./compile.js";
