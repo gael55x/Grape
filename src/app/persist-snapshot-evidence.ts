@@ -31,6 +31,7 @@ export function persistSnapshotEvidence(input: PersistSnapshotEvidenceInput): Pe
     commit: input.snapshot.commit,
     worktreeHash: input.snapshot.worktreeHash,
     dirtyPaths: input.snapshot.dirtyPaths,
+    dirtyPathScopes: input.snapshot.dirtyPathScopes,
     files: input.snapshot.files,
     rejectedFiles: input.snapshot.rejectedFiles,
     capturedAt: input.now

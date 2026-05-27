@@ -152,11 +152,17 @@ test("git repo snapshot marks dirty worktree and changes worktree hash", () => {
 
     writeFileSync(path.join(repoPath, "src", "calculateDiscount.ts"), "export const discount = 20;\n");
     writeFileSync(path.join(repoPath, "src", "newFile.ts"), "export const fresh = true;\n");
+    writeFileSync(path.join(repoPath, "src", "stagedOnly.ts"), "export const staged = true;\n");
+    execGit(repoPath, ["add", "src/stagedOnly.ts"]);
 
     const dirty = createGitRepoSnapshot({ rootPath: repoPath, repoId: "repo-1", createdAt: now });
+    const scopeByPath = new Map(dirty.dirtyPathScopes.map((entry) => [entry.path, entry.sourceScope]));
 
     assert.equal(dirty.worktreeStatus, "dirty");
-    assert.deepEqual(dirty.dirtyPaths, ["src/calculateDiscount.ts", "src/newFile.ts"]);
+    assert.deepEqual(dirty.dirtyPaths, ["src/calculateDiscount.ts", "src/newFile.ts", "src/stagedOnly.ts"]);
+    assert.equal(scopeByPath.get("src/calculateDiscount.ts"), "unstaged");
+    assert.equal(scopeByPath.get("src/newFile.ts"), "untracked");
+    assert.equal(scopeByPath.get("src/stagedOnly.ts"), "staged");
     assert.notEqual(dirty.worktreeHash, clean.worktreeHash);
     assert.notEqual(dirty.snapshotHash, clean.snapshotHash);
   });

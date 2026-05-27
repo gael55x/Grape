@@ -21,10 +21,16 @@ export interface RepoSnapshot {
   worktreeHash: string;
   snapshotHash: string;
   dirtyPaths: string[];
+  dirtyPathScopes: DirtyPathScope[];
   files: SnapshotFileHash[];
   rejectedFiles: SnapshotFileRejection[];
   hashAlgorithm: "sha256";
   createdAt: string;
+}
+
+export interface DirtyPathScope {
+  path: string;
+  sourceScope: "staged" | "unstaged" | "untracked";
 }
 
 export interface RepoSnapshotInput {
@@ -36,6 +42,7 @@ export interface RepoSnapshotInput {
   worktreeHash: string;
   snapshotHash?: string;
   dirtyPaths?: string[];
+  dirtyPathScopes?: DirtyPathScope[];
   files: SnapshotFileHash[];
   rejectedFiles?: SnapshotFileRejection[];
   createdAt: string;
@@ -43,6 +50,10 @@ export interface RepoSnapshotInput {
 
 export function createRepoSnapshotShape(input: RepoSnapshotInput): RepoSnapshot {
   const dirtyPaths = [...(input.dirtyPaths ?? [])].sort();
+  const dirtyPathScopes = normalizeDirtyPathScopes(input.dirtyPathScopes ?? dirtyPaths.map((repoPath) => ({
+    path: repoPath,
+    sourceScope: "unstaged"
+  })));
   const files = [...input.files].sort((left, right) => left.path.localeCompare(right.path));
   const rejectedFiles = [...(input.rejectedFiles ?? [])].sort((left, right) =>
     `${left.path}:${left.reason}`.localeCompare(`${right.path}:${right.reason}`)
@@ -56,7 +67,7 @@ export function createRepoSnapshotShape(input: RepoSnapshotInput): RepoSnapshot 
       input.commit,
       input.worktreeStatus,
       input.worktreeHash,
-      ...dirtyPaths,
+      ...dirtyPathScopes.map((entry) => `${entry.path}:${entry.sourceScope}`),
       ...files.map((file) => `${file.path}:${file.sha256}:${file.sourceKind}`),
       ...rejectedFiles.map(rejectedFileHashPart)
     ]);
@@ -71,6 +82,7 @@ export function createRepoSnapshotShape(input: RepoSnapshotInput): RepoSnapshot 
     worktreeHash: input.worktreeHash,
     snapshotHash,
     dirtyPaths,
+    dirtyPathScopes,
     files,
     rejectedFiles,
     hashAlgorithm: "sha256",
@@ -101,7 +113,8 @@ export function createGitRepoSnapshot(input: GitRepoSnapshotInput): RepoSnapshot
   const branch = readBranch(rootPath, gitBinary);
   const commit = runGit(rootPath, gitBinary, ["rev-parse", "HEAD"]);
   const privacyPolicy = loadPrivacyIgnorePolicy(rootPath);
-  const dirtyPaths = readDirtyPaths(rootPath, gitBinary, privacyPolicy);
+  const dirtyPathScopes = readDirtyPathScopes(rootPath, gitBinary, privacyPolicy);
+  const dirtyPaths = dirtyPathScopes.map((entry) => entry.path);
   const repoPaths = readGitTrackedAndVisiblePaths(rootPath, gitBinary);
   const gitIgnored = readGitIgnoredPaths(rootPath, gitBinary, repoPaths);
   const fileManifest = readGitVisibleFileManifest({ rootPath, repoPaths, gitIgnored, privacyPolicy });
@@ -111,7 +124,7 @@ export function createGitRepoSnapshot(input: GitRepoSnapshotInput): RepoSnapshot
     branch,
     commit,
     worktreeStatus,
-    ...dirtyPaths.map((dirtyPath) => `dirty:${dirtyPath}`),
+    ...dirtyPathScopes.map((entry) => `dirty:${entry.path}:${entry.sourceScope}`),
     ...files.map((file) => `file:${file.path}:${file.sha256}:${file.sourceKind}`),
     ...fileManifest.rejectedFiles.map((file) => `rejected:${rejectedFileHashPart(file)}`)
   ]);
@@ -124,6 +137,7 @@ export function createGitRepoSnapshot(input: GitRepoSnapshotInput): RepoSnapshot
     worktreeStatus,
     worktreeHash,
     dirtyPaths,
+    dirtyPathScopes,
     files,
     rejectedFiles: fileManifest.rejectedFiles,
     createdAt: input.createdAt
@@ -142,31 +156,53 @@ function readBranch(rootPath: string, gitBinary: string): string {
   }
 }
 
-function readDirtyPaths(
+function readDirtyPathScopes(
   rootPath: string,
   gitBinary: string,
   privacyPolicy: ReturnType<typeof loadPrivacyIgnorePolicy>
-): string[] {
+): DirtyPathScope[] {
   const status = runGit(rootPath, gitBinary, ["status", "--porcelain=v1", "-z"]);
   const entries = status.split("\0").filter(Boolean);
-  const dirtyPaths = [];
+  const dirtyPathScopes: DirtyPathScope[] = [];
 
   for (let index = 0; index < entries.length; index += 1) {
     const entry = entries[index];
     const statusCode = entry.slice(0, 2);
     const repoPath = entry.slice(3);
-    dirtyPaths.push(normalizeRepoPath(repoPath));
+    dirtyPathScopes.push({
+      path: normalizeRepoPath(repoPath),
+      sourceScope: sourceScopeForStatus(statusCode)
+    });
 
     if (statusCode.includes("R") || statusCode.includes("C")) {
       index += 1;
     }
   }
 
-  const gitIgnored = readGitIgnoredPaths(rootPath, gitBinary, dirtyPaths);
-  return [...new Set(dirtyPaths)]
-    .filter((repoPath) => !gitIgnored.has(repoPath))
-    .filter((repoPath) => !isIgnoredByPrivacyPolicy(repoPath, privacyPolicy))
-    .sort();
+  const gitIgnored = readGitIgnoredPaths(rootPath, gitBinary, dirtyPathScopes.map((entry) => entry.path));
+  const dedupedScopes = new Map(dirtyPathScopes.map((entry) => [entry.path, entry]));
+  return [...dedupedScopes.values()]
+    .filter((entry) => !gitIgnored.has(entry.path))
+    .filter((entry) => !isIgnoredByPrivacyPolicy(entry.path, privacyPolicy))
+    .sort((left, right) => left.path.localeCompare(right.path));
+}
+
+function sourceScopeForStatus(statusCode: string): DirtyPathScope["sourceScope"] {
+  if (statusCode === "??") return "untracked";
+  const indexStatus = statusCode[0];
+  const worktreeStatus = statusCode[1];
+  if (worktreeStatus !== " " && worktreeStatus !== "?") return "unstaged";
+  if (indexStatus !== " " && indexStatus !== "?") return "staged";
+  return "unstaged";
+}
+
+function normalizeDirtyPathScopes(input: readonly DirtyPathScope[]): DirtyPathScope[] {
+  return [...input]
+    .map((entry) => ({
+      path: normalizeRepoPath(entry.path),
+      sourceScope: entry.sourceScope
+    }))
+    .sort((left, right) => left.path.localeCompare(right.path));
 }
 
 function readGitTrackedAndVisiblePaths(rootPath: string, gitBinary: string): string[] {

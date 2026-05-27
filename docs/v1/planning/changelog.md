@@ -88,3 +88,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added scanner rejection gates for oversized and binary-looking files before source evidence ingestion, plus CLI setup/status scan diagnostics that expose aggregate rejection counts without file bodies.
 - Added focused public context artifact contract coverage for CLI JSON output and MCP Markdown/context-pack item parity.
 - Hardened indexing path handling with separator normalization, unsafe path rejection, and focused Windows-style path tests.
+- Split snapshot source evidence scopes for staged, unstaged, and untracked Git status entries instead of treating every dirty file as unstaged.
