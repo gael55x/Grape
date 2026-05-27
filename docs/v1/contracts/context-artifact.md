@@ -170,7 +170,7 @@ The exact-source-evidence section is a scaffold proof foundation: it reads only 
 
 Local compile also resolves current-valid durable claims and renders a `current-valid-claims` `active_claim` section when verified narrow source-excerpt claims are active for the current branch, commit, source hash, and proof hash. The section includes claim refs, proof refs, source refs, and claim dependency rows. Current active claims only use `repository_source_excerpt_exists`; broader behavior, rule, test, command, and decision claims remain pending.
 
-Local compile now persists a deterministic `symbol_outline` compression artifact from the lightweight symbol index and renders it as `compression-orientation`. The public V1 projection includes `compressionArtifactRefs`, `compressionArtifactsUsed`, and `compression_artifact` dependency refs. This compression section is non-proof orientation only; it has no proof refs and cannot satisfy exact-required or high-risk context.
+Local compile now persists deterministic `symbol_outline` and `rule_digest` compression artifacts from the lightweight symbol index and verified active rule excerpts, then renders them as `compression-orientation`. The public V1 projection includes `compressionArtifactRefs`, `compressionArtifactsUsed`, and `compression_artifact` dependency refs. This compression section is non-proof orientation only; it has no proof refs and cannot satisfy exact-required or high-risk context. Exact rule text still lives in the pinned active-project-rules section; the rule digest carries only rule refs, line spans, proof refs, and hashes.
 
 `grape compile --task <text>` now writes an inspectable V1 context-pack JSON and Markdown under `.grape/artifacts/ctx_<id>.json` and `.grape/artifacts/ctx_<id>.md`, after a basic artifact-level secret scan. The public JSON contains the V1 `ContextArtifact` projection plus the diffed `ContextPackItem[]`; the internal scaffold sidecar remains available only so restore can verify section hashes against the original scaffold source. The artifact ID identifies a compile output instance; the artifact hash is the deterministic scaffold content identity and excludes `createdAt` and instance IDs.
 
@@ -180,7 +180,7 @@ Risk overlays now require task-selected exact source/config/rule evidence. If ta
 
 `grape artifacts --artifact <id>` and MCP `grape_get_artifact` expose stored artifact metadata, dependency rows, and repo-relative public artifact file refs for inspection. They do not return raw scaffold sidecar bodies and do not promote scaffold summaries to proof.
 
-This is still a projection from the repository-derived scaffold rather than the final broad durable-claim retrieval system. It now uses the V1 `ContextArtifact` JSON envelope, enforces the first task-specific high-risk exact-span policy, can render current-valid narrow source-excerpt claims, and includes the first deterministic compression cache orientation section, but broader durable claim types and compression artifact types are not yet promoted.
+This is still a projection from the repository-derived scaffold rather than the final broad durable-claim retrieval system. It now uses the V1 `ContextArtifact` JSON envelope, enforces the first task-specific high-risk exact-span policy, can render current-valid narrow source-excerpt claims, and includes deterministic symbol/rule compression cache orientation, but broader durable claim types and `context_pack_summary` are not yet promoted.
 
 ## Section Rules
 

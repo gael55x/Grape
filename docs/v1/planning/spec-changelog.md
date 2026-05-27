@@ -53,6 +53,7 @@ Each entry should include:
 - Clarified the first durable claim type: `repository_source_excerpt_exists` may be promoted from a validated direct exact-source proof and inspected through `grape claims --active` / `grape_get_claims`, but it proves only excerpt existence and is not yet the primary artifact retrieval input.
 - Clarified artifact behavior for first durable claims: active `repository_source_excerpt_exists` claims may be rendered in a `current-valid-claims` artifact section with claim/proof dependencies, while broader durable claim retrieval remains pending.
 - Clarified the first compression cache behavior: deterministic `symbol_outline` artifacts are derived cache with stored input hashes and artifact dependencies, may render as orientation, and cannot provide proof or replace high-risk exact context.
+- Clarified rule digest compression behavior: deterministic `rule_digest` artifacts are derived from verified active rule excerpt proofs and may provide orientation only; they do not replace pinned exact rule text or act as proof.
 - Clarified the session inspection surface: `grape sessions` is implemented as a read-only CLI debug command over context session and diff ledger metadata.
 - Clarified the stale inspection surface: `grape stale` is implemented as a read-only CLI debug command over emitted `INVALIDATE_PREVIOUS` pack ledger rows, not as predictive stale analysis.
 - Clarified the MCP stale inspection surface: `grape_get_stale_items` exposes the same emitted invalidation metadata without `rootPath` or context bodies.

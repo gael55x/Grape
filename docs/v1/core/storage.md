@@ -107,7 +107,7 @@ Migration `0004_compression_cache.sql` adds the first deterministic compression 
 - `compression_artifacts` stores cache metadata for V1 deterministic `symbol_outline`, `rule_digest`, and `context_pack_summary` records.
 - `compression_inputs` stores each input ref and input hash used to derive a compression artifact.
 
-The current implementation writes only `symbol_outline` records from the lightweight symbol index. Compression repositories persist derived cache records only; they do not decide compiler policy, trust, proof validity, or whether a summary can replace context.
+The current implementation writes `symbol_outline` records from the lightweight symbol index and `rule_digest` records from verified active rule excerpt proofs. Compression repositories persist derived cache records only; they do not decide compiler policy, trust, proof validity, or whether a summary can replace context.
 
 MCP restricted writes currently reuse existing V1 tables instead of adding premature write-specific migrations. Command/test observation writes use `sources` with `source_type = 'command_run'` or `source_type = 'test_run'`, `trust_class = 'temporary'`, and `redaction_status = 'redacted'`. Candidate writes create a temporary `assistant_response` source when needed and link it to `claim_candidates` with `rejection_reason = 'mcp_candidate_requires_proof'`. User decisions use `sources` with `source_type = 'user_message'`, `trust_class = 'temporary'`, and `redaction_status = 'redacted'`. Raw command, stdout, stderr, prompt, response, and candidate evidence bodies are not stored in source metadata; only hashes and scoped metadata are persisted.
 

@@ -152,6 +152,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         snapshotId: snapshotResult.snapshotId,
         worktreeStateId: snapshotResult.worktreeStateId,
         snapshot: snapshotResult.snapshot,
+        sourceExcerpts: proofs.sourceExcerpts,
         symbolNodes,
         symbolEdges,
         now

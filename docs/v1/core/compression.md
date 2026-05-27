@@ -105,9 +105,9 @@ flowchart TD
 
 ## Current Implementation
 
-The first implemented compression slice persists deterministic `symbol_outline` artifacts in SQLite through `compression_artifacts` and `compression_inputs`. Local compile builds the outline from the current snapshot's lightweight symbol nodes and relationship edges, stores every symbol input hash, adds a `compression_artifact` dependency row, and renders a `compression-orientation` section.
+The implemented compression slice persists deterministic `symbol_outline` and `rule_digest` artifacts in SQLite through `compression_artifacts` and `compression_inputs`. Local compile builds the symbol outline from the current snapshot's lightweight symbol nodes and relationship edges, and builds the rule digest from verified active rule excerpts after source-hash and excerpt-hash proof validation. Each artifact stores its input hashes, adds `compression_artifact` dependency rows, and renders in the shared `compression-orientation` section.
 
-This section is orientation only. It has no proof refs, is not pinned, is not exact-required, cannot satisfy high-risk exact context, and cannot promote durable claims. `rule_digest` and `context_pack_summary` remain pending V1 work, as do budget pruning and stale compression invalidation events.
+This section is orientation only. It has no proof refs, is not pinned, is not exact-required, cannot satisfy high-risk exact context, and cannot promote durable claims. The `rule_digest` stores rule source refs, line spans, proof refs, and hashes only; exact rule text remains in the pinned active-project-rules section. `context_pack_summary` remains pending V1 work, as do budget pruning and stale compression invalidation events.
 
 ## Required Tests
 
