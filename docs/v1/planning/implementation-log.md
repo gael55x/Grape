@@ -455,3 +455,10 @@ Keep entries simple:
 - Summary: added Git porcelain-derived dirty path scopes to repo snapshots and source evidence ingestion so allowed sources are marked as committed, staged, unstaged, or untracked instead of collapsing every dirty source to unstaged.
 - Checks run: focused repo snapshot and evidence behavior tests.
 - Risks/follow-ups: approval records and richer scan diagnostics remain pending.
+
+### 2026-05-27 - Compiler Section Builder Split
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: moved repository-derived compiler section builders into `src/core/compiler/repository/sections/builders/`, leaving `sections/sections.ts` as the section assembly point and `sections/dependencies.ts` as the section-local dependency-ref helper.
+- Checks run: focused compiler/artifact behavior tests; `npm run architecture:check`; `npm run docs:check`; `npm run check`; `npm run build`.
+- Risks/follow-ups: future section families should add a focused builder module instead of expanding the assembly file.
