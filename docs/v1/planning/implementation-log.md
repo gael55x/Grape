@@ -316,6 +316,13 @@ Keep entries simple:
 - Checks run: focused compression-cache, repository-artifact, CLI, and storage-runtime behavior tests before full verification.
 - Risks/follow-ups: this is the first compression cache foundation only. `rule_digest`, `context_pack_summary`, stale compression invalidation events, and safe budget pruning remain pending.
 
+### 2026-05-26 - Deterministic Rule Digest Compression Cache
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added a deterministic `rule_digest` compression artifact built from verified active rule excerpts. Local compile now persists rule digest inputs as rule hashes, includes the digest as a compression dependency, and renders it only as non-proof orientation while pinned rule text remains exact context.
+- Checks run: focused compression-cache and CLI behavior tests before full verification.
+- Risks/follow-ups: `context_pack_summary`, stale compression invalidation events, and safe budget pruning remain pending.
+
 ### 2026-05-26 - Session Inspection CLI
 
 - Author/agent: Gaille Amolong / Codex

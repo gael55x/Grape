@@ -69,6 +69,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added narrow durable source-excerpt claim persistence plus CLI/MCP active-claim inspection. These claims only prove selected exact source excerpts exist and do not prove behavior or correctness.
 - Added current-valid narrow source-excerpt claims to compiled context artifacts as `active_claim` sections with claim/proof dependency refs.
 - Added the first deterministic compression cache slice: local compile now persists `symbol_outline` artifacts with input hashes, includes `compression_artifact` dependency refs, and renders non-proof compression orientation sections.
+- Added deterministic `rule_digest` compression cache records from verified active rule excerpts. Rule digests store rule refs, line spans, proof refs, and hashes as non-proof orientation while exact rule text remains pinned separately.
 - Added `grape sessions` for CLI-first inspection of context sessions, lock state, branch/head scope, session events, and diff ledger counts.
 - Added `grape stale` for CLI-first inspection of emitted `INVALIDATE_PREVIOUS` rows, prior sent item refs, stale reasons, and previous branch/head metadata.
 - Added MCP `grape_get_stale_items` so external agents can inspect emitted stale-context invalidations without shelling out or receiving context bodies.

@@ -5,7 +5,10 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
-import { buildSymbolOutlineCompressionArtifact } from "../../.tmp/build/src/core/compression/index.js";
+import {
+  buildRuleDigestCompressionArtifact,
+  buildSymbolOutlineCompressionArtifact
+} from "../../.tmp/build/src/core/compression/index.js";
 import {
   applyStorageMigrations,
   createCompressionStorageRepositories,
@@ -106,6 +109,31 @@ function symbolOutlineInput(overrides = {}) {
   };
 }
 
+function ruleDigestInput(overrides = {}) {
+  return {
+    projectId: "project-1",
+    repoId: "repo-1",
+    snapshotId: "snapshot-1",
+    worktreeStateId: "worktree-1",
+    branch: "main",
+    commit: "abc123",
+    worktreeHash: hashA,
+    rules: [
+      {
+        proofId: "proof:rule:agents",
+        sourceRef: "AGENTS.md",
+        sourceHash: hashA,
+        excerptHash: hashB,
+        startLine: 1,
+        endLine: 12,
+        truncated: false
+      }
+    ],
+    createdAt: now,
+    ...overrides
+  };
+}
+
 test("deterministic symbol outline compression artifacts track input hashes", () => {
   const first = buildSymbolOutlineCompressionArtifact(symbolOutlineInput());
   const second = buildSymbolOutlineCompressionArtifact(symbolOutlineInput());
@@ -132,6 +160,39 @@ test("deterministic symbol outline compression artifacts track input hashes", ()
   assert.equal(first.method, "deterministic");
   assert.equal(first.inputHashes.length, 2);
   assert.match(first.summaryText, /Indexed symbol nodes: 1/);
+});
+
+test("rule_digest_tracks_active_rule_hashes", () => {
+  const first = buildRuleDigestCompressionArtifact(ruleDigestInput());
+  const second = buildRuleDigestCompressionArtifact(ruleDigestInput());
+  const changed = buildRuleDigestCompressionArtifact(
+    ruleDigestInput({
+      rules: [
+        {
+          proofId: "proof:rule:agents",
+          sourceRef: "AGENTS.md",
+          sourceHash: "c".repeat(64),
+          excerptHash: "d".repeat(64),
+          startLine: 1,
+          endLine: 12,
+          truncated: false
+        }
+      ]
+    })
+  );
+
+  assert.ok(first);
+  assert.ok(second);
+  assert.ok(changed);
+  assert.equal(first.compressionId, second.compressionId);
+  assert.equal(first.outputHash, second.outputHash);
+  assert.notEqual(first.outputHash, changed.outputHash);
+  assert.equal(first.type, "rule_digest");
+  assert.equal(first.method, "deterministic");
+  assert.equal(first.inputRefs[0]?.kind, "rule");
+  assert.equal(first.inputHashes.length, 1);
+  assert.match(first.summaryText, /Active rule files: 1/);
+  assert.match(first.summaryText, /AGENTS\.md lines 1-12/);
 });
 
 test("compression storage persists deterministic artifacts and their input hashes", () => {
@@ -172,6 +233,47 @@ test("compression storage persists deterministic artifacts and their input hashe
     assert.deepEqual(
       repositories.compressionInputs.listByArtifact(artifact.compressionId).map((input) => input.inputKind),
       ["symbol", "symbol"]
+    );
+  });
+});
+
+test("compression storage persists rule digest input hashes as rule inputs", () => {
+  withMigratedDatabase((repositories) => {
+    const artifact = buildRuleDigestCompressionArtifact(ruleDigestInput());
+    assert.ok(artifact);
+
+    repositories.compressionArtifacts.upsert({
+      compressionId: artifact.compressionId,
+      projectId: artifact.projectId,
+      repoId: artifact.repoId,
+      repoSnapshotId: artifact.snapshotId,
+      worktreeStateId: artifact.worktreeStateId,
+      artifactType: artifact.type,
+      method: artifact.method,
+      summaryText: artifact.summaryText,
+      inputHash: artifact.inputHash,
+      policyHash: artifact.policyHash,
+      scopeHash: artifact.scopeHash,
+      outputHash: artifact.outputHash,
+      trustStatus: "derived_cache",
+      createdAt: artifact.createdAt,
+      updatedAt: artifact.createdAt
+    });
+
+    for (const ref of artifact.inputRefs) {
+      repositories.compressionInputs.upsert({
+        compressionInputId: `input:${ref.ref}`,
+        compressionId: artifact.compressionId,
+        inputKind: ref.kind,
+        inputRef: ref.ref,
+        inputHash: ref.hash
+      });
+    }
+
+    assert.equal(repositories.compressionArtifacts.get(artifact.compressionId)?.artifactType, "rule_digest");
+    assert.deepEqual(
+      repositories.compressionInputs.listByArtifact(artifact.compressionId).map((input) => input.inputKind),
+      ["rule"]
     );
   });
 });

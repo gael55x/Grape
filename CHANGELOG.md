@@ -58,7 +58,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added high-risk exact-context gating so risk overlays only compile safely when task-selected proof-backed exact evidence exists.
 - Added CLI `grape claims --active` and MCP `grape_get_claims` for current-valid narrow source-excerpt claim inspection.
 - Compiled current-valid narrow source-excerpt claims into context artifacts with claim/proof dependencies.
-- Added deterministic `symbol_outline` compression cache records and non-proof artifact orientation sections.
+- Added deterministic `symbol_outline` and `rule_digest` compression cache records and non-proof artifact orientation sections.
 - Added `grape sessions` for session/diff ledger inspection.
 - Added `grape stale` for CLI inspection of emitted stale-context invalidations without returning context bodies.
 - Added MCP `grape_get_stale_items` for stale invalidation inspection without returning context bodies or absolute root paths.
