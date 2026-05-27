@@ -55,12 +55,14 @@ export interface LocalProjectStatus {
   readonly snapshotHash?: string;
   readonly warnings: readonly string[];
   readonly errors: readonly string[];
+  readonly recoveryGuidance: readonly string[];
 }
 
 export interface LocalProjectDoctor {
   readonly rootPath: string;
   readonly overallStatus: DiagnosticStatus;
   readonly checks: readonly DiagnosticCheck[];
+  readonly recoveryGuidance: readonly string[];
 }
 
 export interface McpConnectionGuide {
@@ -125,6 +127,7 @@ export interface CompileLocalContextResult {
   readonly budget: ContextPackBudgetResult;
   readonly warnings: readonly string[];
   readonly unsafeReasons: readonly string[];
+  readonly recoveryGuidance: readonly string[];
   readonly artifactJsonPath: string;
   readonly artifactMarkdownPath: string;
   readonly sessionResetId?: string;

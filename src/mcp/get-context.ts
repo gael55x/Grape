@@ -45,6 +45,7 @@ export interface GrapeGetContextToolOutput {
   };
   readonly warnings: readonly string[];
   readonly unsafeReasons: readonly string[];
+  readonly recoveryGuidance: readonly string[];
   readonly budget: CompileLocalContextResult["budget"];
   readonly sessionResetId?: string;
   readonly restoreAvailable: boolean;
@@ -89,6 +90,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     diffSummary: summarizeDiff(result.contextPackItems),
     warnings,
     unsafeReasons: result.unsafeReasons,
+    recoveryGuidance: result.recoveryGuidance,
     budget: result.budget,
     sessionResetId: result.sessionResetId,
     restoreAvailable: result.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE" || item.restoreId),

@@ -13,6 +13,7 @@ export * from "./mcp-guide.js";
 export * from "./omitted.js";
 export * from "./observations.js";
 export * from "./proofs.js";
+export * from "./recovery.js";
 export * from "./rules.js";
 export * from "./sessions.js";
 export * from "./source-excerpts.js";

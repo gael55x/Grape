@@ -113,9 +113,11 @@ test("cli init --connect bootstraps local .grape state and keeps it out of git s
     assert.equal(status.databaseExists, true);
     assert.deepEqual(status.pendingMigrations, []);
     assert.equal(status.dirtyWorktree, false);
+    assert.deepEqual(status.recoveryGuidance, []);
 
     const doctor = runCliJson(repoPath, ["doctor"]);
     assert.equal(doctor.overallStatus, "pass");
+    assert.deepEqual(doctor.recoveryGuidance, []);
     assert.ok(doctor.checks.some((check) => check.id === "privacy_local_exclude" && check.status === "pass"));
 
     mkdirSync(path.join(repoPath, "src"));
@@ -123,6 +125,30 @@ test("cli init --connect bootstraps local .grape state and keeps it out of git s
     assert.equal(subdirStatus.status, 0, subdirStatus.stderr);
     assert.equal(subdirStatus.stderr, "");
     assert.equal(JSON.parse(subdirStatus.stdout).initialized, true);
+  });
+});
+
+test("cli status and doctor provide recovery guidance before bootstrap", () => {
+  withGitRepo((repoPath) => {
+    const status = runCli(repoPath, ["status", "--json"]);
+    assert.equal(status.status, 0, status.stderr);
+    const parsedStatus = JSON.parse(status.stdout);
+    assert.equal(parsedStatus.initialized, false);
+    assert.ok(
+      parsedStatus.recoveryGuidance.includes(
+        "Run grape init --connect from the repository root to bootstrap or repair local state."
+      )
+    );
+
+    const doctor = runCli(repoPath, ["doctor", "--json"]);
+    assert.equal(doctor.status, 3, doctor.stderr);
+    const parsedDoctor = JSON.parse(doctor.stdout);
+    assert.equal(parsedDoctor.overallStatus, "fail");
+    assert.ok(
+      parsedDoctor.recoveryGuidance.includes(
+        "Run grape init --connect from the repository root to bootstrap or repair local state."
+      )
+    );
   });
 });
 
@@ -371,6 +397,7 @@ test("cli compile reports unsafe output when token budget cannot fit required co
     const output = JSON.parse(result.stdout);
     assert.equal(output.budget.status, "required_context_exceeds_budget");
     assert.ok(output.unsafeReasons.includes("token_budget_below_required_context"));
+    assert.ok(output.recoveryGuidance.some((item) => item.includes("Increase --token-budget")));
   });
 });
 
@@ -470,6 +497,7 @@ test("cli compile marks risk overlays unsafe without task-selected exact spans",
     assert.deepEqual(parsed.riskOverlays, ["auth"]);
     assert.deepEqual(parsed.unsafeReasons, ["risk_overlay_missing_exact_context"]);
     assert.ok(parsed.warnings.includes("risk_overlay_requires_exact_context"));
+    assert.ok(parsed.recoveryGuidance.some((item) => item.includes("exact file or symbol")));
   });
 });
 
@@ -605,6 +633,8 @@ test("cli omitted rejects blocked-redaction artifact sections before restoring c
     assert.equal(restore.status, 4);
     assert.equal(restore.stdout, "");
     assert.match(restore.stderr, /blocked redaction status/);
+    assert.match(restore.stderr, /Recovery:/);
+    assert.match(restore.stderr, /\.grapeignore/);
   });
 });
 
@@ -629,6 +659,8 @@ test("cli compile reports contended session locks", () => {
 
     assert.equal(second.status, 5);
     assert.match(second.stderr, /context session is locked/);
+    assert.match(second.stderr, /Recovery:/);
+    assert.match(second.stderr, /grape sessions/);
   });
 });
 
@@ -842,5 +874,6 @@ test("cli status reports config root mismatch as stale local state", () => {
     const parsed = JSON.parse(status.stdout);
     assert.equal(parsed.initialized, false);
     assert.ok(parsed.errors.includes("Grape config root path does not match the current repository path."));
+    assert.ok(parsed.recoveryGuidance.some((item) => item.includes("--repo")));
   });
 });

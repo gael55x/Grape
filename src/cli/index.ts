@@ -153,7 +153,8 @@ async function runStatus(parsed: ParsedArgs): Promise<number> {
       `Head: ${status.headCommit ?? "unknown"}`,
       `Worktree: ${status.dirtyWorktree === undefined ? "unknown" : status.dirtyWorktree ? "dirty" : "clean"}`,
       ...renderProblems("Warnings", status.warnings),
-      ...renderProblems("Errors", status.errors)
+      ...renderProblems("Errors", status.errors),
+      ...renderProblems("Recovery", status.recoveryGuidance)
     ].join("\n"));
 
     return status.errors.length === 0 ? exitCodes.ok : exitCodes.stale;
@@ -178,7 +179,8 @@ async function runDoctor(parsed: ParsedArgs): Promise<number> {
     write([
       `Grape doctor: ${doctor.overallStatus}`,
       "",
-      ...doctor.checks.map((check) => `${statusLabel(check.status)} ${check.id}: ${check.message}`)
+      ...doctor.checks.map((check) => `${statusLabel(check.status)} ${check.id}: ${check.message}`),
+      ...renderProblems("Recovery", doctor.recoveryGuidance)
     ].join("\n"));
 
     return doctor.overallStatus === "fail" ? exitCodes.stale : exitCodes.ok;

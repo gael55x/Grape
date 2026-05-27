@@ -357,3 +357,10 @@ Keep entries simple:
 - Summary: added typed `claim_edges` storage access plus CLI `grape conflicts` and MCP `grape_get_conflicts`. The surfaces list recorded conflict-like edges and claim summaries without resolving contradictions, merging claims, or pretending detection exists.
 - Checks run: focused storage/CLI/MCP behavior tests before full verification.
 - Risks/follow-ups: contradiction detection, conflict creation, supersession policy, and artifact conflict sections remain pending.
+
+### 2026-05-26 - Recovery Guidance Surface
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added shared local-project recovery guidance for setup diagnostics, unsafe compile results, lock-conflict errors, stale restore paths, missing Git metadata, root mismatch, and privacy/redaction failures. CLI renders guidance in human/error output, and JSON/MCP surfaces include machine-readable guidance arrays.
+- Checks run: focused CLI/MCP behavior tests before full verification.
+- Risks/follow-ups: future privacy approval/export/purge flows and remaining MCP write tools must add matching recovery guidance when implemented.
