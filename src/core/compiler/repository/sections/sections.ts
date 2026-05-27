@@ -1,21 +1,21 @@
 import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
-} from "../../shared/index.js";
-import { activeClaimsSection } from "./repository-context-active-claims-section.js";
-import { compressionArtifactsSection } from "./repository-context-compression-section.js";
-import { repositoryContextSection as section } from "./repository-context-section-factory.js";
+} from "../../../../shared/index.js";
+import { activeClaimsSection } from "./active-claims.js";
+import { compressionArtifactsSection } from "./compression.js";
+import { repositoryContextSection as section } from "./factory.js";
 import {
   selectedRuleSourceExcerpts,
   selectedSources,
   selectedSymbolEdges,
   selectedSymbolNodes,
   sourceTypeCounts
-} from "./repository-context-selection.js";
-import { selectedPolicyExactSourceExcerpts } from "./repository-context-risk-policy.js";
-import { sourceProofDependencyId, sourceProofRefs } from "./repository-source-proofs.js";
-import { taskRetrievalSection } from "./repository-context-task-retrieval-section.js";
-import type { CompileRepositoryContextArtifactInput } from "./repository-context-types.js";
+} from "../selection.js";
+import { selectedPolicyExactSourceExcerpts } from "../policy/risk.js";
+import { sourceProofDependencyId, sourceProofRefs } from "../source-proofs.js";
+import { taskRetrievalSection } from "./task-retrieval.js";
+import type { CompileRepositoryContextArtifactInput } from "../types.js";
 
 export function contextSections(
   input: CompileRepositoryContextArtifactInput,

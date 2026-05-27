@@ -1,10 +1,10 @@
 import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
-} from "../../shared/index.js";
-import { compressionDependencyId } from "./repository-context-dependencies.js";
-import { repositoryContextSection as section } from "./repository-context-section-factory.js";
-import type { CompileRepositoryContextArtifactInput } from "./repository-context-types.js";
+} from "../../../../shared/index.js";
+import { compressionDependencyId } from "../dependencies.js";
+import { repositoryContextSection as section } from "./factory.js";
+import type { CompileRepositoryContextArtifactInput } from "../types.js";
 
 export function compressionArtifactsSection(
   input: CompileRepositoryContextArtifactInput,

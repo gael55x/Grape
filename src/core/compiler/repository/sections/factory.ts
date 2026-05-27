@@ -1,5 +1,5 @@
-import type { InMemoryContextSectionShape } from "../../shared/index.js";
-import { repositoryContextSectionHash } from "./repository-context-integrity.js";
+import type { InMemoryContextSectionShape } from "../../../../shared/index.js";
+import { repositoryContextSectionHash } from "../integrity.js";
 
 export function repositoryContextSection(
   input: Omit<InMemoryContextSectionShape, "contentHash" | "redactionStatus" | "proofRefs" | "sourceRefs"> & {

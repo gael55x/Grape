@@ -5,7 +5,7 @@ import type {
   InMemoryContextDependencyShape,
   InMemoryContextPackItemShape,
   InMemoryContextSectionShape
-} from "../../shared/index.js";
+} from "../../../shared/index.js";
 
 export function toContextPackItems(
   artifact: InMemoryContextArtifactShape,

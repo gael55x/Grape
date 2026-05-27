@@ -1,10 +1,10 @@
-import type { SourceType } from "../../shared/index.js";
+import type { SourceType } from "../../../shared/index.js";
 import type {
   RepositoryArtifactSourceInput,
   RepositoryArtifactSourceExcerptInput,
   RepositoryArtifactSymbolEdgeInput,
   RepositoryArtifactSymbolNodeInput
-} from "./repository-context-types.js";
+} from "./types.js";
 
 export const maxListedSources = 50;
 export const maxListedSymbols = 50;

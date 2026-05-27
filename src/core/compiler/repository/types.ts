@@ -1,4 +1,4 @@
-import type { RiskOverlay, SourceType, TaskType } from "../../shared/index.js";
+import type { RiskOverlay, SourceType, TaskType } from "../../../shared/index.js";
 
 export interface RepositoryArtifactSnapshotInput {
   readonly snapshotId: string;

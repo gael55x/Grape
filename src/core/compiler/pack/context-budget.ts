@@ -1,4 +1,4 @@
-import type { ContextPackItemShape } from "../../shared/index.js";
+import type { ContextPackItemShape } from "../../../shared/index.js";
 
 export type ContextBudgetStatus =
   | "not_requested"

@@ -1,16 +1,16 @@
-import type { InMemoryContextDependencyShape } from "../../shared/index.js";
-import { hashStableJson } from "./repository-context-hash.js";
+import type { InMemoryContextDependencyShape } from "../../../shared/index.js";
+import { hashStableJson } from "./hash.js";
 import {
   selectedProofSourceExcerpts,
   selectedSources,
   selectedSymbolEdges,
   selectedSymbolNodes
-} from "./repository-context-selection.js";
-import { sourceProofDependencyId } from "./repository-source-proofs.js";
+} from "./selection.js";
+import { sourceProofDependencyId } from "./source-proofs.js";
 import type {
   CompileRepositoryContextArtifactInput,
   RepositoryArtifactSourceInput
-} from "./repository-context-types.js";
+} from "./types.js";
 
 export function dependencyManifest(
   input: CompileRepositoryContextArtifactInput

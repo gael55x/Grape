@@ -1,11 +1,11 @@
 import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
-} from "../../shared/index.js";
-import { claimDependencyId } from "./repository-context-dependencies.js";
-import { repositoryContextSection as section } from "./repository-context-section-factory.js";
-import type { CompileRepositoryContextArtifactInput } from "./repository-context-types.js";
-import { sourceProofDependencyId } from "./repository-source-proofs.js";
+} from "../../../../shared/index.js";
+import { claimDependencyId } from "../dependencies.js";
+import { repositoryContextSection as section } from "./factory.js";
+import type { CompileRepositoryContextArtifactInput } from "../types.js";
+import { sourceProofDependencyId } from "../source-proofs.js";
 
 export function activeClaimsSection(
   input: CompileRepositoryContextArtifactInput,

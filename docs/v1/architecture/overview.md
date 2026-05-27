@@ -75,7 +75,7 @@ flowchart LR
 | `src/core/proofs/` | Proof validators and proof hash checks. | `evidence`, `security`, shared types. | compression. | `../core/trust-model.md`, `../core/security.md` |
 | `src/core/scope/` | Branch/worktree/env/feature scope matching. | `git`, shared types. | ranking and artifact rendering. | `../core/trust-model.md` |
 | `src/core/retrieval/` | Current-valid filtering and retrieval assembly. | `claims`, `scope`, `indexing`, shared types. | trust promotion. | `../core/trust-model.md` |
-| `src/core/compiler/` | Context artifact assembly and task policies. | `retrieval`, `compression`, `security`, shared types. | proof validation bypasses, direct SQL. | `../contracts/context-artifact.md` |
+| `src/core/compiler/` | Context artifact assembly and task policies. Public exports stay in `index.ts`; internal ownership is split into `artifact/` for artifact projections and guards, `pack/` for context-pack item and budget mapping, and `repository/` for repository-derived compilation with `sections/` and `policy/` subdirectories. | `retrieval`, `compression`, `security`, shared types. | proof validation bypasses, direct SQL. | `../contracts/context-artifact.md` |
 | `src/core/compression/` | Compression artifact creation and invalidation. | `security`, storage interfaces, shared types. | trust, proofs, claim promotion. | `../core/compression.md` |
 | `src/core/diff/` | Diff states and context pack item generation. | `sessions`, `compiler`, shared types. | retrieval mutation. | `../contracts/context-diff.md` |
 | `src/core/sessions/` | Session identity, locks, sent ledgers. | storage interfaces, shared types. | compiler policy. | `../contracts/context-diff.md` |
@@ -168,6 +168,8 @@ Split a module when any of these happen:
 Current pressure point: `src/core/storage/repositories.ts` is intentionally boring but already large. Do not add new table families to it without splitting storage repositories by ownership area. Evidence source/source-rejection persistence now lives in `src/core/storage/evidence-repositories.ts`, and file/symbol relationship persistence lives in `src/core/storage/indexing-repositories.ts`; future claim/proof table families should follow the same ownership split instead of expanding the session-ledger repository file.
 
 The local setup path is split under `src/app/local-project/` by use case: config/layout, migration-backed local storage, Git exclusion, initialization, status, doctor diagnostics, and MCP guidance. CLI command handlers must keep calling those app services rather than taking ownership of filesystem, Git, storage, or diagnostic policy.
+
+The compiler path is split under `src/core/compiler/` by artifact ownership rather than by generic helper type. `artifact/` owns public/scaffold artifact shape guards and V1 projection builders, `pack/` owns context-pack item and budget mapping, `repository/` owns repository-derived artifact compilation, `repository/sections/` owns section builders, and `repository/policy/` owns compiler task/risk policy. External layers should import through `src/core/compiler/index.ts` unless a same-layer implementation test needs a focused internal function.
 
 ## Quality Gate
 

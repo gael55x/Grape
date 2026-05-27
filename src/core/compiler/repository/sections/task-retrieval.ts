@@ -1,9 +1,9 @@
 import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
-} from "../../shared/index.js";
-import { repositoryContextSection } from "./repository-context-section-factory.js";
-import type { CompileRepositoryContextArtifactInput } from "./repository-context-types.js";
+} from "../../../../shared/index.js";
+import { repositoryContextSection } from "./factory.js";
+import type { CompileRepositoryContextArtifactInput } from "../types.js";
 
 export function taskRetrievalSection(
   input: CompileRepositoryContextArtifactInput,

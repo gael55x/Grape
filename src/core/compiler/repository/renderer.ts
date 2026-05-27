@@ -2,8 +2,8 @@ import type {
   ContextArtifactShape,
   ContextPackItemShape,
   InMemoryContextArtifactShape
-} from "../../shared/index.js";
-import type { ContextPackBudgetResult } from "./context-budget.js";
+} from "../../../shared/index.js";
+import type { ContextPackBudgetResult } from "../pack/context-budget.js";
 
 export interface RepositoryContextRenderTokenMetric {
   readonly naiveTokens: number;
