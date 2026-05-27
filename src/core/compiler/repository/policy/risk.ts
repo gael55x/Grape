@@ -1,4 +1,4 @@
-import { selectedSourceExcerpts } from "../selection.js";
+import { selectedSourceExcerpts } from "../selection/index.js";
 import type {
   CompileRepositoryContextArtifactInput,
   RepositoryArtifactSourceExcerptInput

@@ -3,13 +3,13 @@ import type {
   InMemoryContextRequest
 } from "../../../shared/index.js";
 import { assertInMemoryContextArtifactShape } from "../artifact/in-memory-context-artifact.js";
-import { dependencyManifest } from "./dependencies.js";
+import { dependencyManifest } from "./manifest/dependencies.js";
 import { hashStableJson, hashStableParts } from "./hash.js";
 import {
   repositoryContextArtifactHash,
   repositoryContextManifestHash
-} from "./integrity.js";
-import { maxListedEdges, maxListedSources, maxListedSymbols } from "./selection.js";
+} from "./validation/integrity.js";
+import { maxListedEdges, maxListedSources, maxListedSymbols } from "./selection/index.js";
 import { evaluateRepositoryRiskPolicy } from "./policy/risk.js";
 import { contextSections } from "./sections/sections.js";
 import type { CompileRepositoryContextArtifactInput } from "./types.js";

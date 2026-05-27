@@ -2,7 +2,7 @@ import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
 } from "../../../../shared/index.js";
-import { compressionDependencyId } from "../dependencies.js";
+import { compressionDependencyId } from "../manifest/dependencies.js";
 import { repositoryContextSection as section } from "./factory.js";
 import type { CompileRepositoryContextArtifactInput } from "../types.js";
 

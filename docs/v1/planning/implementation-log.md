@@ -420,3 +420,10 @@ Keep entries simple:
 - Summary: added app-owned bootstrap detection to `grape init --connect`, reporting language/framework hints, package manager, script names, derived commands, test command, entry points, config files, confidence levels, warnings, and non-durable candidate rules.
 - Checks run: focused CLI behavior test; `npm run check`; `npm run build`; `git diff --check`.
 - Risks/follow-ups: detection is intentionally manifest/config based and does not confirm candidate rules; route detection, broad framework extractors, and user-confirmed durable rules remain pending.
+
+### 2026-05-27 - Compiler Repository Ownership Refinement
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: refined `src/core/compiler/repository/` into focused `manifest/`, `proofs/`, `validation/`, `rendering/`, and split `selection/` ownership folders while preserving the public compiler export boundary and artifact behavior.
+- Checks run: `npm run check`; `npm run build`.
+- Risks/follow-ups: `repository/sections/sections.ts` remains a readable but broad section aggregator; split individual section families only when new section behavior would otherwise add another responsibility.

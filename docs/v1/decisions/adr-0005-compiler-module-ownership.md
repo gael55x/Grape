@@ -17,16 +17,20 @@ Split `src/core/compiler/` into ownership subdirectories:
 - `artifact/` owns artifact shape guards and public artifact projection code.
 - `pack/` owns context-pack item mapping and token-budget evaluation.
 - `repository/` owns repository-derived context artifact compilation.
+- `repository/manifest/` owns dependency manifest construction and dependency ID helpers.
+- `repository/proofs/` owns compiler-local proof-ref helpers. It does not validate proofs or promote claims.
+- `repository/validation/` owns artifact, section, and manifest integrity checks.
+- `repository/selection/` owns bounded source, excerpt, symbol, and relationship selection.
 - `repository/sections/` owns section builders for repository-derived artifacts.
 - `repository/policy/` owns compiler policy such as risk overlay evaluation.
+- `repository/rendering/` owns JSON rendering and narrow render input contracts shared by JSON and Markdown renderers.
 - `repository/markdown/` owns agent-facing Markdown rendering for repository-derived context packs.
-- `repository/render-types.ts` owns the narrow render input contract shared by JSON and Markdown renderers.
 
 Keep `src/core/compiler/index.ts` as the public export boundary for other layers. Internal imports may use focused submodule paths within the compiler package, but unrelated layers should not depend on private compiler file layout.
 
 ## Consequences
 
-Compiler navigation now follows purpose instead of filename prefixes. Future artifact-section work has an obvious home under `repository/sections/`, future compiler policy work has an obvious home under `repository/policy/`, and future Markdown contract work has an obvious home under `repository/markdown/`.
+Compiler navigation now follows purpose instead of filename prefixes. Future artifact-section work has an obvious home under `repository/sections/`, future dependency-manifest work belongs under `repository/manifest/`, proof-ref formatting belongs under `repository/proofs/`, selection limits and ordering belong under `repository/selection/`, artifact integrity checks belong under `repository/validation/`, compiler policy work belongs under `repository/policy/`, and rendered output contract work belongs under `repository/rendering/` or `repository/markdown/`.
 
 The ownership boundary does not permit compiler code to change dependency hashing, trust promotion, storage access, CLI orchestration, or MCP transport behavior. Any artifact or Markdown contract change still needs the artifact contract and tests updated in the same slice.
 
