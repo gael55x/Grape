@@ -5,6 +5,13 @@ export function renderProblems(label: string, values: readonly string[]): string
   return ["", `${label}:`, ...values.map((value) => `  - ${value}`)];
 }
 
+export function renderReasonCounts(counts: Readonly<Record<string, number>>): string {
+  const activeCounts = Object.entries(counts)
+    .filter(([, count]) => count > 0)
+    .map(([reason, count]) => `${reason}=${count}`);
+  return activeCounts.length === 0 ? "none" : activeCounts.join(", ");
+}
+
 export function statusLabel(status: DiagnosticStatus): string {
   switch (status) {
     case "pass":
@@ -22,7 +29,9 @@ export function helpText(): string {
     "",
     "Usage:",
     "  grape init --connect        Initialize local .grape state and show MCP guidance",
+    "  grape sync                  Refresh local snapshot, evidence, and file index",
     "  grape compile --task <text> Compile a task context pack",
+    "  grape diff-context --task <text> Compile and diff a task context pack",
     "  grape artifacts             Inspect compiled context artifacts",
     "  grape bench --fixture <name> Run scripted V1 fixture benchmarks",
     "  grape sessions              Inspect context sessions and diff ledgers",

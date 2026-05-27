@@ -4,6 +4,21 @@ import { errorMessage, renderProblems, write, writeError, writeJson } from "../r
 import { exitCodes } from "../exit-codes.js";
 
 export async function runCompile(parsed: ParsedArgs): Promise<number> {
+  return runCompileLike(parsed, {
+    commandLabel: "compile",
+    missingTaskMessage: "grape compile requires --task <text>",
+    successTitle: "Grape context compiled."
+  });
+}
+
+export async function runCompileLike(
+  parsed: ParsedArgs,
+  output: {
+    readonly commandLabel: string;
+    readonly missingTaskMessage: string;
+    readonly successTitle: string;
+  }
+): Promise<number> {
   const flag = unsupportedFlag(
     parsed,
     new Set([
@@ -18,13 +33,13 @@ export async function runCompile(parsed: ParsedArgs): Promise<number> {
     ])
   );
   if (flag) {
-    writeError(`Unsupported option for grape ${parsed.command}: ${flag}`);
+    writeError(`Unsupported option for grape ${output.commandLabel}: ${flag}`);
     return exitCodes.usage;
   }
 
   const task = parsed.values.get("--task");
   if (!task) {
-    writeError("grape compile requires --task <text>");
+    writeError(output.missingTaskMessage);
     return exitCodes.usage;
   }
 
@@ -46,7 +61,7 @@ export async function runCompile(parsed: ParsedArgs): Promise<number> {
     }
 
     write([
-      "Grape context compiled.",
+      output.successTitle,
       "",
       `Session: ${result.sessionId}`,
       `Artifact: ${result.artifactId}`,
@@ -69,7 +84,7 @@ export async function runCompile(parsed: ParsedArgs): Promise<number> {
     return result.unsafeReasons.length === 0 ? exitCodes.ok : exitCodes.unsafe;
   } catch (error) {
     const message = errorMessage(error);
-    writeError(`grape compile failed: ${message}`);
+    writeError(`grape ${output.commandLabel} failed: ${message}`);
     const guidance = recoveryGuidanceForErrorMessage(message);
     if (guidance.length > 0) writeError(renderProblems("Recovery", guidance).join("\n"));
     return compileErrorExitCode(error);

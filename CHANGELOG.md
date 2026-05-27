@@ -74,3 +74,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added setup/status scan diagnostics and scanner rejection gates for oversized and binary files before source evidence ingestion.
 - Hardened indexing path handling with Windows-style separator normalization and unsafe repo path rejection before file reads.
 - Source evidence now distinguishes committed, staged, unstaged, and untracked Git scopes from porcelain status.
+- Added `grape sync` and `grape diff-context --task <text>` as CLI fallback commands for refreshing local inputs and explicitly requesting a session-diffed context pack.
