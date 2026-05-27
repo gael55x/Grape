@@ -120,6 +120,7 @@ test("mcp stdio lists implemented Grape tools", () => {
         "grape_get_rules",
         "grape_get_omitted_item",
         "grape_get_stale_items",
+        "grape_get_conflicts",
         "grape_get_status",
         "grape_record_command_result",
         "grape_record_test_result"
@@ -132,6 +133,43 @@ test("mcp stdio lists implemented Grape tools", () => {
     const commandTool = responses[1].result.tools.find((tool) => tool.name === "grape_record_command_result");
     assert.equal(commandTool.inputSchema.additionalProperties, false);
     assert.match(commandTool.inputSchema.properties.command.description, /not persisted/);
+  });
+});
+
+test("mcp grape_get_conflicts returns conflict inspection without root paths", () => {
+  withGitRepo((repoPath) => {
+    runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-conflicts-session"
+          }
+        }
+      }
+    ]);
+
+    const conflicts = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_conflicts",
+          arguments: {}
+        }
+      }
+    ])[0].result;
+
+    assert.equal(conflicts.isError, false);
+    assert.equal(Object.hasOwn(conflicts.structuredContent, "rootPath"), false);
+    assert.equal(conflicts.content[0].text.includes(repoPath), false);
+    assert.deepEqual(conflicts.structuredContent.conflicts, []);
+    assert.deepEqual(conflicts.structuredContent.warnings, []);
   });
 });
 

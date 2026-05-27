@@ -67,6 +67,7 @@ The current implementation includes the first stdio MCP server:
       "grape_get_rules",
       "grape_get_omitted_item",
       "grape_get_stale_items",
+      "grape_get_conflicts",
       "grape_get_status",
       "grape_record_command_result",
       "grape_record_test_result"
@@ -85,6 +86,7 @@ The current implementation includes the first stdio MCP server:
 - `grape_get_rules`
 - `grape_get_omitted_item`
 - `grape_get_stale_items`
+- `grape_get_conflicts`
 - `grape_get_status`
 - `grape_record_command_result`
 - `grape_record_test_result`
@@ -108,6 +110,8 @@ Current limitation: the returned `contextArtifact` and public artifact JSON use 
 `grape_get_omitted_item` restores one omitted context item by `sessionId` and `restoreToken`. It validates the token against the session, stored scaffold artifact metadata, stored dependency rows, artifact hash, section content hash, dependency manifest, redaction status, branch, head commit, worktree hash, source/config/lockfile/rule dependency hashes, and proof dependency rows/hashes before returning the omitted body. Stale restore attempts return `status: "stale"` with an error result rather than returning stale content. MCP output omits absolute local root paths.
 
 `grape_get_stale_items` returns emitted stale-context invalidation metadata, optionally filtered by `sessionId`. It reuses the same local app service as `grape stale`, removes `rootPath` from MCP output, and does not return context bodies.
+
+`grape_get_conflicts` returns recorded claim conflict edges from `claim_edges`, including `contradicts`, `needs_review`, `violates`, and `unknown_scope_overlap`, without attempting to resolve or merge claims. It reuses the same app service as `grape conflicts` and removes `rootPath` from MCP output.
 
 `grape_record_command_result` and `grape_record_test_result` persist agent-reported command/test observations as temporary `command_run` / `test_run` source evidence rows scoped to the current repo snapshot and an existing current context session. The adapter accepts the raw command only to verify `commandHash`; raw command, stdout, and stderr bodies are not persisted or returned. MCP callers cannot mint `observedRunId`, cannot self-declare `observedByGrape`, and cannot promote these rows to durable claims or proofs.
 
@@ -308,6 +312,40 @@ interface GrapeGetStaleItemsOutput {
     dependencyRefs: string[];
     createdAt: string;
   }>;
+}
+```
+
+```ts
+interface GrapeGetConflictsInput {}
+
+interface GrapeGetConflictsOutput {
+  branch: string;
+  headCommit: string;
+  dirtyWorktree: boolean;
+  conflicts: Array<{
+    edgeId: string;
+    edgeType: "contradicts" | "needs_review" | "violates" | "unknown_scope_overlap";
+    sourceClaimId: string;
+    targetClaimId: string;
+    sourceClaim?: {
+      claimId: string;
+      subject: string;
+      claimType: string;
+      claimText: string;
+      verificationStatus: string;
+      scopeHash: string;
+    };
+    targetClaim?: {
+      claimId: string;
+      subject: string;
+      claimType: string;
+      claimText: string;
+      verificationStatus: string;
+      scopeHash: string;
+    };
+    createdAt: string;
+  }>;
+  warnings: string[];
 }
 ```
 

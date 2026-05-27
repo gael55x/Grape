@@ -27,6 +27,7 @@ export function helpText(): string {
     "  grape sessions              Inspect context sessions and diff ledgers",
     "  grape stale                 Inspect stale-context invalidations",
     "  grape claims --active       Inspect current-valid durable claims",
+    "  grape conflicts             Inspect recorded claim conflict edges",
     "  grape proofs               Inspect persisted proof rows",
     "  grape omitted --session <id> Inspect or restore omitted context",
     "  grape status                Inspect local project/bootstrap state",

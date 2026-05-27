@@ -86,6 +86,7 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.match(result.stdout, /grape sessions/);
   assert.match(result.stdout, /grape stale/);
   assert.match(result.stdout, /grape claims --active/);
+  assert.match(result.stdout, /grape conflicts/);
   assert.match(result.stdout, /grape proofs/);
   assert.match(result.stdout, /grape status/);
   assert.match(result.stdout, /grape doctor/);
@@ -238,6 +239,9 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(claims.claims[0].claimType, "repository_source_excerpt_exists");
     assert.equal(claims.claims[0].verificationStatus, "verified");
     assert.equal(claims.claims[0].proofRefs.length > 0, true);
+    const conflicts = runCliJson(repoPath, ["conflicts"]);
+    assert.equal(conflicts.conflicts.length, 0);
+    assert.deepEqual(conflicts.warnings, []);
     const proofs = runCliJson(repoPath, ["proofs"]);
     assert.equal(proofs.proofs.length > 0, true);
     const proof = proofs.proofs[0];
@@ -794,6 +798,7 @@ test("cli mcp --print-config emits the V1 stdio connection contract", () => {
         "grape_get_rules",
         "grape_get_omitted_item",
         "grape_get_stale_items",
+        "grape_get_conflicts",
         "grape_get_status",
         "grape_record_command_result",
         "grape_record_test_result"

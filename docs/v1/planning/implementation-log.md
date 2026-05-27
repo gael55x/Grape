@@ -350,3 +350,10 @@ Keep entries simple:
 - Summary: added restricted MCP `grape_record_command_result` and `grape_record_test_result` tools backed by a local observation app service and pure evidence builders. Agent-reported observations are persisted as temporary `command_run` / `test_run` source rows scoped to the current repo snapshot and context session. Raw command/stdout/stderr bodies are not persisted, and MCP callers cannot mint Grape-observed authority or durable claims.
 - Checks run: focused MCP behavior tests before full verification.
 - Risks/follow-ups: these are scratch evidence rows only. Grape-observed command runners, `command_runs` / `test_runs` tables, durable proof attachment, and CLI decision workflows remain pending.
+
+### 2026-05-26 - Conflict Inspection Surface
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added typed `claim_edges` storage access plus CLI `grape conflicts` and MCP `grape_get_conflicts`. The surfaces list recorded conflict-like edges and claim summaries without resolving contradictions, merging claims, or pretending detection exists.
+- Checks run: focused storage/CLI/MCP behavior tests before full verification.
+- Risks/follow-ups: contradiction detection, conflict creation, supersession policy, and artifact conflict sections remain pending.
