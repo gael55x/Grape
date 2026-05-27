@@ -399,3 +399,10 @@ Keep entries simple:
 - Summary: split `src/core/compiler/` into ownership subdirectories for artifact guards/projection, context-pack mapping, repository-derived compilation, section builders, and policy while preserving `src/core/compiler/index.ts` as the public import boundary.
 - Checks run: focused compiler behavior tests before full verification.
 - Risks/follow-ups: future compiler work should keep using the ownership folders rather than adding another flat prefix family or generic helper directory.
+
+### 2026-05-27 - Fixture Benchmark Harness
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added `grape bench --fixture <name>` backed by an app-owned benchmark service. The first benchmark copies a named fixture into a temporary Git repo, runs the real local compile/diff path twice with the same session, and reports first-turn/second-turn token costs, restore hints, invalidations, unsafe omissions, stale sends, and threshold failures.
+- Checks run: focused benchmark CLI behavior tests before full verification.
+- Risks/follow-ups: the harness currently covers `bench_token_reduction_after_first_turn` for named fixtures. Broader benchmark names, gold-label current-valid fixtures, stale-proof fixtures, and threshold calibration remain pending.

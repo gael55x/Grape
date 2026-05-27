@@ -24,6 +24,7 @@ export function helpText(): string {
     "  grape init --connect        Initialize local .grape state and show MCP guidance",
     "  grape compile --task <text> Compile a task context pack",
     "  grape artifacts             Inspect compiled context artifacts",
+    "  grape bench --fixture <name> Run scripted V1 fixture benchmarks",
     "  grape sessions              Inspect context sessions and diff ledgers",
     "  grape stale                 Inspect stale-context invalidations",
     "  grape claims --active       Inspect current-valid durable claims",
@@ -47,6 +48,9 @@ export function helpText(): string {
     "  --artifact <id>             Inspect one context artifact",
     "  --proof <id>                Inspect one persisted proof row",
     "  --source <id>               Filter proof rows by source id",
+    "  --fixture <name>            Run a named benchmark fixture",
+    "  --fixture-path <path>       Use an explicit benchmark fixture path",
+    "  --keep-workspace            Keep benchmark temp workspace for debugging",
     "  --json                      Emit machine-readable JSON"
   ].join("\n");
 }

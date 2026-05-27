@@ -11,6 +11,7 @@ This folder contains Architecture Decision Records for V1.
 | `adr-0003-documentation-structure.md` | Accepted | Keep `SPEC.md` at the V1 root and group supporting docs by purpose. |
 | `adr-0004-node-225-sqlite-runtime.md` | Accepted | Require Node 22.5+ and use built-in `node:sqlite` for the initial storage runtime. |
 | `adr-0005-compiler-module-ownership.md` | Accepted | Split compiler internals into artifact, pack, repository, section, and policy ownership folders while keeping `src/core/compiler/index.ts` as the public boundary. |
+| `adr-0006-benchmark-harness-ownership.md` | Accepted | Own scripted fixture benchmark orchestration under `src/app/benchmark/` while keeping `grape bench` a thin CLI adapter. |
 
 ## Naming
 

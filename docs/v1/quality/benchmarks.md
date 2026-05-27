@@ -48,6 +48,31 @@ Rules:
 - `unsafeOmissions` must be `0`; otherwise the token-saving result is invalid.
 - These numbers are not release benchmark claims. They only prove the accounting path exists.
 
+## Current Alpha Benchmark Harness
+
+The current product harness is `grape bench --fixture <name>`. It is intentionally narrow: it copies a named fixture into a temporary Git repository, commits the fixture, runs the real local `compileLocalContext` path twice with the same session, and reports the token accounting already persisted by the context diff pipeline.
+
+Supported options:
+
+- `--fixture <name>`: required named fixture.
+- `--fixture-path <path>`: optional explicit fixture directory.
+- `--repo <path>`: base path for default fixture lookup at `<repo>/tests/fixtures/<name>`.
+- `--task <text>`: optional benchmark task; defaults to the fixture's discount explanation task for the current clean TypeScript fixture.
+- `--json`: machine-readable output.
+- `--keep-workspace`: preserve the copied temporary benchmark workspace for debugging.
+
+The implemented benchmark is `bench_token_reduction_after_first_turn`. It reports first-turn and second-turn token costs separately, wall-clock duration for each compile call, context-pack item counts, sent and omitted ledger counts, restore hint counts, invalidation item counts, unsafe omissions, stale sends, and second-turn reduction percentage.
+
+Current alpha thresholds:
+
+- second-turn reduction must be at least 30 percent
+- unsafe omissions must be zero
+- stale items sent must be zero
+- second turn must include at least one `OMIT_UNCHANGED`
+- second turn must include at least one `RESTORE_AVAILABLE`
+
+These numbers are deterministic approximate token estimates, not release performance claims. They are valid as harness checks because they run against named fixtures and fail on unsafe omission or stale send counters.
+
 ## Metric Schema
 
 ```ts

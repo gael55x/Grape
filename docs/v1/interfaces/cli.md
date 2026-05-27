@@ -54,6 +54,7 @@ The current implementation includes the first CLI setup/debugging slice:
 - `grape stale`
 - `grape artifacts`
 - `grape artifacts --artifact <id>`
+- `grape bench --fixture <name>`
 - `grape proofs`
 - `grape proofs --proof <id>`
 - `grape proofs --source <sourceId>`
@@ -76,6 +77,8 @@ When an explicit `--session` is reused after switching Git branches for the same
 When `--reset-session` is supplied for an existing compile session, `grape compile` records a session reset event, emits `INVALIDATE_PREVIOUS` rows for active prior sent items, and forces the current scaffold artifact sections to be resent instead of using `OMIT_UNCHANGED`. This is the recovery path for agents that lost prior context.
 
 `grape artifacts` lists stored context artifacts from local SQLite metadata. `grape artifacts --session <id>` filters that list to one context session. `grape artifacts --artifact <id>` returns artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative public `.grape/artifacts/` file refs. It is an inspection command and does not return internal scaffold sidecar bodies.
+
+`grape bench --fixture <name>` runs the first scripted V1 token-reduction benchmark. The command copies the named fixture into a temporary Git repository, runs the real local compile/diff path twice with the same session, and reports first-turn cost, second-turn cost, omitted unchanged tokens, restore hints, invalidation counts, wall-clock timings, unsafe omissions, stale sends, and threshold failures. The default fixture lookup is `<repo>/tests/fixtures/<name>` where `<repo>` comes from `--repo <path>` or the current working directory. `--fixture-path <path>` can point at an explicit fixture directory. `--keep-workspace` preserves the copied temporary workspace for debugging. The benchmark fails closed when second-turn reduction is below the current alpha threshold, unsafe omissions are present, stale items are sent, no unchanged items are omitted, or no restore hint is emitted.
 
 `grape sessions` lists context sessions, branch/head state, task metadata, lock status, artifact/sent/omitted/pack counts, event counts, and the last event reason. It is a debug command for session-scoped diff behavior and does not return context bodies.
 

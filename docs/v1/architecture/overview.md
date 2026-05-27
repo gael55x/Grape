@@ -68,6 +68,7 @@ flowchart LR
 | `src/mcp/` | MCP server, tool schemas, adapter validation. | `src/app/`, `src/shared/`. | direct storage writes, compiler internals. | `../interfaces/mcp-tools.md` |
 | `src/app/` | Use-case orchestration and transaction boundaries. | `src/core/*`, `src/shared/`. | CLI or MCP rendering. | `overview.md`, `state-machine.md` |
 | `src/app/local-project/` | Local setup, config, migration loading, status, doctor, and MCP guidance services for `.grape/`. | `src/core/git/`, `src/core/storage/`, local app services. | CLI rendering, MCP transport, trust promotion, compiler policy. | `../interfaces/cli.md`, `../core/storage.md`, `../core/security.md` |
+| `src/app/benchmark/` | Scripted fixture benchmark orchestration, fixture repo preparation, and benchmark result shaping. | `src/app/local-project/`, Node filesystem/process APIs, shared benchmark types. | CLI rendering, ad hoc baselines, durable truth promotion, compiler policy. | `../quality/benchmarks.md`, `../interfaces/cli.md` |
 | `src/core/state/` | State names, events, transition guards. | `src/shared/`. | storage SQL, CLI/MCP. | `state-machine.md` |
 | `src/core/evidence/` | Sources, evidence records, source classification. | `state`, `security`, storage interfaces, shared types. | claim promotion. | `../core/trust-model.md` |
 | `src/core/trust/` | Belief gates and promotion policy. | `claims`, `proofs`, `scope`, shared types. | compression, CLI/MCP. | `../core/trust-model.md` |
@@ -170,6 +171,8 @@ Current pressure point: `src/core/storage/repositories.ts` is intentionally bori
 The local setup path is split under `src/app/local-project/` by use case: config/layout, migration-backed local storage, Git exclusion, initialization, status, doctor diagnostics, and MCP guidance. CLI command handlers must keep calling those app services rather than taking ownership of filesystem, Git, storage, or diagnostic policy.
 
 The compiler path is split under `src/core/compiler/` by artifact ownership rather than by generic helper type. `artifact/` owns public/scaffold artifact shape guards and V1 projection builders, `pack/` owns context-pack item and budget mapping, `repository/` owns repository-derived artifact compilation, `repository/sections/` owns section builders, and `repository/policy/` owns compiler task/risk policy. External layers should import through `src/core/compiler/index.ts` unless a same-layer implementation test needs a focused internal function.
+
+The benchmark path is split under `src/app/benchmark/` so scripted fixture setup and token-reduction result shaping stay outside CLI rendering and outside core compiler policy. Benchmarks must run named fixture workflows and must fail on unsafe omissions or stale sends instead of treating token reduction as sufficient.
 
 ## Quality Gate
 

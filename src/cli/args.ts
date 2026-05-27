@@ -18,7 +18,9 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     "--token",
     "--artifact",
     "--proof",
-    "--source"
+    "--source",
+    "--fixture",
+    "--fixture-path"
   ]);
 
   for (let index = 0; index < rest.length; index += 1) {
