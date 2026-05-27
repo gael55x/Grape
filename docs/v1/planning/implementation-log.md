@@ -392,3 +392,10 @@ Keep entries simple:
 - Summary: hardened local bootstrap recovery for malformed or incomplete `.grape/config.json`. Status and doctor now identify repairable config damage separately from unsupported future schema versions; `grape init --connect` and compile auto-bootstrap back up repairable invalid configs before writing a fresh local config.
 - Checks run: focused CLI behavior tests before full verification.
 - Risks/follow-ups: framework/package-manager detection, candidate rules, and broader partial-bootstrap recovery remain pending.
+
+### 2026-05-27 - Compiler Directory Ownership Split
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: split `src/core/compiler/` into ownership subdirectories for artifact guards/projection, context-pack mapping, repository-derived compilation, section builders, and policy while preserving `src/core/compiler/index.ts` as the public import boundary.
+- Checks run: focused compiler behavior tests before full verification.
+- Risks/follow-ups: future compiler work should keep using the ownership folders rather than adding another flat prefix family or generic helper directory.

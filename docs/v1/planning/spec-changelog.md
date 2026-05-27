@@ -64,3 +64,4 @@ Each entry should include:
 - Clarified the conflict inspection surface: `grape conflicts` and `grape_get_conflicts` inspect existing conflict-like `claim_edges` rows without claiming contradiction detection or automatic resolution.
 - Clarified V1 recovery guidance behavior: status, doctor, context compile, stale restore, lock-conflict, and privacy/redaction failure paths return actionable next steps without exposing private file contents or secrets.
 - Clarified partial-bootstrap config recovery: malformed or schema/project-identity-incomplete local `.grape/config.json` files are repairable by backing up the old file and writing a fresh local config, while unsupported schema versions fail closed.
+- Clarified compiler source-tree ownership: `src/core/compiler/` is split into artifact, pack, repository, repository section, and repository policy subdirectories, with `src/core/compiler/index.ts` remaining the public export boundary.

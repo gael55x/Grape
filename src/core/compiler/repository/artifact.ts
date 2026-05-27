@@ -1,18 +1,18 @@
 import type {
   InMemoryContextArtifactShape,
   InMemoryContextRequest
-} from "../../shared/index.js";
-import { assertInMemoryContextArtifactShape } from "./in-memory-context-artifact.js";
-import { dependencyManifest } from "./repository-context-dependencies.js";
-import { hashStableJson, hashStableParts } from "./repository-context-hash.js";
+} from "../../../shared/index.js";
+import { assertInMemoryContextArtifactShape } from "../artifact/in-memory-context-artifact.js";
+import { dependencyManifest } from "./dependencies.js";
+import { hashStableJson, hashStableParts } from "./hash.js";
 import {
   repositoryContextArtifactHash,
   repositoryContextManifestHash
-} from "./repository-context-integrity.js";
-import { maxListedEdges, maxListedSources, maxListedSymbols } from "./repository-context-selection.js";
-import { evaluateRepositoryRiskPolicy } from "./repository-context-risk-policy.js";
-import { contextSections } from "./repository-context-sections.js";
-import type { CompileRepositoryContextArtifactInput } from "./repository-context-types.js";
+} from "./integrity.js";
+import { maxListedEdges, maxListedSources, maxListedSymbols } from "./selection.js";
+import { evaluateRepositoryRiskPolicy } from "./policy/risk.js";
+import { contextSections } from "./sections/sections.js";
+import type { CompileRepositoryContextArtifactInput } from "./types.js";
 
 export function compileRepositoryContextArtifact(
   input: CompileRepositoryContextArtifactInput

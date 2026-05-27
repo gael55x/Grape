@@ -1,8 +1,8 @@
-import { selectedSourceExcerpts } from "./repository-context-selection.js";
+import { selectedSourceExcerpts } from "../selection.js";
 import type {
   CompileRepositoryContextArtifactInput,
   RepositoryArtifactSourceExcerptInput
-} from "./repository-context-types.js";
+} from "../types.js";
 
 export interface RepositoryRiskPolicyResult {
   readonly warnings: readonly string[];

@@ -80,3 +80,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added CLI `grape conflicts` and MCP `grape_get_conflicts` for read-only inspection of recorded claim conflict edges.
 - Added CLI/MCP recovery guidance for partial bootstrap, missing Git metadata, unsafe compile, token-budget failures, session lock conflicts, stale restore paths, and privacy/redaction blocks.
 - Added safe malformed-config recovery for partial bootstrap: `grape status` and `grape doctor` identify repairable local config damage or missing schema/project identity fields, while `grape init --connect` and compile auto-bootstrap back up the invalid config before writing a fresh local config.
+- Reorganized compiler internals into ownership subdirectories for artifact guards/projection, context-pack mapping, repository compilation, section builders, and policy while preserving the public `src/core/compiler/index.ts` export boundary.

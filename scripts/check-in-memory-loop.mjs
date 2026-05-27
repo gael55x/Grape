@@ -222,7 +222,7 @@ function checkRepoSnapshotShape() {
 }
 
 function checkInMemoryArtifactShape() {
-  const source = read("src/core/compiler/in-memory-context-artifact.ts");
+  const source = read("src/core/compiler/artifact/in-memory-context-artifact.ts");
 
   for (const required of [
     "dependencyManifest: InMemoryContextDependencyManifestShape;",

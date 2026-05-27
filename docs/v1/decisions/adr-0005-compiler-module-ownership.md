@@ -1,0 +1,47 @@
+# ADR-0005: Compiler Module Ownership
+
+## Status
+
+Accepted.
+
+## Context
+
+`src/core/compiler/` grew into several distinct responsibilities: scaffold artifact guards, public V1 projection, context-pack budget mapping, repository-derived artifact compilation, section construction, dependency manifests, integrity hashes, source proof refs, and risk policy. Keeping all compiler files flat made navigation harder and encouraged future contributors to add new compiler behavior without first choosing a clear owner.
+
+The V1 architecture requires small modules with explicit responsibilities and stable public interfaces. The compiler also sits on a trust boundary: it may render proof-backed context, but it must not validate proofs, promote claims, or write storage SQL.
+
+## Decision
+
+Split `src/core/compiler/` into ownership subdirectories:
+
+- `artifact/` owns artifact shape guards and public artifact projection code.
+- `pack/` owns context-pack item mapping and token-budget evaluation.
+- `repository/` owns repository-derived context artifact compilation.
+- `repository/sections/` owns section builders for repository-derived artifacts.
+- `repository/policy/` owns compiler policy such as risk overlay evaluation.
+
+Keep `src/core/compiler/index.ts` as the public export boundary for other layers. Internal imports may use focused submodule paths within the compiler package, but unrelated layers should not depend on private compiler file layout.
+
+## Consequences
+
+Compiler navigation now follows purpose instead of filename prefixes. Future artifact-section work has an obvious home under `repository/sections/`, and future compiler policy work has an obvious home under `repository/policy/`.
+
+This is a mechanical ownership change only. It does not change artifact format, section content, dependency hashing, trust promotion, storage access, CLI behavior, or MCP behavior.
+
+## Alternatives
+
+- Keep a flat compiler directory and rely on filename prefixes. Rejected because the directory was already long enough to slow review and invited prefix sprawl.
+- Split by generic buckets like `utils/`, `helpers/`, or `models/`. Rejected because those names hide ownership and contradict the V1 modularity rules.
+- Create separate top-level core packages for artifact, pack, and repository compilation. Rejected as unnecessary for V1 because the responsibilities are still compiler-owned.
+
+## Supersedes
+
+None.
+
+## Related Spec Sections
+
+- `docs/v1/SPEC.md` section 2.3: keep MCP/CLI as thin adapters over local services.
+- `docs/v1/SPEC.md` section 9: context graph and dependency manifest requirements.
+- `docs/v1/SPEC.md` section 15: MCP/CLI integration surfaces consume compiled context artifacts.
+- `docs/v1/contracts/context-artifact.md`: artifact and section contract.
+- `docs/v1/architecture/overview.md`: module boundaries and code modularity standards.

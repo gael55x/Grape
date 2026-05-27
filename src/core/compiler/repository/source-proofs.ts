@@ -1,5 +1,5 @@
-import type { RepositoryArtifactSourceExcerptInput } from "./repository-context-types.js";
-import { hashStableParts } from "./repository-context-hash.js";
+import type { RepositoryArtifactSourceExcerptInput } from "./types.js";
+import { hashStableParts } from "./hash.js";
 
 export function repositorySourceProofId(input: {
   readonly sourceId: string;

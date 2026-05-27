@@ -3,7 +3,7 @@ import type {
   InMemoryContextDependencyManifestShape,
   InMemoryContextRequest,
   InMemoryContextSectionShape
-} from "../../shared/index.js";
+} from "../../../shared/index.js";
 
 export interface InMemoryContextArtifactShapeInput {
   artifactId: string;
