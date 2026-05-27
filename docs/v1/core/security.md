@@ -44,6 +44,8 @@ Current implementation note: Git repo snapshots filter paths through Git ignore 
 
 Rejected ignored/private paths are persisted only as path-level `source_rejections` with reason, privacy status, repo snapshot identity, and hashes of allowed inputs. Grape does not read or persist the rejected file contents. Git-ignored untracked files and directories are skipped by default rather than enumerated, which avoids storing local-only path names such as ignored environment files, dependency folders, and `.grape/` runtime files.
 
+Git repo snapshots also reject oversized files and binary-looking files before they become source records. Oversized rejections store path, reason, source kind, and size only; binary rejections store path, reason, source kind, size, and a content hash, but no raw bytes. CLI setup/status output exposes aggregate scan diagnostics so developers and agents can see why files were skipped without receiving file bodies.
+
 The current file-indexing foundation reads only files already present in the allowed snapshot file manifest. Before extracting symbols/imports it rejects symlinks, binary files, oversized files, unreadable files, and files whose current bytes no longer match the snapshot hash. It stores module/symbol names, import refs, hashes, line numbers, confidence, and discovery method, but not source excerpts or file contents.
 
 The current FTS foundation reads only already-allowed source records, reuses the same path, size, symlink, binary, and source-hash guards as file indexing, and skips secret-looking text before inserting FTS rows. FTS result records expose source refs and hashes, not indexed bodies.

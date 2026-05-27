@@ -12,6 +12,7 @@ This folder contains Architecture Decision Records for V1.
 | `adr-0004-node-225-sqlite-runtime.md` | Accepted | Require Node 22.5+ and use built-in `node:sqlite` for the initial storage runtime. |
 | `adr-0005-compiler-module-ownership.md` | Accepted | Split compiler internals into artifact, pack, repository, section, and policy ownership folders while keeping `src/core/compiler/index.ts` as the public boundary. |
 | `adr-0006-benchmark-harness-ownership.md` | Accepted | Own scripted fixture benchmark orchestration under `src/app/benchmark/` while keeping `grape bench` a thin CLI adapter. |
+| `adr-0007-git-snapshot-file-manifest-ownership.md` | Accepted | Split Git snapshot orchestration from file manifest hashing and scanner rejection policy. |
 
 ## Naming
 

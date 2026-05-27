@@ -20,8 +20,13 @@ export interface RepoSnapshotEvidenceFile {
 
 export interface RepoSnapshotEvidenceRejection {
   readonly path: string;
-  readonly reason: "git_ignored" | "privacy_ignored" | "unreadable";
-  readonly privacyStatus: Extract<PrivacyStatus, "ignored" | "private">;
+  readonly reason: "git_ignored" | "privacy_ignored" | "unreadable" | "too_large" | "binary";
+  readonly privacyStatus: Extract<PrivacyStatus, "allowed" | "ignored" | "private">;
+  readonly metadata?: {
+    readonly sha256?: string;
+    readonly sizeBytes?: number;
+    readonly sourceKind?: SnapshotSourceKind;
+  };
 }
 
 export interface CollectRepoSnapshotEvidenceInput {
@@ -129,6 +134,7 @@ function sourceRejectionRecord(
       commit: input.commit,
       projectId: input.projectId,
       repoId: input.repoId,
+      rejectionMetadata: file.metadata ?? {},
       snapshotId: input.snapshotId,
       worktreeHash: input.worktreeHash,
       worktreeStateId: input.worktreeStateId

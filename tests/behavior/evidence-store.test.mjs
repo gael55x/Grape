@@ -7,6 +7,7 @@ import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
 import { persistGitRepoSnapshot } from "../../.tmp/build/src/app/index.js";
+import { maxSnapshotFileBytes } from "../../.tmp/build/src/core/git/index.js";
 import {
   applyStorageMigrations,
   createEvidenceStorageRepositories,
@@ -57,6 +58,8 @@ function withGitRepo(fn) {
     writeFileSync(path.join(dir, ".aiignore"), "private.txt\n");
     writeFileSync(path.join(dir, ".grape", "rules.md"), "Never store raw secrets.\n");
     writeFileSync(path.join(dir, "src", "app.ts"), "export const app = true;\n");
+    writeFileSync(path.join(dir, "src", "binary.ts"), Buffer.from([0, 1, 2, 3]));
+    writeFileSync(path.join(dir, "src", "large.ts"), Buffer.alloc(maxSnapshotFileBytes + 1, "a"));
     writeFileSync(path.join(dir, "package-lock.json"), "{\"lockfileVersion\":3}\n");
     writeFileSync(path.join(dir, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
     writeFileSync(path.join(dir, "ignored.env"), "SECRET=forced-tracked\n");
@@ -68,6 +71,8 @@ function withGitRepo(fn) {
       ".aiignore",
       ".grape/rules.md",
       "src/app.ts",
+      "src/binary.ts",
+      "src/large.ts",
       "package-lock.json",
       "pnpm-lock.yaml"
     ]);
@@ -126,11 +131,22 @@ test("snapshot evidence persists allowed source records and privacy-safe rejecti
       assert.equal(sourceByRef.get(".grape/rules.md")?.sourceType, "rule_file");
       assert.equal(sourceByRef.has("ignored.env"), false);
       assert.equal(sourceByRef.has("private.txt"), false);
+      assert.equal(sourceByRef.has("src/binary.ts"), false);
+      assert.equal(sourceByRef.has("src/large.ts"), false);
       assert.equal(sourceByRef.has("node_modules/package/index.js"), false);
       assert.equal(rejectionByRef.get("ignored.env")?.rejectionReason, "git_ignored");
       assert.equal(rejectionByRef.get("ignored.env")?.privacyStatus, "ignored");
       assert.equal(rejectionByRef.get("private.txt")?.rejectionReason, "privacy_ignored");
       assert.equal(rejectionByRef.get("private.txt")?.privacyStatus, "private");
+      assert.equal(rejectionByRef.get("src/binary.ts")?.rejectionReason, "binary");
+      assert.equal(rejectionByRef.get("src/binary.ts")?.privacyStatus, "allowed");
+      assert.equal(JSON.parse(rejectionByRef.get("src/binary.ts")?.metadataJson ?? "{}").rejectionMetadata.sha256.length, 64);
+      assert.equal(rejectionByRef.get("src/large.ts")?.rejectionReason, "too_large");
+      assert.equal(rejectionByRef.get("src/large.ts")?.privacyStatus, "allowed");
+      assert.equal(
+        JSON.parse(rejectionByRef.get("src/large.ts")?.metadataJson ?? "{}").rejectionMetadata.sizeBytes,
+        maxSnapshotFileBytes + 1
+      );
       assert.equal(rejectionByRef.has("node_modules/package/index.js"), false);
 
       const persistedText = JSON.stringify({ sources, rejections });

@@ -1,5 +1,6 @@
 import type { LocalBootstrapDetection } from "./bootstrap-detection.js";
 import type { LocalProjectConfig, LocalProjectConfigWriteStatus } from "./config.js";
+import type { LocalScanDiagnostics } from "./scan-diagnostics.js";
 
 export type DiagnosticStatus = "pass" | "warn" | "fail";
 
@@ -36,6 +37,7 @@ export interface InitializeLocalProjectResult {
   readonly dirtyWorktree: boolean;
   readonly migrationsApplied: readonly string[];
   readonly bootstrap: LocalBootstrapDetection;
+  readonly scan: LocalScanDiagnostics;
   readonly mcp: McpConnectionGuide;
 }
 
@@ -53,6 +55,7 @@ export interface LocalProjectStatus {
   readonly headCommit?: string;
   readonly dirtyWorktree?: boolean;
   readonly snapshotHash?: string;
+  readonly scan: LocalScanDiagnostics;
   readonly warnings: readonly string[];
   readonly errors: readonly string[];
   readonly recoveryGuidance: readonly string[];

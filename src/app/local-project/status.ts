@@ -15,6 +15,7 @@ import {
   type LocalProjectLayout
 } from "./config.js";
 import { recoveryGuidanceForStatus } from "./recovery.js";
+import { scanDiagnosticsForSnapshot } from "./scan-diagnostics.js";
 import { readStorageMigrationSources } from "./storage.js";
 import type { LocalProjectStatus } from "./types.js";
 
@@ -94,6 +95,7 @@ export function readLocalProjectStatus(rootPathInput: string): LocalProjectStatu
     headCommit: snapshot?.commit,
     dirtyWorktree: snapshot ? snapshot.worktreeStatus !== "clean" : undefined,
     snapshotHash: snapshot?.snapshotHash,
+    scan: scanDiagnosticsForSnapshot(snapshot),
     warnings,
     errors,
     recoveryGuidance: []
