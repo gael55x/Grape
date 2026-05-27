@@ -130,6 +130,8 @@ This proof does not perform MCP transport, CLI rendering, broad repository index
 
 Current implementation note: the durable diff service still uses scaffold in-memory diff rows internally for comparison and ledger persistence, then maps them to V1-shaped `ContextPackItem` outputs at the compiler/app boundary. Public CLI, artifact JSON, and MCP context responses expose `content`, `restoreId`, `inputRefs`, `itemKind`, and safety fields rather than the internal scaffold row shape.
 
+After a durable pack is persisted, local compile builds a deterministic `context_pack_summary` compression artifact from the latest active, non-compression sent rows for the current branch/head. Already-invalidated sent rows, compression-orientation rows, and rows from another branch/head are excluded so the summary cannot recursively summarize itself or revive stale context. The summary is cached but not yet rendered into artifacts because artifact-level manifest invalidation would otherwise mark no-change turns stale.
+
 `grape stale` is the current CLI-first inspection surface for persisted invalidation rows. It reads `INVALIDATE_PREVIOUS` pack items from the session-scoped ledger, reports the prior sent item IDs they invalidate, and classifies the emitted invalidation as `branch_changed`, `session_reset`, or `dependency_manifest_changed` from same-artifact session events. It intentionally does not predict future stale rows before the compiler/diff engine has emitted them.
 
 ## Restore Protocol

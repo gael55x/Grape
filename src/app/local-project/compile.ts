@@ -32,7 +32,11 @@ import { detectRiskOverlaysForTask, mergeRiskOverlays } from "./compile-risk.js"
 import { prepareLocalCompileProofs } from "./compile-proofs.js";
 import { toCompileLocalContextResult } from "./compile-result.js";
 import { ensureCompileSession } from "./compile-session.js";
-import { prepareLocalCompressionArtifacts } from "./compression.js";
+import {
+  persistLocalContextPackSummaryCompressionArtifact,
+  prepareLocalCompressionArtifacts
+} from "./compression.js";
+import { listContextPackSummarySentItems } from "./context-pack-summary.js";
 import { resolveLocalCurrentValidClaims } from "./claim-resolution.js";
 import { resolveLocalTaskRetrieval } from "./task-retrieval.js";
 import { withMigratedLocalDatabase } from "./storage.js";
@@ -195,62 +199,82 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         .listBySession(sessionId)
         .filter((event) => event.eventType === "context_pack_persisted").length + 1;
       let files: LocalArtifactWriteResult | undefined;
-      const build = buildDurableContext({
-        database,
-        repositories,
-        sessionId,
-        lockToken,
-        snapshotId: snapshotResult.snapshotId,
-        artifact,
-        fixture: "local-repository",
-        turn,
-        now,
-        sessionUpdate: session.existed
-          ? {
-              sessionId,
-              repoSnapshotId: session.record.repoSnapshotId,
-              worktreeStateId: session.record.worktreeStateId,
-              branchName: session.record.branchName,
-              baseCommitSha: session.record.baseCommitSha,
-              headCommitSha: session.record.headCommitSha,
-              status: session.record.status,
-              now
-            }
-          : undefined,
-        sessionInvalidation:
-          session.branchChanged && session.previousBranch && session.previousHeadCommit
+      let build: ReturnType<typeof buildDurableContext> | undefined;
+      try {
+        build = buildDurableContext({
+          database,
+          repositories,
+          sessionId,
+          lockToken,
+          snapshotId: snapshotResult.snapshotId,
+          artifact,
+          fixture: "local-repository",
+          turn,
+          now,
+          sessionUpdate: session.existed
             ? {
-                reason: "branch_changed",
-                previousBranch: session.previousBranch,
-                nextBranch: snapshotResult.snapshot.branch,
-                previousHeadCommit: session.previousHeadCommit,
-                nextHeadCommit: snapshotResult.snapshot.commit
+                sessionId,
+                repoSnapshotId: session.record.repoSnapshotId,
+                worktreeStateId: session.record.worktreeStateId,
+                branchName: session.record.branchName,
+                baseCommitSha: session.record.baseCommitSha,
+                headCommitSha: session.record.headCommitSha,
+                status: session.record.status,
+                now
               }
             : undefined,
-        sessionReset,
-        prepareOutput(preview) {
-          const contextPackItems = toContextPackItems(artifact, preview.contextPackItems);
-          const budget = evaluateContextPackBudget({
-            tokenBudget: input.tokenBudget,
-            contextPackItems,
-            estimatedPackTokens: preview.tokenMetric.grapeTokens
-          });
-          files = writeLocalContextOutput({
-            artifactDirPath: layout.artifactDirPath,
-            contextPackItems,
-            omittedItems: preview.omittedItems,
-            tokenMetric: preview.tokenMetric,
-            artifact,
-            projectId: config.project.projectId,
-            repoSnapshotId: snapshotResult.snapshotId,
-            worktreeStateId: snapshotResult.worktreeStateId,
-            dirtyWorktree: snapshotResult.snapshot.worktreeStatus !== "clean",
-            budget,
-            tokenCost: preview.tokenMetric.grapeTokens
-          });
-        }
-      });
-      repositories.contextSessions.releaseLock({ sessionId, lockToken, now });
+          sessionInvalidation:
+            session.branchChanged && session.previousBranch && session.previousHeadCommit
+              ? {
+                  reason: "branch_changed",
+                  previousBranch: session.previousBranch,
+                  nextBranch: snapshotResult.snapshot.branch,
+                  previousHeadCommit: session.previousHeadCommit,
+                  nextHeadCommit: snapshotResult.snapshot.commit
+                }
+              : undefined,
+          sessionReset,
+          prepareOutput(preview) {
+            const contextPackItems = toContextPackItems(artifact, preview.contextPackItems);
+            const budget = evaluateContextPackBudget({
+              tokenBudget: input.tokenBudget,
+              contextPackItems,
+              estimatedPackTokens: preview.tokenMetric.grapeTokens
+            });
+            files = writeLocalContextOutput({
+              artifactDirPath: layout.artifactDirPath,
+              contextPackItems,
+              omittedItems: preview.omittedItems,
+              tokenMetric: preview.tokenMetric,
+              artifact,
+              projectId: config.project.projectId,
+              repoSnapshotId: snapshotResult.snapshotId,
+              worktreeStateId: snapshotResult.worktreeStateId,
+              dirtyWorktree: snapshotResult.snapshot.worktreeStatus !== "clean",
+              budget,
+              tokenCost: preview.tokenMetric.grapeTokens
+            });
+          }
+        });
+        persistLocalContextPackSummaryCompressionArtifact({
+          repositories: compressionRepositories,
+          projectId: config.project.projectId,
+          snapshotId: snapshotResult.snapshotId,
+          worktreeStateId: snapshotResult.worktreeStateId,
+          snapshot: snapshotResult.snapshot,
+          sessionId,
+          sentItems: listContextPackSummarySentItems({
+            repositories,
+            sessionId,
+            branch: snapshotResult.snapshot.branch,
+            commit: snapshotResult.snapshot.commit
+          }),
+          now
+        });
+      } finally {
+        repositories.contextSessions.releaseLock({ sessionId, lockToken, now });
+      }
+      if (!build) throw new Error("context build did not produce a result");
       if (!files) throw new Error("context artifact output was not prepared");
 
       return {
