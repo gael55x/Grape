@@ -1,9 +1,10 @@
 import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
-} from "../../../../shared/index.js";
-import { repositoryContextSection } from "./factory.js";
-import type { CompileRepositoryContextArtifactInput } from "../types.js";
+} from "../../../../../shared/index.js";
+import { repositoryContextSection } from "../factory.js";
+import { sectionDependencyRefs, sourceDependencyRefForSourceRef } from "../dependencies.js";
+import type { CompileRepositoryContextArtifactInput } from "../../types.js";
 
 export function taskRetrievalSection(
   input: CompileRepositoryContextArtifactInput,
@@ -51,20 +52,6 @@ function taskRetrievalBody(
     ...listOrNone(retrieval.ftsSourceRefs),
     retrieval.warnings.length > 0 ? `Warnings: ${retrieval.warnings.join(", ")}` : "Warnings: none"
   ].join("\n");
-}
-
-function sectionDependencyRefs(
-  requiredRefs: readonly string[],
-  scopedRefs: readonly string[]
-): string[] {
-  return [...new Set([...requiredRefs, ...scopedRefs])];
-}
-
-function sourceDependencyRefForSourceRef(
-  sourceRef: string,
-  dependencies: readonly InMemoryContextDependencyShape[]
-): string | undefined {
-  return dependencies.find((dependency) => dependency.ref === sourceRef)?.id;
 }
 
 function listOrNone(values: readonly string[]): readonly string[] {

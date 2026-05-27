@@ -9,5 +9,5 @@ export * from "./repository/rendering/renderer.js";
 export * from "./repository/selection/index.js";
 export * from "./repository/proofs/source-proofs.js";
 export * from "./repository/types.js";
-export * from "./repository/sections/active-claims.js";
-export * from "./repository/sections/compression.js";
+export * from "./repository/sections/builders/active-claims.js";
+export * from "./repository/sections/builders/compression.js";
