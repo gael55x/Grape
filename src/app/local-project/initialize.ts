@@ -16,6 +16,7 @@ import {
 import { ensureGrapeExcludedFromGit } from "./git-exclude.js";
 import { mcpConnectionGuide } from "./mcp-guide.js";
 import { defaultProjectId } from "./project-id.js";
+import { scanDiagnosticsForSnapshot } from "./scan-diagnostics.js";
 import { withMigratedLocalDatabase } from "./storage.js";
 import type { InitializeLocalProjectInput, InitializeLocalProjectResult } from "./types.js";
 
@@ -81,6 +82,7 @@ export function initializeLocalProject(
     dirtyWorktree: snapshot.worktreeStatus !== "clean",
     migrationsApplied: databaseResult.migrationResult.applied.map((migration) => migration.id),
     bootstrap,
+    scan: scanDiagnosticsForSnapshot(snapshot),
     mcp: mcpConnectionGuide(snapshot.rootPath)
   };
 }

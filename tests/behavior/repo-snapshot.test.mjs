@@ -5,7 +5,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { classifySourceKind, createGitRepoSnapshot } from "../../.tmp/build/src/core/git/index.js";
+import {
+  classifySourceKind,
+  createGitRepoSnapshot,
+  maxSnapshotFileBytes
+} from "../../.tmp/build/src/core/git/index.js";
 
 const now = "2026-05-24T00:00:00.000Z";
 
@@ -99,6 +103,36 @@ test("git repo snapshot excludes ignored files and classifies visible files", ()
     assert.equal(fileKinds.get("package.json"), "package");
     assert.equal(fileKinds.get("docs/README.md"), "doc");
     assert.ok(snapshot.files.every((file) => /^[a-f0-9]{64}$/.test(file.sha256)));
+  });
+});
+
+test("git repo snapshot rejects binary and oversized files before source ingestion", () => {
+  withGitRepo((repoPath) => {
+    writeFileSync(path.join(repoPath, "src", "binary.ts"), Buffer.from([0, 1, 2, 3]));
+    writeFileSync(path.join(repoPath, "src", "large.ts"), Buffer.alloc(maxSnapshotFileBytes + 1, "a"));
+    execGit(repoPath, ["add", "src/binary.ts", "src/large.ts"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add non-text fixtures"
+    ]);
+
+    const snapshot = createGitRepoSnapshot({ rootPath: repoPath, repoId: "repo-1", createdAt: now });
+    const filePaths = new Set(snapshot.files.map((file) => file.path));
+    const rejected = new Map(snapshot.rejectedFiles.map((file) => [file.path, file]));
+
+    assert.equal(filePaths.has("src/binary.ts"), false);
+    assert.equal(filePaths.has("src/large.ts"), false);
+    assert.equal(rejected.get("src/binary.ts")?.reason, "binary");
+    assert.equal(rejected.get("src/binary.ts")?.privacyStatus, "allowed");
+    assert.equal(rejected.get("src/binary.ts")?.metadata?.sha256?.length, 64);
+    assert.equal(rejected.get("src/large.ts")?.reason, "too_large");
+    assert.equal(rejected.get("src/large.ts")?.privacyStatus, "allowed");
+    assert.equal(rejected.get("src/large.ts")?.metadata?.sizeBytes, maxSnapshotFileBytes + 1);
   });
 });
 

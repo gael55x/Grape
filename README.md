@@ -100,6 +100,7 @@ Implemented today:
 - durable context build proof for first-turn send, second-turn omission, stale manifest invalidation, and rollback
 - first local setup CLI slice: `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`
 - bootstrap project detection during `grape init --connect` for language/framework, package manager, scripts, test command, entry points, config files, confidence levels, and non-durable candidate rules
+- setup/status scan diagnostics for visible and rejected files, including ignored, private, unreadable, oversized, and binary-file rejection counts without exposing skipped file bodies
 - first CLI context compile fallback: `grape compile --task <text>` auto-bootstraps local state, compiles from real repo inputs, evaluates optional token budgets, persists session diff rows, and writes inspectable V1 `.grape/artifacts/ctx_*.json` and `.md` context-pack artifacts
 - hardened Markdown context-pack artifacts with artifact summary, diff counts, item input refs, omitted/restore metadata, dependency details, token/budget status, and warnings/safety fields
 - compiled current-valid narrow source-excerpt claims in context artifacts with claim/proof dependencies
@@ -186,7 +187,7 @@ npm install -g grape-context
 grape init --connect
 ```
 
-The repository now has the first local setup implementation path for that second command. It creates `.grape/`, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures the initial Git snapshot, and prints MCP connection guidance. The npm package is not released yet.
+The repository now has the first local setup implementation path for that second command. It creates `.grape/`, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures the initial Git snapshot, reports bootstrap and scan diagnostics, and prints MCP connection guidance. The npm package is not released yet.
 
 An MCP-capable coding agent will request context through:
 

@@ -97,11 +97,25 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
 
 test("cli init --connect bootstraps local .grape state and keeps it out of git status", () => {
   withGitRepo((repoPath) => {
+    writeFileSync(path.join(repoPath, "binary.dat"), Buffer.from([0, 1, 2, 3]));
+    execGit(repoPath, ["add", "binary.dat"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add binary scan diagnostic"
+    ]);
+
     const init = runCli(repoPath, ["init", "--connect"]);
 
     assert.equal(init.status, 0, init.stderr);
     assert.equal(init.stderr, "");
     assert.match(init.stdout, /Grape initialized/);
+    assert.match(init.stdout, /Scan diagnostics:/);
+    assert.match(init.stdout, /Rejection reasons: binary=1/);
     assert.equal(existsSync(path.join(repoPath, ".grape", "config.json")), true);
     assert.equal(existsSync(path.join(repoPath, ".grape", "grape.db")), true);
     assert.match(readFileSync(path.join(repoPath, ".git", "info", "exclude"), "utf8"), /\.grape\//);
@@ -114,6 +128,8 @@ test("cli init --connect bootstraps local .grape state and keeps it out of git s
     assert.equal(status.databaseExists, true);
     assert.deepEqual(status.pendingMigrations, []);
     assert.equal(status.dirtyWorktree, false);
+    assert.equal(status.scan.rejectedFileCount, 1);
+    assert.equal(status.scan.rejectionReasonCounts.binary, 1);
     assert.deepEqual(status.recoveryGuidance, []);
 
     const doctor = runCliJson(repoPath, ["doctor"]);

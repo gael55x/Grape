@@ -427,3 +427,10 @@ Keep entries simple:
 - Summary: refined `src/core/compiler/repository/` into focused `manifest/`, `proofs/`, `validation/`, `rendering/`, and split `selection/` ownership folders while preserving the public compiler export boundary and artifact behavior.
 - Checks run: `npm run check`; `npm run build`.
 - Risks/follow-ups: `repository/sections/sections.ts` remains a readable but broad section aggregator; split individual section families only when new section behavior would otherwise add another responsibility.
+
+### 2026-05-27 - Scanner Diagnostics And Non-Text Rejections
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added Git snapshot rejection gates for oversized and binary-looking files before source evidence ingestion, kept file read/rejection policy isolated in `src/core/git/file-manifest.ts`, persisted those skips as source rejections with metadata hashes/sizes only, and surfaced aggregate scan diagnostics through init/status output.
+- Checks run: focused repo-snapshot/evidence/CLI behavior tests; `npm run check`; `npm run build`; `npm run docs:check`.
+- Risks/follow-ups: staged and untracked source-scope splitting, approval records, and richer scan diagnostics by source kind remain pending.

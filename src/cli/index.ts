@@ -129,6 +129,11 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
       ...renderIndentedList("  Candidate rules (not durable)", result.bootstrap.candidateRules),
       ...renderIndentedList("  Bootstrap warnings", result.bootstrap.warnings),
       "",
+      "Scan diagnostics:",
+      `  Visible files: ${result.scan.visibleFileCount}`,
+      `  Rejected files: ${result.scan.rejectedFileCount}`,
+      `  Rejection reasons: ${renderReasonCounts(result.scan.rejectionReasonCounts)}`,
+      "",
       "MCP connection contract:",
       `  command: ${result.mcp.command}`,
       `  args: ${result.mcp.args.join(" ")}`,
@@ -169,6 +174,7 @@ async function runStatus(parsed: ParsedArgs): Promise<number> {
       `Branch: ${status.branch ?? "unknown"}`,
       `Head: ${status.headCommit ?? "unknown"}`,
       `Worktree: ${status.dirtyWorktree === undefined ? "unknown" : status.dirtyWorktree ? "dirty" : "clean"}`,
+      `Scan: ${status.scan.visibleFileCount} visible, ${status.scan.rejectedFileCount} rejected (${renderReasonCounts(status.scan.rejectionReasonCounts)})`,
       ...renderProblems("Warnings", status.warnings),
       ...renderProblems("Errors", status.errors),
       ...renderProblems("Recovery", status.recoveryGuidance)
@@ -266,6 +272,13 @@ function renderInlineList(values: readonly string[]): string {
 function renderIndentedList(title: string, values: readonly string[]): string[] {
   if (values.length === 0) return [`${title}: none`];
   return [`${title}:`, ...values.map((value) => `    - ${value}`)];
+}
+
+function renderReasonCounts(counts: Readonly<Record<string, number>>): string {
+  const activeCounts = Object.entries(counts)
+    .filter(([, count]) => count > 0)
+    .map(([reason, count]) => `${reason}=${count}`);
+  return activeCounts.length === 0 ? "none" : activeCounts.join(", ");
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
