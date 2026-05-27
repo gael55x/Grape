@@ -434,3 +434,10 @@ Keep entries simple:
 - Summary: added Git snapshot rejection gates for oversized and binary-looking files before source evidence ingestion, kept file read/rejection policy isolated in `src/core/git/file-manifest.ts`, persisted those skips as source rejections with metadata hashes/sizes only, and surfaced aggregate scan diagnostics through init/status output.
 - Checks run: focused repo-snapshot/evidence/CLI behavior tests; `npm run check`; `npm run build`; `npm run docs:check`.
 - Risks/follow-ups: staged and untracked source-scope splitting, approval records, and richer scan diagnostics by source kind remain pending.
+
+### 2026-05-27 - Public Artifact Contract Golden Coverage
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added focused behavior coverage for the public V1 context artifact JSON envelope, dependency/input/section references, context-pack item shape, and MCP Markdown parity with structured context-pack items.
+- Checks run: focused context artifact contract behavior test.
+- Risks/follow-ups: broader durable-claim retrieval golden fixtures and final artifact-schema hardening remain pending.

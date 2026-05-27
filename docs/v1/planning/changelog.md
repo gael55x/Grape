@@ -86,3 +86,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added bootstrap project detection to `grape init --connect`. The detector reports language/framework hints, package manager, script names, derived commands, test command, entry points, config files, confidence levels, and non-durable candidate rules without storing raw script bodies.
 - Refined compiler repository ownership with `manifest/`, `proofs/`, `validation/`, `rendering/`, and split `selection/` subdirectories while preserving the public `src/core/compiler/index.ts` boundary.
 - Added scanner rejection gates for oversized and binary-looking files before source evidence ingestion, plus CLI setup/status scan diagnostics that expose aggregate rejection counts without file bodies.
+- Added focused public context artifact contract coverage for CLI JSON output and MCP Markdown/context-pack item parity.
