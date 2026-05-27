@@ -19,8 +19,11 @@ export function mcpConnectionGuide(rootPath = process.cwd()): McpConnectionGuide
       "grape_get_stale_items",
       "grape_get_conflicts",
       "grape_get_status",
+      "grape_record_candidate",
       "grape_record_command_result",
-      "grape_record_test_result"
+      "grape_record_test_result",
+      "grape_record_user_decision",
+      "grape_request_user_confirmation"
     ],
     note: "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
   };

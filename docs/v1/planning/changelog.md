@@ -74,5 +74,6 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added MCP `grape_get_stale_items` so external agents can inspect emitted stale-context invalidations without shelling out or receiving context bodies.
 - Added MCP `grape_get_rules` so external agents can inspect current Git-visible, hash-verified, secret-scanned project rule excerpts without shelling out or receiving absolute root paths.
 - Added restricted MCP `grape_record_command_result` and `grape_record_test_result` tools that persist agent-reported command/test observations as temporary source evidence rows without raw command/output bodies or durable claim promotion.
+- Completed the restricted MCP write-tool foundation with `grape_record_candidate`, `grape_record_user_decision`, and `grape_request_user_confirmation`. These tools require an existing current context session, persist/link only temporary evidence or confirmation request IDs, verify raw prompt/response hashes before redacting bodies, and cannot create durable proofs or claims.
 - Added CLI `grape conflicts` and MCP `grape_get_conflicts` for read-only inspection of recorded claim conflict edges.
 - Added CLI/MCP recovery guidance for partial bootstrap, missing Git metadata, unsafe compile, token-budget failures, session lock conflicts, stale restore paths, and privacy/redaction blocks.

@@ -7,6 +7,16 @@ import type {
   RecordLocalObservationResult,
   RecordLocalTestResultInput
 } from "../app/local-project/observations.js";
+import {
+  assertAllowedFields,
+  assertReportedByAgent,
+  isRecord,
+  optionalString,
+  optionalStringArray,
+  requiredBoolean,
+  requiredInteger,
+  requiredString
+} from "./tool-input.js";
 
 type GrapeRecordObservationOutput = Omit<RecordLocalObservationResult, "rootPath">;
 
@@ -31,8 +41,8 @@ function parseCommandInput(input: unknown): Omit<RecordLocalCommandResultInput, 
     "startedAt",
     "endedAt",
     "reportedBy"
-  ]);
-  assertReportedByAgent(input.reportedBy);
+  ], "observation");
+  assertReportedByAgent(input.reportedBy, "reportedBy must be agent for MCP observation writes");
   return commandFields(input);
 }
 
@@ -52,8 +62,8 @@ function parseTestInput(input: unknown): Omit<RecordLocalTestResultInput, "rootP
     "passed",
     "testFramework",
     "testFiles"
-  ]);
-  assertReportedByAgent(input.reportedBy);
+  ], "observation");
+  assertReportedByAgent(input.reportedBy, "reportedBy must be agent for MCP observation writes");
   return {
     ...commandFields(input),
     passed: requiredBoolean(input, "passed"),
@@ -74,56 +84,6 @@ function commandFields(input: Record<string, unknown>): Omit<RecordLocalCommandR
     startedAt: requiredString(input, "startedAt"),
     endedAt: requiredString(input, "endedAt")
   };
-}
-
-function assertAllowedFields(value: Record<string, unknown>, allowed: readonly string[]): void {
-  const allowedSet = new Set(allowed);
-  for (const key of Object.keys(value)) {
-    if (!allowedSet.has(key)) throw new Error(`unsupported observation argument: ${key}`);
-  }
-}
-
-function assertReportedByAgent(value: unknown): void {
-  if (value === undefined) return;
-  if (value !== "agent") throw new Error("reportedBy must be agent for MCP observation writes");
-}
-
-function requiredString(value: Record<string, unknown>, key: string): string {
-  const field = value[key];
-  if (typeof field !== "string" || field.trim() === "") throw new Error(`${key} must be a non-empty string`);
-  return field;
-}
-
-function optionalString(value: Record<string, unknown>, key: string): string | undefined {
-  const field = value[key];
-  if (field === undefined) return undefined;
-  if (typeof field !== "string") throw new Error(`${key} must be a string`);
-  return field;
-}
-
-function requiredInteger(value: Record<string, unknown>, key: string): number {
-  const field = value[key];
-  if (!Number.isInteger(field)) throw new Error(`${key} must be an integer`);
-  return field as number;
-}
-
-function requiredBoolean(value: Record<string, unknown>, key: string): boolean {
-  const field = value[key];
-  if (typeof field !== "boolean") throw new Error(`${key} must be a boolean`);
-  return field;
-}
-
-function optionalStringArray(value: Record<string, unknown>, key: string): string[] {
-  const field = value[key];
-  if (field === undefined) return [];
-  if (!Array.isArray(field) || field.some((item) => typeof item !== "string" || item.trim() === "")) {
-    throw new Error(`${key} must be an array of non-empty strings`);
-  }
-  return field;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function omitRootPath(result: RecordLocalObservationResult): GrapeRecordObservationOutput {

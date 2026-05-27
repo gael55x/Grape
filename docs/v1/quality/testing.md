@@ -92,7 +92,9 @@ MCP and CLI:
 - `mcp_get_proofs_does_not_show_raw_secret`
 - `mcp_write_tool_cannot_promote_claim`
 - `agent_reported_test_result_is_temporary`
+- `agent_reported_candidate_is_non_durable`
 - `user_decision_requires_direct_confirmation_hashes`
+- `confirmation_request_does_not_persist_truth`
 - `cli_json_matches_schema`
 - `cli_doctor_privacy_redacts_secrets`
 
