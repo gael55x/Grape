@@ -825,6 +825,11 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     assert.equal(Array.isArray(packItem.inputRefs), true);
     assert.equal("body" in packItem, false);
     assert.match(toolResult.structuredContent.contextPackMarkdown, /# Grape Context Pack/);
+    assert.match(toolResult.structuredContent.contextPackMarkdown, /## Artifact Summary/);
+    assert.match(toolResult.structuredContent.contextPackMarkdown, /Artifact format: grape\.context-pack\.v1/);
+    assert.match(toolResult.structuredContent.contextPackMarkdown, /## Diff Summary/);
+    assert.match(toolResult.structuredContent.contextPackMarkdown, /## Artifact Sections/);
+    assert.match(toolResult.structuredContent.contextPackMarkdown, /Input refs:/);
     assert.match(toolResult.structuredContent.artifactFiles.json, /^\.grape\//);
     const artifactJson = JSON.parse(
       readFileSync(path.join(repoPath, toolResult.structuredContent.artifactFiles.json), "utf8")

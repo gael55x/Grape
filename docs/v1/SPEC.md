@@ -2398,7 +2398,7 @@ Each artifact must be written as:
 .grape/artifacts/ctx_<id>.md
 ```
 
-The JSON is for agents/tools. The Markdown is for developers.
+The JSON is the canonical machine contract for agents/tools. The Markdown is a human- and model-readable rendering of the same structured context pack. It must include, at minimum, artifact identity/branch metadata, diff-state counts, context pack item metadata and input refs, omitted/restore metadata, output section summaries, dependency manifest details, token/budget status, and warning/safety fields.
 
 ---
 

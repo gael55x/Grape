@@ -406,3 +406,10 @@ Keep entries simple:
 - Summary: added `grape bench --fixture <name>` backed by an app-owned benchmark service. The first benchmark copies a named fixture into a temporary Git repo, runs the real local compile/diff path twice with the same session, and reports first-turn/second-turn token costs, restore hints, invalidations, unsafe omissions, stale sends, and threshold failures.
 - Checks run: focused benchmark CLI behavior tests before full verification.
 - Risks/follow-ups: the harness currently covers `bench_token_reduction_after_first_turn` for named fixtures. Broader benchmark names, gold-label current-valid fixtures, stale-proof fixtures, and threshold calibration remain pending.
+
+### 2026-05-27 - Context Pack Markdown Hardening
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: split Markdown rendering into `src/core/compiler/repository/markdown/` and expanded context-pack Markdown output so CLI and MCP artifacts expose artifact summary, diff counts, pack item input refs, omitted/restore metadata, artifact section summaries, dependency manifest details, token/budget status, and warnings/safety fields.
+- Checks run: focused CLI/MCP/compiler behavior tests; `npm run check`; `npm run build`; `git diff --check`.
+- Risks/follow-ups: JSON remains the canonical contract; final artifact work still needs broader durable current-valid claim/proof retrieval and safe budget pruning.
