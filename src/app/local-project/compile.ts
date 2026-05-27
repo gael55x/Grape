@@ -30,6 +30,7 @@ import {
 } from "./compile-ids.js";
 import { detectRiskOverlaysForTask, mergeRiskOverlays } from "./compile-risk.js";
 import { prepareLocalCompileProofs } from "./compile-proofs.js";
+import { toCompileLocalContextResult } from "./compile-result.js";
 import { ensureCompileSession } from "./compile-session.js";
 import { prepareLocalCompressionArtifacts } from "./compression.js";
 import { resolveLocalCurrentValidClaims } from "./claim-resolution.js";
@@ -38,7 +39,7 @@ import { withMigratedLocalDatabase } from "./storage.js";
 import type { CompileLocalContextInput, CompileLocalContextResult } from "./types.js";
 import type { LocalArtifactWriteResult } from "./artifact-files.js";
 import { ensureLocalProjectBootstrapped } from "./bootstrap.js";
-import { projectLocalContextArtifact, writeLocalContextOutput } from "./context-output.js";
+import { writeLocalContextOutput } from "./context-output.js";
 
 export function compileLocalContext(input: CompileLocalContextInput): CompileLocalContextResult {
   const now = input.now ?? new Date().toISOString();
@@ -261,45 +262,13 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     }
   });
 
-  const value = databaseResult.value;
-  const contextPackItems = toContextPackItems(value.artifact, value.build.contextPackItems);
-  const budget = evaluateContextPackBudget({
-    tokenBudget: input.tokenBudget,
-    contextPackItems,
-    estimatedPackTokens: value.build.tokenMetric.grapeTokens
-  });
-  const contextArtifact = projectLocalContextArtifact({
-    artifact: value.artifact,
-    projectId: config.project.projectId,
-    repoSnapshotId: value.snapshotResult.snapshotId,
-    worktreeStateId: value.snapshotResult.worktreeStateId,
-    dirtyWorktree: value.snapshotResult.snapshot.worktreeStatus !== "clean",
-    budget,
-    tokenCost: value.build.tokenMetric.grapeTokens
-  });
-  return {
+  return toCompileLocalContextResult({
     rootPath: snapshot.rootPath,
-    projectId: config.project.projectId,
-    repoId: config.project.repoId,
+    config,
     sessionId,
     taskId,
     riskOverlays: requestedRiskOverlays,
-    artifactId: value.artifact.artifactId,
-    artifactHash: value.artifact.artifactHash,
-    dependencyManifestHash: value.artifact.dependencyManifest.manifestHash,
-    branch: value.snapshotResult.snapshot.branch,
-    headCommit: value.snapshotResult.snapshot.commit,
-    dirtyWorktree: value.snapshotResult.snapshot.worktreeStatus !== "clean",
-    contextPackItems,
-    contextArtifact,
-    omittedItemCount: value.build.omittedItems.length,
-    sentItemCount: value.build.sentItems.length,
-    tokenMetric: value.build.tokenMetric,
-    budget,
-    warnings: [...value.artifact.warnings, ...budget.warnings],
-    unsafeReasons: [...value.artifact.unsafeReasons, ...budget.unsafeReasons],
-    artifactJsonPath: value.files.jsonPath,
-    artifactMarkdownPath: value.files.markdownPath,
-    sessionResetId: value.sessionResetId
-  };
+    tokenBudget: input.tokenBudget,
+    value: databaseResult.value
+  });
 }

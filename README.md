@@ -111,6 +111,7 @@ Implemented today:
 - MCP rule inspection through `grape_get_rules`, returning current Git-visible, hash-verified, secret-scanned rule excerpts without absolute root paths
 - restricted MCP command/test result recording as temporary evidence rows without raw command/output bodies or durable claim promotion
 - omitted context restore lookup through `grape omitted --session <id> --token <restoreToken>` and `grape_get_omitted_item`
+- recovery guidance through `grape status`, `grape doctor`, unsafe compile output, lock-conflict errors, stale restore output, and privacy/redaction failures
 - TypeScript, behavior tests, storage checks, docs checks, and architecture-boundary checks
 
 Not released yet:

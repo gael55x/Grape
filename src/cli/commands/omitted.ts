@@ -1,5 +1,6 @@
+import { recoveryGuidanceForErrorMessage } from "../../app/local-project/recovery.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, write, writeError, writeJson } from "../render.js";
+import { errorMessage, renderProblems, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 
 export async function runOmitted(parsed: ParsedArgs): Promise<number> {
@@ -37,7 +38,10 @@ export async function runOmitted(parsed: ParsedArgs): Promise<number> {
     ].join("\n"));
     return exitCodes.ok;
   } catch (error) {
-    writeError(`grape omitted failed: ${errorMessage(error)}`);
+    const message = errorMessage(error);
+    writeError(`grape omitted failed: ${message}`);
+    const guidance = recoveryGuidanceForErrorMessage(message);
+    if (guidance.length > 0) writeError(renderProblems("Recovery", guidance).join("\n"));
     return omittedErrorExitCode(error);
   }
 }
@@ -65,7 +69,8 @@ async function runRestoreOmitted(
       `Session: ${result.sessionId}`,
       `Artifact: ${result.artifactId}`,
       `Section: ${result.sectionId}`,
-      `Reason: ${result.reason}`
+      `Reason: ${result.reason}`,
+      ...renderProblems("Recovery", ["Rerun grape compile for fresh context, or inspect stale entries with grape stale."])
     ].join("\n"));
     return exitCodes.stale;
   }

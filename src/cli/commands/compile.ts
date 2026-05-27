@@ -1,5 +1,6 @@
+import { recoveryGuidanceForErrorMessage } from "../../app/local-project/recovery.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, write, writeError, writeJson } from "../render.js";
+import { errorMessage, renderProblems, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 
 export async function runCompile(parsed: ParsedArgs): Promise<number> {
@@ -58,6 +59,7 @@ export async function runCompile(parsed: ParsedArgs): Promise<number> {
       result.budget.status !== "not_requested" ? `Token budget: ${result.budget.status}` : undefined,
       result.sessionResetId ? `Session reset: ${result.sessionResetId}` : undefined,
       `Warnings: ${result.warnings.length === 0 ? "none" : result.warnings.join(", ")}`,
+      ...renderProblems("Recovery", result.recoveryGuidance),
       "",
       "Files:",
       `  JSON: ${result.artifactJsonPath}`,
@@ -66,7 +68,10 @@ export async function runCompile(parsed: ParsedArgs): Promise<number> {
 
     return result.unsafeReasons.length === 0 ? exitCodes.ok : exitCodes.unsafe;
   } catch (error) {
-    writeError(`grape compile failed: ${errorMessage(error)}`);
+    const message = errorMessage(error);
+    writeError(`grape compile failed: ${message}`);
+    const guidance = recoveryGuidanceForErrorMessage(message);
+    if (guidance.length > 0) writeError(renderProblems("Recovery", guidance).join("\n"));
     return compileErrorExitCode(error);
   }
 }

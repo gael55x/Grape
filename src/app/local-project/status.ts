@@ -9,6 +9,7 @@ import {
   storageMigrationReferences
 } from "../../core/storage/index.js";
 import { readLocalProjectConfig, type LocalProjectConfig, type LocalProjectLayout } from "./config.js";
+import { recoveryGuidanceForStatus } from "./recovery.js";
 import { readStorageMigrationSources } from "./storage.js";
 import type { LocalProjectStatus } from "./types.js";
 
@@ -65,7 +66,7 @@ export function readLocalProjectStatus(rootPathInput: string): LocalProjectStatu
     warnings.push("worktree is dirty; generated context will be worktree-scoped.");
   }
 
-  return {
+  const status: LocalProjectStatus = {
     rootPath,
     initialized:
       errors.length === 0 &&
@@ -84,7 +85,13 @@ export function readLocalProjectStatus(rootPathInput: string): LocalProjectStatu
     dirtyWorktree: snapshot ? snapshot.worktreeStatus !== "clean" : undefined,
     snapshotHash: snapshot?.snapshotHash,
     warnings,
-    errors
+    errors,
+    recoveryGuidance: []
+  };
+
+  return {
+    ...status,
+    recoveryGuidance: recoveryGuidanceForStatus(status)
   };
 }
 

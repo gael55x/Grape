@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 
 import { gitExcludeContainsGrape } from "./git-exclude.js";
+import { recoveryGuidanceForDoctor } from "./recovery.js";
 import { readLocalProjectStatus } from "./status.js";
 import type { DiagnosticCheck, LocalProjectDoctor } from "./types.js";
 
@@ -66,7 +67,8 @@ export function doctorLocalProject(rootPath: string): LocalProjectDoctor {
       : checks.some((check) => check.status === "warn")
         ? "warn"
         : "pass",
-    checks
+    checks,
+    recoveryGuidance: recoveryGuidanceForDoctor(status, checks)
   };
 }
 

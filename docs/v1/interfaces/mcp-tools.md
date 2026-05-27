@@ -99,6 +99,8 @@ When `resetSession: true` is supplied for an existing MCP session, the compile s
 
 Current limitation: the returned `contextArtifact` and public artifact JSON use the V1 `ContextArtifact` envelope, but their sections are still projected from the repository-derived scaffold rather than final durable current-valid claim retrieval. The current implementation requires `sessionId` or `agentSessionId` so session-scoped diffing cannot collapse across independent agents. Seed `files`, `symbols`, and `tests` participate in risk-overlay detection and source retrieval, but retrieval is still a conservative source-selection foundation over allowed snapshot records. `symbol_outline` compression is deterministic cache/orientation only; `rule_digest`, `context_pack_summary`, stale compression invalidation events, and pruning remain pending. `tokenBudget` is evaluated without pruning pinned, exact, or invalidation context; if required context exceeds the budget, `compileMode` is `cannot_compile_safely`. Non-local `environmentScope`, `agentName`, `agentSessionId`, and `resetSession` are accepted for contract compatibility; unsupported environment behavior produces explicit warnings and `compileMode: "partial_with_risk"` unless a stronger unsafe condition applies. Detected risk overlays return `compileMode: "cannot_compile_safely"` with `risk_overlay_missing_exact_context` unless task retrieval or explicit seed refs select proof-backed exact source/config/rule evidence. Artifact file refs returned over MCP are repo-relative paths, not absolute local paths.
 
+Unsafe or risky context outputs include `recoveryGuidance` so MCP consumers can decide whether to request narrower file/symbol/test seed refs, increase a token budget, rerun after worktree cleanup, or inspect local state without guessing from internal errors.
+
 `grape_get_artifact` returns stored artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative public artifact file refs for one `artifactId`. It does not return raw scaffold sidecar bodies. MCP output omits absolute local root paths.
 
 `grape_get_claims` returns current-valid durable claim metadata, defaulting to `activeOnly: true`. Current V1 implementation exposes only the narrow `repository_source_excerpt_exists` claim type created from validated exact-source proof rows. It returns claim IDs, subjects, claim text, scope metadata, proof refs, source refs, and current-valid rejection counts. It does not return raw proof excerpts, source file bodies, or absolute local root paths.
@@ -112,6 +114,8 @@ Current limitation: the returned `contextArtifact` and public artifact JSON use 
 `grape_get_stale_items` returns emitted stale-context invalidation metadata, optionally filtered by `sessionId`. It reuses the same local app service as `grape stale`, removes `rootPath` from MCP output, and does not return context bodies.
 
 `grape_get_conflicts` returns recorded claim conflict edges from `claim_edges`, including `contradicts`, `needs_review`, `violates`, and `unknown_scope_overlap`, without attempting to resolve or merge claims. It reuses the same app service as `grape conflicts` and removes `rootPath` from MCP output.
+
+`grape_get_status` returns local bootstrap, migration, and Git-state diagnostics including `recoveryGuidance` for missing config/database, pending migrations, root mismatch, dirty worktree scope, or missing Git metadata.
 
 `grape_record_command_result` and `grape_record_test_result` persist agent-reported command/test observations as temporary `command_run` / `test_run` source evidence rows scoped to the current repo snapshot and an existing current context session. The adapter accepts the raw command only to verify `commandHash`; raw command, stdout, and stderr bodies are not persisted or returned. MCP callers cannot mint `observedRunId`, cannot self-declare `observedByGrape`, and cannot promote these rows to durable claims or proofs.
 
@@ -158,6 +162,7 @@ interface GrapeGetContextOutput {
   };
   warnings: string[];
   unsafeReasons: string[];
+  recoveryGuidance: string[];
   budget: {
     status: "not_requested" | "within_budget" | "over_budget" | "required_context_exceeds_budget";
     tokenBudget?: number;

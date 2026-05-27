@@ -947,6 +947,7 @@ test("mcp token budget below required context fails closed", () => {
     assert.equal(output.compileMode, "cannot_compile_safely");
     assert.equal(output.budget.status, "required_context_exceeds_budget");
     assert.ok(output.unsafeReasons.includes("token_budget_below_required_context"));
+    assert.ok(output.recoveryGuidance.some((item) => item.includes("Increase --token-budget")));
   });
 });
 
@@ -971,6 +972,7 @@ test("mcp file hints participate in risk overlay detection", () => {
     const output = responses[0].result.structuredContent;
     assert.equal(output.compileMode, "cannot_compile_safely");
     assert.deepEqual(output.riskOverlays, ["auth"]);
+    assert.ok(output.recoveryGuidance.some((item) => item.includes("exact file or symbol")));
   });
 });
 
@@ -996,6 +998,11 @@ test("mcp stdio can launch outside the repository when --repo is provided", () =
 
       assert.equal(responses[0].result.isError, false);
       assert.equal(responses[0].result.structuredContent.rootPath, realpathSync(repoPath));
+      assert.ok(
+        responses[0].result.structuredContent.recoveryGuidance.includes(
+          "Run grape init --connect from the repository root to bootstrap or repair local state."
+        )
+      );
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }
