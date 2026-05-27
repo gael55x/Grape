@@ -186,3 +186,34 @@ test("snapshot evidence persistence is idempotent for the same repo state", () =
     });
   });
 });
+
+test("snapshot evidence scopes staged unstaged and untracked source records", () => {
+  withGitRepo((repoPath) => {
+    writeFileSync(path.join(repoPath, "src", "app.ts"), "export const app = 'dirty';\n");
+    writeFileSync(path.join(repoPath, "src", "staged-scope.ts"), "export const staged = true;\n");
+    writeFileSync(path.join(repoPath, "src", "untracked-scope.ts"), "export const untracked = true;\n");
+    execGit(repoPath, ["add", "src/staged-scope.ts"]);
+
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const result = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+
+      const sourceByRef = new Map(
+        evidenceRepositories.sources.listBySnapshot(result.snapshotId).map((source) => [source.sourceRef, source])
+      );
+
+      assert.equal(sourceByRef.get("src/app.ts")?.sourceScope, "unstaged");
+      assert.equal(sourceByRef.get("src/staged-scope.ts")?.sourceScope, "staged");
+      assert.equal(sourceByRef.get("src/untracked-scope.ts")?.sourceScope, "untracked");
+      assert.equal(JSON.parse(sourceByRef.get("src/staged-scope.ts")?.metadataJson ?? "{}").sourceScopeBasis, "git_status_porcelain");
+    });
+  });
+});

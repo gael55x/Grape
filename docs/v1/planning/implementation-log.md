@@ -448,3 +448,10 @@ Keep entries simple:
 - Summary: normalized Windows-style separators at indexing path boundaries, rejected traversal and drive-qualified repo paths before file reads, and added focused tests for privacy ignores, safe indexed paths, and import resolution with backslash inputs.
 - Checks run: focused cross-platform path and file-index behavior tests.
 - Risks/follow-ups: this is separator/unsafe-path coverage, not a full Windows or WSL CI run.
+
+### 2026-05-27 - Git Source Scope Split
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added Git porcelain-derived dirty path scopes to repo snapshots and source evidence ingestion so allowed sources are marked as committed, staged, unstaged, or untracked instead of collapsing every dirty source to unstaged.
+- Checks run: focused repo snapshot and evidence behavior tests.
+- Risks/follow-ups: approval records and richer scan diagnostics remain pending.

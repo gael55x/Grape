@@ -38,9 +38,15 @@ export interface CollectRepoSnapshotEvidenceInput {
   readonly commit: string;
   readonly worktreeHash: string;
   readonly dirtyPaths: readonly string[];
+  readonly dirtyPathScopes?: readonly RepoSnapshotEvidenceDirtyPathScope[];
   readonly files: readonly RepoSnapshotEvidenceFile[];
   readonly rejectedFiles: readonly RepoSnapshotEvidenceRejection[];
   readonly capturedAt: string;
+}
+
+export interface RepoSnapshotEvidenceDirtyPathScope {
+  readonly path: string;
+  readonly sourceScope: Extract<SourceScope, "staged" | "unstaged" | "untracked">;
 }
 
 export interface CollectedRepoSnapshotEvidence {
@@ -51,10 +57,10 @@ export interface CollectedRepoSnapshotEvidence {
 export function collectRepoSnapshotEvidence(
   input: CollectRepoSnapshotEvidenceInput
 ): CollectedRepoSnapshotEvidence {
-  const dirtyPaths = new Set(input.dirtyPaths);
+  const dirtyPathScopes = dirtyPathScopeMap(input);
 
   return {
-    sources: input.files.map((file) => sourceRecord(input, file, sourceScopeForPath(file.path, dirtyPaths))),
+    sources: input.files.map((file) => sourceRecord(input, file, sourceScopeForPath(file.path, dirtyPathScopes))),
     sourceRejections: input.rejectedFiles.map((file) => sourceRejectionRecord(input, file))
   };
 }
@@ -106,7 +112,7 @@ function sourceRecord(
       repoId: input.repoId,
       snapshotId: input.snapshotId,
       sourceKind: file.sourceKind,
-      sourceScopeBasis: sourceScope === "committed" ? "not_in_dirty_paths" : "dirty_paths_without_stage_split",
+      sourceScopeBasis: sourceScope === "committed" ? "not_in_dirty_paths" : "git_status_porcelain",
       worktreeHash: input.worktreeHash,
       worktreeStateId: input.worktreeStateId
     }),
@@ -152,8 +158,15 @@ function sourceTypeForFile(file: RepoSnapshotEvidenceFile): SourceType {
   return "repository_file";
 }
 
-function sourceScopeForPath(repoPath: string, dirtyPaths: ReadonlySet<string>): SourceScope {
-  return dirtyPaths.has(repoPath) ? "unstaged" : "committed";
+function dirtyPathScopeMap(input: CollectRepoSnapshotEvidenceInput): Map<string, SourceScope> {
+  if (input.dirtyPathScopes) {
+    return new Map(input.dirtyPathScopes.map((entry) => [entry.path, entry.sourceScope]));
+  }
+  return new Map(input.dirtyPaths.map((repoPath) => [repoPath, "unstaged"]));
+}
+
+function sourceScopeForPath(repoPath: string, dirtyPathScopes: ReadonlyMap<string, SourceScope>): SourceScope {
+  return dirtyPathScopes.get(repoPath) ?? "committed";
 }
 
 function isMigrationPath(repoPath: string): boolean {
