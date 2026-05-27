@@ -1,3 +1,4 @@
+export * from "./benchmark/index.js";
 export * from "./durable-context-build.js";
 export * from "./local-project/index.js";
 export * from "./persist-file-index.js";

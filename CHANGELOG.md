@@ -68,3 +68,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added conflict inspection through CLI `grape conflicts` and MCP `grape_get_conflicts` over recorded claim conflict edges.
 - Added recovery guidance to status, doctor, unsafe compile, lock-conflict, stale, and privacy/redaction failure paths.
 - Added safe partial-bootstrap repair for malformed local `.grape/config.json`: status/doctor explain the issue, and init/compile back up the invalid config before writing a fresh one.
+- Added `grape bench --fixture <name>` for scripted fixture token-reduction benchmarking over the real local compile/diff path.

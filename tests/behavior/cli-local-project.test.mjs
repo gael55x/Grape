@@ -83,6 +83,7 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.match(result.stdout, /grape init --connect/);
   assert.match(result.stdout, /grape compile --task <text>/);
   assert.match(result.stdout, /grape artifacts/);
+  assert.match(result.stdout, /grape bench --fixture <name>/);
   assert.match(result.stdout, /grape sessions/);
   assert.match(result.stdout, /grape stale/);
   assert.match(result.stdout, /grape claims --active/);

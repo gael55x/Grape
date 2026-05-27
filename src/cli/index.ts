@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { runArtifacts } from "./commands/artifacts.js";
+import { runBench } from "./commands/bench.js";
 import { runClaims } from "./commands/claims.js";
 import { runCompile } from "./commands/compile.js";
 import { runConflicts } from "./commands/conflicts.js";
@@ -51,6 +52,8 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
       return runCompile(parsed);
     case "artifacts":
       return runArtifacts(parsed);
+    case "bench":
+      return runBench(parsed);
     case "claims":
       return runClaims(parsed);
     case "conflicts":

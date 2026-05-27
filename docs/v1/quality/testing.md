@@ -97,6 +97,8 @@ MCP and CLI:
 - `user_decision_requires_direct_confirmation_hashes`
 - `confirmation_request_does_not_persist_truth`
 - `cli_json_matches_schema`
+- `cli_bench_reports_fixture_token_reduction`
+- `cli_bench_requires_named_fixture`
 - `cli_doctor_privacy_redacts_secrets`
 
 Storage and security:
