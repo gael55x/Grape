@@ -67,3 +67,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Completed the restricted MCP write surface with `grape_record_candidate`, `grape_record_user_decision`, and `grape_request_user_confirmation`, all non-promoting and hash/redaction bounded.
 - Added conflict inspection through CLI `grape conflicts` and MCP `grape_get_conflicts` over recorded claim conflict edges.
 - Added recovery guidance to status, doctor, unsafe compile, lock-conflict, stale, and privacy/redaction failure paths.
+- Added safe partial-bootstrap repair for malformed local `.grape/config.json`: status/doctor explain the issue, and init/compile back up the invalid config before writing a fresh one.

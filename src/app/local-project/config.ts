@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 export const localProjectSchemaVersion = 1;
@@ -65,6 +65,13 @@ export interface LocalProjectLayout {
   readonly databasePath: string;
   readonly artifactDirPath: string;
   readonly createdDirs: readonly string[];
+}
+
+export type LocalProjectConfigWriteStatus = "created" | "unchanged" | "repaired";
+
+export interface LocalProjectConfigWriteResult {
+  readonly status: LocalProjectConfigWriteStatus;
+  readonly backupPath?: string;
 }
 
 const localDirectories = [
@@ -183,18 +190,60 @@ export function readLocalProjectConfig(configPath: string): LocalProjectConfig |
   return parsed as LocalProjectConfig;
 }
 
+export function isRepairableLocalProjectConfigError(error: unknown): boolean {
+  if (error instanceof SyntaxError) return true;
+
+  const message = errorMessage(error);
+  return message === "Grape config is missing project identity.";
+}
+
 export function writeLocalProjectConfig(
   configPath: string,
-  config: LocalProjectConfig
-): "created" | "unchanged" {
+  config: LocalProjectConfig,
+  input: { readonly now?: string } = {}
+): LocalProjectConfigWriteResult {
   if (existsSync(configPath)) {
-    const existing = readLocalProjectConfig(configPath);
+    let existing: LocalProjectConfig | undefined;
+    try {
+      existing = readLocalProjectConfig(configPath);
+    } catch (error) {
+      if (!isRepairableLocalProjectConfigError(error)) throw error;
+      const backupPath = backupInvalidConfig(configPath, input.now);
+      writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+      return { status: "repaired", backupPath };
+    }
+
     if (existing?.project.projectId !== config.project.projectId || existing.project.repoId !== config.project.repoId) {
       throw new Error("existing Grape config points at a different project or repository.");
     }
-    return "unchanged";
+    return { status: "unchanged" };
   }
 
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
-  return "created";
+  return { status: "created" };
+}
+
+function backupInvalidConfig(configPath: string, now = new Date().toISOString()): string {
+  const backupPath = uniqueConfigBackupPath(configPath, now);
+  copyFileSync(configPath, backupPath);
+  return backupPath;
+}
+
+function uniqueConfigBackupPath(configPath: string, now: string): string {
+  const directory = path.dirname(configPath);
+  const stamp = now.replace(/[^0-9A-Za-z.-]/g, "-");
+  const base = path.join(directory, `config.invalid.${stamp}.json`);
+
+  if (!existsSync(base)) return base;
+
+  for (let index = 1; index < 1000; index += 1) {
+    const candidate = path.join(directory, `config.invalid.${stamp}.${index}.json`);
+    if (!existsSync(candidate)) return candidate;
+  }
+
+  throw new Error("could not create a unique backup path for invalid Grape config.");
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

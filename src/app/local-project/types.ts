@@ -1,4 +1,4 @@
-import type { LocalProjectConfig } from "./config.js";
+import type { LocalProjectConfig, LocalProjectConfigWriteStatus } from "./config.js";
 import type { ContextPackBudgetResult } from "../../core/compiler/index.js";
 import type { InMemoryTokenSavingsMetric } from "../../core/diff/index.js";
 import type { ContextArtifactShape, ContextPackItemShape, RiskOverlay } from "../../shared/index.js";
@@ -25,7 +25,8 @@ export interface InitializeLocalProjectResult {
   readonly grapeDirPath: string;
   readonly configPath: string;
   readonly databasePath: string;
-  readonly configStatus: "created" | "unchanged";
+  readonly configStatus: LocalProjectConfigWriteStatus;
+  readonly configBackupPath?: string;
   readonly excludeStatus: "updated" | "unchanged";
   readonly createdDirs: readonly string[];
   readonly projectId: string;

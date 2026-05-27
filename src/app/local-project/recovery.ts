@@ -9,10 +9,17 @@ export function recoveryGuidanceForStatus(status: LocalProjectStatus): readonly 
   }
   if (
     status.warnings.some((warning) => warning.includes(".grape")) ||
+    status.errors.some((error) => error.startsWith("Grape config is repairable")) ||
     status.pendingMigrations.length > 0 ||
     !status.databaseExists
   ) {
     guidance.add("Run grape init --connect from the repository root to bootstrap or repair local state.");
+  }
+  if (status.errors.some((error) => error.startsWith("Grape config is repairable"))) {
+    guidance.add("Grape will back up the invalid config before writing a fresh local config.");
+  }
+  if (status.errors.some((error) => error.startsWith("Grape config is unsupported"))) {
+    guidance.add("Use a Grape version that supports this config, or inspect .grape/config.json before reinitializing.");
   }
   if (status.errors.some((error) => error.includes("config root path does not match"))) {
     guidance.add("Run with --repo pointing at the configured repository root, or reinitialize Grape in the intended repo.");
@@ -69,8 +76,17 @@ export function recoveryGuidanceForErrorMessage(message: string): readonly strin
   if (message.includes("session is locked")) {
     guidance.add("Run grape sessions to inspect the lock; wait for the active run or use a different --session.");
   }
-  if (message.includes("config is missing") || message.includes("Pending migrations")) {
+  if (
+    message.includes("config is missing") ||
+    message.includes("Grape config is repairable") ||
+    message.includes("Grape config is missing project identity") ||
+    message.includes("Unexpected token") ||
+    message.includes("Pending migrations")
+  ) {
     guidance.add("Run grape init --connect from the repository root to bootstrap or repair local state.");
+  }
+  if (message.includes("unsupported Grape config schema version")) {
+    guidance.add("Use a Grape version that supports this config, or inspect .grape/config.json before reinitializing.");
   }
   if (message.includes("config root path does not match")) {
     guidance.add("Run with --repo pointing at the configured repository root, or reinitialize Grape in the intended repo.");

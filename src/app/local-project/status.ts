@@ -8,7 +8,12 @@ import {
   readAppliedStorageMigrations,
   storageMigrationReferences
 } from "../../core/storage/index.js";
-import { readLocalProjectConfig, type LocalProjectConfig, type LocalProjectLayout } from "./config.js";
+import {
+  isRepairableLocalProjectConfigError,
+  readLocalProjectConfig,
+  type LocalProjectConfig,
+  type LocalProjectLayout
+} from "./config.js";
 import { recoveryGuidanceForStatus } from "./recovery.js";
 import { readStorageMigrationSources } from "./storage.js";
 import type { LocalProjectStatus } from "./types.js";
@@ -34,7 +39,12 @@ export function readLocalProjectStatus(rootPathInput: string): LocalProjectStatu
   try {
     config = readLocalProjectConfig(layout.configPath);
   } catch (error) {
-    errors.push(errorMessage(error));
+    const detail = errorMessage(error);
+    errors.push(
+      isRepairableLocalProjectConfigError(error)
+        ? `Grape config is repairable but invalid: ${detail}`
+        : `Grape config is unsupported: ${detail}`
+    );
   }
 
   if (existsSync(layout.databasePath)) {
