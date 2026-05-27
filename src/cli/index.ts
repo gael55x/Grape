@@ -116,6 +116,19 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
         ? "Privacy: added .grape/ to .git/info/exclude"
         : "Privacy: .grape/ is already locally excluded",
       "",
+      "Bootstrap detection:",
+      `  Languages: ${renderInlineList(result.bootstrap.languages)}`,
+      `  Frameworks: ${renderInlineList(result.bootstrap.frameworks)}`,
+      `  Package manager: ${result.bootstrap.packageManager ?? "unknown"}`,
+      `  Scripts: ${renderInlineList(result.bootstrap.scripts)}`,
+      `  Commands: ${renderInlineList(result.bootstrap.commands)}`,
+      `  Test command: ${result.bootstrap.testCommand ?? "not detected"}`,
+      `  Entry points: ${renderInlineList(result.bootstrap.entryPoints)}`,
+      `  Config files: ${renderInlineList(result.bootstrap.configFiles)}`,
+      `  Confidence: language=${result.bootstrap.confidence.language}, framework=${result.bootstrap.confidence.framework}, packageManager=${result.bootstrap.confidence.packageManager}, testCommand=${result.bootstrap.confidence.testCommand}`,
+      ...renderIndentedList("  Candidate rules (not durable)", result.bootstrap.candidateRules),
+      ...renderIndentedList("  Bootstrap warnings", result.bootstrap.warnings),
+      "",
       "MCP connection contract:",
       `  command: ${result.mcp.command}`,
       `  args: ${result.mcp.args.join(" ")}`,
@@ -244,6 +257,15 @@ function rejectUnsupportedFlags(parsed: ParsedArgs, allowed: ReadonlySet<string>
     return exitCodes.usage;
   }
   return undefined;
+}
+
+function renderInlineList(values: readonly string[]): string {
+  return values.length === 0 ? "none" : values.join(", ");
+}
+
+function renderIndentedList(title: string, values: readonly string[]): string[] {
+  if (values.length === 0) return [`${title}: none`];
+  return [`${title}:`, ...values.map((value) => `    - ${value}`)];
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

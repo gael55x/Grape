@@ -1,4 +1,5 @@
 export * from "./artifacts.js";
+export * from "./bootstrap-detection.js";
 export * from "./candidates.js";
 export * from "./claim-resolution.js";
 export * from "./claims.js";
@@ -17,6 +18,7 @@ export * from "./proofs.js";
 export * from "./recovery.js";
 export * from "./rules.js";
 export * from "./sessions.js";
+export * from "./setup-types.js";
 export * from "./source-excerpts.js";
 export * from "./stale.js";
 export * from "./status.js";

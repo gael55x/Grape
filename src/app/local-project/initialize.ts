@@ -7,6 +7,7 @@ import {
   createStorageRepositories
 } from "../../core/storage/index.js";
 import { persistGitRepoSnapshot } from "../persist-repo-snapshot.js";
+import { detectLocalBootstrap } from "./bootstrap-detection.js";
 import {
   defaultLocalProjectConfig,
   ensureLocalProjectLayout,
@@ -30,6 +31,7 @@ export function initializeLocalProject(
   });
   const projectId = defaultProjectId(snapshot.repoId);
   const layout = ensureLocalProjectLayout(snapshot.rootPath);
+  const bootstrap = detectLocalBootstrap(snapshot.rootPath);
   const excludeStatus = ensureGrapeExcludedFromGit(snapshot.rootPath, input.gitBinary);
   const config = defaultLocalProjectConfig({
     projectId,
@@ -78,6 +80,7 @@ export function initializeLocalProject(
     headCommit: snapshot.commit,
     dirtyWorktree: snapshot.worktreeStatus !== "clean",
     migrationsApplied: databaseResult.migrationResult.applied.map((migration) => migration.id),
+    bootstrap,
     mcp: mcpConnectionGuide(snapshot.rootPath)
   };
 }

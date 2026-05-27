@@ -129,6 +129,73 @@ test("cli init --connect bootstraps local .grape state and keeps it out of git s
   });
 });
 
+test("cli init --connect reports bootstrap project detection without durable rule promotion", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "src"));
+    writeFileSync(path.join(repoPath, "src", "main.ts"), "export const main = () => 'ok';\n");
+    writeFileSync(path.join(repoPath, "tsconfig.json"), "{\"compilerOptions\":{\"strict\":true}}\n");
+    writeFileSync(path.join(repoPath, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
+    writeFileSync(
+      path.join(repoPath, "package.json"),
+      `${JSON.stringify(
+        {
+          scripts: {
+            dev: "next dev",
+            build: "next build",
+            test: "vitest run",
+            lint: "next lint"
+          },
+          dependencies: {
+            next: "^15.0.0",
+            react: "^19.0.0"
+          },
+          devDependencies: {
+            typescript: "^5.0.0",
+            vitest: "^3.0.0"
+          }
+        },
+        null,
+        2
+      )}\n`
+    );
+    execGit(repoPath, ["add", "package.json", "pnpm-lock.yaml", "src/main.ts", "tsconfig.json"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add package metadata"
+    ]);
+
+    const init = runCli(repoPath, ["init", "--connect"]);
+    assert.equal(init.status, 0, init.stderr);
+    assert.match(init.stdout, /Bootstrap detection/);
+    assert.match(init.stdout, /Languages: TypeScript, JavaScript/);
+    assert.match(init.stdout, /Frameworks: Next\.js, React, Vitest/);
+    assert.match(init.stdout, /Package manager: pnpm/);
+    assert.match(init.stdout, /Test command: pnpm test/);
+    assert.match(init.stdout, /Candidate rules \(not durable\)/);
+
+    const initJson = runCliJson(repoPath, ["init", "--connect"]);
+    assert.equal(initJson.bootstrap.packageManager, "pnpm");
+    assert.deepEqual(initJson.bootstrap.languages, ["TypeScript", "JavaScript"]);
+    assert.ok(initJson.bootstrap.frameworks.includes("Next.js"));
+    assert.ok(initJson.bootstrap.frameworks.includes("Vitest"));
+    assert.ok(initJson.bootstrap.scripts.includes("test"));
+    assert.ok(initJson.bootstrap.commands.includes("pnpm test"));
+    assert.equal(initJson.bootstrap.testCommand, "pnpm test");
+    assert.ok(initJson.bootstrap.entryPoints.includes("src/main.ts"));
+    assert.ok(initJson.bootstrap.configFiles.includes("package.json"));
+    assert.ok(
+      initJson.bootstrap.candidateRules.some((rule) =>
+        rule.includes("Run pnpm test before final changes")
+      )
+    );
+  });
+});
+
 test("cli status and doctor provide recovery guidance before bootstrap", () => {
   withGitRepo((repoPath) => {
     const status = runCli(repoPath, ["status", "--json"]);
