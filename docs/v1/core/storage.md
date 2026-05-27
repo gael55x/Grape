@@ -123,7 +123,7 @@ MCP command/test observation writes currently use the existing `sources` table w
 - Evidence source storage is split into `src/core/storage/evidence-repositories.ts` so source/source-rejection persistence does not expand the session-ledger repository file.
 - Evidence repositories persist already-classified records from `src/core/evidence/`; they do not decide trust, privacy policy, source relevance, or proof validity.
 - Claim storage is split into `src/core/storage/claim-repositories.ts` so claim candidates and durable claims do not expand session-ledger or proof repositories.
-- Claim repositories persist already-gated candidate/claim records only; extraction, belief gates, scope policy, and current-valid filtering stay in claims/trust/retrieval/app modules.
+- Claim repositories persist already-gated candidate/claim records and claim edge records only; extraction, belief gates, scope policy, contradiction detection, and current-valid filtering stay in claims/trust/retrieval/app modules.
 - Proof storage is split into `src/core/storage/proof-repositories.ts` so validated proof rows are persisted without expanding session-ledger or evidence repositories.
 - Proof repositories persist already-validated proof records only and can link a proof row to an accepted claim. Validation stays in `src/core/proofs/`; claim gating stays out of storage.
 - Alpha source storage keeps branch, commit, repo ID, project ID, worktree hash, and worktree state ID inside `metadata_json` until a later migration promotes the final `Source` shape fields that the compiler and MCP surface will query directly.

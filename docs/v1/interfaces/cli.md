@@ -57,6 +57,7 @@ The current implementation includes the first CLI setup/debugging slice:
 - `grape proofs`
 - `grape proofs --proof <id>`
 - `grape proofs --source <sourceId>`
+- `grape conflicts`
 - `grape omitted --session <id>`
 - `grape omitted --session <id> --token <restoreToken>`
 - `grape status`
@@ -78,6 +79,8 @@ When `--reset-session` is supplied for an existing compile session, `grape compi
 
 `grape stale` lists context pack invalidation rows that mark previously sent context as stale. `grape stale --session <id>` filters to one context session. Current V1 behavior is an invalidation-ledger inspector, not a predictive stale analyzer: it reports dependency-manifest, branch-switch, and session-reset invalidations already emitted by the diff engine, along with prior sent item IDs and previous branch/head metadata. It does not return context bodies.
 
+`grape conflicts` lists recorded claim conflict edges from `claim_edges`, including `contradicts`, `needs_review`, `violates`, and `unknown_scope_overlap`. Current V1 behavior is an inspector only: it does not detect new contradictions, resolve conflicts, or promote/refute claims.
+
 `grape claims --active` lists current-valid durable claims from local SQLite metadata. Current V1 implementation exposes only the narrow `repository_source_excerpt_exists` claim type created from validated exact-source proof rows. It returns claim IDs, subjects, claim text, scope metadata, proof refs, source refs, and current-valid rejection counts. It does not return raw proof excerpts or source file bodies.
 
 `grape proofs` lists persisted proof rows from local SQLite metadata. `grape proofs --proof <id>` inspects one proof row, and `grape proofs --source <sourceId>` filters proof rows by source. It returns proof IDs, source IDs/refs, proof type, support status, source hashes, excerpt hashes, and optional claim IDs. It does not return raw proof excerpts or source file bodies. The future `grape proofs <claim_id>` claim-linked form remains deferred until durable claims exist.
@@ -86,7 +89,7 @@ When `--reset-session` is supplied for an existing compile session, `grape compi
 
 `grape status` reports initialization, config, database, migration, branch, head commit, and worktree state. `grape doctor` reports setup diagnostics, Node runtime compatibility, migration state, dirty worktree state, and whether `.grape/` is locally excluded from Git.
 
-`grape mcp --print-config` prints the V1 MCP connection shape for stdio clients, including `--repo <root>` and `cwd` guidance so MCP clients do not accidentally launch Grape against their own working directory. `grape mcp --stdio` serves the first MCP adapter with `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_rules`, `grape_get_omitted_item`, `grape_get_stale_items`, `grape_get_status`, `grape_record_command_result`, and `grape_record_test_result`; the context tool reuses the local compile service and returns V1-shaped context-pack items while the stored artifact body remains the documented scaffold artifact shape. The command/test write tools record temporary agent-reported evidence only and do not promote durable claims.
+`grape mcp --print-config` prints the V1 MCP connection shape for stdio clients, including `--repo <root>` and `cwd` guidance so MCP clients do not accidentally launch Grape against their own working directory. `grape mcp --stdio` serves the first MCP adapter with `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_rules`, `grape_get_omitted_item`, `grape_get_stale_items`, `grape_get_conflicts`, `grape_get_status`, `grape_record_command_result`, and `grape_record_test_result`; the context tool reuses the local compile service and returns V1-shaped context-pack items while the stored artifact body remains the documented scaffold artifact shape. The command/test write tools record temporary agent-reported evidence only and do not promote durable claims.
 
 All implemented commands support `--repo <path>` where relevant and `--json` for machine-readable output. Unsupported options fail with a usage error instead of being silently ignored; for example, `grape doctor --privacy` is documented V1 scope but is not accepted until the privacy-specific doctor workflow exists.
 

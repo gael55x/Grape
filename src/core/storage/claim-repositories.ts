@@ -25,6 +25,29 @@ export interface ClaimRecord {
   readonly updatedAt: string;
 }
 
+export type ClaimEdgeType =
+  | "supersedes"
+  | "contradicts"
+  | "depends_on"
+  | "validated_by"
+  | "caused_by"
+  | "related_to"
+  | "narrows"
+  | "broadens"
+  | "needs_review"
+  | "violates"
+  | "coexists_with"
+  | "variant_of"
+  | "unknown_scope_overlap";
+
+export interface ClaimEdgeRecord {
+  readonly edgeId: string;
+  readonly sourceClaimId: string;
+  readonly targetClaimId: string;
+  readonly edgeType: ClaimEdgeType;
+  readonly createdAt: string;
+}
+
 export interface ClaimStorageRepositories {
   readonly claimCandidates: {
     insertOrIgnore(record: ClaimCandidateRecord): boolean;
@@ -35,6 +58,11 @@ export interface ClaimStorageRepositories {
     insertOrIgnore(record: ClaimRecord): boolean;
     get(claimId: string): ClaimRecord | undefined;
     list(): readonly ClaimRecord[];
+  };
+  readonly claimEdges: {
+    insertOrIgnore(record: ClaimEdgeRecord): boolean;
+    get(edgeId: string): ClaimEdgeRecord | undefined;
+    listConflictEdges(): readonly ClaimEdgeRecord[];
   };
 }
 
@@ -119,6 +147,40 @@ export function createClaimStorageRepositories(database: DatabaseSync): ClaimSto
             .all() as Array<Record<string, unknown>>
         ).map(mapRequiredClaim);
       }
+    },
+    claimEdges: {
+      insertOrIgnore(record) {
+        const result = database
+          .prepare(
+            [
+              "INSERT OR IGNORE INTO claim_edges",
+              "(edge_id, source_claim_id, target_claim_id, edge_type, created_at)",
+              "VALUES (?, ?, ?, ?, ?)"
+            ].join(" ")
+          )
+          .run(record.edgeId, record.sourceClaimId, record.targetClaimId, record.edgeType, record.createdAt);
+        return result.changes === 1;
+      },
+      get(edgeId) {
+        return mapClaimEdge(
+          database
+            .prepare("SELECT * FROM claim_edges WHERE edge_id = ?")
+            .get(edgeId) as Record<string, unknown> | undefined
+        );
+      },
+      listConflictEdges() {
+        return (
+          database
+            .prepare(
+              [
+                "SELECT * FROM claim_edges",
+                "WHERE edge_type IN ('contradicts', 'needs_review', 'violates', 'unknown_scope_overlap')",
+                "ORDER BY created_at DESC, edge_id ASC"
+              ].join(" ")
+            )
+            .all() as Array<Record<string, unknown>>
+        ).map(mapRequiredClaimEdge);
+      }
     }
   };
 }
@@ -157,6 +219,21 @@ function mapRequiredClaim(row: Record<string, unknown>): ClaimRecord {
     verificationStatus: stringField(row, "verification_status") as ClaimRecord["verificationStatus"],
     createdAt: stringField(row, "created_at"),
     updatedAt: stringField(row, "updated_at")
+  };
+}
+
+function mapClaimEdge(row: Record<string, unknown> | undefined): ClaimEdgeRecord | undefined {
+  if (!row) return undefined;
+  return mapRequiredClaimEdge(row);
+}
+
+function mapRequiredClaimEdge(row: Record<string, unknown>): ClaimEdgeRecord {
+  return {
+    edgeId: stringField(row, "edge_id"),
+    sourceClaimId: stringField(row, "source_claim_id"),
+    targetClaimId: stringField(row, "target_claim_id"),
+    edgeType: stringField(row, "edge_type") as ClaimEdgeType,
+    createdAt: stringField(row, "created_at")
   };
 }
 

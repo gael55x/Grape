@@ -2,6 +2,7 @@
 import { runArtifacts } from "./commands/artifacts.js";
 import { runClaims } from "./commands/claims.js";
 import { runCompile } from "./commands/compile.js";
+import { runConflicts } from "./commands/conflicts.js";
 import { runOmitted } from "./commands/omitted.js";
 import { runProofs } from "./commands/proofs.js";
 import { runSessions } from "./commands/sessions.js";
@@ -52,6 +53,8 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
       return runArtifacts(parsed);
     case "claims":
       return runClaims(parsed);
+    case "conflicts":
+      return runConflicts(parsed);
     case "status":
       return runStatus(parsed);
     case "doctor":
@@ -217,6 +220,7 @@ async function runMcp(parsed: ParsedArgs): Promise<number> {
     "  grape_get_rules",
     "  grape_get_omitted_item",
     "  grape_get_stale_items",
+    "  grape_get_conflicts",
     "  grape_get_status",
     "  grape_record_command_result",
     "  grape_record_test_result"

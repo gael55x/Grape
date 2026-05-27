@@ -64,3 +64,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added MCP `grape_get_stale_items` for stale invalidation inspection without returning context bodies or absolute root paths.
 - Added MCP `grape_get_rules` for current Git-visible, hash-verified, secret-scanned rule excerpt inspection without absolute root paths.
 - Added MCP `grape_record_command_result` and `grape_record_test_result` for temporary agent-reported evidence without raw command/output persistence or durable claim promotion.
+- Added conflict inspection through CLI `grape conflicts` and MCP `grape_get_conflicts` over recorded claim conflict edges.

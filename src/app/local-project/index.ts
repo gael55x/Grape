@@ -2,6 +2,7 @@ export * from "./artifacts.js";
 export * from "./claim-resolution.js";
 export * from "./claims.js";
 export * from "./compile.js";
+export * from "./conflicts.js";
 export * from "./compression.js";
 export * from "./configured-layout.js";
 export * from "./config.js";

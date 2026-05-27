@@ -1,5 +1,6 @@
 import { runGrapeGetArtifactTool } from "./artifact.js";
 import { runGrapeGetClaimsTool } from "./claims.js";
+import { runGrapeGetConflictsTool } from "./conflicts.js";
 import { runGrapeGetContextTool } from "./get-context.js";
 import { runGrapeGetOmittedItemTool } from "./omitted.js";
 import { runGrapeRecordCommandResultTool, runGrapeRecordTestResultTool } from "./observations.js";
@@ -128,6 +129,15 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
         }
       },
       {
+        name: "grape_get_conflicts",
+        description: "Inspect recorded claim conflict edges without resolving them.",
+        inputSchema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {}
+        }
+      },
+      {
         name: "grape_get_status",
         description: "Inspect local Grape bootstrap, migration, and repository state for the current working directory.",
         inputSchema: {
@@ -218,6 +228,8 @@ export function callMcpTool(params: ToolCallParams, rootPath: string): McpToolRe
       }
       case "grape_get_stale_items":
         return toolResult(runGrapeGetStaleItemsTool(params.arguments ?? {}, rootPath), false);
+      case "grape_get_conflicts":
+        return toolResult(runGrapeGetConflictsTool(params.arguments ?? {}, rootPath), false);
       case "grape_get_status":
         assertEmptyArguments(params.arguments, "grape_get_status");
         return toolResult(runGrapeGetStatusTool(rootPath), false);
