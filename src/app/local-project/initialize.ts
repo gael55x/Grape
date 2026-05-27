@@ -37,7 +37,7 @@ export function initializeLocalProject(
     rootPath: snapshot.rootPath,
     initializedAt: now
   });
-  const configStatus = writeLocalProjectConfig(layout.configPath, config);
+  const configWrite = writeLocalProjectConfig(layout.configPath, config, { now });
 
   const databaseResult = withMigratedLocalDatabase({
     databasePath: layout.databasePath,
@@ -66,7 +66,8 @@ export function initializeLocalProject(
     grapeDirPath: layout.grapeDirPath,
     configPath: layout.configPath,
     databasePath: layout.databasePath,
-    configStatus,
+    configStatus: configWrite.status,
+    configBackupPath: configWrite.backupPath,
     excludeStatus,
     createdDirs: layout.createdDirs,
     projectId,

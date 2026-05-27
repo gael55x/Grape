@@ -385,3 +385,10 @@ Keep entries simple:
 - Summary: completed the V1 restricted MCP write-tool foundation with `grape_record_candidate`, `grape_record_user_decision`, and `grape_request_user_confirmation`. Candidate writes link temporary `assistant_response` evidence to non-durable claim candidates, user decisions store redacted `user_message` evidence with prompt/response hashes only, and confirmation requests return non-durable request IDs with recovery guidance. The observation/candidate app services now share current-session validation so writes fail if the branch, head, or worktree state has changed since `grape_get_context`.
 - Checks run: typecheck before full verification.
 - Risks/follow-ups: these tools still do not promote durable truth. Grape-observed command/test runners and broader Trust Kernel promotion flows remain pending.
+
+### 2026-05-26 - Partial Bootstrap Config Repair
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: hardened local bootstrap recovery for malformed `.grape/config.json`. Status and doctor now identify repairable config damage separately from unsupported future schema versions; `grape init --connect` and compile auto-bootstrap back up repairable invalid configs before writing a fresh local config.
+- Checks run: focused CLI behavior tests before full verification.
+- Risks/follow-ups: framework/package-manager detection, candidate rules, and broader partial-bootstrap recovery remain pending.

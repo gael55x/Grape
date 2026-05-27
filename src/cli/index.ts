@@ -106,6 +106,7 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
       `Head: ${result.headCommit}`,
       `Worktree: ${result.dirtyWorktree ? "dirty" : "clean"}`,
       `Config: ${result.configPath} (${result.configStatus})`,
+      result.configBackupPath ? `Config backup: ${result.configBackupPath}` : undefined,
       `Database: ${result.databasePath}`,
       `Migrations applied: ${result.migrationsApplied.length === 0 ? "none" : result.migrationsApplied.join(", ")}`,
       result.excludeStatus === "updated"
@@ -121,7 +122,7 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
       "  grape status",
       "  grape doctor",
       "  grape mcp --print-config"
-    ].join("\n"));
+    ].filter((line): line is string => line !== undefined).join("\n"));
 
     return exitCodes.ok;
   } catch (error) {
