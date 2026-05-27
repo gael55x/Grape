@@ -52,6 +52,8 @@ The current CLI compile path runs a basic artifact-level secret scan before writ
 
 Exact source evidence excerpts are read only from source records that were already allowed by Git ignore and local privacy ignore filtering. The local reader rejects unsafe repo-relative paths, verifies the current bytes still match the stored source hash, skips binary-looking content, and bounds excerpt size before the artifact-level secret scan runs.
 
+Bootstrap detection reads only common root manifest/config files such as `package.json`, lockfiles, `tsconfig.json`, framework config files, and conventional entry point paths. It reports script names and derived commands such as `pnpm test`, not raw script bodies, and candidate rules remain non-durable hints until a user confirms them.
+
 Restricted MCP write tools run the same baseline secret scan over caller-provided command/candidate/decision/confirmation text before persistence. Source metadata stores hashes and scope only; raw command output, prompt, response, and candidate evidence bodies are not returned over MCP.
 
 ## Redaction And Hash Rules

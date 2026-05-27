@@ -413,3 +413,10 @@ Keep entries simple:
 - Summary: split Markdown rendering into `src/core/compiler/repository/markdown/` and expanded context-pack Markdown output so CLI and MCP artifacts expose artifact summary, diff counts, pack item input refs, omitted/restore metadata, artifact section summaries, dependency manifest details, token/budget status, and warnings/safety fields.
 - Checks run: focused CLI/MCP/compiler behavior tests; `npm run check`; `npm run build`; `git diff --check`.
 - Risks/follow-ups: JSON remains the canonical contract; final artifact work still needs broader durable current-valid claim/proof retrieval and safe budget pruning.
+
+### 2026-05-27 - Bootstrap Project Detection
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added app-owned bootstrap detection to `grape init --connect`, reporting language/framework hints, package manager, script names, derived commands, test command, entry points, config files, confidence levels, warnings, and non-durable candidate rules.
+- Checks run: focused CLI behavior test; `npm run check`; `npm run build`; `git diff --check`.
+- Risks/follow-ups: detection is intentionally manifest/config based and does not confirm candidate rules; route detection, broad framework extractors, and user-confirmed durable rules remain pending.
