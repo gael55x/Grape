@@ -91,3 +91,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Split snapshot source evidence scopes for staged, unstaged, and untracked Git status entries instead of treating every dirty file as unstaged.
 - Split compiler repository section builders into `sections/builders/` so the section assembly file stays narrow while each artifact section family has a clear owner.
 - Added CLI fallback commands `grape sync` and `grape diff-context` over the existing local bootstrap/snapshot/index and compile/session-diff services.
+- Added `grape doctor --privacy` for local-first and scanner privacy diagnostics without returning file bodies or secret values.

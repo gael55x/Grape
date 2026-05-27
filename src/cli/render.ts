@@ -42,6 +42,7 @@ export function helpText(): string {
     "  grape omitted --session <id> Inspect or restore omitted context",
     "  grape status                Inspect local project/bootstrap state",
     "  grape doctor                Run setup and privacy diagnostics",
+    "  grape doctor --privacy      Run privacy-focused diagnostics",
     "  grape mcp --print-config    Print MCP client configuration",
     "  grape mcp --stdio           Serve MCP tools over stdio",
     "  grape help                  Show this help",

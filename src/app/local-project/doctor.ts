@@ -3,11 +3,37 @@ import { existsSync } from "node:fs";
 import { gitExcludeContainsGrape } from "./git-exclude.js";
 import { recoveryGuidanceForDoctor } from "./recovery.js";
 import { readLocalProjectStatus } from "./status.js";
-import type { DiagnosticCheck, LocalProjectDoctor } from "./types.js";
+import type { DiagnosticCheck, LocalProjectDoctor, LocalProjectStatus } from "./types.js";
 
-export function doctorLocalProject(rootPath: string): LocalProjectDoctor {
+export interface DoctorLocalProjectOptions {
+  readonly privacyOnly?: boolean;
+}
+
+export function doctorLocalProject(
+  rootPath: string,
+  options: DoctorLocalProjectOptions = {}
+): LocalProjectDoctor {
   const status = readLocalProjectStatus(rootPath);
-  const checks: DiagnosticCheck[] = [
+  const checks = options.privacyOnly ? privacyChecks(status) : setupChecks(status);
+
+  for (const error of status.errors) {
+    checks.push({ id: "status_error", status: "fail", message: error });
+  }
+
+  return {
+    rootPath: status.rootPath,
+    overallStatus: checks.some((check) => check.status === "fail")
+      ? "fail"
+      : checks.some((check) => check.status === "warn")
+        ? "warn"
+        : "pass",
+    checks,
+    recoveryGuidance: recoveryGuidanceForDoctor(status, checks)
+  };
+}
+
+function setupChecks(status: LocalProjectStatus): DiagnosticCheck[] {
+  return [
     nodeVersionCheck(),
     {
       id: "git_repo",
@@ -55,21 +81,43 @@ export function doctorLocalProject(rootPath: string): LocalProjectDoctor {
     },
     privacyCheck(status.rootPath)
   ];
+}
 
-  for (const error of status.errors) {
-    checks.push({ id: "status_error", status: "fail", message: error });
-  }
+function privacyChecks(status: LocalProjectStatus): DiagnosticCheck[] {
+  const ignoredOrPrivateCount =
+    status.scan.rejectionReasonCounts.git_ignored + status.scan.rejectionReasonCounts.privacy_ignored;
 
-  return {
-    rootPath: status.rootPath,
-    overallStatus: checks.some((check) => check.status === "fail")
-      ? "fail"
-      : checks.some((check) => check.status === "warn")
-        ? "warn"
-        : "pass",
-    checks,
-    recoveryGuidance: recoveryGuidanceForDoctor(status, checks)
-  };
+  return [
+    {
+      id: "local_first",
+      status: "pass",
+      message: "V1 runs locally and does not use cloud sync, telemetry, or remote embeddings by default."
+    },
+    privacyCheck(status.rootPath),
+    {
+      id: "scan_rejections",
+      status: status.scan.rejectedFileCount > 0 ? "warn" : "pass",
+      message:
+        status.scan.rejectedFileCount > 0
+          ? `Scanner rejected ${status.scan.rejectedFileCount} visible path(s) before indexing.`
+          : "Current scan has no visible rejected paths.",
+      detail: renderReasonCounts(status.scan.rejectionReasonCounts)
+    },
+    {
+      id: "ignored_private_inputs",
+      status: "pass",
+      message:
+        ignoredOrPrivateCount > 0
+          ? "Ignored/private paths were excluded and recorded as metadata-only rejections."
+          : "No Git-ignored or Grape-private visible tracked paths were detected in the current scan.",
+      detail: `git_ignored=${status.scan.rejectionReasonCounts.git_ignored}, privacy_ignored=${status.scan.rejectionReasonCounts.privacy_ignored}`
+    },
+    {
+      id: "artifact_secret_scan",
+      status: "pass",
+      message: "Compile output is blocked if the artifact-level secret scan finds raw secret-looking content."
+    }
+  ];
 }
 
 function nodeVersionCheck(): DiagnosticCheck {
@@ -105,4 +153,11 @@ function privacyCheck(rootPath: string): DiagnosticCheck {
       ? "Local .grape state is excluded through .git/info/exclude."
       : "Run grape init --connect to add .grape/ to .git/info/exclude."
   };
+}
+
+function renderReasonCounts(counts: Readonly<Record<string, number>>): string {
+  const activeCounts = Object.entries(counts)
+    .filter(([, count]) => count > 0)
+    .map(([reason, count]) => `${reason}=${count}`);
+  return activeCounts.length === 0 ? "none" : activeCounts.join(", ");
 }

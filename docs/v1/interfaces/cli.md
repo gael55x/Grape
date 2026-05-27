@@ -65,6 +65,7 @@ The current implementation includes the first CLI setup/debugging slice:
 - `grape omitted --session <id> --token <restoreToken>`
 - `grape status`
 - `grape doctor`
+- `grape doctor --privacy`
 - `grape mcp --print-config`
 - `grape mcp --stdio`
 
@@ -100,9 +101,11 @@ When `--reset-session` is supplied for an existing compile session, `grape compi
 
 `grape status` reports initialization, config, database, migration, branch, head commit, worktree state, current scan diagnostics, and setup recovery guidance. Repairable malformed config and unsupported future config schema versions are reported distinctly so agents know whether `grape init --connect` can safely repair the state. `grape doctor` reports setup diagnostics, Node runtime compatibility, migration state, dirty worktree state, whether `.grape/` is locally excluded from Git, and recovery guidance for failed or warning checks.
 
+`grape doctor --privacy` narrows doctor output to privacy and local-first diagnostics. It reports local-first defaults, `.grape/` Git exclusion, aggregate scanner rejection counts, ignored/private input handling, and artifact secret-scan coverage without returning file bodies, secret values, or raw rejected-file contents. It does not approve ignored/private reads, export data, purge data, or change scanner policy.
+
 `grape mcp --print-config` prints the V1 MCP connection shape for stdio clients, including `--repo <root>` and `cwd` guidance so MCP clients do not accidentally launch Grape against their own working directory. `grape mcp --stdio` serves the first MCP adapter with `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_rules`, `grape_get_omitted_item`, `grape_get_stale_items`, `grape_get_conflicts`, `grape_get_status`, `grape_record_candidate`, `grape_record_command_result`, `grape_record_test_result`, `grape_record_user_decision`, and `grape_request_user_confirmation`; the context tool reuses the local compile service and returns V1-shaped context-pack items while the stored artifact body remains the documented scaffold artifact shape. The write tools record temporary agent-reported evidence or confirmation requests only and do not promote durable claims.
 
-All implemented commands support `--repo <path>` where relevant and `--json` for machine-readable output. Unsupported options fail with a usage error instead of being silently ignored; for example, `grape doctor --privacy` is documented V1 scope but is not accepted until the privacy-specific doctor workflow exists.
+All implemented commands support `--repo <path>` where relevant and `--json` for machine-readable output. Unsupported options fail with a usage error instead of being silently ignored; privacy export and purge workflows remain deferred until their data contracts exist.
 
 ## Adapter Rule
 
