@@ -1,5 +1,7 @@
 import path from "node:path";
 
+import { tryNormalizeIndexRepoPath } from "./index-paths.js";
+
 const importPatterns = [
   /\bimport\s+(?:[^'"]+\s+from\s+)?["']([^"']+)["']/g,
   /\bexport\s+[^'"]+\s+from\s+["']([^"']+)["']/g,
@@ -26,7 +28,10 @@ export function resolveLocalImport(
 ): string | undefined {
   if (!specifier.startsWith(".")) return undefined;
 
-  const baseDir = path.posix.dirname(fromRepoPath);
+  const normalizedFromPath = tryNormalizeIndexRepoPath(fromRepoPath);
+  if (!normalizedFromPath) return undefined;
+
+  const baseDir = path.posix.dirname(normalizedFromPath);
   const basePath = safeNormalizeImportPath(path.posix.join(baseDir, specifier));
   if (!basePath) return undefined;
   const candidates = [
@@ -47,9 +52,5 @@ export function resolveLocalImport(
 }
 
 function safeNormalizeImportPath(inputPath: string): string | undefined {
-  const normalized = inputPath.replace(/\\/g, "/").replace(/^\/+/, "");
-  if (normalized === "" || normalized === "." || normalized.startsWith("../") || normalized.includes("/../")) {
-    return undefined;
-  }
-  return normalized;
+  return tryNormalizeIndexRepoPath(inputPath);
 }

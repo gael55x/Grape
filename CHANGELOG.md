@@ -72,3 +72,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Hardened context-pack Markdown artifacts with artifact summary, diff counts, pack item input refs, omitted/restore metadata, artifact section summaries, dependency details, token/budget status, and warnings/safety fields.
 - Added bootstrap project detection to `grape init --connect` for language/framework, package manager, scripts, test command, entry points, config files, confidence levels, and non-durable candidate rules.
 - Added setup/status scan diagnostics and scanner rejection gates for oversized and binary files before source evidence ingestion.
+- Hardened indexing path handling with Windows-style separator normalization and unsafe repo path rejection before file reads.

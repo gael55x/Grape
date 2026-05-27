@@ -441,3 +441,10 @@ Keep entries simple:
 - Summary: added focused behavior coverage for the public V1 context artifact JSON envelope, dependency/input/section references, context-pack item shape, and MCP Markdown parity with structured context-pack items.
 - Checks run: focused context artifact contract behavior test.
 - Risks/follow-ups: broader durable-claim retrieval golden fixtures and final artifact-schema hardening remain pending.
+
+### 2026-05-27 - Cross-Platform Path Hardening
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: normalized Windows-style separators at indexing path boundaries, rejected traversal and drive-qualified repo paths before file reads, and added focused tests for privacy ignores, safe indexed paths, and import resolution with backslash inputs.
+- Checks run: focused cross-platform path and file-index behavior tests.
+- Risks/follow-ups: this is separator/unsafe-path coverage, not a full Windows or WSL CI run.
