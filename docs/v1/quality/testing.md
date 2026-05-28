@@ -90,6 +90,7 @@ Compression:
 - `compression_dependency_is_in_artifact_manifest`
 - `high_risk_overlay_forbids_summary_replacement`
 - `stale_compression_emits_invalidated_previous_when_sent`
+- `section_dependency_drift_does_not_invalidate_unrelated_context`
 
 MCP and CLI:
 

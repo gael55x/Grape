@@ -328,7 +328,7 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: added a deterministic `context_pack_summary` compression artifact builder and local compile persistence after durable pack writes. The cache is derived from latest active, non-compression sent ledger rows for the current branch/head and stores context-artifact input hashes without returning context bodies.
 - Checks run: focused compression-cache and CLI behavior tests before full verification.
-- Risks/follow-ups: the summary is cached but not rendered into artifacts until section-level compression invalidation avoids making no-change turns stale. Stale compression invalidation events and safe budget pruning remain pending.
+- Risks/follow-ups: rendering and stale compression invalidation were deferred at the time and later addressed by the context pack summary rendering slice. Safe budget pruning remained pending at this point.
 
 ### 2026-05-26 - Session Inspection CLI
 
@@ -482,7 +482,7 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: moved token-budget policy into the durable pack path so budgeted compiles prune only optional non-safety context before pack rows are persisted. Required task, pinned, exact/safety-critical, omission/restore, and invalidation context is protected, and public artifacts record budget-pruned bodies in `omittedDueToBudget` instead of sending them.
 - Checks run: focused context-budget, CLI local-project, and repository-artifact behavior tests under Node 22; `npm run docs:check`; `npm run architecture:check`; `npm run typecheck`; `npm run build`; `npm run build:test`; `npm run check`.
-- Risks/follow-ups: this is a conservative optional-pruning policy, not final compression replacement or rendered `context_pack_summary` use. Broader budget ranking, section-level compression invalidation, and durable current-valid retrieval remain pending.
+- Risks/follow-ups: this is a conservative optional-pruning policy, not final compression replacement. Broader budget ranking and durable current-valid retrieval remain pending.
 
 ### 2026-05-28 - Agent Artifact Annotation Boundary
 
@@ -546,3 +546,10 @@ Keep entries simple:
 - Summary: prepared the package for the documented global install path by removing the private package flag, copying SQL migrations into `dist/` after build, and adding a package dry-run gate that verifies the packed CLI, README/changelog, and runtime migrations while excluding source, tests, local state, dependencies, and private planning docs.
 - Checks run: `npm run package:check`; `npm run check`.
 - Risks/follow-ups: the package remains unpublished, and V1 still requires Node 22.5+ for storage-backed commands because the accepted SQLite runtime uses `node:sqlite`.
+
+### 2026-05-28 - Context Pack Summary Rendering
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: rendered deterministic `context_pack_summary` compression orientation on later compile turns by rebuilding it from current active, non-compression sent-ledger rows before artifact compilation. Durable diffing now compares prior/current section dependency refs and hashes when the artifact manifest changes, so stale compression orientation emits invalidation without forcing unrelated unchanged sections to resend.
+- Checks run: focused durable context build, CLI local-project, compression cache, and repository artifact behavior tests before broader verification.
+- Risks/follow-ups: this is still deterministic ledger orientation, not model memory or compression replacement. Broader compression replacement policy and richer current-valid durable retrieval remain pending.

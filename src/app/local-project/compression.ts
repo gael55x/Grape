@@ -29,6 +29,11 @@ export interface PrepareLocalCompressionArtifactsInput {
   readonly now: string;
 }
 
+export interface PrepareLocalCompileCompressionArtifactsInput extends PrepareLocalCompressionArtifactsInput {
+  readonly sessionId: string;
+  readonly sentItems: readonly ContextPackSummarySentItemInput[];
+}
+
 export interface PersistLocalContextPackSummaryCompressionInput {
   readonly repositories: CompressionStorageRepositories;
   readonly projectId: string;
@@ -99,9 +104,36 @@ export function prepareLocalCompressionArtifacts(
   }));
 }
 
+export function prepareLocalCompileCompressionArtifacts(
+  input: PrepareLocalCompileCompressionArtifactsInput
+): readonly RepositoryArtifactCompressionInput[] {
+  const orientationArtifacts = prepareLocalCompressionArtifacts(input);
+  const priorContextPackSummary = prepareLocalContextPackSummaryCompressionArtifact({
+    repositories: input.repositories,
+    projectId: input.projectId,
+    snapshotId: input.snapshotId,
+    worktreeStateId: input.worktreeStateId,
+    snapshot: input.snapshot,
+    sessionId: input.sessionId,
+    sentItems: input.sentItems,
+    now: input.now
+  });
+
+  return [
+    ...orientationArtifacts,
+    ...(priorContextPackSummary ? [priorContextPackSummary] : [])
+  ];
+}
+
 export function persistLocalContextPackSummaryCompressionArtifact(
   input: PersistLocalContextPackSummaryCompressionInput
 ): void {
+  prepareLocalContextPackSummaryCompressionArtifact(input);
+}
+
+export function prepareLocalContextPackSummaryCompressionArtifact(
+  input: PersistLocalContextPackSummaryCompressionInput
+): RepositoryArtifactCompressionInput | undefined {
   const contextPackSummary = buildContextPackSummaryCompressionArtifact({
     projectId: input.projectId,
     repoId: input.snapshot.repoId,
@@ -115,7 +147,19 @@ export function persistLocalContextPackSummaryCompressionArtifact(
     createdAt: input.now
   });
 
-  if (contextPackSummary) persistCompressionArtifact(input.repositories, contextPackSummary, input.now);
+  if (!contextPackSummary) return undefined;
+  persistCompressionArtifact(input.repositories, contextPackSummary, input.now);
+  return {
+    compressionId: contextPackSummary.compressionId,
+    type: contextPackSummary.type,
+    summaryText: contextPackSummary.summaryText,
+    inputRefs: contextPackSummary.inputRefs.map((ref) => ref.ref),
+    inputHashes: contextPackSummary.inputHashes,
+    inputHash: contextPackSummary.inputHash,
+    policyHash: contextPackSummary.policyHash,
+    scopeHash: contextPackSummary.scopeHash,
+    outputHash: contextPackSummary.outputHash
+  };
 }
 
 function persistCompressionArtifact(

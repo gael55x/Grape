@@ -112,17 +112,19 @@ function section(overrides = {}) {
   };
 }
 
+function dependency(overrides = {}) {
+  return {
+    id: overrides.id ?? "dep-1",
+    kind: overrides.kind ?? "source_file",
+    ref: overrides.ref ?? "src/calculateDiscount.ts",
+    hash: overrides.hash ?? hashA,
+    scope: overrides.scope ?? { branch: "main" }
+  };
+}
+
 function artifact(artifactId, overrides = {}) {
   const manifestHash = overrides.manifestHash ?? hashB;
-  const dependencies = overrides.dependencies ?? [
-    {
-      id: "dep-1",
-      kind: "source_file",
-      ref: "src/calculateDiscount.ts",
-      hash: hashA,
-      scope: { branch: "main" }
-    }
-  ];
+  const dependencies = overrides.dependencies ?? [dependency()];
 
   return {
     artifactId,
@@ -258,7 +260,10 @@ test("durable context build invalidates stale dependency manifests before resend
     insertBaseGraph(repositories);
     build(database, repositories, artifact("artifact-1"), 1);
 
-    const result = build(database, repositories, artifact("artifact-2", { manifestHash: hashC }), 2);
+    const result = build(database, repositories, artifact("artifact-2", {
+      manifestHash: hashC,
+      dependencies: [dependency({ hash: hashC })]
+    }), 2);
 
     assert.ok(result.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"));
     assert.deepEqual(
@@ -272,7 +277,10 @@ test("durable context build invalidates stale dependency manifests before resend
         .some((item) => item.diffState === "INVALIDATE_PREVIOUS" && item.invalidatesSentItemId)
     );
 
-    const repeated = build(database, repositories, artifact("artifact-3", { manifestHash: hashC }), 3);
+    const repeated = build(database, repositories, artifact("artifact-3", {
+      manifestHash: hashC,
+      dependencies: [dependency({ hash: hashC })]
+    }), 3);
     assert.equal(repeated.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), false);
     assert.deepEqual(
       repeated.contextPackItems.map((item) => item.state),
@@ -281,11 +289,64 @@ test("durable context build invalidates stale dependency manifests before resend
   });
 });
 
+test("durable context build does not invalidate unchanged sections for unrelated new dependencies", () => {
+  withMigratedDatabase((database, repositories) => {
+    insertBaseGraph(repositories);
+    build(database, repositories, artifact("artifact-1"), 1);
+
+    const result = build(database, repositories, artifact("artifact-2", {
+      manifestHash: hashC,
+      dependencies: [
+        dependency(),
+        dependency({
+          id: "dep-2",
+          kind: "compression_artifact",
+          ref: "compression:context_pack_summary:abc",
+          hash: hashC
+        })
+      ],
+      sections: [
+        section({
+          id: "rule",
+          type: "pinned_rule",
+          title: "Pinned rule",
+          body: "Never omit safety-critical project rules.",
+          pinned: true,
+          exactRequired: false
+        }),
+        section({ id: "claim" }),
+        section({
+          id: "compression-orientation",
+          type: "compression_orientation",
+          title: "Deterministic Compression Cache",
+          body: "Prior sent items: 2",
+          sourceRefs: [],
+          proofRefs: [],
+          dependencyRefs: ["dep-2"],
+          contentHash: hashC,
+          pinned: false,
+          exactRequired: false
+        })
+      ]
+    }), 2);
+
+    assert.equal(result.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), false);
+    assert.deepEqual(
+      result.contextPackItems.map((item) => item.state),
+      ["PINNED", "OMIT_UNCHANGED", "RESTORE_AVAILABLE", "NEW"]
+    );
+    assert.equal(result.omittedItems.length, 1);
+  });
+});
+
 test("durable context build does not reuse sent items after invalidating them", () => {
   withMigratedDatabase((database, repositories) => {
     insertBaseGraph(repositories);
     build(database, repositories, artifact("artifact-1"), 1);
-    build(database, repositories, artifact("artifact-2", { manifestHash: hashC }), 2);
+    build(database, repositories, artifact("artifact-2", {
+      manifestHash: hashC,
+      dependencies: [dependency({ hash: hashC })]
+    }), 2);
 
     const result = build(database, repositories, artifact("artifact-3"), 3);
 

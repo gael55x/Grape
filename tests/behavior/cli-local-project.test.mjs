@@ -391,6 +391,7 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     ]);
 
     assert.equal(second.sessionId, "session-test");
+    assert.equal(second.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE"), true);
     assert.equal(localContextArtifactCount(repoPath), 2);
@@ -399,6 +400,18 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
       "rule_digest",
       "symbol_outline"
     ]);
+    const secondArtifactJson = JSON.parse(readFileSync(second.artifactJsonPath, "utf8"));
+    const secondCompressionOrientation = secondArtifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "compression-orientation"
+    );
+    assert.match(secondCompressionOrientation?.text ?? "", /Type: context_pack_summary/);
+    assert.match(secondCompressionOrientation?.text ?? "", /Prior sent items:/);
+    assert.equal(
+      secondArtifactJson.contextArtifact.compressionArtifactRefs.some((ref) =>
+        ref.startsWith("compression:context_pack_summary:")
+      ),
+      true
+    );
 
     const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE").restoreId;
     const omitted = runCliJson(repoPath, ["omitted", "--session", "session-test"]);
