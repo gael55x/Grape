@@ -10,11 +10,11 @@ import {
   requiredDependencyIds,
   toContextDependency,
   toContextInput
-} from "./v1-dependencies.js";
-import { confidenceFor, graphConfidenceFor, missingContextFor } from "./v1-quality.js";
-import { toContextSection } from "./v1-sections.js";
+} from "./dependencies.js";
+import { confidenceFor, graphConfidenceFor, missingContextFor } from "./quality.js";
+import { toContextSection } from "./sections.js";
 
-export interface V1ContextArtifactInput {
+export interface ContextArtifactBuildInput {
   readonly artifact: InMemoryContextArtifactShape;
   readonly projectId: string;
   readonly repoSnapshotId: string;
@@ -25,7 +25,7 @@ export interface V1ContextArtifactInput {
   readonly environmentScope?: ContextArtifactShape["environmentScope"];
 }
 
-export function buildV1ContextArtifact(input: V1ContextArtifactInput): ContextArtifactShape {
+export function buildContextArtifact(input: ContextArtifactBuildInput): ContextArtifactShape {
   const budgetOmittedSectionIds = new Set(
     input.budget.omittedDueToBudget
       .map((item) => item.sectionId)

@@ -8,7 +8,7 @@ import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
 } from "../../../shared/index.js";
-import { isScaffoldSectionSafetyCritical } from "./v1-sections.js";
+import { isScaffoldSectionSafetyCritical } from "./sections.js";
 
 export function compressionArtifactRefs(dependencies: readonly ContextDependencyShape[]): string[] {
   return [...new Set(

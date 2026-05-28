@@ -20,8 +20,8 @@ Each entry should include:
 - Organized supporting docs into purpose-based folders while keeping `docs/v1/SPEC.md` as the canonical top-level contract.
 - Added In-Memory Context Loop plan to constrain the first implementation loop.
 - Aligned supporting storage table names with canonical `SPEC.md` names where present.
-- Added the first alpha storage migration contract for project, repo, source, claim, proof, artifact, and session-ledger tables.
-- Hardened the alpha storage contract with SQL checksum validation, serialized-state constraints, session branch/worktree identity, dependency manifest hashes, and complete sent/omitted ledger fields.
+- Added the initial storage migration contract for project, repo, source, claim, proof, artifact, and session-ledger tables.
+- Hardened the initial storage contract with SQL checksum validation, serialized-state constraints, session branch/worktree identity, dependency manifest hashes, and complete sent/omitted ledger fields.
 - Selected Node 22.5+ built-in `node:sqlite` for the initial runtime migration path to avoid native SQLite package installation.
 - Made Node 22.5+ the canonical V1 runtime and added ADR-0004 for the no-native SQLite runtime decision.
 - Tightened the storage contract so sent, omitted, and pack ledger rows must reference artifacts owned by the same session.
@@ -78,3 +78,4 @@ Each entry should include:
 - Clarified privacy doctor behavior: `grape doctor --privacy` is a diagnostic-only command and does not approve private reads, export data, purge data, or reveal rejected-file contents.
 - Clarified token-budget pruning behavior: budgeted compile protects task, pinned, exact/safety-critical, omission/restore, and invalidation context; optional non-safety context may be omitted from public pack items and output sections with explicit `omittedDueToBudget` metadata.
 - Clarified the V1 artifact annotation boundary: agent-authored annotations are deferred from rendered Context Artifacts, and restricted MCP writes remain non-authoritative evidence/candidate/confirmation surfaces until proof and scope validation promote durable truth.
+- Clarified naming standards: implementation filenames and source symbols should use purpose-based names instead of release-phase or version prefixes, except for external protocol names, artifact-format identifiers, and versioned documentation namespaces.

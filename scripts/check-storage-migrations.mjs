@@ -7,7 +7,7 @@ const migrationDir = path.join(root, "src/core/storage/migrations");
 const manifestPath = path.join(root, "src/core/storage/migrations.ts");
 const errors = [];
 
-const alphaTables = [
+const initialTables = [
   "schema_migrations",
   "projects",
   "repos",
@@ -96,16 +96,16 @@ for (const entry of manifestEntries) {
   }
 }
 
-const firstMigration = read("src/core/storage/migrations/0001_alpha_storage_subset.sql");
+const firstMigration = read("src/core/storage/migrations/0001_initial_storage.sql");
 const allMigrations = files.map((file) => read(`src/core/storage/migrations/${file}`)).join("\n");
 expect(firstMigration.includes("PRAGMA foreign_keys = ON;"), "first migration must enable foreign key enforcement");
 expect(firstMigration.includes("checksum_sha256 TEXT NOT NULL"), "schema_migrations must store checksums");
 expect(firstMigration.includes("applied_at TEXT NOT NULL"), "schema_migrations must store applied timestamps");
 
-for (const table of alphaTables) {
+for (const table of initialTables) {
   expect(
     firstMigration.includes(`CREATE TABLE IF NOT EXISTS ${table} (`),
-    `first migration must create alpha table: ${table}`
+    `first migration must create initial table: ${table}`
   );
 }
 

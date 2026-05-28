@@ -5,7 +5,7 @@ import { planPendingStorageMigrations } from "../../.tmp/build/src/core/storage/
 
 const migrationOne = {
   id: "0001",
-  filename: "0001_alpha_storage_subset.sql",
+  filename: "0001_initial_storage.sql",
   checksumSha256: "a".repeat(64)
 };
 

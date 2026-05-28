@@ -91,7 +91,7 @@ function privacyChecks(status: LocalProjectStatus): DiagnosticCheck[] {
     {
       id: "local_first",
       status: "pass",
-      message: "V1 runs locally and does not use cloud sync, telemetry, or remote embeddings by default."
+      message: "Grape runs locally and does not use cloud sync, telemetry, or remote embeddings by default."
     },
     privacyCheck(status.rootPath),
     {

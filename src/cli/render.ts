@@ -33,7 +33,7 @@ export function helpText(): string {
     "  grape compile --task <text> Compile a task context pack",
     "  grape diff-context --task <text> Compile and diff a task context pack",
     "  grape artifacts             Inspect compiled context artifacts",
-    "  grape bench --fixture <name> Run scripted V1 fixture benchmarks",
+    "  grape bench --fixture <name> Run scripted fixture benchmarks",
     "  grape sessions              Inspect context sessions and diff ledgers",
     "  grape stale                 Inspect stale-context invalidations",
     "  grape claims --active       Inspect current-valid durable claims",

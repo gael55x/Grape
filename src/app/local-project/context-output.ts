@@ -4,7 +4,7 @@ import type {
   InMemoryContextArtifactShape
 } from "../../shared/index.js";
 import {
-  buildV1ContextArtifact,
+  buildContextArtifact,
   renderRepositoryContextPackJson,
   renderRepositoryContextPackMarkdown,
   renderRepositoryScaffoldArtifactJson
@@ -35,7 +35,7 @@ export interface LocalContextOutputInput extends LocalContextArtifactProjectionI
 }
 
 export function projectLocalContextArtifact(input: LocalContextArtifactProjectionInput): ContextArtifactShape {
-  return buildV1ContextArtifact(input);
+  return buildContextArtifact(input);
 }
 
 export function writeLocalContextOutput(input: LocalContextOutputInput): LocalArtifactWriteResult {

@@ -1,5 +1,5 @@
 export * from "./artifact/in-memory-context-artifact.js";
-export * from "./artifact/v1-context-artifact.js";
+export * from "./artifact/context-artifact.js";
 export * from "./pack/context-budget.js";
 export * from "./pack/context-budget-pruning.js";
 export * from "./pack/context-pack-items.js";

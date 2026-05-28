@@ -8,7 +8,7 @@ export function blindSpotSection(input: CompileRepositoryContextArtifactInput): 
     type: "stale_warning",
     title: "Index Confidence",
     body: [
-      "This artifact uses the V1 lightweight file index.",
+      "This artifact uses the lightweight file index.",
       "It is an impact candidate set, not a complete call graph.",
       "Regex import/symbol extraction can miss dynamic imports, framework routing, dependency injection, and generated code.",
       "No durable claims are promoted from this artifact without proof validation."

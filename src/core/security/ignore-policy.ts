@@ -60,7 +60,7 @@ function parseIgnoreLine(line: string): { pattern: string } | undefined {
   const trimmed = line.trim();
   if (!trimmed || trimmed.startsWith("#")) return undefined;
 
-  // V1 handles ignore patterns conservatively. Negated unignore rules are not
+  // Ignore patterns are handled conservatively. Negated unignore rules are not
   // supported yet because a false include is riskier than an extra skipped file.
   if (trimmed.startsWith("!")) return undefined;
 
