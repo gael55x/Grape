@@ -1,45 +1,56 @@
 # Roadmap
 
-This roadmap separates V1 implementation work from later ideas.
+Grape is being built as a local-first context compiler for AI coding agents. The roadmap is intentionally narrow: make the artifact useful, inspectable, and safe before adding broader integrations.
 
-## V1
+## Now
 
-V1 is a local-first incremental context compiler for AI coding agents.
+These are the capabilities needed for the first comprehensive human review:
 
-Required V1 capabilities:
+- simple setup with `npm install -g grape-context` and `grape init --connect`
+- repository snapshot, worktree state, and local bootstrap recovery
+- allowed-source scanning with ignored/private/secret-safe behavior
+- lightweight file, lexical, symbol, and relationship indexing
+- task-specific source retrieval from task text, files, symbols, tests, and related imports
+- proof-backed exact source excerpts with dependency hashes and current source validation
+- scoped current-valid claim rendering without leaking unrelated active claims into artifacts
+- branch-aware and session-scoped context diffing
+- budget pruning that protects pinned, exact, safety-critical, omitted, and invalidation context
+- CLI and MCP inspection for status, doctor, artifacts, sessions, stale items, claims, proofs, conflicts, rules, and omitted context
+- package dry-run checks proving the global package contains the CLI and runtime migrations
+- behavior tests, docs checks, architecture checks, storage checks, typecheck, and package checks
 
-- repo snapshot and worktree state
-- evidence store
-- trust kernel and proof validation
-- scoped durable claims
-- current-valid retrieval
-- context artifact compiler
-- session-scoped context diff
-- deterministic compression cache as derived cache only
-- MCP and CLI access
-- benchmarks and safety tests
+## Next
 
-## V1.1 Candidates
+These are the strongest follow-up slices after the current review target:
 
-- model-assisted summaries, still non-authoritative
-- branch summaries
-- session summaries
-- hybrid semantic search
-- more framework-specific extractors
-- richer benchmark corpus
+- broader exact-span ranking across symbol ranges, tests, config, and multiple task anchors
+- Grape-observed command and test runners that can create trusted execution proofs
+- broader durable claim types with contradiction and supersession handling
+- parsed durable project rules with scope resolution and conflict detection
+- richer compression replacement policy without allowing summaries to become proof
+- stronger partial-bootstrap repair for interrupted local setup
+- broader fixture benchmark corpus with real token-reduction and safety thresholds
+- clearer package publishing checklist and release hardening
 
-## V2 Candidates
+## Later
 
-- team sync
-- cloud sync
-- multi-repo context graphs
-- runtime tracing integrations
-- enterprise dashboards
+These stay out of the current implementation target unless the core artifact contract needs them:
 
-## Non-Goals For V1
+- model-assisted summaries as non-authoritative orientation
+- hybrid semantic search over already-allowed local inputs
+- framework-specific extractors for common stacks
+- imported CI or runtime evidence with verifiable hashes
+- multi-repo context once single-repo artifacts are reliable
+- team sync or cloud sync after the local trust boundary is proven
 
-- autonomous patch application
-- generic chatbot behavior
-- cloud memory platform
-- production observability connector
-- complete code intelligence engine
+## Non-Goals
+
+Grape should not become:
+
+- a chatbot
+- an IDE clone
+- an autonomous patch runner
+- a cloud memory platform
+- a generic knowledge graph
+- a production observability connector
+- a complete code intelligence engine

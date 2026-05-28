@@ -5,7 +5,7 @@
 <h1 align="center">Grape</h1>
 
 <p align="center">
-  The context artifact system for AI agents.
+  An open-source context artifact system for AI agents.
 </p>
 
 <p align="center">
@@ -13,16 +13,16 @@
   ·
   <a href="docs/README.md"><strong>Architecture</strong></a>
   ·
-  <a href="docs/README.md"><strong>Roadmap</strong></a>
+  <a href="ROADMAP.md"><strong>Roadmap</strong></a>
   ·
-  <a href="AGENTS.md"><strong>Agent Rules</strong></a>
+  <a href="CONTRIBUTING.md"><strong>Contributing</strong></a>
 </p>
 
 <p align="center">
-  <img alt="Status" src="https://img.shields.io/badge/status-pre--release%20implementation-6f42c1" />
-  <img alt="Runtime" src="https://img.shields.io/badge/node-%3E%3D22.5-339933" />
-  <img alt="Storage" src="https://img.shields.io/badge/storage-sqlite%20%2B%20wal-044a64" />
-  <img alt="Compiler" src="https://img.shields.io/badge/compiler-incremental%20context-111827" />
+  <img alt="Local-first" src="https://img.shields.io/badge/local--first-repository%20native-176f45" />
+  <img alt="Artifact-first" src="https://img.shields.io/badge/artifact--first-context%20packs-6f42c1" />
+  <img alt="CLI and MCP" src="https://img.shields.io/badge/interfaces-CLI%20%2B%20MCP-044a64" />
+  <img alt="Dependency-tracked" src="https://img.shields.io/badge/tracking-dependency%20hashes-111827" />
 </p>
 
 ---
@@ -136,8 +136,8 @@ Start here:
 - [Architecture](docs/README.md)
 - [State Machine](docs/README.md)
 - [Invariants](docs/README.md)
-- [Implementation Roadmap](docs/README.md)
-- [Agent Operating Rules](AGENTS.md)
+- [Roadmap](ROADMAP.md)
+- [Contributing](CONTRIBUTING.md)
 
 Core contracts:
 

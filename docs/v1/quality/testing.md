@@ -73,6 +73,8 @@ Artifact and diff:
 - `related_test_import_selects_exact_source_without_runtime_claim`
 - `task_selected_exact_source_evidence_excludes_unrelated_fillers`
 - `task_scoped_current_valid_claims_exclude_unrelated_active_claims`
+- `multi_window_exact_source_excerpts_use_distant_task_anchors`
+- `multi_window_exact_source_excerpts_use_query_fallback_without_anchors`
 - `token_budget_prunes_only_optional_context`
 - `budget_omitted_sections_are_removed_from_public_artifact_body`
 - `artifact_hash_is_deterministic`

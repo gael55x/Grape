@@ -147,6 +147,110 @@ test("local source excerpts prefer task-selected symbol anchors over earlier que
   }
 });
 
+test("local source excerpts can return multiple non-overlapping query windows when no anchors exist", () => {
+  const rootPath = mkdtempSync(path.join(tmpdir(), "grape-source-excerpt-multi-query-"));
+  try {
+    mkdirSync(path.join(rootPath, "src"));
+    const sourceRef = "src/query-windows.ts";
+    const firstFiller = Array.from({ length: 20 }, (_, index) => `const first${index} = ${index};`);
+    const middleFiller = Array.from({ length: 55 }, (_, index) => `const middle${index} = ${index};`);
+    const sourceText = [
+      ...firstFiller,
+      "export function checkoutPolicyDraft() { return 'draft'; }",
+      ...middleFiller,
+      "export function checkoutPolicyPublish() { return 'publish'; }",
+      ""
+    ].join("\n");
+    writeFileSync(path.join(rootPath, sourceRef), sourceText);
+
+    const source = {
+      sourceId: "source-query-windows",
+      sourceType: "repository_file",
+      sourceRef,
+      sourceHash: sha256(Buffer.from(sourceText, "utf8")),
+      sourceScope: "committed",
+      privacyStatus: "allowed",
+      trustClass: "trusted",
+      redactionStatus: "not_needed"
+    };
+
+    const excerpts = readLocalSourceExcerpts({
+      rootPath,
+      sources: [source],
+      preferredSourceRefs: [sourceRef],
+      queryTerms: ["checkoutpolicy"]
+    });
+
+    assert.equal(excerpts.length, 2);
+    assert.match(excerpts[0].excerpt, /checkoutPolicyDraft/);
+    assert.doesNotMatch(excerpts[0].excerpt, /checkoutPolicyPublish/);
+    assert.match(excerpts[1].excerpt, /checkoutPolicyPublish/);
+    assert.doesNotMatch(excerpts[1].excerpt, /checkoutPolicyDraft/);
+  } finally {
+    rmSync(rootPath, { recursive: true, force: true });
+  }
+});
+
+test("local source excerpts can return multiple non-overlapping symbol windows for one source", () => {
+  const rootPath = mkdtempSync(path.join(tmpdir(), "grape-source-excerpt-multi-anchor-"));
+  try {
+    mkdirSync(path.join(rootPath, "src"));
+    const sourceRef = "src/workflow.ts";
+    const firstFiller = Array.from({ length: 20 }, (_, index) => `const first${index} = ${index};`);
+    const middleFiller = Array.from({ length: 55 }, (_, index) => `const middle${index} = ${index};`);
+    const sourceText = [
+      ...firstFiller,
+      "export function prepareInvoice() { return 'prepared'; }",
+      ...middleFiller,
+      "export function settleInvoice() { return 'settled'; }",
+      ""
+    ].join("\n");
+    writeFileSync(path.join(rootPath, sourceRef), sourceText);
+
+    const source = {
+      sourceId: "source-workflow",
+      sourceType: "repository_file",
+      sourceRef,
+      sourceHash: sha256(Buffer.from(sourceText, "utf8")),
+      sourceScope: "committed",
+      privacyStatus: "allowed",
+      trustClass: "trusted",
+      redactionStatus: "not_needed"
+    };
+
+    const excerpts = readLocalSourceExcerpts({
+      rootPath,
+      sources: [source],
+      preferredSourceRefs: [sourceRef],
+      sourceAnchors: [
+        {
+          sourceRef,
+          reason: "symbol_match",
+          label: "prepareInvoice",
+          startLine: 21,
+          endLine: 21
+        },
+        {
+          sourceRef,
+          reason: "symbol_match",
+          label: "settleInvoice",
+          startLine: 77,
+          endLine: 77
+        }
+      ]
+    });
+
+    assert.equal(excerpts.length, 2);
+    assert.match(excerpts[0].excerpt, /prepareInvoice/);
+    assert.doesNotMatch(excerpts[0].excerpt, /settleInvoice/);
+    assert.match(excerpts[1].excerpt, /settleInvoice/);
+    assert.doesNotMatch(excerpts[1].excerpt, /prepareInvoice/);
+    assert.notEqual(excerpts[0].proofId, excerpts[1].proofId);
+  } finally {
+    rmSync(rootPath, { recursive: true, force: true });
+  }
+});
+
 test("rule excerpt selection is independent from generic exact-source excerpt cap", () => {
   const sourceExcerpts = [
     ...Array.from({ length: 6 }, (_, index) => sourceExcerpt(`src/source-${index}.ts`, "repository_file")),

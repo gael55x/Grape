@@ -78,3 +78,8 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added `grape doctor --privacy` for privacy-focused local diagnostics without returning file bodies or secret values.
 - Added token-budget pruning for `grape compile --token-budget` and MCP `tokenBudget`: required context is protected, optional context can be pruned, and budget omissions are recorded in the artifact.
 - Scoped exact-source evidence and rendered current-valid claims to task-selected files when retrieval has concrete matches, reducing unrelated proof-backed context in task artifacts while keeping broad claim inspection commands available.
+- Added multi-window exact source excerpts so distant task-selected symbol anchors in one source can produce separate proof-backed context windows.
+
+### Changed
+
+- Simplified the root README navigation/status area, replaced the agent-rules link with contributing guidance, and rewrote the root roadmap around practical now/next/later work.
