@@ -145,7 +145,8 @@ function compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, ind
     sourceExcerpts: readLocalSourceExcerpts({
       rootPath: repoPath,
       sources,
-      preferredSourceRefs: taskRetrieval?.selectedSourceRefs
+      preferredSourceRefs: taskRetrieval?.selectedSourceRefs,
+      queryTerms: taskRetrieval?.queryTerms
     }),
     symbolNodes: indexingRepositories.symbolNodes.listBySnapshot(snapshotId),
     symbolEdges: indexingRepositories.symbolEdges.listBySnapshot(snapshotId),
