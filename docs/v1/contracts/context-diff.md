@@ -94,7 +94,7 @@ interface OmittedContextItem {
 - When `canRestore` is true, `restoreId` and `restoreCommand` are required.
 - Stored sent, omitted, and pack items must reference an artifact owned by the same session.
 - `INVALIDATE_PREVIOUS` must include the prior item ID or prior section ID being invalidated.
-- A branch, worktree, dependency, or compression invalidation must invalidate sent items that relied on it.
+- A branch, worktree, dependency, or compression invalidation must invalidate sent items that relied on it. Dependency-manifest drift should be narrowed to the affected section when stored pack-item dependency refs are available, so unrelated new compression dependencies do not force unchanged sections to resend.
 - A stale sent item should emit `INVALIDATE_PREVIOUS` once per session. Later packs should not repeat the same invalidation after it has already been recorded in the session pack ledger, and invalidated sent rows must not be reused as current context if a later artifact returns to the same dependency manifest.
 
 ## In-Memory Loop Proof
@@ -123,6 +123,7 @@ The current persisted build proof adds a narrow app-level build service:
 - it persists structured context pack items
 - it persists sent and omitted ledger rows
 - it emits `INVALIDATE_PREVIOUS` for stale dependency manifests
+- it narrows stale dependency-manifest handling to section dependencies when prior pack-item dependency refs and dependency rows are available
 - it updates existing session compile state under the session lock and records branch-change invalidation events when the same session moves branches
 - it commits or rolls back the build as one storage transaction
 
@@ -130,7 +131,7 @@ This proof does not perform MCP transport, CLI rendering, broad repository index
 
 Current implementation note: the durable diff service still uses scaffold in-memory diff rows internally for comparison and ledger persistence, then maps them to V1-shaped `ContextPackItem` outputs at the compiler/app boundary. Public CLI, artifact JSON, and MCP context responses expose `content`, `restoreId`, `inputRefs`, `itemKind`, and safety fields rather than the internal scaffold row shape.
 
-After a durable pack is persisted, local compile builds a deterministic `context_pack_summary` compression artifact from the latest active, non-compression sent rows for the current branch/head. Already-invalidated sent rows, compression-orientation rows, and rows from another branch/head are excluded so the summary cannot recursively summarize itself or revive stale context. The summary is cached but not yet rendered into artifacts because artifact-level manifest invalidation would otherwise mark no-change turns stale.
+Before artifact compilation, local compile can build and render a deterministic `context_pack_summary` compression artifact from the latest active, non-compression sent rows for the current branch/head when prior sent context exists. After the durable pack is persisted, local compile rebuilds that summary for the next turn. Already-invalidated sent rows, compression-orientation rows, and rows from another branch/head are excluded so the summary cannot recursively summarize itself or revive stale context. If the previously sent compression-orientation section becomes stale, the diff emits `INVALIDATE_PREVIOUS` for that sent item while still allowing unchanged unrelated sections to omit safely.
 
 `grape stale` is the current CLI-first inspection surface for persisted invalidation rows. It reads `INVALIDATE_PREVIOUS` pack items from the session-scoped ledger, reports the prior sent item IDs they invalidate, and classifies the emitted invalidation as `branch_changed`, `session_reset`, or `dependency_manifest_changed` from same-artifact session events. It intentionally does not predict future stale rows before the compiler/diff engine has emitted them.
 
@@ -155,6 +156,7 @@ After a durable pack is persisted, local compile builds a deterministic `context
 - `invalidate_previous_names_prior_item`
 - `branch_switch_invalidates_sent_items`
 - `compression_invalidation_invalidates_sent_items`
+- `section_dependency_drift_does_not_invalidate_unrelated_context`
 - `durable_context_build_persists_first_turn_pack`
 - `durable_context_build_omits_second_turn_unchanged_context`
 - `durable_context_build_invalidates_stale_manifest`

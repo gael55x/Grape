@@ -24,6 +24,7 @@ import {
   toInMemorySentItem,
   toOmittedContextItem
 } from "./durable-context-records.js";
+import { partitionPriorContextByStaleness } from "./durable-context-staleness.js";
 
 export interface DurableContextBuildInput {
   readonly database: DatabaseSync;
@@ -122,21 +123,19 @@ export function buildDurableContext(input: DurableContextBuildInput): DurableCon
     });
 
     const priorSentItems = input.repositories.contextSentItems.listBySession(input.sessionId);
-    const alreadyInvalidatedSentItemIds = listAlreadyInvalidatedSentItemIds(input);
+    const packItems = input.repositories.contextPackItems.listBySession(input.sessionId);
+    const alreadyInvalidatedSentItemIds = listAlreadyInvalidatedSentItemIds(packItems);
     const activePriorItems = priorSentItems.filter(
       (item) => !alreadyInvalidatedSentItemIds.has(item.sentItemId)
     );
-    const stalePriorItems = input.sessionReset
-      ? activePriorItems
-      : activePriorItems.filter(
-          (item) =>
-            item.dependencyManifestHash !== input.artifact.dependencyManifest.manifestHash
-        );
-    const currentPriorItems = input.sessionReset
-      ? []
-      : activePriorItems.filter(
-          (item) => item.dependencyManifestHash === input.artifact.dependencyManifest.manifestHash
-        );
+    const { currentPriorItems, stalePriorItems } = partitionPriorContextByStaleness({
+      activePriorItems,
+      packItems,
+      artifact: input.artifact,
+      listDependenciesByArtifact: (artifactId) =>
+        input.repositories.contextDependencies.listByArtifact(artifactId),
+      forceStale: Boolean(input.sessionReset)
+    });
 
     persistArtifact(input);
 
@@ -223,9 +222,9 @@ function assertArtifactMatchesSession(input: DurableContextBuildInput): void {
   }
 }
 
-function listAlreadyInvalidatedSentItemIds(input: DurableContextBuildInput): Set<string> {
+function listAlreadyInvalidatedSentItemIds(packItems: readonly { diffState: string; invalidatesSentItemId?: string }[]): Set<string> {
   const invalidatedIds = new Set<string>();
-  for (const item of input.repositories.contextPackItems.listBySession(input.sessionId)) {
+  for (const item of packItems) {
     if (item.diffState === "INVALIDATE_PREVIOUS" && item.invalidatesSentItemId) {
       invalidatedIds.add(item.invalidatesSentItemId);
     }

@@ -1725,6 +1725,7 @@ Summaries must be listed in the artifact dependency manifest when used.
 If an input hash changes, the summary becomes stale.
 If stale compression was previously sent, the next diff must emit `INVALIDATE_PREVIOUS`.
 `context_pack_summary` must be a deterministic ledger of sent item IDs, labels, hashes, and states, not a freeform model summary.
+`context_pack_summary` must be rebuilt from current active sent-ledger rows before it is rendered, and it must exclude invalidated rows, compression rows, and rows from other branch/head scopes.
 Summary-as-proof is a critical violation.
 ```
 

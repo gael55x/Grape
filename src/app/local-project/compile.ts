@@ -33,7 +33,7 @@ import { toCompileLocalContextResult } from "./compile-result.js";
 import { ensureCompileSession } from "./compile-session.js";
 import {
   persistLocalContextPackSummaryCompressionArtifact,
-  prepareLocalCompressionArtifacts
+  prepareLocalCompileCompressionArtifacts
 } from "./compression.js";
 import { listContextPackSummarySentItems } from "./context-pack-summary.js";
 import { resolveLocalCurrentValidClaims } from "./claim-resolution.js";
@@ -52,7 +52,6 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     detectRiskOverlaysForTask(input.task, input.riskSeedRefs)
   );
   const rootPath = path.resolve(input.rootPath);
-
   ensureLocalProjectBootstrapped({
     rootPath,
     now,
@@ -150,7 +149,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sources: evidenceRepositories.sources,
         snapshot: snapshotResult.snapshot
       });
-      const compressionArtifacts = prepareLocalCompressionArtifacts({
+      const compressionArtifacts = prepareLocalCompileCompressionArtifacts({
         repositories: compressionRepositories,
         projectId: config.project.projectId,
         snapshotId: snapshotResult.snapshotId,
@@ -159,6 +158,13 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sourceExcerpts: proofs.sourceExcerpts,
         symbolNodes,
         symbolEdges,
+        sessionId,
+        sentItems: listContextPackSummarySentItems({
+          repositories,
+          sessionId,
+          branch: snapshotResult.snapshot.branch,
+          commit: snapshotResult.snapshot.commit
+        }),
         now
       });
       const artifact = compileRepositoryContextArtifact({

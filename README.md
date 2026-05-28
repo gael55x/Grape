@@ -104,7 +104,7 @@ Implemented today:
 - first CLI context compile fallback: `grape compile --task <text>` auto-bootstraps local state, compiles from real repo inputs, evaluates optional token budgets, persists session diff rows, and writes inspectable V1 `.grape/artifacts/ctx_*.json` and `.md` context-pack artifacts
 - hardened Markdown context-pack artifacts with artifact summary, diff counts, item input refs, omitted/restore metadata, dependency details, token/budget status, and warnings/safety fields
 - compiled current-valid narrow source-excerpt claims in context artifacts with claim/proof dependencies
-- deterministic `symbol_outline`, `rule_digest`, and cached `context_pack_summary` compression records with input hashes and non-proof artifact orientation sections
+- deterministic `symbol_outline`, `rule_digest`, and prior-turn `context_pack_summary` compression records with input hashes and non-proof artifact orientation sections
 - artifact inspection through `grape artifacts`, `grape artifacts --artifact <id>`, and MCP `grape_get_artifact`
 - session and stale-invalidation debugging through `grape sessions` and `grape stale`
 - active narrow claim inspection through `grape claims --active` and MCP `grape_get_claims`
