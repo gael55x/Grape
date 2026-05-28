@@ -34,6 +34,7 @@ export function doctorLocalProject(
 }
 
 function setupChecks(status: LocalProjectStatus): DiagnosticCheck[] {
+  const databaseError = status.errors.find((error) => error.startsWith("database check failed"));
   return [
     nodeVersionCheck(),
     {
@@ -60,16 +61,19 @@ function setupChecks(status: LocalProjectStatus): DiagnosticCheck[] {
     },
     {
       id: "database",
-      status: status.databaseExists ? "pass" : "fail",
+      status: status.databaseExists && !databaseError ? "pass" : "fail",
       message: status.databaseExists
-        ? "Local SQLite database exists."
-        : "Local .grape/grape.db is missing."
+        ? databaseError
+          ? "Local .grape/grape.db exists but is not readable."
+          : "Local SQLite database exists."
+        : "Local .grape/grape.db is missing.",
+      detail: databaseError
     },
     {
       id: "migrations",
-      status: status.pendingMigrations.length === 0 && status.databaseExists ? "pass" : "fail",
+      status: status.pendingMigrations.length === 0 && status.databaseExists && !databaseError ? "pass" : "fail",
       message:
-        status.pendingMigrations.length === 0 && status.databaseExists
+        status.pendingMigrations.length === 0 && status.databaseExists && !databaseError
           ? "Storage migrations are current."
           : `Pending migrations: ${status.pendingMigrations.join(", ") || "unknown"}.`
     },

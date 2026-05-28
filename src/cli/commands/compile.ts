@@ -74,6 +74,7 @@ export async function runCompileLike(
       result.budget.status !== "not_requested" ? `Token budget: ${result.budget.status}` : undefined,
       result.sessionResetId ? `Session reset: ${result.sessionResetId}` : undefined,
       `Warnings: ${result.warnings.length === 0 ? "none" : result.warnings.join(", ")}`,
+      result.databaseBackupPath ? `Database backup: ${result.databaseBackupPath}` : undefined,
       ...renderProblems("Recovery", result.recoveryGuidance),
       "",
       "Files:",

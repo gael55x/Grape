@@ -505,6 +505,13 @@ Keep entries simple:
 - Checks run: focused compression cache, durable context build, CLI local-project, and repository artifact behavior tests before broader verification.
 - Risks/follow-ups: compression remains deterministic orientation only. Richer replacement policy and model-assisted summaries remain deferred.
 
+### 2026-05-28 - Local Database Bootstrap Repair
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: bootstrap-capable flows now repair unusable local SQLite state by renaming `.grape/grape.db` to a timestamped invalid backup before recreating migrations and snapshot/index state. `status` and `doctor` fail the database/migration checks with recovery guidance instead of mutating local state.
+- Checks run: focused CLI bootstrap recovery tests before broader verification.
+- Risks/follow-ups: repair preserves the unusable database file but recreates session ledgers from scratch, so agents may receive a full resend after repair.
+
 ### 2026-05-28 - Multi-Window Exact Source Excerpts
 
 - Author/agent: Gaille Amolong / Codex

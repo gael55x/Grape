@@ -153,6 +153,8 @@ MCP restricted writes currently reuse existing V1 tables instead of adding prema
 
 The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` and covered by behavioral tests. Runtime migration application uses Node's built-in `node:sqlite` through `src/core/storage/sqlite-runtime.ts`, so V1 requires Node 22.5 or newer and avoids a native SQLite package dependency. Storage factories must apply the pragma statements before running migrations or repository writes. Packaged builds copy SQL migrations into `dist/core/storage/migrations/`; the local storage bootstrap resolves that directory from compiled code so global installs do not need TypeScript source files at runtime.
 
+Local bootstrap-capable flows (`init`, `sync`, and `compile`) may repair an unusable `.grape/grape.db` only after preserving the old file. Repairable database failures are limited to SQLite corruption/readability errors and non-empty local databases that lack trusted `schema_migrations` metadata. The repair path renames the old database to `.grape/grape.db.invalid.<timestamp>` and also preserves SQLite sidecars when present, then reruns migrations into a fresh local database. Read-only inspection flows such as `status` and `doctor` diagnose this state and provide recovery guidance instead of mutating local state.
+
 ## Migration Rules
 
 - Migration filenames use `NNNN_short_description.sql`.

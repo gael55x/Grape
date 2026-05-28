@@ -141,3 +141,69 @@ test("cli init repairs project-identity-incomplete partial config", () => {
     assert.equal(JSON.parse(readFileSync(path.join(repoPath, ".grape", "config.json"), "utf8")).schemaVersion, 1);
   });
 });
+
+test("cli status, doctor, and init recover unusable local database safely", () => {
+  withGitRepo((repoPath) => {
+    runCliJson(repoPath, ["init", "--connect"]);
+    const databasePath = path.join(repoPath, ".grape", "grape.db");
+    writeFileSync(databasePath, "not sqlite");
+
+    const status = runCli(repoPath, ["status", "--json"]);
+    assert.equal(status.status, 3, status.stderr);
+    const parsedStatus = JSON.parse(status.stdout);
+    assert.equal(parsedStatus.initialized, false);
+    assert.ok(parsedStatus.errors.some((error) => error.startsWith("database check failed")));
+    assert.ok(
+      parsedStatus.recoveryGuidance.includes(
+        "Grape will back up an unusable local database before creating fresh local state."
+      )
+    );
+
+    const doctor = runCli(repoPath, ["doctor", "--json"]);
+    assert.equal(doctor.status, 3, doctor.stderr);
+    const parsedDoctor = JSON.parse(doctor.stdout);
+    assert.equal(parsedDoctor.overallStatus, "fail");
+    assert.ok(parsedDoctor.checks.some((check) => check.id === "database" && check.status === "fail"));
+    assert.ok(parsedDoctor.checks.some((check) => check.id === "migrations" && check.status === "fail"));
+
+    const repaired = runCliJson(repoPath, ["init", "--connect"]);
+    assert.ok(repaired.databaseBackupPath.includes("grape.db.invalid."));
+    assert.equal(readFileSync(repaired.databaseBackupPath, "utf8"), "not sqlite");
+
+    const repairedDoctor = runCliJson(repoPath, ["doctor"]);
+    assert.equal(repairedDoctor.overallStatus, "pass");
+  });
+});
+
+test("cli compile auto-repairs unusable local database and reports the backup", () => {
+  withGitRepo((repoPath) => {
+    runCliJson(repoPath, ["init", "--connect"]);
+    const databasePath = path.join(repoPath, ".grape", "grape.db");
+    writeFileSync(databasePath, "not sqlite");
+
+    const compile = runCli(repoPath, [
+      "compile",
+      "--task",
+      "Explain the README entry point",
+      "--session",
+      "database-repair-test",
+      "--json"
+    ]);
+
+    assert.equal(compile.status, 0, compile.stderr);
+    assert.equal(compile.stderr, "");
+    const output = JSON.parse(compile.stdout);
+    assert.equal(output.sessionId, "database-repair-test");
+    assert.ok(output.warnings.includes("local_database_repaired"));
+    assert.ok(
+      output.recoveryGuidance.includes(
+        "The unusable local database was backed up and recreated; previous session ledgers may require a full resend."
+      )
+    );
+    assert.equal(readFileSync(output.databaseBackupPath, "utf8"), "not sqlite");
+    assert.equal(existsSync(output.artifactJsonPath), true);
+
+    const doctor = runCliJson(repoPath, ["doctor"]);
+    assert.equal(doctor.overallStatus, "pass");
+  });
+});

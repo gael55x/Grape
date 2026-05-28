@@ -35,7 +35,7 @@ import { listContextPackSummarySentItems } from "./context-pack-summary.js";
 import { resolveLocalCurrentValidClaims } from "./claim-resolution.js";
 import { resolveLocalTaskRetrieval } from "./task-retrieval.js";
 import { compileLocalRepositoryArtifact } from "./repository-artifact.js";
-import { withMigratedLocalDatabase } from "./storage.js";
+import { withRepairableMigratedLocalDatabase } from "./storage.js";
 import type { CompileLocalContextInput, CompileLocalContextResult } from "./types.js";
 import type { LocalArtifactWriteResult } from "./artifact-files.js";
 import { ensureLocalProjectBootstrapped } from "./bootstrap.js";
@@ -67,7 +67,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
   assertSafeId("session id", sessionId);
   const lockToken = createLockToken();
 
-  const databaseResult = withMigratedLocalDatabase({
+  const databaseResult = withRepairableMigratedLocalDatabase({
     databasePath: layout.databasePath,
     migrationsDir: input.migrationsDir,
     now: () => now,
@@ -276,6 +276,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     sessionId,
     taskId,
     riskOverlays: requestedRiskOverlays,
-    value: databaseResult.value
+    value: databaseResult.value,
+    databaseBackupPath: databaseResult.databaseBackupPath
   });
 }
