@@ -40,6 +40,7 @@ test("task source retrieval merges explicit, symbol, and lexical source matches"
   assert.deepEqual(result.selectedSourceRefs, ["src/auth.ts", "src/billing.ts", "README.md"]);
   assert.deepEqual(result.explicitSourceRefs, ["src/auth.ts"]);
   assert.deepEqual(result.testSourceRefs, []);
+  assert.deepEqual(result.relatedTestSourceRefs, []);
   assert.deepEqual(result.symbolSourceRefs, ["src/billing.ts"]);
   assert.deepEqual(result.lexicalSourceRefs, ["src/billing.ts", "README.md"]);
   assert.deepEqual(result.sourceAnchors, [
@@ -74,6 +75,59 @@ test("task source retrieval treats path-like test seeds as exact source inputs",
   assert.ok(result.warnings.includes("task_seed_test_not_found:tests/missing.test.ts"));
   assert.ok(result.warnings.includes("task_seed_test_not_found:invalid"));
   assert.equal(result.warnings.some((warning) => warning.includes("calculateDiscount regression")), false);
+});
+
+test("task source retrieval includes related tests that import selected source files", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix calculateDiscount refund flow",
+    sources: [
+      source("source-billing", "src/billing.ts"),
+      source("source-billing-test", "tests/billing.test.ts"),
+      source("source-readme", "README.md")
+    ],
+    symbols: [symbol("source-billing", "src/billing.ts", "calculateDiscount")],
+    relationships: [
+      {
+        sourceRef: "tests/billing.test.ts",
+        targetSourceRef: "src/billing.ts",
+        relationship: "imports"
+      },
+      {
+        sourceRef: "README.md",
+        targetSourceRef: "src/billing.ts",
+        relationship: "imports"
+      }
+    ],
+    lexicalMatches: []
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, ["src/billing.ts", "tests/billing.test.ts"]);
+  assert.deepEqual(result.relatedTestSourceRefs, ["tests/billing.test.ts"]);
+  assert.deepEqual(result.symbolSourceRefs, ["src/billing.ts"]);
+  assert.deepEqual(result.lexicalSourceRefs, []);
+});
+
+test("task source retrieval includes related tests for lexical source matches", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Investigate invoice reconciliation",
+    sources: [
+      source("source-invoice", "src/invoice.ts"),
+      source("source-invoice-test", "src/invoice.spec.ts")
+    ],
+    symbols: [],
+    relationships: [
+      {
+        sourceRef: "src/invoice.spec.ts",
+        targetSourceRef: "src/invoice.ts",
+        relationship: "imports"
+      }
+    ],
+    lexicalMatches: [{ sourceId: "source-invoice", sourceRef: "src/invoice.ts", matchedTerm: "invoice" }]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, ["src/invoice.ts", "src/invoice.spec.ts"]);
+  assert.deepEqual(result.lexicalSourceRefs, ["src/invoice.ts"]);
+  assert.deepEqual(result.relatedTestSourceRefs, ["src/invoice.spec.ts"]);
 });
 
 test("task source retrieval warns when query terms find no source matches", () => {

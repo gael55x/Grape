@@ -21,6 +21,12 @@ export interface TaskRetrievalLexicalMatch {
   readonly matchedTerm: string;
 }
 
+export interface TaskRetrievalRelationship {
+  readonly sourceRef: string;
+  readonly targetSourceRef: string;
+  readonly relationship: "imports" | string;
+}
+
 export interface TaskRetrievalTermInput {
   readonly task: string;
   readonly symbols?: readonly string[];
@@ -32,6 +38,7 @@ export interface TaskSourceRetrievalInput {
   readonly sources: readonly TaskRetrievalSource[];
   readonly symbols: readonly TaskRetrievalSymbol[];
   readonly lexicalMatches: readonly TaskRetrievalLexicalMatch[];
+  readonly relationships?: readonly TaskRetrievalRelationship[];
   readonly seedFiles?: readonly string[];
   readonly seedSymbols?: readonly string[];
   readonly seedTests?: readonly string[];
@@ -42,6 +49,7 @@ export interface TaskSourceRetrievalResult {
   readonly selectedSourceRefs: readonly string[];
   readonly explicitSourceRefs: readonly string[];
   readonly testSourceRefs: readonly string[];
+  readonly relatedTestSourceRefs: readonly string[];
   readonly symbolSourceRefs: readonly string[];
   readonly lexicalSourceRefs: readonly string[];
   readonly sourceAnchors: readonly TaskSourceRetrievalAnchor[];
@@ -57,7 +65,7 @@ export interface TaskSourceRetrievalAnchor {
   readonly endLine: number;
 }
 
-type SelectionReason = "explicit_seed" | "test_seed" | "symbol_match" | "lexical_match";
+type SelectionReason = "explicit_seed" | "test_seed" | "related_test" | "symbol_match" | "lexical_match";
 
 const defaultMaxTerms = 12;
 const defaultMaxSelectedSources = 8;
@@ -152,10 +160,14 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     }
   }
 
+  const relationships = input.relationships ?? [];
+  addRelatedTests(selectedReasons, sourceByRef, relationships, new Set(selectedReasons.keys()));
+
   for (const match of input.lexicalMatches) {
     const sourceRef = sourceRefById.get(match.sourceId) ?? match.sourceRef;
     if (!sourceByRef.has(sourceRef)) continue;
     addReason(selectedReasons, sourceRef, "lexical_match");
+    addRelatedTests(selectedReasons, sourceByRef, relationships, new Set([sourceRef]));
   }
 
   const selectedSourceRefs = [...selectedReasons.keys()].slice(0, maxSelectedSources);
@@ -166,12 +178,28 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     selectedSourceRefs,
     explicitSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "explicit_seed"),
     testSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "test_seed"),
+    relatedTestSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "related_test"),
     symbolSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "symbol_match"),
     lexicalSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "lexical_match"),
     sourceAnchors: sourceAnchors.filter((anchor) => selectedSourceRefs.includes(anchor.sourceRef)),
     queryTerms,
     warnings
   };
+}
+
+function addRelatedTests(
+  selectedReasons: Map<string, Set<SelectionReason>>,
+  sourceByRef: ReadonlyMap<string, TaskRetrievalSource>,
+  relationships: readonly TaskRetrievalRelationship[],
+  targetSourceRefs: ReadonlySet<string>
+): void {
+  for (const relationship of relationships) {
+    if (relationship.relationship !== "imports") continue;
+    if (!targetSourceRefs.has(relationship.targetSourceRef)) continue;
+    if (!sourceByRef.has(relationship.sourceRef)) continue;
+    if (!isTestSourceRef(relationship.sourceRef)) continue;
+    addReason(selectedReasons, relationship.sourceRef, "related_test");
+  }
 }
 
 function addReason(
@@ -250,4 +278,16 @@ function isPathLikeTestSeed(value: string): boolean {
   const trimmed = value.trim();
   if (trimmed.includes("/") || trimmed.includes("\\")) return true;
   return /\.(test|spec|e2e)\.[A-Za-z0-9]+$/.test(trimmed);
+}
+
+function isTestSourceRef(value: string): boolean {
+  const normalized = value.replace(/\\/g, "/").toLowerCase();
+  return (
+    normalized.startsWith("test/") ||
+    normalized.startsWith("tests/") ||
+    normalized.includes("/test/") ||
+    normalized.includes("/tests/") ||
+    normalized.includes("/__tests__/") ||
+    /\.(test|spec|e2e)\.[a-z0-9]+$/.test(normalized)
+  );
 }

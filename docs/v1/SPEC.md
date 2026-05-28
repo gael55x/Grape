@@ -2692,7 +2692,9 @@ contribute retrieval terms. Path-like `tests` entries, such as
 `tests/auth.test.ts` or `src/foo.spec.ts`, are treated as explicit test source
 hints when they match allowed snapshot sources. Test source hints can select
 exact, hash-backed source excerpts, but they do not prove behavior or test
-success unless a separate trusted test-run proof exists.
+success unless a separate trusted test-run proof exists. When the lightweight
+index records that a test file imports a task-selected source file, Grape may
+include that test file as related exact source context for orientation only.
 
 ### 28.6 `grape_get_context` output
 

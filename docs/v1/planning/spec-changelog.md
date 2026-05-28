@@ -85,3 +85,4 @@ Each entry should include:
 - Clarified CLI runtime compatibility behavior: V1 remains Node 22.5+ because of `node:sqlite`, but storage-backed commands must fail before importing SQLite services on older Node versions and static setup guidance must remain available.
 - Clarified exact-source excerpt ranking: task-selected symbol line anchors may guide proof windows before query-term fallback, while source hashes, excerpt hashes, and line spans remain required proof inputs.
 - Clarified test seed retrieval: path-like `tests` seeds may select matching allowed test source files for exact source excerpts, while non-path test names stay retrieval terms and test-source excerpts do not prove execution or correctness.
+- Clarified related test retrieval: import edges from test files to task-selected source files may add related exact test source context, but import relationships remain orientation rather than proof of behavior or test execution.

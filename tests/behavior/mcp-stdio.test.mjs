@@ -1093,6 +1093,7 @@ test("mcp seed files participate in retrieval while token budget is evaluated", 
     assert.equal(retrievalSection.itemRefs.some((ref) => ref.ref === "src/main.ts"), true);
     assert.equal(retrievalSection.itemRefs.some((ref) => ref.ref === "tests/main.test.ts"), true);
     assert.match(retrievalSection.text, /Test seed refs:\n- tests\/main\.test\.ts/);
+    assert.match(retrievalSection.text, /Related test refs:\n- tests\/main\.test\.ts/);
     assert.equal(output.warnings.some((warning) => warning.includes("mainEntry regression")), false);
   });
 });

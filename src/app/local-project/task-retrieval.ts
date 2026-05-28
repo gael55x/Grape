@@ -6,6 +6,7 @@ import {
 import type { IndexingStorageRepositories } from "../../core/storage/index.js";
 import type {
   RepositoryArtifactSourceInput,
+  RepositoryArtifactSymbolEdgeInput,
   RepositoryArtifactSymbolNodeInput,
   RepositoryArtifactTaskRetrievalInput
 } from "../../core/compiler/index.js";
@@ -15,6 +16,7 @@ export interface ResolveLocalTaskRetrievalInput {
   readonly snapshotId: string;
   readonly sources: readonly RepositoryArtifactSourceInput[];
   readonly symbolNodes: readonly RepositoryArtifactSymbolNodeInput[];
+  readonly symbolEdges: readonly RepositoryArtifactSymbolEdgeInput[];
   readonly indexingRepositories: IndexingStorageRepositories;
   readonly seedFiles?: readonly string[];
   readonly seedSymbols?: readonly string[];
@@ -47,10 +49,33 @@ export function resolveLocalTaskRetrieval(
       endLine: node.endLine
     })),
     lexicalMatches,
+    relationships: importRelationships(input.symbolNodes, input.symbolEdges),
     seedFiles: input.seedFiles,
     seedSymbols: input.seedSymbols,
     seedTests: input.seedTests
   });
+}
+
+function importRelationships(
+  symbolNodes: readonly RepositoryArtifactSymbolNodeInput[],
+  symbolEdges: readonly RepositoryArtifactSymbolEdgeInput[]
+): Array<{ sourceRef: string; targetSourceRef: string; relationship: "imports" }> {
+  const modulePathBySymbolId = new Map(
+    symbolNodes
+      .filter((node) => node.symbolKind === "module")
+      .map((node) => [node.symbolId, node.path])
+  );
+  const relationships: Array<{ sourceRef: string; targetSourceRef: string; relationship: "imports" }> = [];
+
+  for (const edge of symbolEdges) {
+    if (edge.edgeType !== "imports") continue;
+    const sourceRef = modulePathBySymbolId.get(edge.fromSymbolId);
+    const targetSourceRef = edge.toSymbolId ? modulePathBySymbolId.get(edge.toSymbolId) : edge.toRef;
+    if (!sourceRef || !targetSourceRef) continue;
+    relationships.push({ sourceRef, targetSourceRef, relationship: "imports" });
+  }
+
+  return relationships;
 }
 
 function searchLexicalTerm(
