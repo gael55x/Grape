@@ -118,7 +118,7 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
       const nodes = indexingRepositories.symbolNodes.listBySnapshot(result.snapshotId);
       const edges = indexingRepositories.symbolEdges.listBySnapshot(result.snapshotId);
       const ftsEntries = indexingRepositories.ftsEntries.listBySnapshot(result.snapshotId);
-      const ftsMatches = indexingRepositories.ftsEntries.searchSnapshot(result.snapshotId, "calculateDiscount");
+      const lexicalMatches = indexingRepositories.ftsEntries.searchSnapshot(result.snapshotId, "calculateDiscount");
       const secretMatches = indexingRepositories.ftsEntries.searchSnapshot(result.snapshotId, "TOKEN");
       const nodeByPathAndName = new Map(nodes.map((node) => [`${node.path}:${node.name}`, node]));
       const appModule = nodeByPathAndName.get("src/app.ts:src/app.ts");
@@ -129,7 +129,7 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
       assert.equal(result.index.ftsEntriesInserted, ftsEntries.length);
       assert.equal(ftsEntries.some((entry) => entry.sourceRef === "src/app.ts"), true);
       assert.equal(ftsEntries.some((entry) => entry.sourceRef === "src/secret.ts"), false);
-      assert.equal(ftsMatches.some((entry) => entry.sourceRef === "src/app.ts"), true);
+      assert.equal(lexicalMatches.some((entry) => entry.sourceRef === "src/app.ts"), true);
       assert.equal(secretMatches.length, 0);
       assert.equal(appModule?.symbolKind, "module");
       assert.equal(libModule?.symbolKind, "module");
@@ -170,7 +170,7 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
 
       const persistedText = JSON.stringify({ nodes, edges });
       assert.equal(persistedText.includes("PRIVATE=value"), false);
-      assert.equal(JSON.stringify({ ftsEntries, ftsMatches, secretMatches }).includes("TOKEN=value"), false);
+      assert.equal(JSON.stringify({ ftsEntries, lexicalMatches, secretMatches }).includes("TOKEN=value"), false);
     });
   });
 });

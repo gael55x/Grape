@@ -1,7 +1,7 @@
 import {
   resolveTaskSourceRetrieval,
   taskRetrievalTerms,
-  type TaskRetrievalFtsMatch
+  type TaskRetrievalLexicalMatch
 } from "../../core/retrieval/index.js";
 import type { IndexingStorageRepositories } from "../../core/storage/index.js";
 import type {
@@ -21,7 +21,7 @@ export interface ResolveLocalTaskRetrievalInput {
   readonly seedTests?: readonly string[];
 }
 
-const ftsMatchesPerTerm = 8;
+const lexicalMatchesPerTerm = 8;
 
 export function resolveLocalTaskRetrieval(
   input: ResolveLocalTaskRetrievalInput
@@ -31,7 +31,9 @@ export function resolveLocalTaskRetrieval(
     symbols: input.seedSymbols,
     tests: input.seedTests
   });
-  const ftsMatches = terms.flatMap((term) => searchFtsTerm(input.indexingRepositories, input.snapshotId, term));
+  const lexicalMatches = terms.flatMap((term) =>
+    searchLexicalTerm(input.indexingRepositories, input.snapshotId, term)
+  );
 
   return resolveTaskSourceRetrieval({
     task: input.task,
@@ -41,19 +43,19 @@ export function resolveLocalTaskRetrieval(
       path: node.path,
       name: node.name
     })),
-    ftsMatches,
+    lexicalMatches,
     seedFiles: input.seedFiles,
     seedSymbols: input.seedSymbols,
     seedTests: input.seedTests
   });
 }
 
-function searchFtsTerm(
+function searchLexicalTerm(
   repositories: IndexingStorageRepositories,
   snapshotId: string,
   term: string
-): readonly TaskRetrievalFtsMatch[] {
-  return repositories.ftsEntries.searchSnapshot(snapshotId, term, ftsMatchesPerTerm).map((entry) => ({
+): readonly TaskRetrievalLexicalMatch[] {
+  return repositories.ftsEntries.searchSnapshot(snapshotId, term, lexicalMatchesPerTerm).map((entry) => ({
     sourceId: entry.sourceId,
     sourceRef: entry.sourceRef,
     matchedTerm: term

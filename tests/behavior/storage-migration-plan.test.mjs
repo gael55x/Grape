@@ -52,6 +52,21 @@ test("storage migration planner tolerates filename-only drift when checksums mat
   assert.deepEqual(plan.pending, []);
 });
 
+test("storage migration planner tolerates documented compatible checksum drift", () => {
+  const current = {
+    ...migrationOne,
+    checksumSha256: "d".repeat(64),
+    compatibleChecksumSha256: [migrationOne.checksumSha256]
+  };
+  const plan = planPendingStorageMigrations(
+    [current],
+    [{ ...migrationOne, appliedAt: "2026-05-24T00:00:00.000Z" }]
+  );
+
+  assert.deepEqual(plan.alreadyApplied, [current]);
+  assert.deepEqual(plan.pending, []);
+});
+
 test("storage migration planner rejects unknown applied migrations", () => {
   assert.throws(
     () =>

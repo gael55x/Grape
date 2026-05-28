@@ -50,7 +50,7 @@ Git repo snapshots also reject oversized files and binary-looking files before t
 
 The current file-indexing foundation reads only files already present in the allowed snapshot file manifest. Before extracting symbols/imports it normalizes repository separators, rejects traversal or drive-qualified repo paths, and rejects symlinks, binary files, oversized files, unreadable files, and files whose current bytes no longer match the snapshot hash. It stores module/symbol names, import refs, hashes, line numbers, confidence, and discovery method, but not source excerpts or file contents.
 
-The current FTS foundation reads only already-allowed source records, reuses the same path, size, symlink, binary, and source-hash guards as file indexing, and skips secret-looking text before inserting FTS rows. FTS result records expose source refs and hashes, not indexed bodies.
+The current lexical search foundation reads only already-allowed source records, reuses the same path, size, symlink, binary, and source-hash guards as file indexing, and skips secret-looking text before inserting search rows. Search result records expose source refs and hashes, not indexed bodies.
 
 The current CLI compile path runs a basic artifact-level secret scan before writing JSON or Markdown artifacts. The scanner blocks obvious raw secret assignments, private-key blocks, and AWS access-key IDs. This is a baseline guard for scaffold artifacts, not a complete redaction engine or proof-span scanner.
 
@@ -65,7 +65,7 @@ Restricted MCP write tools run the same baseline secret scan over caller-provide
 - Source hashes are computed from original source bytes.
 - Excerpt hashes are computed from exact source spans before redaction.
 - Redacted display hashes are computed from redacted text and are not proof hashes.
-- Raw secrets must not be stored in sources, proofs, artifacts, FTS entries, logs, examples, fixtures, or benchmark outputs.
+- Raw secrets must not be stored in sources, proofs, artifacts, lexical search entries, logs, examples, fixtures, or benchmark outputs.
 - If a proof span contains a secret and cannot be safely redacted while preserving support, the proof is blocked.
 - If an artifact section fails a secret scan, the artifact becomes `unsafe_compile` or the section is omitted with an explicit blocked reason.
 

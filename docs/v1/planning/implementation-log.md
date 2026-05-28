@@ -174,7 +174,7 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: added migration-backed `symbol_nodes` and `symbol_edges`, a split indexing repository, deterministic module/symbol/import extraction for allowed snapshot files, and app-level snapshot persistence for index rows. The first extractor is intentionally lightweight and records confidence/discovery method instead of claiming a complete dependency graph.
 - Checks run: `npm run typecheck`; `npm run test:behavior`; `npm run check`; `npm run build`.
-- Risks/follow-ups: broad language parsing, FTS entries, exact symbol ranges, persisted skip diagnostics, dynamic import blind-spot reporting, and compiler use of indexed relationships remain required.
+- Risks/follow-ups: broad language parsing, lexical entries, exact symbol ranges, persisted skip diagnostics, dynamic import blind-spot reporting, and compiler use of indexed relationships remain required.
 
 ### 2026-05-26 - Repository Artifact Compile Path
 
@@ -232,12 +232,12 @@ Keep entries simple:
 - Checks run: focused source-excerpt, repo-snapshot, repository-artifact, and CLI behavior tests; `npm run check`; `npm run build`; `git diff --check`.
 - Risks/follow-ups: this renders exact rule text as pinned context only. Parsed `project_rules`, conflicts, nested scope resolution, candidate/generated rules, and rule-specific MCP/CLI inspection remain pending.
 
-### 2026-05-26 - Safe FTS Index Foundation
+### 2026-05-26 - Safe Lexical Index Foundation
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: added `fts_entries` metadata rows plus an FTS5 text table for allowed source records. FTS persistence now reuses source-hash/path/binary/symlink guards, skips secret-looking text, exposes source-linked search results through storage repositories, and remains separate from compiler selection policy.
+- Summary: added `fts_entries` metadata rows plus a lexical text table for allowed source records. Lexical persistence now reuses source-hash/path/binary/symlink guards, skips secret-looking text, exposes source-linked search results through storage repositories, and remains separate from compiler selection policy.
 - Checks run: focused file-index and storage-runtime behavior tests; `npm run check`; `npm run build`; `git diff --check`.
-- Risks/follow-ups: FTS rows are persisted and searchable. Later slices use them for scaffold source selection; durable current-valid claim filtering and final high-risk compiler policy remain pending.
+- Risks/follow-ups: lexical rows are persisted and searchable. Later slices use them for scaffold source selection; durable current-valid claim filtering and final high-risk compiler policy remain pending.
 
 ### 2026-05-26 - V1 ContextPackItem Output Mapping
 
@@ -249,7 +249,7 @@ Keep entries simple:
 ### 2026-05-26 - Task Source Retrieval Foundation
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: scaffold context compilation now resolves task source hints from task terms, MCP seed file/symbol/test refs, safe FTS rows, and symbol/path metadata. Selected source refs are surfaced in a `task-retrieval` section and prioritized across source manifests, dependency manifests, symbol summaries, and bounded exact-source evidence.
+- Summary: scaffold context compilation now resolves task source hints from task terms, MCP seed file/symbol/test refs, safe lexical rows, and symbol/path metadata. Selected source refs are surfaced in a `task-retrieval` section and prioritized across source manifests, dependency manifests, symbol summaries, and bounded exact-source evidence.
 - Checks run: focused retrieval/source-excerpt/CLI/MCP/repository-artifact behavior tests before full verification.
 - Risks/follow-ups: retrieval is still source selection over allowed snapshot records. Durable current-valid claim retrieval, final ContextArtifact schema, budget pruning/compression policy, and high-risk exact-span policies remain pending.
 
@@ -504,3 +504,10 @@ Keep entries simple:
 - Summary: split local source excerpt handling into a focused ownership folder and changed exact source proof excerpt selection so task query terms anchor the excerpt window when a selected source contains a matching line. Proofs still require path safety checks, source-hash verification, excerpt hashes, and line spans.
 - Checks run: focused source-excerpt and repository-artifact behavior tests; `npm run typecheck`; broader gates before commit.
 - Risks/follow-ups: matching is still lexical and uses the first matching line only. Richer exact-span ranking across symbol body ranges, tests, and multiple relevant spans remains pending.
+
+### 2026-05-28 - Portable Lexical Search Runtime
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: replaced the mandatory SQLite FTS5 virtual table with normal SQLite text rows plus app-owned deterministic lexical matching so local bootstrap does not depend on a Node build exposing FTS5. The storage migration planner now accepts the previous FTS5 migration checksum for migration `0003` as a documented compatibility checksum.
+- Checks run: focused storage/file-index behavior tests; Node runtime smoke under Node 23 without FTS5; broader gates before commit.
+- Risks/follow-ups: table-backed lexical matching is less capable than FTS5 ranking. Richer relevance ranking remains pending and should not be treated as proof or current-valid filtering.

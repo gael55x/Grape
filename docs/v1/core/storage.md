@@ -6,7 +6,7 @@ Define SQLite storage ownership, schema documentation, migrations, and concurren
 
 ## Source Of Truth
 
-Storage follows the SQLite/WAL/FTS5 contract in `docs/v1/SPEC.md`.
+Storage follows the SQLite/WAL/local lexical index contract in `docs/v1/SPEC.md`.
 
 ## Update Triggers
 
@@ -44,7 +44,7 @@ The V1 schema must define at least these tables or explicitly defer a table with
 | `project_rules` | evidence/trust | project rules and pinned safety invariants |
 | `symbol_nodes` | indexing | symbol/file index metadata |
 | `symbol_edges` | indexing | symbol relationship metadata |
-| `fts_entries` | indexing | FTS5 searchable text refs, never raw secrets |
+| `fts_entries` | indexing | lexical searchable text refs, never raw secrets |
 | `context_sessions` | sessions | session identity, agent ID, current lock status |
 | `session_events` | sessions | reset, invalidation, lock conflict, branch switch events |
 | `context_artifacts` | compiler | artifact metadata and hashes |
@@ -95,12 +95,12 @@ Migration `0002_indexing_foundation.sql` implements the first indexing-specific 
 
 This is intentionally a foundation, not a complete code intelligence graph. The current extractor is deterministic and regex-based for common JavaScript/TypeScript symbols and imports. It records confidence and discovery method so downstream compiler logic cannot mistake the index for a complete impact graph.
 
-Migration `0003_fts_entries.sql` adds the first FTS5 lexical index foundation:
+Migration `0003_fts_entries.sql` adds the first portable lexical index foundation:
 
 - `fts_entries` stores source-linked lexical entry metadata, hashes, and repo/snapshot refs.
-- `fts_entry_text` is the FTS5 virtual table that indexes text for allowed source records.
+- `fts_entry_text` stores allowed source text rows in a normal SQLite table so bootstrap does not depend on SQLite FTS5 extension support.
 
-FTS persistence reads only existing allowed source records, reuses the same path/hash/binary/symlink guards as file indexing, skips secret-looking text before inserting FTS rows, and stores search results through repository methods rather than direct SQL outside storage. The local compile service now uses these rows, explicit seed file refs, and symbol/path matches to prioritize scaffold source evidence and to satisfy the first high-risk exact-context policy only when a proof-backed exact excerpt is selected for the task. This is still a source-selection foundation only; durable current-valid claim retrieval remains pending.
+Lexical persistence reads only existing allowed source records, reuses the same path/hash/binary/symlink guards as file indexing, skips secret-looking text before inserting search rows, and stores search results through repository methods rather than direct SQL outside storage. The local compile service now uses these rows, explicit seed file refs, and symbol/path matches to prioritize scaffold source evidence and to satisfy the first high-risk exact-context policy only when a proof-backed exact excerpt is selected for the task. This is still a source-selection foundation only; durable current-valid claim retrieval remains pending.
 
 Migration `0004_compression_cache.sql` adds the first deterministic compression cache tables:
 
@@ -127,7 +127,7 @@ MCP restricted writes currently reuse existing V1 tables instead of adding prema
 - Proof storage is split into `src/core/storage/proof-repositories.ts` so validated proof rows are persisted without expanding session-ledger or evidence repositories.
 - Proof repositories persist already-validated proof records only and can link a proof row to an accepted claim. Validation stays in `src/core/proofs/`; claim gating stays out of storage.
 - Initial source storage keeps branch, commit, repo ID, project ID, worktree hash, and worktree state ID inside `metadata_json` until a later migration promotes first-class `Source` shape fields that the compiler and MCP surface will query directly.
-- Indexing storage is split between `src/core/storage/indexing-repositories.ts` for aggregate wiring, `src/core/storage/fts-repositories.ts` for FTS rows/search, and symbol repository ownership for `symbol_nodes` and `symbol_edges` SQL and typed row mapping.
+- Indexing storage is split between `src/core/storage/indexing-repositories.ts` for aggregate wiring, `src/core/storage/fts-repositories.ts` for lexical rows/search, and symbol repository ownership for `symbol_nodes` and `symbol_edges` SQL and typed row mapping. The `fts` file/table names are retained for compatibility with earlier local databases.
 - Compression cache storage is split into `src/core/storage/compression-repositories.ts` so deterministic cache metadata and input hashes do not expand the session-ledger repository file.
 - Repository tests must prove session-scoped sent/omitted ledgers and fail-closed foreign-key behavior before app services rely on those tables.
 
@@ -139,7 +139,7 @@ MCP restricted writes currently reuse existing V1 tables instead of adding prema
 - Use one writer transaction for each explicit state transition that persists multiple records.
 - Session locks must be represented durably, not only in process memory.
 - Session locks must use atomic compare/update methods for acquire, renew, release, and expiry; direct lock-column mutation outside the session repository is forbidden.
-- FTS5 is allowed for lexical search, but FTS entries must reference source IDs and must not contain raw secrets.
+- Lexical search entries must reference source IDs and must not contain raw secrets. SQLite FTS5 extension support is not required for V1 bootstrap.
 - Safety-critical serialized enums must use database `CHECK` constraints, including diff state, task type, verification status, privacy status, source type, lock status, and session status.
 - `context_sessions` must persist repo, snapshot, worktree, branch, head commit, task, status, and lock identity so branch/session invalidation can fail closed.
 - `context_sent_items` and `omitted_context_items` must persist item kind/ref/hash, branch/commit identity, dependency manifest hash where applicable, token counts, restore metadata, and send counts so omission and restore decisions are auditable.

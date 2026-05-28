@@ -126,8 +126,8 @@ expect(
   "migrations must define canonical fts_entries metadata table"
 );
 expect(
-  allMigrations.includes("CREATE VIRTUAL TABLE IF NOT EXISTS fts_entry_text USING fts5"),
-  "migrations must define an FTS5 text table for lexical search"
+  allMigrations.includes("CREATE TABLE IF NOT EXISTS fts_entry_text ("),
+  "migrations must define a lexical text table for source search"
 );
 expect(
   allMigrations.includes("CREATE TABLE IF NOT EXISTS compression_artifacts ("),

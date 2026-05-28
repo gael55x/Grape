@@ -16,7 +16,7 @@ test("task retrieval terms split identifiers and ignore broad prompt words", () 
   );
 });
 
-test("task source retrieval merges explicit, symbol, and fts source matches", () => {
+test("task source retrieval merges explicit, symbol, and lexical source matches", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix calculateDiscount refund flow",
     sources: [
@@ -28,7 +28,7 @@ test("task source retrieval merges explicit, symbol, and fts source matches", ()
       symbol("source-auth", "src/auth.ts", "createSession"),
       symbol("source-billing", "src/billing.ts", "calculateDiscount")
     ],
-    ftsMatches: [
+    lexicalMatches: [
       { sourceId: "source-readme", sourceRef: "README.md", matchedTerm: "refund" },
       { sourceId: "source-billing", sourceRef: "src/billing.ts", matchedTerm: "refund" },
       { sourceId: "source-missing", sourceRef: "src/missing.ts", matchedTerm: "refund" }
@@ -40,7 +40,7 @@ test("task source retrieval merges explicit, symbol, and fts source matches", ()
   assert.deepEqual(result.selectedSourceRefs, ["src/auth.ts", "src/billing.ts", "README.md"]);
   assert.deepEqual(result.explicitSourceRefs, ["src/auth.ts"]);
   assert.deepEqual(result.symbolSourceRefs, ["src/billing.ts"]);
-  assert.deepEqual(result.ftsSourceRefs, ["src/billing.ts", "README.md"]);
+  assert.deepEqual(result.lexicalSourceRefs, ["src/billing.ts", "README.md"]);
   assert.ok(result.warnings.includes("task_seed_file_not_found:invalid"));
 });
 
@@ -49,7 +49,7 @@ test("task source retrieval warns when query terms find no source matches", () =
     task: "Investigate invoice reconciliation",
     sources: [source("source-readme", "README.md")],
     symbols: [],
-    ftsMatches: []
+    lexicalMatches: []
   });
 
   assert.deepEqual(result.selectedSourceRefs, []);

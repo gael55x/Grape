@@ -7,7 +7,7 @@ import {
   type IndexableTextSkipReason
 } from "./indexable-source-reader.js";
 
-export interface FtsIndexInput {
+export interface LexicalIndexInput {
   readonly projectId: string;
   readonly repoId: string;
   readonly snapshotId: string;
@@ -16,7 +16,7 @@ export interface FtsIndexInput {
   readonly createdAt: string;
 }
 
-export interface FtsIndexEntry {
+export interface LexicalIndexEntry {
   readonly ftsEntryId: string;
   readonly projectId: string;
   readonly repoId: string;
@@ -31,17 +31,17 @@ export interface FtsIndexEntry {
   readonly createdAt: string;
 }
 
-export interface FtsIndexResult {
-  readonly entries: readonly FtsIndexEntry[];
-  readonly skipped: readonly FtsIndexSkip[];
+export interface LexicalIndexResult {
+  readonly entries: readonly LexicalIndexEntry[];
+  readonly skipped: readonly LexicalIndexSkip[];
 }
 
-export interface FtsIndexSkip {
+export interface LexicalIndexSkip {
   readonly sourceRef: string;
   readonly reason: IndexableTextSkipReason | "unsupported_source" | "secret_detected";
 }
 
-const ftsSourceTypes = new Set<SourceType>([
+const lexicalSourceTypes = new Set<SourceType>([
   "repository_file",
   "rule_file",
   "config_file",
@@ -49,9 +49,9 @@ const ftsSourceTypes = new Set<SourceType>([
   "migration_file"
 ]);
 
-export function buildFtsIndex(input: FtsIndexInput): FtsIndexResult {
-  const entries: FtsIndexEntry[] = [];
-  const skipped: FtsIndexSkip[] = [];
+export function buildLexicalIndex(input: LexicalIndexInput): LexicalIndexResult {
+  const entries: LexicalIndexEntry[] = [];
+  const skipped: LexicalIndexSkip[] = [];
 
   for (const source of input.sources) {
     if (!sourceCanBeIndexed(source)) {
@@ -73,7 +73,7 @@ export function buildFtsIndex(input: FtsIndexInput): FtsIndexResult {
       continue;
     }
 
-    entries.push(ftsEntry(input, source, readResult.text));
+    entries.push(lexicalEntry(input, source, readResult.text));
   }
 
   return { entries, skipped };
@@ -84,11 +84,11 @@ function sourceCanBeIndexed(source: SourceRecord): boolean {
     source.trustClass === "trusted" &&
     source.privacyStatus === "allowed" &&
     source.redactionStatus !== "blocked" &&
-    ftsSourceTypes.has(source.sourceType)
+    lexicalSourceTypes.has(source.sourceType)
   );
 }
 
-function ftsEntry(input: FtsIndexInput, source: SourceRecord, body: string): FtsIndexEntry {
+function lexicalEntry(input: LexicalIndexInput, source: SourceRecord, body: string): LexicalIndexEntry {
   const textHash = sha256(Buffer.from(body, "utf8"));
   return {
     ftsEntryId: `fts:${hashStableParts([input.repoId, input.snapshotId, source.sourceId, source.sourceHash]).slice(0, 24)}`,
@@ -102,7 +102,7 @@ function ftsEntry(input: FtsIndexInput, source: SourceRecord, body: string): Fts
     textHash,
     body,
     metadata: {
-      extractor: "fts_basic",
+      extractor: "lexical_basic",
       sourceScope: source.sourceScope
     },
     createdAt: input.createdAt

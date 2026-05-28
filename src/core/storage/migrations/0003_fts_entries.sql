@@ -12,13 +12,13 @@ CREATE TABLE IF NOT EXISTS fts_entries (
   created_at TEXT NOT NULL
 );
 
-CREATE VIRTUAL TABLE IF NOT EXISTS fts_entry_text USING fts5(
-  fts_entry_id UNINDEXED,
-  source_id UNINDEXED,
-  source_ref UNINDEXED,
-  body,
-  tokenize = 'unicode61'
+CREATE TABLE IF NOT EXISTS fts_entry_text (
+  fts_entry_id TEXT PRIMARY KEY REFERENCES fts_entries(fts_entry_id) ON DELETE CASCADE,
+  source_id TEXT NOT NULL,
+  source_ref TEXT NOT NULL,
+  body TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_fts_entries_snapshot_source ON fts_entries(snapshot_id, source_id);
 CREATE INDEX IF NOT EXISTS idx_fts_entries_source_ref ON fts_entries(source_ref);
+CREATE INDEX IF NOT EXISTS idx_fts_entry_text_source ON fts_entry_text(source_id, source_ref);

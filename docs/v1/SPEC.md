@@ -7,7 +7,7 @@
 **Safety model:** proof-backed, branch-aware, task-specific context artifacts with explicit uncertainty  
 **Runtime:** TypeScript on Node.js 22.5+  
 **Distribution:** `npm install -g grape-context`  
-**Storage:** SQLite + WAL + FTS5  
+**Storage:** SQLite + WAL + portable lexical source index
 **Integration:** MCP server + CLI  
 **Default mode:** local-first, no cloud dependency, no remote embeddings by default  
 **V1 target users:** developers using Cursor, Claude Code, Codex, Aider-like CLIs, JetBrains AI, custom internal agents, or any MCP-capable AI coding tool
@@ -444,7 +444,7 @@ V1.0 should build the smallest useful infrastructure loop:
 - `grape init --connect`
 - local `.grape/` project directory
 - SQLite + WAL + migrations
-- FTS5 lexical search
+- local lexical source search
 - Git repo detection
 - RepoSnapshot and WorktreeState
 - file hashing and incremental sync
@@ -538,7 +538,7 @@ Best-effort:
 Fallback:
 
 - unsupported language → file path/text indexing only
-- parser failure → file-level FTS indexing
+- parser failure → file-level lexical indexing
 - huge file → skip/truncate with warning
 - binary file → skip
 
@@ -628,7 +628,7 @@ sequenceDiagram
 | Package | `grape-context` |
 | CLI binary | `grape` |
 | Storage | SQLite + WAL |
-| Search | FTS5 |
+| Search | portable lexical source index |
 | Embeddings | off by default |
 | Integration | MCP over stdio + CLI |
 | Default data location | `.grape/` |
@@ -797,7 +797,7 @@ type CompileMode =
     grape.log
   cache/
     parser/
-    fts/
+    lexical/
     compression/
       symbol_outlines/
       rule_digests/
@@ -1579,8 +1579,8 @@ flowchart TD
     START[grape_get_context] --> SNAP[Detect RepoSnapshot + WorktreeState]
     SNAP --> TASK[Detect Task Type + Risk Overlays]
     TASK --> SEEDS[Resolve Seed Files / Symbols / Routes / Tests]
-    SEEDS --> FTS[Run FTS5 + Structured Filters]
-    FTS --> SCOPE[Resolve Scope Match]
+    SEEDS --> SEARCH[Run Lexical Search + Structured Filters]
+    SEARCH --> SCOPE[Resolve Scope Match]
     SCOPE --> VALID[Apply Current-Valid Filter]
     VALID --> RANK[Rank by Task Relevance]
     RANK --> PROOFS[Retrieve Supporting Proofs]
@@ -3408,7 +3408,7 @@ flowchart TD
     G0[Alpha vertical slice] --> G1[Local project skeleton]
     G1 --> G2[Repo state foundation]
     G2 --> G3[Trust kernel]
-    G3 --> G4[Symbol index + FTS5 retrieval]
+    G3 --> G4[Symbol index + lexical retrieval]
     G4 --> G5[Context artifacts]
     G5 --> G6[Context diff + sessions]
     G6 --> G7[Lightweight compression cache]
@@ -3427,7 +3427,7 @@ Build:
 - SQLite WAL database and migrations
 - Git RepoSnapshot and WorktreeState
 - ignore policy and secret baseline
-- FTS file/rule index
+- lexical file/rule index
 - MCP `grape_get_context`
 - Context Artifact JSON/Markdown output
 - session sent-item diff
@@ -3478,7 +3478,7 @@ Build:
 - belief gate
 - layer isolation
 
-### Symbol index and FTS5 retrieval
+### Symbol index and lexical retrieval
 
 Build:
 
@@ -3486,7 +3486,7 @@ Build:
 - basic TS/JS/Python extraction
 - symbol nodes
 - symbol edges
-- FTS5 tables
+- lexical source index tables
 - current-valid filter
 - task relevance ranking
 

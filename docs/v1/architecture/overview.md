@@ -82,7 +82,7 @@ flowchart LR
 | `src/core/sessions/` | Session identity, locks, sent ledgers. | storage interfaces, shared types. | compiler policy. | `../contracts/context-diff.md` |
 | `src/core/storage/` | Repositories, migrations, SQLite connection policy. | `src/shared/`. | CLI/MCP, compiler policy, trust decisions. | `../core/storage.md` |
 | `src/core/git/` | Git state, branch, commit, dirty tree, ignore inputs. | `security`, shared types. | storage SQL. | `../core/storage.md`, `../core/security.md` |
-| `src/core/indexing/` | File/symbol/FTS indexing. | `git`, `security`, storage interfaces. | trust promotion. | `../core/storage.md` |
+| `src/core/indexing/` | File/symbol/lexical indexing. | `git`, `security`, storage interfaces. | trust promotion. | `../core/storage.md` |
 | `src/core/security/` | Redaction, ignored-file approval, artifact scans. | shared types. | adapter transport. | `../core/security.md` |
 | `src/shared/` | Shared types, schemas, errors, constants, path utilities. | none or platform libraries. | domain workflows. | all docs |
 | `tests/` | Test helpers and fixtures. | production public APIs. | production import of test helpers. | `../quality/testing.md` |

@@ -1,5 +1,5 @@
 import type { RepoSnapshot } from "../core/git/index.js";
-import { buildFileIndex, buildFtsIndex } from "../core/indexing/index.js";
+import { buildFileIndex, buildLexicalIndex } from "../core/indexing/index.js";
 import type {
   EvidenceStorageRepositories,
   FtsEntryRecord,
@@ -45,7 +45,7 @@ export function persistFileIndex(input: PersistFileIndexInput): PersistFileIndex
     }),
     createdAt: input.now
   });
-  const ftsIndex = buildFtsIndex({
+  const lexicalIndex = buildLexicalIndex({
     projectId: input.projectId,
     repoId: input.snapshot.repoId,
     snapshotId: input.snapshot.snapshotId,
@@ -82,7 +82,7 @@ export function persistFileIndex(input: PersistFileIndexInput): PersistFileIndex
     }
   }
 
-  for (const entry of ftsIndex.entries) {
+  for (const entry of lexicalIndex.entries) {
     const record: FtsEntryInsertRecord = {
       ...entry,
       metadataJson: JSON.stringify(entry.metadata)
@@ -99,10 +99,10 @@ export function persistFileIndex(input: PersistFileIndexInput): PersistFileIndex
     nodesInserted,
     edgesSeen: index.edges.length,
     edgesInserted,
-    ftsEntriesSeen: ftsIndex.entries.length,
+    ftsEntriesSeen: lexicalIndex.entries.length,
     ftsEntriesInserted,
     skippedFiles: index.skipped.length,
-    ftsSkippedSources: ftsIndex.skipped.length
+    ftsSkippedSources: lexicalIndex.skipped.length
   };
 }
 

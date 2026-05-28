@@ -479,7 +479,7 @@ test("cli compile uses task retrieval to prioritize matching exact source eviden
     );
 
     assert.equal(retrievalSection.itemRefs.some((ref) => ref.ref === "src/z-billing.ts"), true);
-    assert.match(retrievalSection.text, /FTS-matched refs:/);
+    assert.match(retrievalSection.text, /Lexical-matched refs:/);
     assert.match(exactEvidence.text, /Source: src\/z-billing\.ts/);
     assert.match(exactEvidence.text, /refundInvoice/);
     assert.equal(result.warnings.includes("task_retrieval_no_source_matches"), false);
