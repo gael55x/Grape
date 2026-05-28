@@ -76,3 +76,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Source evidence now distinguishes committed, staged, unstaged, and untracked Git scopes from porcelain status.
 - Added `grape sync` and `grape diff-context --task <text>` as CLI fallback commands for refreshing local inputs and explicitly requesting a session-diffed context pack.
 - Added `grape doctor --privacy` for privacy-focused local diagnostics without returning file bodies or secret values.
+- Added token-budget pruning for `grape compile --token-budget` and MCP `tokenBudget`: required context is protected, optional context can be pruned, and budget omissions are recorded in the artifact.

@@ -1,6 +1,6 @@
 import type { DurableContextBuildResult } from "../durable-context-build.js";
 import type { PersistGitRepoSnapshotResult } from "../persist-repo-snapshot.js";
-import { evaluateContextPackBudget, toContextPackItems } from "../../core/compiler/index.js";
+import { toContextPackItems } from "../../core/compiler/index.js";
 import type { InMemoryContextArtifactShape, RiskOverlay } from "../../shared/index.js";
 import type { LocalArtifactWriteResult } from "./artifact-files.js";
 import type { LocalProjectConfig } from "./config.js";
@@ -22,17 +22,12 @@ export interface LocalCompileResultInput {
   readonly sessionId: string;
   readonly taskId: string;
   readonly riskOverlays: readonly RiskOverlay[];
-  readonly tokenBudget?: number;
   readonly value: LocalCompileDatabaseValue;
 }
 
 export function toCompileLocalContextResult(input: LocalCompileResultInput): CompileLocalContextResult {
   const contextPackItems = toContextPackItems(input.value.artifact, input.value.build.contextPackItems);
-  const budget = evaluateContextPackBudget({
-    tokenBudget: input.tokenBudget,
-    contextPackItems,
-    estimatedPackTokens: input.value.build.tokenMetric.grapeTokens
-  });
+  const budget = input.value.build.budget;
   const contextArtifact = projectLocalContextArtifact({
     artifact: input.value.artifact,
     projectId: input.config.project.projectId,

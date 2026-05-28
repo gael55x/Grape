@@ -26,11 +26,17 @@ export interface V1ContextArtifactInput {
 }
 
 export function buildV1ContextArtifact(input: V1ContextArtifactInput): ContextArtifactShape {
-  const requiredIds = requiredDependencyIds(input.artifact.sections);
+  const budgetOmittedSectionIds = new Set(
+    input.budget.omittedDueToBudget
+      .map((item) => item.sectionId)
+      .filter((sectionId): sectionId is string => sectionId !== undefined)
+  );
+  const outputSourceSections = input.artifact.sections.filter((section) => !budgetOmittedSectionIds.has(section.id));
+  const requiredIds = requiredDependencyIds(outputSourceSections);
   const dependencies = input.artifact.dependencyManifest.dependencies.map((dependency) =>
     toContextDependency(input.artifact, dependency, requiredIds)
   );
-  const sections = input.artifact.sections.map((section) =>
+  const sections = outputSourceSections.map((section) =>
     toContextSection(input.artifact, section, dependencies)
   );
   const warnings = [...input.artifact.warnings, ...input.budget.warnings];
@@ -77,7 +83,18 @@ export function buildV1ContextArtifact(input: V1ContextArtifactInput): ContextAr
     omittedRequired: unsafeReasons.includes("token_budget_below_required_context")
       ? ["required_context_exceeds_token_budget"]
       : [],
-    omittedDueToBudget: [],
+    omittedDueToBudget: input.budget.omittedDueToBudget.map((item) => ({
+      id: item.id,
+      itemKind: item.itemKind,
+      itemRef: item.itemRef,
+      itemHash: item.itemHash,
+      reasonOmitted: "budget" as const,
+      canRestore: item.canRestore,
+      restoreId: item.restoreId,
+      restoreCommand: item.restoreId
+        ? `grape omitted --session ${input.artifact.input.sessionId} --token ${item.restoreId}`
+        : undefined
+    })),
     tokenBudget: input.budget.tokenBudget,
     tokenCost: input.tokenCost,
     createdAt: input.artifact.createdAt

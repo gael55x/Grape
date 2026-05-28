@@ -507,6 +507,45 @@ test("cli compile reports unsafe output when token budget cannot fit required co
   });
 });
 
+test("cli compile prunes optional context when token budget fits required context", () => {
+  withGitRepo((repoPath) => {
+    const baseline = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository",
+      "--session",
+      "budget-baseline-session"
+    ]);
+    const budget = baseline.budget.requiredContextTokens + 2;
+    const result = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository",
+      "--session",
+      "budget-pruned-session",
+      "--token-budget",
+      String(budget)
+    ]);
+    const artifactJson = JSON.parse(readFileSync(result.artifactJsonPath, "utf8"));
+    const omittedSectionIds = result.budget.omittedDueToBudget.map((item) => item.sectionId);
+    const outputSectionIds = artifactJson.contextArtifact.outputSections.map((section) => section.id);
+    const emittedSectionIds = result.contextPackItems.map((item) => item.sectionId);
+
+    assert.equal(result.budget.status, "within_budget");
+    assert.equal(result.warnings.includes("token_budget_pruned_optional_context"), true);
+    assert.equal(result.unsafeReasons.includes("token_budget_below_required_context"), false);
+    assert.equal(omittedSectionIds.length > 0, true);
+    assert.equal(artifactJson.contextArtifact.omittedDueToBudget.length, omittedSectionIds.length);
+    assert.equal(outputSectionIds.includes("task"), true);
+    assert.equal(outputSectionIds.includes("repo-state"), true);
+    for (const sectionId of omittedSectionIds) {
+      assert.equal(typeof sectionId, "string");
+      assert.equal(outputSectionIds.includes(sectionId), false);
+      assert.equal(emittedSectionIds.includes(sectionId), false);
+    }
+  });
+});
+
 test("cli compile invalidates prior sent context when a session switches branches", () => {
   withGitRepo((repoPath) => {
     const first = runCliJson(repoPath, [
