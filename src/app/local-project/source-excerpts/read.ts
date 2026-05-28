@@ -6,6 +6,7 @@ import {
   selectedExactSourceSources
 } from "../../../core/compiler/index.js";
 import type {
+  RepositoryArtifactSourceAnchorInput,
   RepositoryArtifactSourceExcerptInput,
   RepositoryArtifactSourceInput
 } from "../../../core/compiler/index.js";
@@ -17,12 +18,14 @@ export interface ReadLocalSourceExcerptsInput {
   readonly sources: readonly RepositoryArtifactSourceInput[];
   readonly preferredSourceRefs?: readonly string[];
   readonly queryTerms?: readonly string[];
+  readonly sourceAnchors?: readonly RepositoryArtifactSourceAnchorInput[];
 }
 
 export function readLocalSourceExcerpts(
   input: ReadLocalSourceExcerptsInput
 ): readonly RepositoryArtifactSourceExcerptInput[] {
   const rootPath = path.resolve(input.rootPath);
+  const anchorBySourceRef = firstAnchorBySourceRef(input.sourceAnchors ?? []);
   return selectedExactSourceSources(input.sources, input.preferredSourceRefs ?? []).flatMap(
     (source): RepositoryArtifactSourceExcerptInput[] => {
       const bytes = readAllowedSourceBytes(rootPath, source.sourceRef);
@@ -34,7 +37,8 @@ export function readLocalSourceExcerpts(
 
       const excerpt = selectSourceExcerptWindow({
         text,
-        queryTerms: input.queryTerms
+        queryTerms: input.queryTerms,
+        anchorLine: anchorBySourceRef.get(source.sourceRef)?.startLine
       });
       const excerptHash = sha256(Buffer.from(excerpt.text, "utf8"));
       return [
@@ -58,6 +62,16 @@ export function readLocalSourceExcerpts(
       ];
     }
   );
+}
+
+function firstAnchorBySourceRef(
+  anchors: readonly RepositoryArtifactSourceAnchorInput[]
+): ReadonlyMap<string, RepositoryArtifactSourceAnchorInput> {
+  const bySourceRef = new Map<string, RepositoryArtifactSourceAnchorInput>();
+  for (const anchor of anchors) {
+    if (!bySourceRef.has(anchor.sourceRef)) bySourceRef.set(anchor.sourceRef, anchor);
+  }
+  return bySourceRef;
 }
 
 function sha256(bytes: Buffer): string {

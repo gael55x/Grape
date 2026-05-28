@@ -10,6 +10,9 @@ export interface TaskRetrievalSymbol {
   readonly sourceId: string;
   readonly path: string;
   readonly name: string;
+  readonly symbolKind?: string;
+  readonly startLine?: number;
+  readonly endLine?: number;
 }
 
 export interface TaskRetrievalLexicalMatch {
@@ -40,8 +43,17 @@ export interface TaskSourceRetrievalResult {
   readonly explicitSourceRefs: readonly string[];
   readonly symbolSourceRefs: readonly string[];
   readonly lexicalSourceRefs: readonly string[];
+  readonly sourceAnchors: readonly TaskSourceRetrievalAnchor[];
   readonly queryTerms: readonly string[];
   readonly warnings: readonly string[];
+}
+
+export interface TaskSourceRetrievalAnchor {
+  readonly sourceRef: string;
+  readonly reason: "symbol_match";
+  readonly label: string;
+  readonly startLine: number;
+  readonly endLine: number;
 }
 
 type SelectionReason = "explicit_seed" | "symbol_match" | "lexical_match";
@@ -99,6 +111,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   const sourceByRef = new Map(input.sources.map((source) => [source.sourceRef, source]));
   const sourceRefById = new Map(input.sources.map((source) => [source.sourceId, source.sourceRef]));
   const selectedReasons = new Map<string, Set<SelectionReason>>();
+  const sourceAnchors: TaskSourceRetrievalAnchor[] = [];
   const warnings: string[] = [];
 
   for (const seedFile of input.seedFiles ?? []) {
@@ -116,6 +129,15 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     if (!sourceRef) continue;
     if (matchesAnyTerm(symbol.name, normalizedTerms) || matchesAnyTerm(symbol.path, normalizedTerms)) {
       addReason(selectedReasons, sourceRef, "symbol_match");
+      if (symbol.symbolKind !== "module" && symbol.startLine !== undefined && symbol.endLine !== undefined) {
+        sourceAnchors.push({
+          sourceRef,
+          reason: "symbol_match",
+          label: symbol.name,
+          startLine: symbol.startLine,
+          endLine: symbol.endLine
+        });
+      }
     }
   }
 
@@ -134,6 +156,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     explicitSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "explicit_seed"),
     symbolSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "symbol_match"),
     lexicalSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "lexical_match"),
+    sourceAnchors: sourceAnchors.filter((anchor) => selectedSourceRefs.includes(anchor.sourceRef)),
     queryTerms,
     warnings
   };

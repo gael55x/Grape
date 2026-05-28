@@ -48,6 +48,8 @@ function taskRetrievalBody(
     ...listOrNone(retrieval.explicitSourceRefs),
     "Symbol-matched refs:",
     ...listOrNone(retrieval.symbolSourceRefs),
+    "Exact source anchors:",
+    ...anchorListOrNone(retrieval.sourceAnchors ?? []),
     "Lexical-matched refs:",
     ...listOrNone(retrieval.lexicalSourceRefs),
     retrieval.warnings.length > 0 ? `Warnings: ${retrieval.warnings.join(", ")}` : "Warnings: none"
@@ -56,4 +58,12 @@ function taskRetrievalBody(
 
 function listOrNone(values: readonly string[]): readonly string[] {
   return values.length > 0 ? values.map((value) => `- ${value}`) : ["- none"];
+}
+
+function anchorListOrNone(
+  anchors: NonNullable<CompileRepositoryContextArtifactInput["taskRetrieval"]>["sourceAnchors"]
+): readonly string[] {
+  return anchors && anchors.length > 0
+    ? anchors.map((anchor) => `- ${anchor.sourceRef}:${anchor.startLine}-${anchor.endLine} (${anchor.label})`)
+    : ["- none"];
 }
