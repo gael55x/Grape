@@ -11,15 +11,15 @@
 <p align="center">
   <a href="docs/README.md"><strong>Documentation</strong></a>
   ·
-  <a href="docs/v1/architecture/overview.md"><strong>Architecture</strong></a>
+  <a href="docs/README.md"><strong>Architecture</strong></a>
   ·
-  <a href="docs/v1/planning/implementation-roadmap.md"><strong>Roadmap</strong></a>
+  <a href="docs/README.md"><strong>Roadmap</strong></a>
   ·
   <a href="AGENTS.md"><strong>Agent Rules</strong></a>
 </p>
 
 <p align="center">
-  <img alt="Status" src="https://img.shields.io/badge/status-v1%20implementation%20scaffold-6f42c1" />
+  <img alt="Status" src="https://img.shields.io/badge/status-pre--release%20implementation-6f42c1" />
   <img alt="Runtime" src="https://img.shields.io/badge/node-%3E%3D22.5-339933" />
   <img alt="Storage" src="https://img.shields.io/badge/storage-sqlite%20%2B%20wal-044a64" />
   <img alt="Compiler" src="https://img.shields.io/badge/compiler-incremental%20context-111827" />
@@ -101,7 +101,7 @@ Implemented today:
 - first local setup CLI slice: `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`
 - bootstrap project detection during `grape init --connect` for language/framework, package manager, scripts, test command, entry points, config files, confidence levels, and non-durable candidate rules
 - setup/status scan diagnostics for visible and rejected files, including ignored, private, unreadable, oversized, and binary-file rejection counts without exposing skipped file bodies
-- first CLI context compile fallback: `grape compile --task <text>` auto-bootstraps local state, compiles from real repo inputs, evaluates optional token budgets, persists session diff rows, and writes inspectable V1 `.grape/artifacts/ctx_*.json` and `.md` context-pack artifacts
+- first CLI context compile fallback: `grape compile --task <text>` auto-bootstraps local state, compiles from real repo inputs, evaluates optional token budgets, persists session diff rows, and writes inspectable `.grape/artifacts/ctx_*.json` and `.md` context-pack artifacts
 - hardened Markdown context-pack artifacts with artifact summary, diff counts, item input refs, omitted/restore metadata, dependency details, token/budget status, and warnings/safety fields
 - compiled current-valid narrow source-excerpt claims in context artifacts with claim/proof dependencies
 - deterministic `symbol_outline`, `rule_digest`, and prior-turn `context_pack_summary` compression records with input hashes and non-proof artifact orientation sections
@@ -131,26 +131,26 @@ Not released yet:
 Start here:
 
 - [Documentation Index](docs/README.md)
-- [Framework Documentation](docs/v1/README.md)
-- [Implementation Contract](docs/v1/SPEC.md)
-- [Architecture](docs/v1/architecture/overview.md)
-- [State Machine](docs/v1/architecture/state-machine.md)
-- [Invariants](docs/v1/architecture/invariants.md)
-- [Implementation Roadmap](docs/v1/planning/implementation-roadmap.md)
+- [Framework Documentation](docs/README.md)
+- [Implementation Contract](docs/README.md)
+- [Architecture](docs/README.md)
+- [State Machine](docs/README.md)
+- [Invariants](docs/README.md)
+- [Implementation Roadmap](docs/README.md)
 - [Agent Operating Rules](AGENTS.md)
 
 Core contracts:
 
-- [Trust Model](docs/v1/core/trust-model.md)
-- [Context Artifact](docs/v1/contracts/context-artifact.md)
-- [Context Diff](docs/v1/contracts/context-diff.md)
-- [Compression](docs/v1/core/compression.md)
-- [Storage](docs/v1/core/storage.md)
-- [Security](docs/v1/core/security.md)
-- [MCP Tools](docs/v1/interfaces/mcp-tools.md)
-- [CLI](docs/v1/interfaces/cli.md)
-- [Testing](docs/v1/quality/testing.md)
-- [Benchmarks](docs/v1/quality/benchmarks.md)
+- [Trust Model](docs/README.md)
+- [Context Artifact](docs/README.md)
+- [Context Diff](docs/README.md)
+- [Compression](docs/README.md)
+- [Storage](docs/README.md)
+- [Security](docs/README.md)
+- [MCP Tools](docs/README.md)
+- [CLI](docs/README.md)
+- [Testing](docs/README.md)
+- [Benchmarks](docs/README.md)
 
 ## Architecture
 
@@ -180,7 +180,7 @@ flowchart LR
 
 ## Planned Usage
 
-The intended V1 setup is:
+The intended setup is:
 
 ```bash
 npm install -g grape-context
@@ -215,7 +215,7 @@ grape conflicts
 grape bench --fixture clean-typescript-app
 ```
 
-`grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape sessions`, `grape stale`, `grape conflicts`, `grape bench --fixture <name>`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, and `grape omitted` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, stale-invalidation inspection, conflict-edge inspection, scripted fixture benchmarking, omitted-context restore, and the first MCP context retrieval path. MCP also exposes stale invalidation inspection through `grape_get_stale_items`, conflict inspection through `grape_get_conflicts`, and the restricted V1 write surface through non-promoting candidate, command/test observation, user-decision, and confirmation-request tools. Conflict detection/resolution, broader durable artifact retrieval, claim-linked proof inspection, and broader durable proof types are not implemented yet.
+`grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape sessions`, `grape stale`, `grape conflicts`, `grape bench --fixture <name>`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, and `grape omitted` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, stale-invalidation inspection, conflict-edge inspection, scripted fixture benchmarking, omitted-context restore, and the first MCP context retrieval path. MCP also exposes stale invalidation inspection through `grape_get_stale_items`, conflict inspection through `grape_get_conflicts`, and the restricted write surface through non-promoting candidate, command/test observation, user-decision, and confirmation-request tools. Conflict detection/resolution, broader durable artifact retrieval, claim-linked proof inspection, and broader durable proof types are not implemented yet.
 
 ## Development
 
@@ -241,8 +241,8 @@ Before contributing, read:
 
 - [Contributing Guide](CONTRIBUTING.md)
 - [Agent Operating Rules](AGENTS.md)
-- [V1 Invariants](docs/v1/architecture/invariants.md)
-- [V1 Implementation Roadmap](docs/v1/planning/implementation-roadmap.md)
+- [Invariants](docs/README.md)
+- [Implementation Roadmap](docs/README.md)
 
 Implementation standards are strict:
 
@@ -256,7 +256,7 @@ Implementation standards are strict:
 
 ## Repository Status
 
-This repository is public-facing but pre-release. APIs, schemas, and command names may change until the V1 alpha contract is complete.
+This repository is public-facing but pre-release. APIs, schemas, and command names may change until the alpha contract is complete.
 
 ## License
 

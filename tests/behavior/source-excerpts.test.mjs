@@ -179,7 +179,7 @@ test("rule source selection is independent from generic exact-source source cap"
   );
 });
 
-test("preferred task source refs are selected before generic exact-source cap", () => {
+test("preferred task source refs exclude generic exact-source filler", () => {
   const sources = [
     ...Array.from({ length: 6 }, (_, index) => sourceInput(`src/source-${index}.ts`, "repository_file")),
     sourceInput("src/z-task.ts", "repository_file")
@@ -188,11 +188,11 @@ test("preferred task source refs are selected before generic exact-source cap", 
 
   assert.deepEqual(
     selectedExactSourceSources(sources, ["src/z-task.ts"]).map((source) => source.sourceRef),
-    ["src/z-task.ts", "src/source-0.ts", "src/source-1.ts", "src/source-2.ts", "src/source-3.ts"]
+    ["src/z-task.ts"]
   );
   assert.deepEqual(
     selectedSourceExcerpts(sourceExcerpts, ["src/z-task.ts"]).map((excerpt) => excerpt.sourceRef),
-    ["src/z-task.ts", "src/source-0.ts", "src/source-1.ts", "src/source-2.ts", "src/source-3.ts"]
+    ["src/z-task.ts"]
   );
 });
 

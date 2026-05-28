@@ -27,8 +27,16 @@ export function selectedSourceExcerpts(
   excerpts: readonly RepositoryArtifactSourceExcerptInput[],
   preferredSourceRefs: readonly string[] = []
 ): readonly RepositoryArtifactSourceExcerptInput[] {
-  return orderByPreferredRefs([...excerpts], preferredSourceRefs)
-    .filter((excerpt) => excerpt.sourceType !== "rule_file")
+  const ordered = orderByPreferredRefs(
+    excerpts.filter((excerpt) => excerpt.sourceType !== "rule_file"),
+    preferredSourceRefs
+  );
+  const preferred = new Set(preferredSourceRefs);
+  const selected = preferredSourceRefs.length > 0
+    ? ordered.filter((excerpt) => preferred.has(excerpt.sourceRef))
+    : ordered;
+
+  return selected
     .slice(0, maxExactSourceExcerpts);
 }
 
@@ -63,9 +71,14 @@ function selectedGenericExactSourceSources(
   sources: readonly RepositoryArtifactSourceInput[],
   preferredSourceRefs: readonly string[]
 ): readonly RepositoryArtifactSourceInput[] {
-  return orderByPreferredRefs(exactSourceCandidates(sources), preferredSourceRefs)
-    .filter((source) => source.sourceType !== "rule_file")
-    .slice(0, maxExactSourceExcerpts);
+  const candidates = exactSourceCandidates(sources).filter((source) => source.sourceType !== "rule_file");
+  const ordered = orderByPreferredRefs(candidates, preferredSourceRefs);
+  const preferred = new Set(preferredSourceRefs);
+  const selected = preferredSourceRefs.length > 0
+    ? ordered.filter((source) => preferred.has(source.sourceRef))
+    : ordered;
+
+  return selected.slice(0, maxExactSourceExcerpts);
 }
 
 function selectedRuleSources(

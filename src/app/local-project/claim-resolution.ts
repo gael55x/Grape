@@ -16,6 +16,7 @@ export interface ResolveLocalCurrentValidClaimsInput {
   readonly proofs: ProofStorageRepositories["proofs"];
   readonly sources: EvidenceStorageRepositories["sources"];
   readonly snapshot: ReturnType<typeof createGitRepoSnapshot>;
+  readonly taskSourceRefs?: readonly string[];
 }
 
 export interface ResolveLocalCurrentValidClaimsResult {
@@ -42,16 +43,38 @@ export function resolveLocalCurrentValidClaims(
     )
   );
   const activeIds = new Set(resolved.active.map((claim) => claim.id));
-  const activeClaims = claims
+  const allActiveClaims = claims
     .filter((claim) => activeIds.has(claim.claimId))
     .map((claim) => toClaimSummary(claim, input.proofs.listByClaim(claim.claimId)));
 
   return {
-    activeClaims,
+    activeClaims: selectTaskScopedClaims(allActiveClaims, input.taskSourceRefs),
     visibleClaims: claims.map((claim) => toClaimSummary(claim, input.proofs.listByClaim(claim.claimId))),
     rejectedCount: resolved.rejected.length,
     warnings: resolved.warnings
   };
+}
+
+function selectTaskScopedClaims(
+  claims: readonly LocalClaimSummary[],
+  taskSourceRefs: readonly string[] | undefined
+): readonly LocalClaimSummary[] {
+  if (taskSourceRefs === undefined) return claims;
+
+  const taskSourceOrder = new Map(taskSourceRefs.map((sourceRef, index) => [sourceRef, index]));
+  return claims
+    .filter((claim) => claim.sourceRefs.some((sourceRef) => taskSourceOrder.has(sourceRef)))
+    .sort((left, right) => claimTaskOrder(left, taskSourceOrder) - claimTaskOrder(right, taskSourceOrder));
+}
+
+function claimTaskOrder(
+  claim: LocalClaimSummary,
+  taskSourceOrder: ReadonlyMap<string, number>
+): number {
+  const positions = claim.sourceRefs
+    .map((sourceRef) => taskSourceOrder.get(sourceRef))
+    .filter((position): position is number => position !== undefined);
+  return positions.length > 0 ? Math.min(...positions) : Number.MAX_SAFE_INTEGER;
 }
 
 function toCurrentValidCandidate(input: {
