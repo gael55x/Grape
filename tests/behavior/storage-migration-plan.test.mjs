@@ -36,21 +36,20 @@ test("storage migration planner rejects checksum drift", () => {
   );
 });
 
-test("storage migration planner rejects filename drift", () => {
-  assert.throws(
-    () =>
-      planPendingStorageMigrations(
-        [migrationOne],
-        [
-          {
-            ...migrationOne,
-            filename: "0001_renamed.sql",
-            appliedAt: "2026-05-24T00:00:00.000Z"
-          }
-        ]
-      ),
-    /filename changed/
+test("storage migration planner tolerates filename-only drift when checksums match", () => {
+  const plan = planPendingStorageMigrations(
+    [migrationOne],
+    [
+      {
+        ...migrationOne,
+        filename: "0001_previous_name.sql",
+        appliedAt: "2026-05-24T00:00:00.000Z"
+      }
+    ]
   );
+
+  assert.deepEqual(plan.alreadyApplied, [migrationOne]);
+  assert.deepEqual(plan.pending, []);
 });
 
 test("storage migration planner rejects unknown applied migrations", () => {

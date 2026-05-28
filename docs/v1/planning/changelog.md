@@ -95,3 +95,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added token-budget pruning for compiled context packs. Required task, pinned, exact/safety-critical, omission/restore, and invalidation context is never pruned; optional non-safety context can be omitted from public pack items and output sections with explicit `omittedDueToBudget` metadata.
 - Added ADR-0008 to keep V1 artifact-first by deferring rendered agent-authored artifact annotations and preserving restricted MCP writes as non-authoritative evidence surfaces.
 - Renamed phase/version-prefixed implementation files and symbols to purpose-based names, including compiler artifact projection files and the initial storage migration filename.
+- Relaxed migration planning to tolerate filename-only drift when migration ID and checksum match, preserving setup compatibility after purpose-based migration renames.

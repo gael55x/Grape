@@ -162,7 +162,7 @@ The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` 
 - Committed migration references must include the SHA-256 checksum of the SQL file bytes.
 - Destructive migrations require an ADR before implementation.
 - `npm run storage:check` validates migration naming, manifest coverage, the initial table set, canonical table names, and obviously unsafe migration statements.
-- Migration planning must reject duplicate IDs, out-of-order available migrations, unknown applied migrations, changed filenames, and changed checksums before any SQL is applied.
+- Migration planning must reject duplicate IDs, out-of-order available migrations, unknown applied migrations, and changed checksums before any SQL is applied. Filename-only drift is tolerated when the migration ID and checksum still match so purpose-based migration renames do not break existing local projects.
 - Applied migrations must form a prefix of available migrations. Sparse histories fail closed.
 - Runtime SQLite apply tests must cover empty-database migration, idempotent re-run, WAL/foreign-key pragmas, and checksum drift before SQL execution.
 - Runtime migration must reject a non-empty database that has no trusted `schema_migrations` table.
