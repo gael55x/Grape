@@ -494,6 +494,6 @@ Keep entries simple:
 ### 2026-05-28 - Purpose-Based Implementation Naming
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: removed release-phase/version prefixes from implementation filenames and source symbols where the version was not an external contract. Compiler artifact projection files now use purpose names, the initial storage migration no longer uses an alpha label, and internal extractor labels use capability names.
+- Summary: removed release-phase/version prefixes from implementation filenames and source symbols where the version was not an external contract. Compiler artifact projection files now use purpose names, the initial storage migration no longer uses an alpha label, internal extractor labels use capability names, and migration planning tolerates filename-only drift when ID/checksum still match.
 - Checks run: `npm run docs:check`; `npm run architecture:check`; `npm run storage:check`; `npm run typecheck`; `npm run build`; `npm run build:test`; focused storage, compiler, indexing, and CLI behavior tests; `npm run check`.
 - Risks/follow-ups: versioned docs namespaces and artifact format strings intentionally remain versioned because they are external contract identifiers, not implementation filename prefixes.

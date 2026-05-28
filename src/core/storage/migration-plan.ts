@@ -37,9 +37,6 @@ export function planPendingStorageMigrations(
     if (!current) {
       throw new Error(`applied migration is not available: ${appliedMigration.id}`);
     }
-    if (current.filename !== appliedMigration.filename) {
-      throw new Error(`applied migration filename changed: ${appliedMigration.id}`);
-    }
     if (current.checksumSha256 !== appliedMigration.checksumSha256) {
       throw new Error(`applied migration checksum changed: ${appliedMigration.id}`);
     }
