@@ -120,6 +120,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         snapshotId: snapshotResult.snapshotId,
         sources,
         symbolNodes,
+        symbolEdges,
         indexingRepositories,
         seedFiles: input.seedFiles,
         seedSymbols: input.seedSymbols,

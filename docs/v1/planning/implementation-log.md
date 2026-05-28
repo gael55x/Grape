@@ -532,3 +532,10 @@ Keep entries simple:
 - Summary: changed task retrieval so MCP `tests` entries that look like repository paths, such as `tests/foo.test.ts`, select matching allowed test source files as exact source context. The task-retrieval artifact section now renders test seed refs separately, while free-form test names remain retrieval terms.
 - Checks run: focused task retrieval, repository artifact, source excerpt, and MCP stdio behavior tests before broader verification.
 - Risks/follow-ups: selected test file excerpts prove source existence only. Grape-observed test execution proofs, broader test-to-code linkage, and multi-span test/code ranking remain pending.
+
+### 2026-05-28 - Related Test Retrieval
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: fed lightweight import relationships into task retrieval so test files that import task-selected source files can be selected as related exact source context and rendered as related test refs.
+- Checks run: focused task retrieval, repository artifact, and MCP stdio behavior tests before broader verification.
+- Risks/follow-ups: import-related tests are orientation only. They do not prove the test was run or that behavior is correct; Grape-observed test-run proofs remain pending.
