@@ -483,3 +483,10 @@ Keep entries simple:
 - Summary: moved token-budget policy into the durable pack path so budgeted compiles prune only optional non-safety context before pack rows are persisted. Required task, pinned, exact/safety-critical, omission/restore, and invalidation context is protected, and public artifacts record budget-pruned bodies in `omittedDueToBudget` instead of sending them.
 - Checks run: focused context-budget, CLI local-project, and repository-artifact behavior tests under Node 22; `npm run docs:check`; `npm run architecture:check`; `npm run typecheck`; `npm run build`; `npm run build:test`; `npm run check`.
 - Risks/follow-ups: this is a conservative optional-pruning policy, not final compression replacement or rendered `context_pack_summary` use. Broader budget ranking, section-level compression invalidation, and durable current-valid retrieval remain pending.
+
+### 2026-05-28 - Agent Artifact Annotation Boundary
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added ADR-0008 to keep V1 artifact-first by deferring rendered agent-authored artifact annotations. Restricted MCP write tools remain the safe foundation for temporary evidence, candidates, hashes, and confirmation requests without mutating artifact bodies or promoting durable truth.
+- Checks run: `npm run docs:check`.
+- Risks/follow-ups: V1.1 annotation work must define a separate non-authoritative overlay, proof/scope boundaries, schema, rendering rules, and invalidation behavior before implementation.

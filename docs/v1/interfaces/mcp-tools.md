@@ -133,6 +133,8 @@ Unsafe or risky context outputs include `recoveryGuidance` so MCP consumers can 
 
 The V1 MCP surface is now implemented as a local-first foundation. Remaining work is hardening final durable current-valid retrieval, broader proof types, and future Grape-observed command/test runners without allowing MCP writes to promote truth directly.
 
+V1 does not use restricted write tools as free-form artifact annotation channels. Agent-authored observations remain temporary evidence, candidates, hashes, or confirmation requests until a proof/scope flow validates them. Rendered artifact annotations are deferred by ADR-0008 so the Context Artifact remains a compiled, proof-backed output rather than an agent notebook.
+
 ## Read Tool Contract
 
 ```ts

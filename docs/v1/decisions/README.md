@@ -13,6 +13,7 @@ This folder contains Architecture Decision Records for V1.
 | `adr-0005-compiler-module-ownership.md` | Accepted | Split compiler internals into artifact, pack, repository, section, and policy ownership folders while keeping `src/core/compiler/index.ts` as the public boundary. |
 | `adr-0006-benchmark-harness-ownership.md` | Accepted | Own scripted fixture benchmark orchestration under `src/app/benchmark/` while keeping `grape bench` a thin CLI adapter. |
 | `adr-0007-git-snapshot-file-manifest-ownership.md` | Accepted | Split Git snapshot orchestration from file manifest hashing and scanner rejection policy. |
+| `adr-0008-agent-artifact-annotations.md` | Accepted | Defer agent-authored artifact annotations from V1 rendered artifacts and keep MCP writes non-authoritative evidence only. |
 
 ## Naming
 

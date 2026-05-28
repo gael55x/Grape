@@ -180,6 +180,8 @@ Risk overlays now require task-selected exact source/config/rule evidence. If ta
 
 `grape artifacts --artifact <id>` and MCP `grape_get_artifact` expose stored artifact metadata, dependency rows, and repo-relative public artifact file refs for inspection. They do not return raw scaffold sidecar bodies and do not promote scaffold summaries to proof.
 
+Agent-authored artifact annotations are explicitly deferred from V1 rendered artifacts. Restricted MCP write tools may record temporary evidence, candidates, hashes, and confirmation request metadata, but those records do not mutate an artifact body or become current-valid context unless a future Trust Kernel flow validates proof and scope. See `docs/v1/decisions/adr-0008-agent-artifact-annotations.md`.
+
 This is still a projection from the repository-derived scaffold rather than the final broad durable-claim retrieval system. It now uses the V1 `ContextArtifact` JSON envelope, enforces the first task-specific high-risk exact-span policy, can render current-valid narrow source-excerpt claims, and includes deterministic symbol/rule compression cache orientation, but broader durable claim types and rendered `context_pack_summary` orientation are not yet promoted.
 
 ## Section Rules

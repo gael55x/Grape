@@ -93,3 +93,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added CLI fallback commands `grape sync` and `grape diff-context` over the existing local bootstrap/snapshot/index and compile/session-diff services.
 - Added `grape doctor --privacy` for local-first and scanner privacy diagnostics without returning file bodies or secret values.
 - Added token-budget pruning for compiled context packs. Required task, pinned, exact/safety-critical, omission/restore, and invalidation context is never pruned; optional non-safety context can be omitted from public pack items and output sections with explicit `omittedDueToBudget` metadata.
+- Added ADR-0008 to keep V1 artifact-first by deferring rendered agent-authored artifact annotations and preserving restricted MCP writes as non-authoritative evidence surfaces.
