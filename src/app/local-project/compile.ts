@@ -58,7 +58,6 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     gitBinary: input.gitBinary,
     migrationsDir: input.migrationsDir
   });
-
   const snapshot = createGitRepoSnapshot({ rootPath, createdAt: now, gitBinary: input.gitBinary });
   const layout = ensureLocalProjectLayout(snapshot.rootPath);
   const config = readLocalProjectConfig(layout.configPath);
@@ -66,7 +65,6 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
   if (path.resolve(config.project.rootPath) !== snapshot.rootPath) {
     throw new Error("Grape config root path does not match the current repository path.");
   }
-
   const taskId = taskIdFor(input.task, taskType, requestedRiskOverlays);
   const sessionId = input.sessionId ?? sessionIdFor(snapshot.repoId, snapshot.branch, taskId);
   assertSafeId("session id", sessionId);
@@ -110,7 +108,6 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         now
       });
       if (!session.existed) repositories.contextSessions.insert(session.record);
-
       const sources = evidenceRepositories.sources.listBySnapshot(snapshotResult.snapshotId);
       const symbolNodes = indexingRepositories.symbolNodes.listBySnapshot(snapshotResult.snapshotId);
       const symbolEdges = indexingRepositories.symbolEdges.listBySnapshot(snapshotResult.snapshotId);
@@ -147,7 +144,10 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         claims: claimRepositories.claims,
         proofs: proofRepositories.proofs,
         sources: evidenceRepositories.sources,
-        snapshot: snapshotResult.snapshot
+        snapshot: snapshotResult.snapshot,
+        taskSourceRefs: proofs.taskRetrieval.selectedSourceRefs.length > 0
+          ? proofs.taskRetrieval.selectedSourceRefs
+          : undefined
       });
       const compressionArtifacts = prepareLocalCompileCompressionArtifacts({
         repositories: compressionRepositories,

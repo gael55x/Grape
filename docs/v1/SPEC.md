@@ -1613,6 +1613,14 @@ After current-valid filtering, rank by:
 - environment match
 - branch/worktree match
 
+Current V1 implementation note: when task retrieval selects concrete source
+refs, scaffold exact-source proof creation and artifact `current-valid-claims`
+rendering are scoped to those selected refs plus pinned rule excerpts. Grape
+uses the broader exact-source fallback only when retrieval has no selected
+source refs, so a task-specific artifact does not fill unused proof/claim slots
+with unrelated files from the same commit. Inspection commands such as
+`grape claims --active` may still list all current-valid claims for debugging.
+
 ---
 
 ## 20. Layer 10 — Compression Cache
@@ -2698,6 +2706,11 @@ exact, hash-backed source excerpts, but they do not prove behavior or test
 success unless a separate trusted test-run proof exists. When the lightweight
 index records that a test file imports a task-selected source file, Grape may
 include that test file as related exact source context for orientation only.
+When any source refs are selected through files, path-like tests, symbols,
+lexical matches, or related-test imports, exact source proof rows are created
+from those selected refs instead of backfilling unrelated repository files.
+If retrieval finds no selected source refs, Grape may fall back to bounded
+generic exact-source excerpts so the artifact remains inspectable.
 
 ### 28.6 `grape_get_context` output
 

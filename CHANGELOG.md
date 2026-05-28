@@ -77,3 +77,4 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added `grape sync` and `grape diff-context --task <text>` as CLI fallback commands for refreshing local inputs and explicitly requesting a session-diffed context pack.
 - Added `grape doctor --privacy` for privacy-focused local diagnostics without returning file bodies or secret values.
 - Added token-budget pruning for `grape compile --token-budget` and MCP `tokenBudget`: required context is protected, optional context can be pruned, and budget omissions are recorded in the artifact.
+- Scoped exact-source evidence and rendered current-valid claims to task-selected files when retrieval has concrete matches, reducing unrelated proof-backed context in task artifacts while keeping broad claim inspection commands available.

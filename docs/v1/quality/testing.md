@@ -71,6 +71,8 @@ Artifact and diff:
 - `high_risk_with_task_exact_context_is_not_unsafe`
 - `path_like_test_seed_selects_exact_source_without_runtime_claim`
 - `related_test_import_selects_exact_source_without_runtime_claim`
+- `task_selected_exact_source_evidence_excludes_unrelated_fillers`
+- `task_scoped_current_valid_claims_exclude_unrelated_active_claims`
 - `token_budget_prunes_only_optional_context`
 - `budget_omitted_sections_are_removed_from_public_artifact_body`
 - `artifact_hash_is_deterministic`

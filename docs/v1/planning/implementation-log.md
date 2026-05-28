@@ -553,3 +553,10 @@ Keep entries simple:
 - Summary: rendered deterministic `context_pack_summary` compression orientation on later compile turns by rebuilding it from current active, non-compression sent-ledger rows before artifact compilation. Durable diffing now compares prior/current section dependency refs and hashes when the artifact manifest changes, so stale compression orientation emits invalidation without forcing unrelated unchanged sections to resend.
 - Checks run: focused durable context build, CLI local-project, compression cache, and repository artifact behavior tests before broader verification.
 - Risks/follow-ups: this is still deterministic ledger orientation, not model memory or compression replacement. Broader compression replacement policy and richer current-valid durable retrieval remain pending.
+
+### 2026-05-28 - Task-Scoped Claims And Exact Evidence
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: tightened task-specific context generation so exact-source proof creation and rendered current-valid claim sections stay scoped to task-selected source refs when retrieval has concrete matches. Broad exact-source fallback still keeps no-match artifacts inspectable, and broad active-claim inspection remains available through CLI/MCP.
+- Checks run: focused CLI local-project, task retrieval, repository artifact, and source-claim behavior tests before broader verification.
+- Risks/follow-ups: retrieval is still lexical/lightweight-symbol based. Broader durable claim types, contradiction/supersession, Grape-observed test/command proofs, and richer multi-span ranking remain pending.

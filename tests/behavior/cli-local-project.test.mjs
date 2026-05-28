@@ -495,7 +495,73 @@ test("cli compile uses task retrieval to prioritize matching exact source eviden
     assert.match(retrievalSection.text, /Lexical-matched refs:/);
     assert.match(exactEvidence.text, /Source: src\/z-billing\.ts/);
     assert.match(exactEvidence.text, /refundInvoice/);
+    assert.doesNotMatch(exactEvidence.text, /Source: src\/a-0\.ts/);
     assert.equal(result.warnings.includes("task_retrieval_no_source_matches"), false);
+  });
+});
+
+test("cli compile renders task-scoped current-valid claims instead of all active claims", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "src"));
+    writeFileSync(
+      path.join(repoPath, "src", "payments.ts"),
+      [
+        "export function authorizePayment() {",
+        "  return 'payment-approved';",
+        "}",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(
+      path.join(repoPath, "src", "search.ts"),
+      [
+        "export function buildSearchIndex() {",
+        "  return 'search-ready';",
+        "}",
+        ""
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "src"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add scoped claim fixture"
+    ]);
+
+    runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain authorizePayment payment approval",
+      "--session",
+      "payment-claim-session"
+    ]);
+    const search = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain buildSearchIndex search indexing",
+      "--session",
+      "search-claim-session"
+    ]);
+    const artifactJson = JSON.parse(readFileSync(search.artifactJsonPath, "utf8"));
+    const currentValidClaims = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "current-valid-claims"
+    );
+    const exactEvidence = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "exact-source-evidence"
+    );
+    const activeClaims = runCliJson(repoPath, ["claims", "--active"]).claims;
+
+    assert.ok(currentValidClaims);
+    assert.match(currentValidClaims.text, /src\/search\.ts/);
+    assert.doesNotMatch(currentValidClaims.text, /src\/payments\.ts/);
+    assert.match(exactEvidence.text, /Source: src\/search\.ts/);
+    assert.doesNotMatch(exactEvidence.text, /Source: src\/payments\.ts/);
+    assert.equal(activeClaims.some((claim) => claim.subject === "src/payments.ts"), true);
+    assert.equal(activeClaims.some((claim) => claim.subject === "src/search.ts"), true);
   });
 });
 
