@@ -108,3 +108,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added multi-window exact source excerpts. Selected sources can now produce up to two non-overlapping proof windows from distant task-selected symbol anchors, while query-term windows remain a fallback when no anchors exist for that source.
 - Simplified root README navigation/status language and rewrote the root roadmap into product-focused now/next/later buckets.
 - Hardened `context_pack_summary` rendering so current-turn stale dependency checks run before the prior sent ledger is summarized. Rows that the same compile will invalidate are excluded from the compression orientation.
+- Added safe local database repair for partial bootstrap. Bootstrap-capable flows back up unusable `.grape/grape.db` files before recreating local state, while status and doctor diagnose the condition without mutating local files.

@@ -23,6 +23,7 @@ export interface LocalCompileResultInput {
   readonly taskId: string;
   readonly riskOverlays: readonly RiskOverlay[];
   readonly value: LocalCompileDatabaseValue;
+  readonly databaseBackupPath?: string;
 }
 
 export function toCompileLocalContextResult(input: LocalCompileResultInput): CompileLocalContextResult {
@@ -37,7 +38,11 @@ export function toCompileLocalContextResult(input: LocalCompileResultInput): Com
     budget,
     tokenCost: input.value.build.tokenMetric.grapeTokens
   });
-  const warnings = [...input.value.artifact.warnings, ...budget.warnings];
+  const warnings = [
+    ...input.value.artifact.warnings,
+    ...budget.warnings,
+    ...(input.databaseBackupPath ? ["local_database_repaired"] : [])
+  ];
   const unsafeReasons = [...input.value.artifact.unsafeReasons, ...budget.unsafeReasons];
 
   return {
@@ -64,6 +69,7 @@ export function toCompileLocalContextResult(input: LocalCompileResultInput): Com
     recoveryGuidance: recoveryGuidanceForCompileResult({ warnings, unsafeReasons, budget }),
     artifactJsonPath: input.value.files.jsonPath,
     artifactMarkdownPath: input.value.files.markdownPath,
+    databaseBackupPath: input.databaseBackupPath,
     sessionResetId: input.value.sessionResetId
   };
 }

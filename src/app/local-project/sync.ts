@@ -20,6 +20,7 @@ export interface SyncLocalProjectResult {
   readonly dirtyWorktree: boolean;
   readonly configStatus: LocalProjectConfigWriteStatus;
   readonly configBackupPath?: string;
+  readonly databaseBackupPath?: string;
   readonly databasePath: string;
   readonly migrationsApplied: readonly string[];
   readonly scan: LocalScanDiagnostics;
@@ -45,6 +46,7 @@ export function syncLocalProject(input: SyncLocalProjectInput): SyncLocalProject
     dirtyWorktree: result.dirtyWorktree,
     configStatus: result.configStatus,
     configBackupPath: result.configBackupPath,
+    databaseBackupPath: result.databaseBackupPath,
     databasePath: result.databasePath,
     migrationsApplied: result.migrationsApplied,
     scan: result.scan,

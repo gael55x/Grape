@@ -53,6 +53,7 @@ export interface CompileLocalContextResult {
   readonly recoveryGuidance: readonly string[];
   readonly artifactJsonPath: string;
   readonly artifactMarkdownPath: string;
+  readonly databaseBackupPath?: string;
   readonly sessionResetId?: string;
 }
 

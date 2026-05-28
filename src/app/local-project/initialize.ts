@@ -17,7 +17,7 @@ import { ensureGrapeExcludedFromGit } from "./git-exclude.js";
 import { mcpConnectionGuide } from "./mcp-guide.js";
 import { defaultProjectId } from "./project-id.js";
 import { scanDiagnosticsForSnapshot } from "./scan-diagnostics.js";
-import { withMigratedLocalDatabase } from "./storage.js";
+import { withRepairableMigratedLocalDatabase } from "./storage.js";
 import type { InitializeLocalProjectInput, InitializeLocalProjectResult } from "./types.js";
 
 export function initializeLocalProject(
@@ -42,7 +42,7 @@ export function initializeLocalProject(
   });
   const configWrite = writeLocalProjectConfig(layout.configPath, config, { now });
 
-  const databaseResult = withMigratedLocalDatabase({
+  const databaseResult = withRepairableMigratedLocalDatabase({
     databasePath: layout.databasePath,
     migrationsDir: input.migrationsDir,
     now: () => now,
@@ -71,6 +71,7 @@ export function initializeLocalProject(
     databasePath: layout.databasePath,
     configStatus: configWrite.status,
     configBackupPath: configWrite.backupPath,
+    databaseBackupPath: databaseResult.databaseBackupPath,
     excludeStatus,
     createdDirs: layout.createdDirs,
     projectId,

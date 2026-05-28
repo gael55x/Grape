@@ -110,6 +110,8 @@ MCP and CLI:
 - `cli_bench_reports_fixture_token_reduction`
 - `cli_bench_requires_named_fixture`
 - `cli_doctor_privacy_redacts_secrets`
+- `cli_init_repairs_unusable_local_database`
+- `cli_compile_repairs_unusable_local_database`
 
 Storage and security:
 

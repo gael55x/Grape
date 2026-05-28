@@ -10,6 +10,7 @@ export function recoveryGuidanceForStatus(status: LocalProjectStatus): readonly 
   if (
     status.warnings.some((warning) => warning.includes(".grape")) ||
     status.errors.some((error) => error.startsWith("Grape config is repairable")) ||
+    status.errors.some((error) => error.startsWith("database check failed")) ||
     status.pendingMigrations.length > 0 ||
     !status.databaseExists
   ) {
@@ -20,6 +21,9 @@ export function recoveryGuidanceForStatus(status: LocalProjectStatus): readonly 
   }
   if (status.errors.some((error) => error.startsWith("Grape config is unsupported"))) {
     guidance.add("Use a Grape version that supports this config, or inspect .grape/config.json before reinitializing.");
+  }
+  if (status.errors.some((error) => error.startsWith("database check failed"))) {
+    guidance.add("Grape will back up an unusable local database before creating fresh local state.");
   }
   if (status.errors.some((error) => error.includes("config root path does not match"))) {
     guidance.add("Run with --repo pointing at the configured repository root, or reinitialize Grape in the intended repo.");
@@ -69,6 +73,9 @@ export function recoveryGuidanceForCompileResult(input: {
   if (input.warnings.includes("token_budget_pruned_optional_context")) {
     guidance.add("Inspect contextArtifact.omittedDueToBudget before deciding whether to rerun with a larger token budget.");
   }
+  if (input.warnings.includes("local_database_repaired")) {
+    guidance.add("The unusable local database was backed up and recreated; previous session ledgers may require a full resend.");
+  }
 
   return [...guidance];
 }
@@ -90,6 +97,13 @@ export function recoveryGuidanceForErrorMessage(message: string): readonly strin
   }
   if (message.includes("unsupported Grape config schema version")) {
     guidance.add("Use a Grape version that supports this config, or inspect .grape/config.json before reinitializing.");
+  }
+  if (
+    message.includes("file is not a database") ||
+    message.includes("database disk image is malformed") ||
+    message.includes("non-empty database without schema_migrations")
+  ) {
+    guidance.add("Run grape init --connect to back up and recreate unusable local database state.");
   }
   if (message.includes("config root path does not match")) {
     guidance.add("Run with --repo pointing at the configured repository root, or reinitialize Grape in the intended repo.");

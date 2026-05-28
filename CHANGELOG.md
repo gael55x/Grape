@@ -80,6 +80,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Scoped exact-source evidence and rendered current-valid claims to task-selected files when retrieval has concrete matches, reducing unrelated proof-backed context in task artifacts while keeping broad claim inspection commands available.
 - Added multi-window exact source excerpts so distant task-selected symbol anchors in one source can produce separate proof-backed context windows.
 - Filtered prior sent rows through current dependency staleness before rendering `context_pack_summary`, preventing compression orientation from mentioning context invalidated by the same compile.
+- Added safe local database repair for bootstrap-capable flows. `init`, `sync`, and `compile` now back up unusable `.grape/grape.db` files before recreating local state, while `status` and `doctor` diagnose the state without mutating it.
 
 ### Changed
 

@@ -31,6 +31,7 @@ export async function runSync(parsed: ParsedArgs): Promise<number> {
       `Config: ${result.configStatus}`,
       result.configBackupPath ? `Config backup: ${result.configBackupPath}` : undefined,
       `Database: ${result.databasePath}`,
+      result.databaseBackupPath ? `Database backup: ${result.databaseBackupPath}` : undefined,
       `Migrations applied: ${result.migrationsApplied.length === 0 ? "none" : result.migrationsApplied.join(", ")}`,
       "",
       "Scan diagnostics:",

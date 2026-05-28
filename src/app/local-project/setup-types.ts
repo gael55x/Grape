@@ -26,6 +26,7 @@ export interface InitializeLocalProjectResult {
   readonly databasePath: string;
   readonly configStatus: LocalProjectConfigWriteStatus;
   readonly configBackupPath?: string;
+  readonly databaseBackupPath?: string;
   readonly excludeStatus: "updated" | "unchanged";
   readonly createdDirs: readonly string[];
   readonly projectId: string;

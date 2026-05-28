@@ -123,6 +123,7 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
       `Config: ${result.configPath} (${result.configStatus})`,
       result.configBackupPath ? `Config backup: ${result.configBackupPath}` : undefined,
       `Database: ${result.databasePath}`,
+      result.databaseBackupPath ? `Database backup: ${result.databaseBackupPath}` : undefined,
       `Migrations applied: ${result.migrationsApplied.length === 0 ? "none" : result.migrationsApplied.join(", ")}`,
       result.excludeStatus === "updated"
         ? "Privacy: added .grape/ to .git/info/exclude"
