@@ -240,9 +240,8 @@ Grape is not ready for broad feature work yet. Contributions should preserve the
 Before contributing, read:
 
 - [Contributing Guide](CONTRIBUTING.md)
-- [Agent Operating Rules](AGENTS.md)
 - [Invariants](docs/README.md)
-- [Implementation Roadmap](docs/README.md)
+- [Roadmap](ROADMAP.md)
 
 Implementation standards are strict:
 
