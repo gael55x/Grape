@@ -29,11 +29,6 @@ export interface PrepareLocalCompressionArtifactsInput {
   readonly now: string;
 }
 
-export interface PrepareLocalCompileCompressionArtifactsInput extends PrepareLocalCompressionArtifactsInput {
-  readonly sessionId: string;
-  readonly sentItems: readonly ContextPackSummarySentItemInput[];
-}
-
 export interface PersistLocalContextPackSummaryCompressionInput {
   readonly repositories: CompressionStorageRepositories;
   readonly projectId: string;
@@ -102,27 +97,6 @@ export function prepareLocalCompressionArtifacts(
     scopeHash: artifact.scopeHash,
     outputHash: artifact.outputHash
   }));
-}
-
-export function prepareLocalCompileCompressionArtifacts(
-  input: PrepareLocalCompileCompressionArtifactsInput
-): readonly RepositoryArtifactCompressionInput[] {
-  const orientationArtifacts = prepareLocalCompressionArtifacts(input);
-  const priorContextPackSummary = prepareLocalContextPackSummaryCompressionArtifact({
-    repositories: input.repositories,
-    projectId: input.projectId,
-    snapshotId: input.snapshotId,
-    worktreeStateId: input.worktreeStateId,
-    snapshot: input.snapshot,
-    sessionId: input.sessionId,
-    sentItems: input.sentItems,
-    now: input.now
-  });
-
-  return [
-    ...orientationArtifacts,
-    ...(priorContextPackSummary ? [priorContextPackSummary] : [])
-  ];
 }
 
 export function persistLocalContextPackSummaryCompressionArtifact(

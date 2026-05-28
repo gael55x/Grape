@@ -3,10 +3,7 @@ import path from "node:path";
 import { buildDurableContext } from "../durable-context-build.js";
 import { persistGitRepoSnapshot } from "../persist-repo-snapshot.js";
 import { persistSourceExcerptClaims } from "../persist-source-claims.js";
-import {
-  compileRepositoryContextArtifact,
-  toContextPackItems
-} from "../../core/compiler/index.js";
+import { toContextPackItems } from "../../core/compiler/index.js";
 import { createGitRepoSnapshot } from "../../core/git/index.js";
 import { assertArtifactTextHasNoSecrets } from "../../core/security/index.js";
 import {
@@ -32,12 +29,12 @@ import { prepareLocalCompileProofs } from "./compile-proofs.js";
 import { toCompileLocalContextResult } from "./compile-result.js";
 import { ensureCompileSession } from "./compile-session.js";
 import {
-  persistLocalContextPackSummaryCompressionArtifact,
-  prepareLocalCompileCompressionArtifacts
+  persistLocalContextPackSummaryCompressionArtifact
 } from "./compression.js";
 import { listContextPackSummarySentItems } from "./context-pack-summary.js";
 import { resolveLocalCurrentValidClaims } from "./claim-resolution.js";
 import { resolveLocalTaskRetrieval } from "./task-retrieval.js";
+import { compileLocalRepositoryArtifact } from "./repository-artifact.js";
 import { withMigratedLocalDatabase } from "./storage.js";
 import type { CompileLocalContextInput, CompileLocalContextResult } from "./types.js";
 import type { LocalArtifactWriteResult } from "./artifact-files.js";
@@ -149,25 +146,17 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
           ? proofs.taskRetrieval.selectedSourceRefs
           : undefined
       });
-      const compressionArtifacts = prepareLocalCompileCompressionArtifacts({
-        repositories: compressionRepositories,
-        projectId: config.project.projectId,
-        snapshotId: snapshotResult.snapshotId,
-        worktreeStateId: snapshotResult.worktreeStateId,
-        snapshot: snapshotResult.snapshot,
-        sourceExcerpts: proofs.sourceExcerpts,
-        symbolNodes,
-        symbolEdges,
-        sessionId,
-        sentItems: listContextPackSummarySentItems({
-          repositories,
-          sessionId,
-          branch: snapshotResult.snapshot.branch,
-          commit: snapshotResult.snapshot.commit
-        }),
-        now
-      });
-      const artifact = compileRepositoryContextArtifact({
+      const activeClaims = currentValidClaims.activeClaims.map((claim) => ({
+        claimId: claim.claimId,
+        claimType: claim.claimType,
+        claimText: claim.claimText,
+        scopeHash: claim.scopeHash,
+        sourceRefs: claim.sourceRefs,
+        proofRefs: claim.proofRefs
+      }));
+      const artifact = compileLocalRepositoryArtifact({
+        repositories,
+        compressionRepositories,
         projectId: config.project.projectId,
         sessionId,
         taskId,
@@ -180,17 +169,9 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sourceExcerpts: proofs.sourceExcerpts,
         symbolNodes,
         symbolEdges,
-        activeClaims: currentValidClaims.activeClaims.map((claim) => ({
-          claimId: claim.claimId,
-          claimType: claim.claimType,
-          claimText: claim.claimText,
-          scopeHash: claim.scopeHash,
-          sourceRefs: claim.sourceRefs,
-          proofRefs: claim.proofRefs
-        })),
-        compressionArtifacts,
+        activeClaims,
         taskRetrieval: proofs.taskRetrieval,
-        createdAt: now
+        now
       });
 
       assertArtifactTextHasNoSecrets(JSON.stringify(artifact), "context artifact");

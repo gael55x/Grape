@@ -500,6 +500,64 @@ test("cli compile uses task retrieval to prioritize matching exact source eviden
   });
 });
 
+test("cli compile excludes currently invalidated sent items from context pack summaries", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "src"));
+    writeFileSync(
+      path.join(repoPath, "src", "payments.ts"),
+      "export function paymentFlow() {\n  return 'authorized';\n}\n"
+    );
+    execGit(repoPath, ["add", "src/payments.ts"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add payments flow"
+    ]);
+
+    runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain paymentFlow",
+      "--session",
+      "stale-summary"
+    ]);
+    writeFileSync(
+      path.join(repoPath, "src", "payments.ts"),
+      "export function paymentFlow() {\n  return 'captured';\n}\n"
+    );
+    const second = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain paymentFlow",
+      "--session",
+      "stale-summary"
+    ]);
+
+    const invalidatedSentItemIds = second.contextPackItems
+      .filter((item) => item.state === "INVALIDATE_PREVIOUS")
+      .map((item) => item.invalidatesSentItemId)
+      .filter(Boolean);
+    assert.equal(invalidatedSentItemIds.length > 0, true);
+
+    const artifactJson = JSON.parse(readFileSync(second.artifactJsonPath, "utf8"));
+    const compressionOrientation = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "compression-orientation"
+    );
+    const orientationText = compressionOrientation?.text ?? "";
+    for (const sentItemId of invalidatedSentItemIds) {
+      assert.equal(
+        orientationText.includes(sentItemId),
+        false,
+        `context_pack_summary should not include currently invalidated sent item ${sentItemId}`
+      );
+    }
+  });
+});
+
 test("cli compile renders task-scoped current-valid claims instead of all active claims", () => {
   withGitRepo((repoPath) => {
     mkdirSync(path.join(repoPath, "src"));

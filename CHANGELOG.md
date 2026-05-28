@@ -79,6 +79,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added token-budget pruning for `grape compile --token-budget` and MCP `tokenBudget`: required context is protected, optional context can be pruned, and budget omissions are recorded in the artifact.
 - Scoped exact-source evidence and rendered current-valid claims to task-selected files when retrieval has concrete matches, reducing unrelated proof-backed context in task artifacts while keeping broad claim inspection commands available.
 - Added multi-window exact source excerpts so distant task-selected symbol anchors in one source can produce separate proof-backed context windows.
+- Filtered prior sent rows through current dependency staleness before rendering `context_pack_summary`, preventing compression orientation from mentioning context invalidated by the same compile.
 
 ### Changed
 
