@@ -126,7 +126,7 @@ MCP restricted writes currently reuse existing V1 tables instead of adding prema
 - Claim repositories persist already-gated candidate/claim records and claim edge records only; extraction, belief gates, scope policy, contradiction detection, and current-valid filtering stay in claims/trust/retrieval/app modules.
 - Proof storage is split into `src/core/storage/proof-repositories.ts` so validated proof rows are persisted without expanding session-ledger or evidence repositories.
 - Proof repositories persist already-validated proof records only and can link a proof row to an accepted claim. Validation stays in `src/core/proofs/`; claim gating stays out of storage.
-- Alpha source storage keeps branch, commit, repo ID, project ID, worktree hash, and worktree state ID inside `metadata_json` until a later migration promotes the final `Source` shape fields that the compiler and MCP surface will query directly.
+- Initial source storage keeps branch, commit, repo ID, project ID, worktree hash, and worktree state ID inside `metadata_json` until a later migration promotes first-class `Source` shape fields that the compiler and MCP surface will query directly.
 - Indexing storage is split between `src/core/storage/indexing-repositories.ts` for aggregate wiring, `src/core/storage/fts-repositories.ts` for FTS rows/search, and symbol repository ownership for `symbol_nodes` and `symbol_edges` SQL and typed row mapping.
 - Compression cache storage is split into `src/core/storage/compression-repositories.ts` so deterministic cache metadata and input hashes do not expand the session-ledger repository file.
 - Repository tests must prove session-scoped sent/omitted ledgers and fail-closed foreign-key behavior before app services rely on those tables.
@@ -161,7 +161,7 @@ The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` 
 - Every migration stores checksum and applied timestamp in `schema_migrations`.
 - Committed migration references must include the SHA-256 checksum of the SQL file bytes.
 - Destructive migrations require an ADR before implementation.
-- `npm run storage:check` validates migration naming, manifest coverage, the first alpha table set, canonical table names, and obviously unsafe migration statements.
+- `npm run storage:check` validates migration naming, manifest coverage, the initial table set, canonical table names, and obviously unsafe migration statements.
 - Migration planning must reject duplicate IDs, out-of-order available migrations, unknown applied migrations, changed filenames, and changed checksums before any SQL is applied.
 - Applied migrations must form a prefix of available migrations. Sparse histories fail closed.
 - Runtime SQLite apply tests must cover empty-database migration, idempotent re-run, WAL/foreign-key pragmas, and checksum drift before SQL execution.

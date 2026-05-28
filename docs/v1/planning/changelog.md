@@ -28,7 +28,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added a zero-dependency architecture-boundary check for TypeScript import direction.
 - Added empty source ownership modules for the documented app, adapter, storage, security, session, scope, compression, indexing, and claims layers.
 - Marked SQLite Schema And Migrations as the next goal and deferred CI wiring until the dependency and lockfile baseline is defined.
-- Added the first alpha storage migration contract and a zero-dependency migration validator.
+- Added the initial storage migration contract and a zero-dependency migration validator.
 - Added typed SQLite connection policy defaults for WAL, foreign keys, busy timeout, synchronous mode, and temp store.
 - Added pure storage migration planning for pending migrations, checksum drift, filename drift, unknown applied migrations, and ordering failures.
 - Hardened migration planning for sparse histories, real SQL checksums, schema guards, session ledger identity, restore metadata, and stricter architecture import boundaries.
@@ -94,3 +94,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added `grape doctor --privacy` for local-first and scanner privacy diagnostics without returning file bodies or secret values.
 - Added token-budget pruning for compiled context packs. Required task, pinned, exact/safety-critical, omission/restore, and invalidation context is never pruned; optional non-safety context can be omitted from public pack items and output sections with explicit `omittedDueToBudget` metadata.
 - Added ADR-0008 to keep V1 artifact-first by deferring rendered agent-authored artifact annotations and preserving restricted MCP writes as non-authoritative evidence surfaces.
+- Renamed phase/version-prefixed implementation files and symbols to purpose-based names, including compiler artifact projection files and the initial storage migration filename.

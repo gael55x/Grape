@@ -3,7 +3,7 @@ import test from "node:test";
 
 import {
   applyInMemoryContextPackBudget,
-  buildV1ContextArtifact,
+  buildContextArtifact,
   evaluateContextPackBudget
 } from "../../.tmp/build/src/core/compiler/index.js";
 
@@ -95,7 +95,7 @@ test("budget-omitted sections are removed from the public context artifact body"
       inMemoryPackItem("source-manifest", 80)
     ]
   });
-  const publicArtifact = buildV1ContextArtifact({
+  const publicArtifact = buildContextArtifact({
     artifact,
     projectId: "project-1",
     repoSnapshotId: "snapshot-1",

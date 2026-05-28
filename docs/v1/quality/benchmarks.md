@@ -63,7 +63,7 @@ Supported options:
 
 The implemented benchmark is `bench_token_reduction_after_first_turn`. It reports first-turn and second-turn token costs separately, wall-clock duration for each compile call, context-pack item counts, sent and omitted ledger counts, restore hint counts, invalidation item counts, unsafe omissions, stale sends, and second-turn reduction percentage.
 
-Current alpha thresholds:
+Current benchmark thresholds:
 
 - second-turn reduction must be at least 30 percent
 - unsafe omissions must be zero

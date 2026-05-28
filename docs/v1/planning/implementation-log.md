@@ -109,7 +109,7 @@ Keep entries simple:
 ### 2026-05-24 - Storage Contract Correction
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: hardened the alpha storage contract around migration ordering, SQL checksums, session ledger identity, dependency manifest hashes, restore metadata, and serialized-state constraints.
+- Summary: hardened the initial storage contract around migration ordering, SQL checksums, session ledger identity, dependency manifest hashes, restore metadata, and serialized-state constraints.
 - Checks run: `npm run check`.
 - Risks/follow-ups: runtime SQLite apply tests and repository APIs still require a driver/package decision; token benchmark claims still need scripted baselines.
 
@@ -490,3 +490,10 @@ Keep entries simple:
 - Summary: added ADR-0008 to keep V1 artifact-first by deferring rendered agent-authored artifact annotations. Restricted MCP write tools remain the safe foundation for temporary evidence, candidates, hashes, and confirmation requests without mutating artifact bodies or promoting durable truth.
 - Checks run: `npm run docs:check`.
 - Risks/follow-ups: V1.1 annotation work must define a separate non-authoritative overlay, proof/scope boundaries, schema, rendering rules, and invalidation behavior before implementation.
+
+### 2026-05-28 - Purpose-Based Implementation Naming
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: removed release-phase/version prefixes from implementation filenames and source symbols where the version was not an external contract. Compiler artifact projection files now use purpose names, the initial storage migration no longer uses an alpha label, and internal extractor labels use capability names.
+- Checks run: `npm run docs:check`; `npm run architecture:check`; `npm run storage:check`; `npm run typecheck`; `npm run build`; `npm run build:test`; focused storage, compiler, indexing, and CLI behavior tests; `npm run check`.
+- Risks/follow-ups: versioned docs namespaces and artifact format strings intentionally remain versioned because they are external contract identifiers, not implementation filename prefixes.

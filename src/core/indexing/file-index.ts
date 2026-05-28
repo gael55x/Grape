@@ -148,7 +148,7 @@ function detectSymbols(input: FileIndexInput, file: FileIndexSource, content: st
       endLine: index + 1,
       signatureHash: sha256(Buffer.from(line.trim())),
       confidence: symbol.confidence,
-      metadata: { sourceKind: file.sourceKind, extractor: "regex_v1" },
+      metadata: { sourceKind: file.sourceKind, extractor: "regex_basic" },
       createdAt: input.createdAt
     });
   }
@@ -187,7 +187,7 @@ function detectImportEdges(
       edgeType: "imports",
       confidence: targetPath ? "medium" : "low",
       discoveryMethod: "import_resolution",
-      metadata: { specifier, targetPath, extractor: "regex_v1" },
+      metadata: { specifier, targetPath, extractor: "regex_basic" },
       createdAt: input.createdAt
     });
   }

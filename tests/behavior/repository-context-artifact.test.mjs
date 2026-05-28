@@ -8,7 +8,7 @@ import test from "node:test";
 
 import { persistGitRepoSnapshot, readLocalSourceExcerpts } from "../../.tmp/build/src/app/index.js";
 import {
-  buildV1ContextArtifact,
+  buildContextArtifact,
   compileRepositoryContextArtifact
 } from "../../.tmp/build/src/core/compiler/index.js";
 import {
@@ -248,7 +248,7 @@ test("repository artifact compiler projects scaffold output to the V1 ContextArt
       });
 
       const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories);
-      const contextArtifact = buildV1ContextArtifact({
+      const contextArtifact = buildContextArtifact({
         artifact,
         projectId: "project-1",
         repoSnapshotId: snapshotResult.snapshotId,
@@ -368,7 +368,7 @@ test("repository artifact compiler renders compression artifacts as non-proof or
       const compressionDependency = artifact.dependencyManifest.dependencies.find(
         (dependency) => dependency.ref === "compression:symbol_outline:abc"
       );
-      const contextArtifact = buildV1ContextArtifact({
+      const contextArtifact = buildContextArtifact({
         artifact,
         projectId: "project-1",
         repoSnapshotId: snapshotResult.snapshotId,

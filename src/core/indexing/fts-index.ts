@@ -102,7 +102,7 @@ function ftsEntry(input: FtsIndexInput, source: SourceRecord, body: string): Fts
     textHash,
     body,
     metadata: {
-      extractor: "fts_v1",
+      extractor: "fts_basic",
       sourceScope: source.sourceScope
     },
     createdAt: input.createdAt
