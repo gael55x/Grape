@@ -66,6 +66,9 @@ export function recoveryGuidanceForCompileResult(input: {
   if (input.budget.status === "over_budget") {
     guidance.add("Use grape artifacts --artifact <id> to inspect the pack before choosing a larger token budget.");
   }
+  if (input.warnings.includes("token_budget_pruned_optional_context")) {
+    guidance.add("Inspect contextArtifact.omittedDueToBudget before deciding whether to rerun with a larger token budget.");
+  }
 
   return [...guidance];
 }

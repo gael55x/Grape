@@ -157,6 +157,7 @@
     "status": "not_requested",
     "estimatedPackTokens": 200,
     "requiredContextTokens": 22,
+    "omittedDueToBudget": [],
     "warnings": [],
     "unsafeReasons": []
   }

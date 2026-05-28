@@ -476,3 +476,10 @@ Keep entries simple:
 - Summary: implemented `grape doctor --privacy` as a privacy-focused diagnostic view over local-first defaults, `.grape/` Git exclusion, aggregate scanner rejection counts, ignored/private handling, and artifact secret-scan coverage without returning secret values or rejected-file bodies.
 - Checks run: focused CLI privacy/local-project behavior tests; `npm run check`; `npm run build`.
 - Risks/follow-ups: privacy export, purge, and scoped ignored-file approvals remain deferred until their data contracts are implemented.
+
+### 2026-05-28 - Context Pack Budget Pruning
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: moved token-budget policy into the durable pack path so budgeted compiles prune only optional non-safety context before pack rows are persisted. Required task, pinned, exact/safety-critical, omission/restore, and invalidation context is protected, and public artifacts record budget-pruned bodies in `omittedDueToBudget` instead of sending them.
+- Checks run: focused context-budget, CLI local-project, and repository-artifact behavior tests under Node 22; `npm run docs:check`; `npm run architecture:check`; `npm run typecheck`; `npm run build`; `npm run build:test`; `npm run check`.
+- Risks/follow-ups: this is a conservative optional-pruning policy, not final compression replacement or rendered `context_pack_summary` use. Broader budget ranking, section-level compression invalidation, and durable current-valid retrieval remain pending.

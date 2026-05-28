@@ -1,5 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 
+import { applyInMemoryContextPackBudget } from "../core/compiler/index.js";
+import type { ContextPackBudgetResult } from "../core/compiler/index.js";
 import { calculateInMemoryTokenSavings, createInMemoryContextDiff } from "../core/diff/index.js";
 import type { InMemoryTokenSavingsMetric } from "../core/diff/index.js";
 import type {
@@ -36,6 +38,7 @@ export interface DurableContextBuildInput {
   readonly sessionUpdate?: ContextSessionCompileStateUpdate;
   readonly sessionInvalidation?: DurableSessionInvalidation;
   readonly sessionReset?: DurableSessionReset;
+  readonly tokenBudget?: number;
   readonly prepareOutput?: (preview: DurableContextBuildPreview) => void;
 }
 
@@ -59,6 +62,7 @@ export interface DurableContextBuildResult {
   readonly omittedItems: readonly OmittedContextItemRecord[];
   readonly sentItems: readonly ContextSentItemRecord[];
   readonly tokenMetric: InMemoryTokenSavingsMetric;
+  readonly budget: ContextPackBudgetResult;
   readonly unsafeOmissions: number;
 }
 
@@ -151,7 +155,12 @@ export function buildDurableContext(input: DurableContextBuildInput): DurableCon
       previouslySent: currentPriorItems.map(toInMemorySentItem)
     });
 
-    const contextPackItems = [...invalidationItems, ...diff.contextPackItems];
+    const budgetedPack = applyInMemoryContextPackBudget({
+      tokenBudget: input.tokenBudget,
+      artifact: input.artifact,
+      contextPackItems: [...invalidationItems, ...diff.contextPackItems]
+    });
+    const contextPackItems = budgetedPack.contextPackItems;
     const sentItems = contextPackItems
       .filter(isSentDiffState)
       .map((item) => toContextSentItem(input, item, priorSentItems));
@@ -198,6 +207,7 @@ export function buildDurableContext(input: DurableContextBuildInput): DurableCon
       omittedItems,
       sentItems,
       tokenMetric,
+      budget: budgetedPack.budget,
       unsafeOmissions: diff.unsafeOmissions
     };
 

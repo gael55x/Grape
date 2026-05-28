@@ -258,6 +258,7 @@ test("repository artifact compiler projects scaffold output to the V1 ContextArt
           status: "not_requested",
           estimatedPackTokens: 100,
           requiredContextTokens: 20,
+          omittedDueToBudget: [],
           warnings: [],
           unsafeReasons: []
         },
@@ -377,6 +378,7 @@ test("repository artifact compiler renders compression artifacts as non-proof or
           status: "not_requested",
           estimatedPackTokens: 100,
           requiredContextTokens: 20,
+          omittedDueToBudget: [],
           warnings: [],
           unsafeReasons: []
         },

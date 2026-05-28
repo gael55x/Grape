@@ -103,7 +103,7 @@ When the same MCP session identity is reused after a Git branch switch for the s
 
 When `resetSession: true` is supplied for an existing MCP session, the compile service records a `session_reset` invalidation event, returns `INVALIDATE_PREVIOUS` items for active prior sent context, and forces full resend of current scaffold artifact sections instead of omitting unchanged sections.
 
-Current limitation: the returned `contextArtifact` and public artifact JSON use the V1 `ContextArtifact` envelope, but their sections are still projected from the repository-derived scaffold rather than final durable current-valid claim retrieval. The current implementation requires `sessionId` or `agentSessionId` so session-scoped diffing cannot collapse across independent agents. Seed `files`, `symbols`, and `tests` participate in risk-overlay detection and source retrieval, but retrieval is still a conservative source-selection foundation over allowed snapshot records. `symbol_outline` and `rule_digest` compression are deterministic cache/orientation only; `context_pack_summary` is persisted as cache but not rendered into artifacts yet. Stale compression invalidation events and pruning remain pending. `tokenBudget` is evaluated without pruning pinned, exact, or invalidation context; if required context exceeds the budget, `compileMode` is `cannot_compile_safely`. Non-local `environmentScope`, `agentName`, `agentSessionId`, and `resetSession` are accepted for contract compatibility; unsupported environment behavior produces explicit warnings and `compileMode: "partial_with_risk"` unless a stronger unsafe condition applies. Detected risk overlays return `compileMode: "cannot_compile_safely"` with `risk_overlay_missing_exact_context` unless task retrieval or explicit seed refs select proof-backed exact source/config/rule evidence. Artifact file refs returned over MCP are repo-relative paths, not absolute local paths.
+Current limitation: the returned `contextArtifact` and public artifact JSON use the V1 `ContextArtifact` envelope, but their sections are still projected from the repository-derived scaffold rather than final durable current-valid claim retrieval. The current implementation requires `sessionId` or `agentSessionId` so session-scoped diffing cannot collapse across independent agents. Seed `files`, `symbols`, and `tests` participate in risk-overlay detection and source retrieval, but retrieval is still a conservative source-selection foundation over allowed snapshot records. `symbol_outline` and `rule_digest` compression are deterministic cache/orientation only; `context_pack_summary` is persisted as cache but not rendered into artifacts yet. Stale compression invalidation events remain pending. `tokenBudget` prunes only optional non-safety context after required task summary, pinned, exact/safety-critical, omission/restore, and invalidation context fits; pruned bodies are removed from public `contextPackItems` and `contextArtifact.outputSections` and recorded in `contextArtifact.omittedDueToBudget` plus `budget.omittedDueToBudget`. If required context exceeds the budget, `compileMode` is `cannot_compile_safely`. Non-local `environmentScope`, `agentName`, `agentSessionId`, and `resetSession` are accepted for contract compatibility; unsupported environment behavior produces explicit warnings and `compileMode: "partial_with_risk"` unless a stronger unsafe condition applies. Detected risk overlays return `compileMode: "cannot_compile_safely"` with `risk_overlay_missing_exact_context` unless task retrieval or explicit seed refs select proof-backed exact source/config/rule evidence. Artifact file refs returned over MCP are repo-relative paths, not absolute local paths.
 
 Unsafe or risky context outputs include `recoveryGuidance` so MCP consumers can decide whether to request narrower file/symbol/test seed refs, increase a token budget, rerun after worktree cleanup, or inspect local state without guessing from internal errors.
 
@@ -180,6 +180,16 @@ interface GrapeGetContextOutput {
     tokenBudget?: number;
     estimatedPackTokens: number;
     requiredContextTokens: number;
+    omittedDueToBudget: Array<{
+      id: string;
+      itemKind: string;
+      itemRef: string;
+      itemHash: string;
+      sectionId?: string;
+      tokenCount: number;
+      canRestore: boolean;
+      restoreId?: string;
+    }>;
     warnings: string[];
     unsafeReasons: string[];
   };

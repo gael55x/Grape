@@ -5,7 +5,6 @@ import { persistGitRepoSnapshot } from "../persist-repo-snapshot.js";
 import { persistSourceExcerptClaims } from "../persist-source-claims.js";
 import {
   compileRepositoryContextArtifact,
-  evaluateContextPackBudget,
   toContextPackItems
 } from "../../core/compiler/index.js";
 import { createGitRepoSnapshot } from "../../core/git/index.js";
@@ -234,13 +233,9 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
                 }
               : undefined,
           sessionReset,
+          tokenBudget: input.tokenBudget,
           prepareOutput(preview) {
             const contextPackItems = toContextPackItems(artifact, preview.contextPackItems);
-            const budget = evaluateContextPackBudget({
-              tokenBudget: input.tokenBudget,
-              contextPackItems,
-              estimatedPackTokens: preview.tokenMetric.grapeTokens
-            });
             files = writeLocalContextOutput({
               artifactDirPath: layout.artifactDirPath,
               contextPackItems,
@@ -251,7 +246,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
               repoSnapshotId: snapshotResult.snapshotId,
               worktreeStateId: snapshotResult.worktreeStateId,
               dirtyWorktree: snapshotResult.snapshot.worktreeStatus !== "clean",
-              budget,
+              budget: preview.budget,
               tokenCost: preview.tokenMetric.grapeTokens
             });
           }
@@ -293,7 +288,6 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     sessionId,
     taskId,
     riskOverlays: requestedRiskOverlays,
-    tokenBudget: input.tokenBudget,
     value: databaseResult.value
   });
 }
