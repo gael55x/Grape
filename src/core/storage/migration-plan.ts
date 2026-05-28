@@ -2,6 +2,7 @@ export interface StorageMigrationDefinition {
   readonly id: string;
   readonly filename: string;
   readonly checksumSha256: string;
+  readonly compatibleChecksumSha256?: readonly string[];
 }
 
 export interface AppliedStorageMigration {
@@ -37,7 +38,7 @@ export function planPendingStorageMigrations(
     if (!current) {
       throw new Error(`applied migration is not available: ${appliedMigration.id}`);
     }
-    if (current.checksumSha256 !== appliedMigration.checksumSha256) {
+    if (!checksumMatchesAvailableMigration(current, appliedMigration.checksumSha256)) {
       throw new Error(`applied migration checksum changed: ${appliedMigration.id}`);
     }
   }
@@ -81,12 +82,31 @@ function assertSortedById(migrations: readonly { readonly id: string }[], label:
 }
 
 function assertChecksums(
-  migrations: readonly { readonly id: string; readonly checksumSha256: string }[],
+  migrations: readonly {
+    readonly id: string;
+    readonly checksumSha256: string;
+    readonly compatibleChecksumSha256?: readonly string[];
+  }[],
   label: string
 ): void {
   for (const migration of migrations) {
     if (!/^[a-f0-9]{64}$/.test(migration.checksumSha256)) {
       throw new Error(`${label} migration has invalid checksum: ${migration.id}`);
     }
+    for (const checksum of migration.compatibleChecksumSha256 ?? []) {
+      if (!/^[a-f0-9]{64}$/.test(checksum)) {
+        throw new Error(`${label} migration has invalid compatible checksum: ${migration.id}`);
+      }
+    }
   }
+}
+
+function checksumMatchesAvailableMigration(
+  migration: StorageMigrationDefinition,
+  appliedChecksum: string
+): boolean {
+  return (
+    migration.checksumSha256 === appliedChecksum ||
+    (migration.compatibleChecksumSha256 ?? []).includes(appliedChecksum)
+  );
 }

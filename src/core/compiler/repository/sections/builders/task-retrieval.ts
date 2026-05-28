@@ -48,8 +48,8 @@ function taskRetrievalBody(
     ...listOrNone(retrieval.explicitSourceRefs),
     "Symbol-matched refs:",
     ...listOrNone(retrieval.symbolSourceRefs),
-    "FTS-matched refs:",
-    ...listOrNone(retrieval.ftsSourceRefs),
+    "Lexical-matched refs:",
+    ...listOrNone(retrieval.lexicalSourceRefs),
     retrieval.warnings.length > 0 ? `Warnings: ${retrieval.warnings.join(", ")}` : "Warnings: none"
   ].join("\n");
 }

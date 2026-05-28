@@ -62,7 +62,7 @@ export interface RepositoryArtifactTaskRetrievalInput {
   readonly selectedSourceRefs: readonly string[];
   readonly explicitSourceRefs: readonly string[];
   readonly symbolSourceRefs: readonly string[];
-  readonly ftsSourceRefs: readonly string[];
+  readonly lexicalSourceRefs: readonly string[];
   readonly queryTerms: readonly string[];
   readonly warnings: readonly string[];
 }

@@ -55,7 +55,7 @@ No product code should start before the Documentation Foundation is complete. In
 8. Trust Kernel And Proof Validation
 9. Claims And Layer Isolation
 10. Project Rules Ingestion
-11. Symbol/File Index And FTS
+11. Symbol/File Index And Lexical Search
 12. Current-Valid Retrieval
 13. Context Artifact Compiler
 14. Context Diff Engine And Session Locks
@@ -80,7 +80,7 @@ No product code should start before the Documentation Foundation is complete. In
 | Trust Kernel And Proof Validation | proof validators, belief gate, promotion rules. | trust safety, proof hash, partial verification tests. | model judgment as proof. |
 | Claims And Layer Isolation | durable claims, scratch claims, claim edges. | no hidden promotion, contradiction/supersession tests. | advanced contradiction AI. |
 | Project Rules Ingestion | pinned rules, rule proofs, rule digests. | pinned resend and stale rule tests. | remote/team rules. |
-| Symbol/File Index And FTS | lexical index, basic symbol outlines, path normalization. | FTS, secret exclusion, cross-platform path tests. | full semantic graph. |
+| Symbol/File Index And Lexical Search | lexical index, basic symbol outlines, path normalization. | lexical retrieval, secret exclusion, cross-platform path tests. | full semantic graph. |
 | Current-Valid Retrieval | scope matching, stale filtering, partial warnings. | gold label current-valid tests. | relevance ranking over stale facts. |
 | Context Artifact Compiler | artifact schema, sections, manifests, redaction scan. | artifact golden tests. | compression optimization first. |
 | Context Diff Engine And Session Locks | sent ledger, omitted ledger, restore, invalidation. | session isolation, pinned resend, restore tests. | global context lock. |

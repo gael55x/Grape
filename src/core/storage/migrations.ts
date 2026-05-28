@@ -2,6 +2,7 @@ export interface StorageMigrationReference {
   readonly id: string;
   readonly filename: string;
   readonly checksumSha256: string;
+  readonly compatibleChecksumSha256?: readonly string[];
   readonly description: string;
 }
 
@@ -21,8 +22,9 @@ export const storageMigrationReferences = [
   {
     id: "0003",
     filename: "0003_fts_entries.sql",
-    checksumSha256: "e23937d27051cb573f7e31264607ee4930e8cc8347ab62c183ae0807c06994d1",
-    description: "Create safe FTS5 lexical source entry refs and text index rows."
+    checksumSha256: "18c2ddc068433ffd2cdb523fe920d3ad63478b0bbd8ecddffc14ea06ced1f3cb",
+    compatibleChecksumSha256: ["e23937d27051cb573f7e31264607ee4930e8cc8347ab62c183ae0807c06994d1"],
+    description: "Create safe lexical source entry refs and text index rows."
   },
   {
     id: "0004",

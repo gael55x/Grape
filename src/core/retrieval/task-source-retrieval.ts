@@ -12,7 +12,7 @@ export interface TaskRetrievalSymbol {
   readonly name: string;
 }
 
-export interface TaskRetrievalFtsMatch {
+export interface TaskRetrievalLexicalMatch {
   readonly sourceId: string;
   readonly sourceRef: string;
   readonly matchedTerm: string;
@@ -28,7 +28,7 @@ export interface TaskSourceRetrievalInput {
   readonly task: string;
   readonly sources: readonly TaskRetrievalSource[];
   readonly symbols: readonly TaskRetrievalSymbol[];
-  readonly ftsMatches: readonly TaskRetrievalFtsMatch[];
+  readonly lexicalMatches: readonly TaskRetrievalLexicalMatch[];
   readonly seedFiles?: readonly string[];
   readonly seedSymbols?: readonly string[];
   readonly seedTests?: readonly string[];
@@ -39,12 +39,12 @@ export interface TaskSourceRetrievalResult {
   readonly selectedSourceRefs: readonly string[];
   readonly explicitSourceRefs: readonly string[];
   readonly symbolSourceRefs: readonly string[];
-  readonly ftsSourceRefs: readonly string[];
+  readonly lexicalSourceRefs: readonly string[];
   readonly queryTerms: readonly string[];
   readonly warnings: readonly string[];
 }
 
-type SelectionReason = "explicit_seed" | "symbol_match" | "fts_match";
+type SelectionReason = "explicit_seed" | "symbol_match" | "lexical_match";
 
 const defaultMaxTerms = 12;
 const defaultMaxSelectedSources = 8;
@@ -119,10 +119,10 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     }
   }
 
-  for (const match of input.ftsMatches) {
+  for (const match of input.lexicalMatches) {
     const sourceRef = sourceRefById.get(match.sourceId) ?? match.sourceRef;
     if (!sourceByRef.has(sourceRef)) continue;
-    addReason(selectedReasons, sourceRef, "fts_match");
+    addReason(selectedReasons, sourceRef, "lexical_match");
   }
 
   const selectedSourceRefs = [...selectedReasons.keys()].slice(0, maxSelectedSources);
@@ -133,7 +133,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     selectedSourceRefs,
     explicitSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "explicit_seed"),
     symbolSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "symbol_match"),
-    ftsSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "fts_match"),
+    lexicalSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "lexical_match"),
     queryTerms,
     warnings
   };

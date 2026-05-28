@@ -14,6 +14,7 @@ This folder contains Architecture Decision Records for V1.
 | `adr-0006-benchmark-harness-ownership.md` | Accepted | Own scripted fixture benchmark orchestration under `src/app/benchmark/` while keeping `grape bench` a thin CLI adapter. |
 | `adr-0007-git-snapshot-file-manifest-ownership.md` | Accepted | Split Git snapshot orchestration from file manifest hashing and scanner rejection policy. |
 | `adr-0008-agent-artifact-annotations.md` | Accepted | Defer agent-authored artifact annotations from V1 rendered artifacts and keep MCP writes non-authoritative evidence only. |
+| `adr-0009-lexical-search-runtime-portability.md` | Accepted | Use portable table-backed lexical search instead of requiring SQLite FTS5 extension support. |
 
 ## Naming
 

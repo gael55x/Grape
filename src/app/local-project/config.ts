@@ -83,7 +83,7 @@ const localDirectories = [
   ".grape/logs",
   ".grape/cache",
   ".grape/cache/parser",
-  ".grape/cache/fts",
+  ".grape/cache/lexical",
   ".grape/cache/compression",
   ".grape/cache/compression/symbol_outlines",
   ".grape/cache/compression/rule_digests",

@@ -86,20 +86,29 @@ export function createFtsEntriesRepository(database: DatabaseSync): FtsEntriesRe
         database
           .prepare(
             [
-              "SELECT e.* FROM fts_entry_text",
-              "JOIN fts_entries e ON e.fts_entry_id = fts_entry_text.fts_entry_id",
-              "WHERE e.snapshot_id = ? AND fts_entry_text MATCH ?",
-              "ORDER BY rank LIMIT ?"
+              "SELECT e.*, t.body FROM fts_entries e",
+              "JOIN fts_entry_text t ON t.fts_entry_id = e.fts_entry_id",
+              "WHERE e.snapshot_id = ?",
+              "ORDER BY e.source_ref ASC, e.fts_entry_id ASC"
             ].join(" ")
           )
-          .all(snapshotId, phraseQuery(trimmedQuery), limit) as Array<Record<string, unknown>>
-      ).map(mapRequiredFtsEntry);
+          .all(snapshotId) as Array<Record<string, unknown>>
+      )
+        .filter((row) => bodyMatchesQuery(stringField(row, "body"), trimmedQuery))
+        .slice(0, limit)
+        .map(mapRequiredFtsEntry);
     }
   };
 }
 
-function phraseQuery(query: string): string {
-  return `"${query.replace(/"/g, '""')}"`;
+function bodyMatchesQuery(body: string, query: string): boolean {
+  const normalizedBody = normalizeSearchText(body);
+  const normalizedQuery = normalizeSearchText(query);
+  return normalizedQuery.length > 0 && normalizedBody.includes(normalizedQuery);
+}
+
+function normalizeSearchText(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
 function mapFtsEntry(row: Record<string, unknown> | undefined): FtsEntryRecord | undefined {
