@@ -84,6 +84,7 @@ Artifact and diff:
 - `omit_unchanged_requires_restore_or_safe_reason`
 - `restore_token_rejects_stale_dependency`
 - `restore_token_rejects_stale_proof_dependency`
+- `context_pack_summary_excludes_currently_invalidated_sent_items`
 
 Compression:
 

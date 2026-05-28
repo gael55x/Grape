@@ -498,6 +498,13 @@ Keep entries simple:
 - Checks run: `npm run docs:check`; `npm run architecture:check`; `npm run storage:check`; `npm run typecheck`; `npm run build`; `npm run build:test`; focused storage, compiler, indexing, and CLI behavior tests; `npm run check`.
 - Risks/follow-ups: versioned docs namespaces and artifact format strings intentionally remain versioned because they are external contract identifiers, not implementation filename prefixes.
 
+### 2026-05-28 - Context Pack Summary Stale Filtering
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: local artifact assembly now builds a base artifact before rendering `context_pack_summary`, filters prior sent ledger rows through current dependency staleness, and excludes rows the current compile will invalidate from compression orientation.
+- Checks run: focused compression cache, durable context build, CLI local-project, and repository artifact behavior tests before broader verification.
+- Risks/follow-ups: compression remains deterministic orientation only. Richer replacement policy and model-assisted summaries remain deferred.
+
 ### 2026-05-28 - Multi-Window Exact Source Excerpts
 
 - Author/agent: Gaille Amolong / Codex
