@@ -5,7 +5,7 @@ import { createGitRepoSnapshot } from "../../core/git/index.js";
 import { scanArtifactTextForSecrets } from "../../core/security/index.js";
 import type { SourceRecord } from "../../core/storage/index.js";
 import { ensureLocalProjectLayout, readLocalProjectConfig } from "./config.js";
-import { readLocalSourceExcerpts } from "./source-excerpts.js";
+import { readLocalSourceExcerpts } from "./source-excerpts/index.js";
 
 export interface LocalRuleSummary {
   readonly sourceId: string;

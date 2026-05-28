@@ -10,7 +10,7 @@ import type {
   SourceRecord
 } from "../../core/storage/index.js";
 import { runStorageTransaction } from "../../core/storage/index.js";
-import { readLocalSourceExcerpts } from "./source-excerpts.js";
+import { readLocalSourceExcerpts } from "./source-excerpts/index.js";
 
 export interface PrepareLocalCompileProofsInput {
   readonly database: DatabaseSync;
@@ -32,7 +32,8 @@ export function prepareLocalCompileProofs(
   const sourceExcerpts = readLocalSourceExcerpts({
     rootPath: input.rootPath,
     sources: input.sources,
-    preferredSourceRefs: input.taskRetrieval.selectedSourceRefs
+    preferredSourceRefs: input.taskRetrieval.selectedSourceRefs,
+    queryTerms: input.taskRetrieval.queryTerms
   });
   const persistedProofs = runStorageTransaction(input.database, () =>
     persistSourceProofs({

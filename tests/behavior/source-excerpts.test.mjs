@@ -60,6 +60,45 @@ test("local source excerpts require matching source bytes and safe repo paths", 
   }
 });
 
+test("local source excerpts anchor around task query terms beyond the first window", () => {
+  const rootPath = mkdtempSync(path.join(tmpdir(), "grape-source-excerpt-anchor-"));
+  try {
+    mkdirSync(path.join(rootPath, "src"));
+    const sourceRef = "src/deep-auth.ts";
+    const filler = Array.from({ length: 55 }, (_, index) => `const filler${index} = ${index};`);
+    const targetLine = "export function rareSecurityHook() { return 'scoped'; }";
+    const sourceText = [...filler, targetLine, "export const done = true;", ""].join("\n");
+    writeFileSync(path.join(rootPath, sourceRef), sourceText);
+
+    const source = {
+      sourceId: "source-deep-auth",
+      sourceType: "repository_file",
+      sourceRef,
+      sourceHash: sha256(Buffer.from(sourceText, "utf8")),
+      sourceScope: "committed",
+      privacyStatus: "allowed",
+      trustClass: "trusted",
+      redactionStatus: "not_needed"
+    };
+
+    const excerpts = readLocalSourceExcerpts({
+      rootPath,
+      sources: [source],
+      preferredSourceRefs: [sourceRef],
+      queryTerms: ["raresecurityhook"]
+    });
+
+    assert.equal(excerpts.length, 1);
+    assert.ok(excerpts[0].startLine > 1);
+    assert.ok(excerpts[0].startLine <= 56);
+    assert.ok(excerpts[0].endLine >= 56);
+    assert.match(excerpts[0].excerpt, /rareSecurityHook/);
+    assert.doesNotMatch(excerpts[0].excerpt, /filler0/);
+  } finally {
+    rmSync(rootPath, { recursive: true, force: true });
+  }
+});
+
 test("rule excerpt selection is independent from generic exact-source excerpt cap", () => {
   const sourceExcerpts = [
     ...Array.from({ length: 6 }, (_, index) => sourceExcerpt(`src/source-${index}.ts`, "repository_file")),

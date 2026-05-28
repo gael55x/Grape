@@ -497,3 +497,10 @@ Keep entries simple:
 - Summary: removed release-phase/version prefixes from implementation filenames and source symbols where the version was not an external contract. Compiler artifact projection files now use purpose names, the initial storage migration no longer uses an alpha label, internal extractor labels use capability names, and migration planning tolerates filename-only drift when ID/checksum still match.
 - Checks run: `npm run docs:check`; `npm run architecture:check`; `npm run storage:check`; `npm run typecheck`; `npm run build`; `npm run build:test`; focused storage, compiler, indexing, and CLI behavior tests; `npm run check`.
 - Risks/follow-ups: versioned docs namespaces and artifact format strings intentionally remain versioned because they are external contract identifiers, not implementation filename prefixes.
+
+### 2026-05-28 - Task-Anchored Exact Source Proof Windows
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: split local source excerpt handling into a focused ownership folder and changed exact source proof excerpt selection so task query terms anchor the excerpt window when a selected source contains a matching line. Proofs still require path safety checks, source-hash verification, excerpt hashes, and line spans.
+- Checks run: focused source-excerpt and repository-artifact behavior tests; `npm run typecheck`; broader gates before commit.
+- Risks/follow-ups: matching is still lexical and uses the first matching line only. Richer exact-span ranking across symbol body ranges, tests, and multiple relevant spans remains pending.

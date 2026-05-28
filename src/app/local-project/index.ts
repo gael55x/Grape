@@ -20,7 +20,7 @@ export * from "./rules.js";
 export * from "./scan-diagnostics.js";
 export * from "./sessions.js";
 export * from "./setup-types.js";
-export * from "./source-excerpts.js";
+export * from "./source-excerpts/index.js";
 export * from "./stale.js";
 export * from "./status.js";
 export * from "./sync.js";
