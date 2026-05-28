@@ -77,3 +77,4 @@ Each entry should include:
 - Clarified CLI fallback behavior: `grape sync` refreshes local snapshot/evidence/index inputs without context output, and `grape diff-context --task <text>` names the explicit compile-plus-session-diff path.
 - Clarified privacy doctor behavior: `grape doctor --privacy` is a diagnostic-only command and does not approve private reads, export data, purge data, or reveal rejected-file contents.
 - Clarified token-budget pruning behavior: budgeted compile protects task, pinned, exact/safety-critical, omission/restore, and invalidation context; optional non-safety context may be omitted from public pack items and output sections with explicit `omittedDueToBudget` metadata.
+- Clarified the V1 artifact annotation boundary: agent-authored annotations are deferred from rendered Context Artifacts, and restricted MCP writes remain non-authoritative evidence/candidate/confirmation surfaces until proof and scope validation promote durable truth.
