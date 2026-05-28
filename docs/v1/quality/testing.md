@@ -69,6 +69,7 @@ Artifact and diff:
 - `context_section_requires_content_hash`
 - `high_risk_without_task_exact_context_is_unsafe`
 - `high_risk_with_task_exact_context_is_not_unsafe`
+- `path_like_test_seed_selects_exact_source_without_runtime_claim`
 - `token_budget_prunes_only_optional_context`
 - `budget_omitted_sections_are_removed_from_public_artifact_body`
 - `artifact_hash_is_deterministic`

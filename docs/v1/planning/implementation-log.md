@@ -525,3 +525,10 @@ Keep entries simple:
 - Summary: carried task-selected symbol line anchors from retrieval into local exact source excerpt selection. Matched symbols now guide proof windows before generic query-term fallback, and the task-retrieval artifact section renders the selected source anchors.
 - Checks run: focused task retrieval and source excerpt behavior tests before broader verification.
 - Risks/follow-ups: symbol anchors use the current lightweight regex index and first matching anchor per source. Richer AST spans, test linkage, and multiple relevant spans remain pending.
+
+### 2026-05-28 - Path-Like Test Seed Retrieval
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: changed task retrieval so MCP `tests` entries that look like repository paths, such as `tests/foo.test.ts`, select matching allowed test source files as exact source context. The task-retrieval artifact section now renders test seed refs separately, while free-form test names remain retrieval terms.
+- Checks run: focused task retrieval, repository artifact, source excerpt, and MCP stdio behavior tests before broader verification.
+- Risks/follow-ups: selected test file excerpts prove source existence only. Grape-observed test execution proofs, broader test-to-code linkage, and multi-span test/code ranking remain pending.

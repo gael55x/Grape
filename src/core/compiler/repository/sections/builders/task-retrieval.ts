@@ -46,6 +46,8 @@ function taskRetrievalBody(
     ...listOrNone(retrieval.selectedSourceRefs),
     "Explicit seed refs:",
     ...listOrNone(retrieval.explicitSourceRefs),
+    "Test seed refs:",
+    ...listOrNone(retrieval.testSourceRefs),
     "Symbol-matched refs:",
     ...listOrNone(retrieval.symbolSourceRefs),
     "Exact source anchors:",

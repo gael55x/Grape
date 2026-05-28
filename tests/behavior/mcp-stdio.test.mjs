@@ -1045,8 +1045,13 @@ test("mcp agentSessionId maps to an isolated stable Grape session", () => {
 test("mcp seed files participate in retrieval while token budget is evaluated", () => {
   withGitRepo((repoPath) => {
     mkdirSync(path.join(repoPath, "src"));
+    mkdirSync(path.join(repoPath, "tests"));
     writeFileSync(path.join(repoPath, "src", "main.ts"), "export function mainEntry() { return 'main'; }\n");
-    execGit(repoPath, ["add", "src/main.ts"]);
+    writeFileSync(
+      path.join(repoPath, "tests", "main.test.ts"),
+      "import { mainEntry } from '../src/main';\n\ntest('mainEntry returns main', () => mainEntry());\n"
+    );
+    execGit(repoPath, ["add", "src/main.ts", "tests/main.test.ts"]);
     execGit(repoPath, [
       "-c",
       "user.name=Grape Test",
@@ -1068,6 +1073,7 @@ test("mcp seed files participate in retrieval while token budget is evaluated", 
             query: "Explain the repository",
             sessionId: "seed-warning-session",
             files: ["src/main.ts"],
+            tests: ["tests/main.test.ts", "mainEntry regression"],
             tokenBudget: 1200
           }
         }
@@ -1085,6 +1091,9 @@ test("mcp seed files participate in retrieval while token budget is evaluated", 
     assert.equal(output.warnings.includes("mcp_token_budget_not_enforced_in_scaffold_compile"), false);
     assert.equal(output.budget.status, "within_budget");
     assert.equal(retrievalSection.itemRefs.some((ref) => ref.ref === "src/main.ts"), true);
+    assert.equal(retrievalSection.itemRefs.some((ref) => ref.ref === "tests/main.test.ts"), true);
+    assert.match(retrievalSection.text, /Test seed refs:\n- tests\/main\.test\.ts/);
+    assert.equal(output.warnings.some((warning) => warning.includes("mainEntry regression")), false);
   });
 });
 
