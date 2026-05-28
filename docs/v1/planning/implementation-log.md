@@ -539,3 +539,10 @@ Keep entries simple:
 - Summary: fed lightweight import relationships into task retrieval so test files that import task-selected source files can be selected as related exact source context and rendered as related test refs.
 - Checks run: focused task retrieval, repository artifact, and MCP stdio behavior tests before broader verification.
 - Risks/follow-ups: import-related tests are orientation only. They do not prove the test was run or that behavior is correct; Grape-observed test-run proofs remain pending.
+
+### 2026-05-28 - Global Package Readiness
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: prepared the package for the documented global install path by removing the private package flag, copying SQL migrations into `dist/` after build, and adding a package dry-run gate that verifies the packed CLI, README/changelog, and runtime migrations while excluding source, tests, local state, dependencies, and private planning docs.
+- Checks run: `npm run package:check`; `npm run check`.
+- Risks/follow-ups: the package remains unpublished, and V1 still requires Node 22.5+ for storage-backed commands because the accepted SQLite runtime uses `node:sqlite`.

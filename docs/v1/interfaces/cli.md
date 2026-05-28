@@ -109,6 +109,8 @@ All implemented commands support `--repo <path>` where relevant and `--json` for
 
 Runtime compatibility is checked before storage-backed commands import SQLite-backed application services. `grape help`, command-specific `--help`, `grape mcp`, and `grape mcp --print-config` remain available on older Node runtimes so setup guidance can still render. Commands that need local storage, including `init`, `sync`, `status`, `doctor`, `compile`, `diff-context`, inspection commands, benchmarks, and `mcp --stdio`, require Node.js 22.5 or newer. If the runtime is too old, the CLI fails before bootstrap with recovery guidance. `grape doctor --json` can still return a minimal machine-readable `node_runtime` failure without importing storage modules.
 
+Package builds must include the compiled `dist/cli/index.js` binary target and copied SQL migrations under `dist/core/storage/migrations/` so globally installed storage-backed commands can bootstrap without access to TypeScript source files.
+
 ## Adapter Rule
 
 The CLI must call application services. It must not:

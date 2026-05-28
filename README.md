@@ -187,7 +187,7 @@ npm install -g grape-context
 grape init --connect
 ```
 
-The repository now has the first local setup implementation path for that second command. It creates `.grape/`, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures the initial Git snapshot, reports bootstrap and scan diagnostics, and prints MCP connection guidance. The npm package is not released yet.
+The repository now has the first local setup implementation path for that second command. It creates `.grape/`, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures the initial Git snapshot, reports bootstrap and scan diagnostics, and prints MCP connection guidance. The npm package is prepared for the documented global install path, including compiled CLI output and runtime SQL migrations in `dist/`; it has not been published to npm yet.
 
 An MCP-capable coding agent will request context through:
 
@@ -231,7 +231,7 @@ npm ci
 npm run check
 ```
 
-The check suite currently covers documentation structure, fixtures, in-memory context loop checks, architecture boundaries, storage migrations, TypeScript typechecking, and behavior tests.
+The check suite currently covers documentation structure, fixtures, in-memory context loop checks, architecture boundaries, storage migrations, TypeScript typechecking, package dry-run contents, and behavior tests.
 
 ## Contributing
 

@@ -151,7 +151,7 @@ MCP restricted writes currently reuse existing V1 tables instead of adding prema
 - Repository construction must apply the SQLite connection policy so foreign keys are not optional caller discipline.
 - Durable context builds must persist artifact, dependency, pack, sent, and omitted rows in one transaction owned by `src/app/`.
 
-The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` and covered by behavioral tests. Runtime migration application uses Node's built-in `node:sqlite` through `src/core/storage/sqlite-runtime.ts`, so V1 requires Node 22.5 or newer and avoids a native SQLite package dependency. Storage factories must apply the pragma statements before running migrations or repository writes.
+The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` and covered by behavioral tests. Runtime migration application uses Node's built-in `node:sqlite` through `src/core/storage/sqlite-runtime.ts`, so V1 requires Node 22.5 or newer and avoids a native SQLite package dependency. Storage factories must apply the pragma statements before running migrations or repository writes. Packaged builds copy SQL migrations into `dist/core/storage/migrations/`; the local storage bootstrap resolves that directory from compiled code so global installs do not need TypeScript source files at runtime.
 
 ## Migration Rules
 
