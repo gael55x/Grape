@@ -498,6 +498,13 @@ Keep entries simple:
 - Checks run: `npm run docs:check`; `npm run architecture:check`; `npm run storage:check`; `npm run typecheck`; `npm run build`; `npm run build:test`; focused storage, compiler, indexing, and CLI behavior tests; `npm run check`.
 - Risks/follow-ups: versioned docs namespaces and artifact format strings intentionally remain versioned because they are external contract identifiers, not implementation filename prefixes.
 
+### 2026-05-28 - Multi-Window Exact Source Excerpts
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: local exact source excerpt selection can now emit up to two non-overlapping proof windows for one selected source when task retrieval supplies distant symbol anchors. Query-term windowing remains a fallback only when no symbol anchors exist for that source, so symbol-selected proof spans stay narrow and task-specific.
+- Checks run: focused source-excerpt, CLI local-project, proof/claim, and repository artifact behavior tests before broader verification.
+- Risks/follow-ups: windows are still line-based over the lightweight symbol index. Full AST body ranges and richer test/code ranking remain pending.
+
 ### 2026-05-28 - Task-Anchored Exact Source Proof Windows
 
 - Author/agent: Gaille Amolong / Codex

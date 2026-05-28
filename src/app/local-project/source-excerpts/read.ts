@@ -11,7 +11,7 @@ import type {
   RepositoryArtifactSourceInput
 } from "../../../core/compiler/index.js";
 import { readAllowedSourceBytes } from "./path.js";
-import { selectSourceExcerptWindow } from "./window.js";
+import { selectSourceExcerptWindows } from "./window.js";
 
 export interface ReadLocalSourceExcerptsInput {
   readonly rootPath: string;
@@ -25,7 +25,7 @@ export function readLocalSourceExcerpts(
   input: ReadLocalSourceExcerptsInput
 ): readonly RepositoryArtifactSourceExcerptInput[] {
   const rootPath = path.resolve(input.rootPath);
-  const anchorBySourceRef = firstAnchorBySourceRef(input.sourceAnchors ?? []);
+  const anchorsBySourceRef = groupAnchorsBySourceRef(input.sourceAnchors ?? []);
   return selectedExactSourceSources(input.sources, input.preferredSourceRefs ?? []).flatMap(
     (source): RepositoryArtifactSourceExcerptInput[] => {
       const bytes = readAllowedSourceBytes(rootPath, source.sourceRef);
@@ -35,14 +35,13 @@ export function readLocalSourceExcerpts(
       const text = bytes.toString("utf8");
       if (text.includes("\0")) return [];
 
-      const excerpt = selectSourceExcerptWindow({
+      return selectSourceExcerptWindows({
         text,
         queryTerms: input.queryTerms,
-        anchorLine: anchorBySourceRef.get(source.sourceRef)?.startLine
-      });
-      const excerptHash = sha256(Buffer.from(excerpt.text, "utf8"));
-      return [
-        {
+        anchorLines: (anchorsBySourceRef.get(source.sourceRef) ?? []).map((anchor) => anchor.startLine)
+      }).map((excerpt) => {
+        const excerptHash = sha256(Buffer.from(excerpt.text, "utf8"));
+        return {
           proofId: repositorySourceProofId({
             sourceId: source.sourceId,
             sourceHash: source.sourceHash,
@@ -58,18 +57,20 @@ export function readLocalSourceExcerpts(
           startLine: excerpt.startLine,
           endLine: excerpt.endLine,
           truncated: excerpt.truncated
-        }
-      ];
+        };
+      });
     }
   );
 }
 
-function firstAnchorBySourceRef(
+function groupAnchorsBySourceRef(
   anchors: readonly RepositoryArtifactSourceAnchorInput[]
-): ReadonlyMap<string, RepositoryArtifactSourceAnchorInput> {
-  const bySourceRef = new Map<string, RepositoryArtifactSourceAnchorInput>();
+): ReadonlyMap<string, readonly RepositoryArtifactSourceAnchorInput[]> {
+  const bySourceRef = new Map<string, RepositoryArtifactSourceAnchorInput[]>();
   for (const anchor of anchors) {
-    if (!bySourceRef.has(anchor.sourceRef)) bySourceRef.set(anchor.sourceRef, anchor);
+    const sourceAnchors = bySourceRef.get(anchor.sourceRef) ?? [];
+    sourceAnchors.push(anchor);
+    bySourceRef.set(anchor.sourceRef, sourceAnchors);
   }
   return bySourceRef;
 }
