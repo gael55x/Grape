@@ -5,6 +5,7 @@ const contextBeforeMatchedLine = 8;
 export interface SelectSourceExcerptWindowInput {
   readonly text: string;
   readonly queryTerms?: readonly string[];
+  readonly anchorLine?: number;
 }
 
 export interface SourceExcerptWindow {
@@ -16,7 +17,7 @@ export interface SourceExcerptWindow {
 
 export function selectSourceExcerptWindow(input: SelectSourceExcerptWindowInput): SourceExcerptWindow {
   const lines = normalizedLines(input.text);
-  const anchorIndex = firstMatchingLineIndex(lines, input.queryTerms ?? []) ?? 0;
+  const anchorIndex = lineAnchorIndex(lines, input.anchorLine) ?? firstMatchingLineIndex(lines, input.queryTerms ?? []) ?? 0;
   const startIndex = Math.max(0, anchorIndex - contextBeforeMatchedLine);
   const selectedLines = lines.slice(startIndex, startIndex + maxExcerptLines);
   const rawExcerpt = selectedLines.join("\n");
@@ -29,6 +30,11 @@ export function selectSourceExcerptWindow(input: SelectSourceExcerptWindowInput)
     endLine: Math.max(startIndex + 1, startIndex + includedLineCount),
     truncated: clipped.truncated || startIndex > 0 || startIndex + selectedLines.length < lines.length
   };
+}
+
+function lineAnchorIndex(lines: readonly string[], anchorLine: number | undefined): number | undefined {
+  if (anchorLine === undefined || !Number.isInteger(anchorLine) || anchorLine < 1) return undefined;
+  return Math.min(anchorLine - 1, Math.max(0, lines.length - 1));
 }
 
 function normalizedLines(text: string): readonly string[] {

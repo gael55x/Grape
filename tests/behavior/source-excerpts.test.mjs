@@ -99,6 +99,54 @@ test("local source excerpts anchor around task query terms beyond the first wind
   }
 });
 
+test("local source excerpts prefer task-selected symbol anchors over earlier query matches", () => {
+  const rootPath = mkdtempSync(path.join(tmpdir(), "grape-source-excerpt-symbol-anchor-"));
+  try {
+    mkdirSync(path.join(rootPath, "src"));
+    const sourceRef = "src/checkout.ts";
+    const earlyLine = "const refund = 'mentioned in setup comments';";
+    const filler = Array.from({ length: 50 }, (_, index) => `const filler${index} = ${index};`);
+    const targetLine = "export function calculateDiscount() { return 'refund'; }";
+    const sourceText = [earlyLine, ...filler, targetLine, "export const done = true;", ""].join("\n");
+    writeFileSync(path.join(rootPath, sourceRef), sourceText);
+
+    const source = {
+      sourceId: "source-checkout",
+      sourceType: "repository_file",
+      sourceRef,
+      sourceHash: sha256(Buffer.from(sourceText, "utf8")),
+      sourceScope: "committed",
+      privacyStatus: "allowed",
+      trustClass: "trusted",
+      redactionStatus: "not_needed"
+    };
+
+    const excerpts = readLocalSourceExcerpts({
+      rootPath,
+      sources: [source],
+      preferredSourceRefs: [sourceRef],
+      queryTerms: ["refund"],
+      sourceAnchors: [
+        {
+          sourceRef,
+          reason: "symbol_match",
+          label: "calculateDiscount",
+          startLine: 52,
+          endLine: 52
+        }
+      ]
+    });
+
+    assert.equal(excerpts.length, 1);
+    assert.ok(excerpts[0].startLine > 1);
+    assert.ok(excerpts[0].endLine >= 52);
+    assert.match(excerpts[0].excerpt, /calculateDiscount/);
+    assert.doesNotMatch(excerpts[0].excerpt, /mentioned in setup comments/);
+  } finally {
+    rmSync(rootPath, { recursive: true, force: true });
+  }
+});
+
 test("rule excerpt selection is independent from generic exact-source excerpt cap", () => {
   const sourceExcerpts = [
     ...Array.from({ length: 6 }, (_, index) => sourceExcerpt(`src/source-${index}.ts`, "repository_file")),

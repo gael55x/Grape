@@ -43,6 +43,8 @@ export interface RepositoryArtifactSymbolNodeInput {
   readonly language: string;
   readonly name: string;
   readonly symbolKind: string;
+  readonly startLine?: number;
+  readonly endLine?: number;
   readonly bodyHash?: string;
   readonly signatureHash?: string;
   readonly confidence: "high" | "medium" | "low";
@@ -63,8 +65,17 @@ export interface RepositoryArtifactTaskRetrievalInput {
   readonly explicitSourceRefs: readonly string[];
   readonly symbolSourceRefs: readonly string[];
   readonly lexicalSourceRefs: readonly string[];
+  readonly sourceAnchors?: readonly RepositoryArtifactSourceAnchorInput[];
   readonly queryTerms: readonly string[];
   readonly warnings: readonly string[];
+}
+
+export interface RepositoryArtifactSourceAnchorInput {
+  readonly sourceRef: string;
+  readonly reason: "symbol_match";
+  readonly label: string;
+  readonly startLine: number;
+  readonly endLine: number;
 }
 
 export interface RepositoryArtifactActiveClaimInput {

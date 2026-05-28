@@ -33,7 +33,8 @@ export function prepareLocalCompileProofs(
     rootPath: input.rootPath,
     sources: input.sources,
     preferredSourceRefs: input.taskRetrieval.selectedSourceRefs,
-    queryTerms: input.taskRetrieval.queryTerms
+    queryTerms: input.taskRetrieval.queryTerms,
+    sourceAnchors: input.taskRetrieval.sourceAnchors
   });
   const persistedProofs = runStorageTransaction(input.database, () =>
     persistSourceProofs({

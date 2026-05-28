@@ -41,6 +41,15 @@ test("task source retrieval merges explicit, symbol, and lexical source matches"
   assert.deepEqual(result.explicitSourceRefs, ["src/auth.ts"]);
   assert.deepEqual(result.symbolSourceRefs, ["src/billing.ts"]);
   assert.deepEqual(result.lexicalSourceRefs, ["src/billing.ts", "README.md"]);
+  assert.deepEqual(result.sourceAnchors, [
+    {
+      sourceRef: "src/billing.ts",
+      reason: "symbol_match",
+      label: "calculateDiscount",
+      startLine: 42,
+      endLine: 44
+    }
+  ]);
   assert.ok(result.warnings.includes("task_seed_file_not_found:invalid"));
 });
 
@@ -56,6 +65,29 @@ test("task source retrieval warns when query terms find no source matches", () =
   assert.ok(result.warnings.includes("task_retrieval_no_source_matches"));
 });
 
+test("task source retrieval does not use module path matches as exact anchors", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix billing calculateDiscount",
+    sources: [source("source-billing", "src/billing.ts")],
+    symbols: [
+      symbol("source-billing", "src/billing.ts", "src/billing.ts", "module", 1, 1),
+      symbol("source-billing", "src/billing.ts", "calculateDiscount", "function", 42, 44)
+    ],
+    lexicalMatches: []
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, ["src/billing.ts"]);
+  assert.deepEqual(result.sourceAnchors, [
+    {
+      sourceRef: "src/billing.ts",
+      reason: "symbol_match",
+      label: "calculateDiscount",
+      startLine: 42,
+      endLine: 44
+    }
+  ]);
+});
+
 function source(sourceId, sourceRef) {
   return {
     sourceId,
@@ -64,10 +96,15 @@ function source(sourceId, sourceRef) {
   };
 }
 
-function symbol(sourceId, path, name) {
+function symbol(sourceId, path, name, symbolKind = "function", startLine, endLine) {
+  const resolvedStartLine = startLine ?? (name === "calculateDiscount" ? 42 : 3);
+  const resolvedEndLine = endLine ?? (name === "calculateDiscount" ? 44 : 3);
   return {
     sourceId,
     path,
-    name
+    name,
+    symbolKind,
+    startLine: resolvedStartLine,
+    endLine: resolvedEndLine
   };
 }

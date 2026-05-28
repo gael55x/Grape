@@ -518,3 +518,10 @@ Keep entries simple:
 - Summary: added a CLI runtime guard around storage-backed commands so older Node versions receive explicit recovery guidance before the CLI imports `node:sqlite`. Static help, command-specific help, `grape mcp`, and `grape mcp --print-config` remain available without the storage runtime, while `grape doctor --json` can emit a minimal machine-readable `node_runtime` failure.
 - Checks run: focused CLI runtime guard behavior tests before broader verification.
 - Risks/follow-ups: V1 still requires Node 22.5+ because the accepted local SQLite path uses `node:sqlite`; a Node 20-compatible fallback would need a separate storage-runtime ADR.
+
+### 2026-05-28 - Symbol-Anchored Exact Source Proof Windows
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: carried task-selected symbol line anchors from retrieval into local exact source excerpt selection. Matched symbols now guide proof windows before generic query-term fallback, and the task-retrieval artifact section renders the selected source anchors.
+- Checks run: focused task retrieval and source excerpt behavior tests before broader verification.
+- Risks/follow-ups: symbol anchors use the current lightweight regex index and first matching anchor per source. Richer AST spans, test linkage, and multiple relevant spans remain pending.

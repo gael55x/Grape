@@ -41,7 +41,10 @@ export function resolveLocalTaskRetrieval(
     symbols: input.symbolNodes.map((node) => ({
       sourceId: node.sourceId,
       path: node.path,
-      name: node.name
+      name: node.name,
+      symbolKind: node.symbolKind,
+      startLine: node.startLine,
+      endLine: node.endLine
     })),
     lexicalMatches,
     seedFiles: input.seedFiles,
