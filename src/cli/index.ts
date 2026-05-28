@@ -12,6 +12,8 @@ import { runStale } from "./commands/stale.js";
 import { runSync } from "./commands/sync.js";
 import { exitCodes } from "./exit-codes.js";
 import { parseArgs, repoPath, unsupportedFlag, type ParsedArgs } from "./args.js";
+import { renderRuntimeFailure } from "./runtime-failure.js";
+import { checkCliNodeRuntime } from "./runtime-guard.js";
 import {
   errorMessage,
   helpText,
@@ -41,6 +43,9 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
     writeError(errorMessage(error));
     return exitCodes.usage;
   }
+
+  const runtimeFailure = checkCliNodeRuntime(parsed.command, parsed.flags);
+  if (runtimeFailure) return renderRuntimeFailure(parsed, runtimeFailure);
 
   switch (parsed.command) {
     case "":

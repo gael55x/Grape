@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 
+import { describeNodeRuntimeRequirement } from "../../shared/index.js";
 import { gitExcludeContainsGrape } from "./git-exclude.js";
 import { recoveryGuidanceForDoctor } from "./recovery.js";
 import { readLocalProjectStatus } from "./status.js";
@@ -121,19 +122,14 @@ function privacyChecks(status: LocalProjectStatus): DiagnosticCheck[] {
 }
 
 function nodeVersionCheck(): DiagnosticCheck {
-  const version = process.versions.node;
+  const runtime = describeNodeRuntimeRequirement();
   return {
     id: "node_runtime",
-    status: isNodeVersionAtLeast(version, 22, 5) ? "pass" : "fail",
-    message: isNodeVersionAtLeast(version, 22, 5)
-      ? `Node.js ${version} satisfies Grape's current runtime requirement.`
-      : `Node.js ${version} is below Grape's current >=22.5 runtime requirement.`
+    status: runtime.supported ? "pass" : "fail",
+    message: runtime.supported
+      ? `Node.js ${runtime.actualVersion} satisfies Grape's current runtime requirement.`
+      : `Node.js ${runtime.actualVersion} is below Grape's current >=${runtime.minimumVersion} runtime requirement.`
   };
-}
-
-function isNodeVersionAtLeast(version: string, major: number, minor: number): boolean {
-  const [actualMajor, actualMinor] = version.split(".").map((part) => Number(part));
-  return actualMajor > major || (actualMajor === major && actualMinor >= minor);
 }
 
 function privacyCheck(rootPath: string): DiagnosticCheck {

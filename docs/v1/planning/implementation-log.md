@@ -511,3 +511,10 @@ Keep entries simple:
 - Summary: replaced the mandatory SQLite FTS5 virtual table with normal SQLite text rows plus app-owned deterministic lexical matching so local bootstrap does not depend on a Node build exposing FTS5. The storage migration planner now accepts the previous FTS5 migration checksum for migration `0003` as a documented compatibility checksum.
 - Checks run: focused storage/file-index behavior tests; Node runtime smoke under Node 23 without FTS5; broader gates before commit.
 - Risks/follow-ups: table-backed lexical matching is less capable than FTS5 ranking. Richer relevance ranking remains pending and should not be treated as proof or current-valid filtering.
+
+### 2026-05-28 - CLI Runtime Guard
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added a CLI runtime guard around storage-backed commands so older Node versions receive explicit recovery guidance before the CLI imports `node:sqlite`. Static help, command-specific help, `grape mcp`, and `grape mcp --print-config` remain available without the storage runtime, while `grape doctor --json` can emit a minimal machine-readable `node_runtime` failure.
+- Checks run: focused CLI runtime guard behavior tests before broader verification.
+- Risks/follow-ups: V1 still requires Node 22.5+ because the accepted local SQLite path uses `node:sqlite`; a Node 20-compatible fallback would need a separate storage-runtime ADR.

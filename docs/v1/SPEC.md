@@ -638,6 +638,8 @@ sequenceDiagram
 
 Basic install must not require local native compilation. If SQLite or parser packages need native code, V1 must ship prebuilt binaries for supported platforms or fall back to a pure JS/WASM/file-level mode with an explicit warning.
 
+The CLI must keep static setup guidance available even when the local Node runtime is below the storage requirement. `grape help`, command-specific `--help`, `grape mcp`, and `grape mcp --print-config` can run without importing SQLite-backed services. Storage-backed commands must fail before importing `node:sqlite` on unsupported runtimes and must return clear recovery guidance.
+
 ### 9.2 Default config
 
 ```json
