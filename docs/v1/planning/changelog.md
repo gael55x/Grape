@@ -98,3 +98,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Relaxed migration planning to tolerate filename-only drift when migration ID and checksum match, preserving setup compatibility after purpose-based migration renames.
 - Added task-query-anchored exact source excerpt windows so proof-backed exact context can target relevant lines beyond the first bounded file window while preserving source-hash and excerpt-hash validation.
 - Replaced the mandatory SQLite FTS5 virtual table with portable table-backed lexical search while accepting the previous migration checksum for existing local databases.
+- Added a CLI Node runtime guard so static help and MCP setup guidance remain available on older Node versions while storage-backed commands fail before importing `node:sqlite` with clear recovery guidance.

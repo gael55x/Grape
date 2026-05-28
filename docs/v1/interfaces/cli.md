@@ -107,6 +107,8 @@ When `--reset-session` is supplied for an existing compile session, `grape compi
 
 All implemented commands support `--repo <path>` where relevant and `--json` for machine-readable output. Unsupported options fail with a usage error instead of being silently ignored; privacy export and purge workflows remain deferred until their data contracts exist.
 
+Runtime compatibility is checked before storage-backed commands import SQLite-backed application services. `grape help`, command-specific `--help`, `grape mcp`, and `grape mcp --print-config` remain available on older Node runtimes so setup guidance can still render. Commands that need local storage, including `init`, `sync`, `status`, `doctor`, `compile`, `diff-context`, inspection commands, benchmarks, and `mcp --stdio`, require Node.js 22.5 or newer. If the runtime is too old, the CLI fails before bootstrap with recovery guidance. `grape doctor --json` can still return a minimal machine-readable `node_runtime` failure without importing storage modules.
+
 ## Adapter Rule
 
 The CLI must call application services. It must not:
@@ -133,7 +135,7 @@ The CLI must call application services. It must not:
 | 0 | command succeeded |
 | 1 | validation or usage error |
 | 2 | unsafe compile or blocked privacy/security action |
-| 3 | stale local state requires sync/retry |
+| 3 | stale local state or unsupported local runtime requires setup/sync/retry |
 | 4 | storage/schema failure |
 | 5 | lock conflict |
 
