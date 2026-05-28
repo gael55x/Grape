@@ -2687,6 +2687,13 @@ type GrapeGetContextInput = {
 };
 ```
 
+`files` are explicit repository source hints. `symbols` and non-path `tests`
+contribute retrieval terms. Path-like `tests` entries, such as
+`tests/auth.test.ts` or `src/foo.spec.ts`, are treated as explicit test source
+hints when they match allowed snapshot sources. Test source hints can select
+exact, hash-backed source excerpts, but they do not prove behavior or test
+success unless a separate trusted test-run proof exists.
+
 ### 28.6 `grape_get_context` output
 
 ```ts

@@ -41,6 +41,7 @@ export interface TaskSourceRetrievalInput {
 export interface TaskSourceRetrievalResult {
   readonly selectedSourceRefs: readonly string[];
   readonly explicitSourceRefs: readonly string[];
+  readonly testSourceRefs: readonly string[];
   readonly symbolSourceRefs: readonly string[];
   readonly lexicalSourceRefs: readonly string[];
   readonly sourceAnchors: readonly TaskSourceRetrievalAnchor[];
@@ -56,7 +57,7 @@ export interface TaskSourceRetrievalAnchor {
   readonly endLine: number;
 }
 
-type SelectionReason = "explicit_seed" | "symbol_match" | "lexical_match";
+type SelectionReason = "explicit_seed" | "test_seed" | "symbol_match" | "lexical_match";
 
 const defaultMaxTerms = 12;
 const defaultMaxSelectedSources = 8;
@@ -123,6 +124,16 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     addReason(selectedReasons, normalized, "explicit_seed");
   }
 
+  for (const seedTest of input.seedTests ?? []) {
+    if (!isPathLikeTestSeed(seedTest)) continue;
+    const normalized = normalizeSeedFile(seedTest);
+    if (!normalized || !sourceByRef.has(normalized)) {
+      warnings.push(`task_seed_test_not_found:${normalized ?? "invalid"}`);
+      continue;
+    }
+    addReason(selectedReasons, normalized, "test_seed");
+  }
+
   const normalizedTerms = new Set(queryTerms);
   for (const symbol of input.symbols) {
     const sourceRef = sourceRefById.get(symbol.sourceId);
@@ -154,6 +165,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   return {
     selectedSourceRefs,
     explicitSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "explicit_seed"),
+    testSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "test_seed"),
     symbolSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "symbol_match"),
     lexicalSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "lexical_match"),
     sourceAnchors: sourceAnchors.filter((anchor) => selectedSourceRefs.includes(anchor.sourceRef)),
@@ -232,4 +244,10 @@ function normalizeSeedFile(value: string): string | undefined {
     return undefined;
   }
   return normalized;
+}
+
+function isPathLikeTestSeed(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed.includes("/") || trimmed.includes("\\")) return true;
+  return /\.(test|spec|e2e)\.[A-Za-z0-9]+$/.test(trimmed);
 }

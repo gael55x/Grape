@@ -100,3 +100,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Replaced the mandatory SQLite FTS5 virtual table with portable table-backed lexical search while accepting the previous migration checksum for existing local databases.
 - Added a CLI Node runtime guard so static help and MCP setup guidance remain available on older Node versions while storage-backed commands fail before importing `node:sqlite` with clear recovery guidance.
 - Added task-selected symbol line anchors for exact source proof windows, so matched symbols can anchor evidence excerpts before generic query-term fallback.
+- Added path-like MCP test seed source selection. `tests` entries such as `tests/foo.test.ts` now select matching allowed test files as exact source context and render them as test seed refs, while free-form test names remain retrieval terms and do not become proof of test execution.
