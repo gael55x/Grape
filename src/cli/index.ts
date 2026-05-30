@@ -25,6 +25,7 @@ import {
   writeError,
   writeJson
 } from "./render.js";
+import { isCliEntrypoint } from "./entrypoint.js";
 
 const emitWarning = process.emitWarning;
 // Node 22.5+ ships the SQLite runtime Grape uses, but still labels it experimental.
@@ -290,7 +291,7 @@ function renderIndentedList(title: string, values: readonly string[]): string[] 
   return [`${title}:`, ...values.map((value) => `    - ${value}`)];
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isCliEntrypoint(import.meta.url)) {
   main()
     .then((code) => {
       process.exitCode = code;
