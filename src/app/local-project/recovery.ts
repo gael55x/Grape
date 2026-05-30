@@ -42,7 +42,7 @@ export function recoveryGuidanceForDoctor(
   const guidance = new Set(recoveryGuidanceForStatus(status));
 
   if (checks.some((check) => check.id === "node_runtime" && check.status === "fail")) {
-    guidance.add("Use Node.js 22.5 or newer before running Grape.");
+    guidance.add("Use Node.js 22.13 or newer before running Grape.");
   }
   if (checks.some((check) => check.id === "privacy_local_exclude" && check.status !== "pass")) {
     guidance.add("Run grape init --connect to add .grape/ to local Git exclude rules.");

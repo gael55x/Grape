@@ -7,7 +7,7 @@ const packageJson = JSON.parse(readFileSync(path.join(root, "package.json"), "ut
 
 assert(packageJson.private !== true, "package.json must not be private for the documented global install path");
 assert(packageJson.bin?.grape === "./dist/cli/index.js", "package.json bin.grape must point at dist/cli/index.js");
-assert(packageJson.engines?.node === ">=22.5.0", "package.json must keep the documented Node runtime floor");
+assert(packageJson.engines?.node === ">=22.13.0", "package.json must keep the documented Node runtime floor");
 
 const requiredFiles = [
   "dist/cli/index.js",

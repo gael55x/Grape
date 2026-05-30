@@ -2,8 +2,10 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { assertNodeSqliteAvailable, envWithSqliteNodeOptions } from "./sqlite-node-env.mjs";
 
 const root = process.cwd();
+assertNodeSqliteAvailable();
 const packDir = path.join(root, ".tmp", "install-smoke-pack");
 const npmCacheDir = path.join(root, ".tmp", "npm-cache-install-smoke");
 
@@ -42,7 +44,8 @@ try {
     spawnSync(grapeBin, args, {
       cwd: consumerRepo,
       encoding: "utf8",
-      maxBuffer: 16 * 1024 * 1024
+      maxBuffer: 16 * 1024 * 1024,
+      env: envWithSqliteNodeOptions(npmEnv())
     });
 
   const help = spawnGrape(["help"]);
