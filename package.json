@@ -1,8 +1,16 @@
 {
   "name": "grape-context",
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.1",
   "description": "The context infrastructure layer between a repository and an AI coding agent.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gael55x/Grape.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gael55x/Grape/issues"
+  },
+  "homepage": "https://github.com/gael55x/Grape#readme",
   "type": "module",
   "bin": {
     "grape": "./dist/cli/index.js"
