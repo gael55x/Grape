@@ -57,14 +57,15 @@ Work through these in order. Each item should land with tests and doc updates wh
 
 - [x] CI on Node 22.13+ (`node:sqlite` without `--experimental-sqlite`)
 - [x] Install smoke passes spawned `grape` on the same Node policy
-- [ ] Git tag `v0.1.0-alpha.1` on the published commit (if not already)
+- [ ] Git tag `v0.1.0-alpha.2` on the published commit (if not already)
 
 ### 2. Protocol hardening (differentiator)
 
-- Golden tests for full `ContextPackItem` envelopes (wire contract)
-- Named scenarios: branch switch, session reset, dependency stale → `INVALIDATE_PREVIOUS`
-- Stable `artifactFormatVersion` documented in contracts
-- Restore path documented and tested (stale restore fails closed)
+- [x] Golden tests for `ContextPackItem` envelopes (`context-pack-protocol-golden.test.mjs`)
+- [x] Branch switch and stale-source `INVALIDATE_PREVIOUS` benchmarks
+- [x] Stable `artifactFormatVersion` documented in `context-diff.md`
+- [ ] Session reset scenario benchmark (behavior tests exist; fixture bench pending)
+- [ ] Restore path golden beyond existing stale-restore behavior tests
 
 ### 3. Compiler quality (supports the diff)
 
@@ -74,8 +75,8 @@ Work through these in order. Each item should land with tests and doc updates wh
 
 ### 4. Benchmark evidence
 
-- At least three fixture scenarios (clean app, branch switch, stale file)
-- Published metrics: turn-1 vs turn-2 tokens, `OMIT_UNCHANGED` count, unsafe omissions = 0
+- [x] Three fixture scenarios wired to `grape bench` (clean, branch switch, stale source)
+- [ ] Published baseline metrics in docs (turn-1 vs turn-2 tokens from CI or manual run log)
 
 ---
 

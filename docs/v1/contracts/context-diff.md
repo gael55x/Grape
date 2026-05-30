@@ -26,6 +26,18 @@ Before editing diff behavior, agents must verify:
 - omitted items have safe reasons and restore metadata when restorable
 - stale previous context emits `INVALIDATE_PREVIOUS`
 
+## Wire contract (V1)
+
+Public CLI and MCP responses that include a context pack use this envelope:
+
+- `artifactFormat`: `grape.context-pack.v1`
+- `artifactFormatVersion`: `1` (integer; bump only with a documented migration)
+- `contextPackItemShape`: `ContextPackItem`
+- `contextPackItems`: array of pack items (see below)
+- `contextArtifact`: nested V1 artifact projection (`context-artifact.md`)
+
+Pack items must use the canonical `state` values below. `INVALIDATE_PREVIOUS` items must include `invalidatesSentItemId`. Restorable omissions must surface as `RESTORE_AVAILABLE` with `restoreId` when policy allows restore.
+
 ## Canonical Diff States
 
 ```text
