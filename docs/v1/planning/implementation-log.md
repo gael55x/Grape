@@ -596,6 +596,13 @@ Keep entries simple:
 - Checks run: `npm run check`.
 - Risks/follow-ups: protocol golden tests and multi-fixture benchmarks remain open.
 
+### 2026-05-30 - Protocol golden tests and multi-fixture benchmarks
+
+- Author/agent: Gaille Amolong / Composer
+- Summary: added `context-pack-protocol-golden` behavior tests, `grape bench` scenarios for branch-switch and stale-source fixtures, wire-contract notes in `context-diff.md`, and benchmark routing by fixture name.
+- Checks run: `npm run check` (164 behavior tests).
+- Risks/follow-ups: publish baseline metrics to docs; session-reset fixture bench still open.
+
 ### 2026-05-30 - CI Node 22.13 and roadmap wording
 
 - Author/agent: Gaille Amolong / Composer

@@ -23,17 +23,18 @@ Agents must not add benchmarks against undocumented fixtures.
 
 ## Documented Fixtures
 
-- [clean-typescript-app](clean-typescript-app.md) — the only fixture with committed docs and a wired `grape bench` path today
+- [clean-typescript-app](clean-typescript-app.md) — baseline token-reduction benchmark
+- `branch-switch-typescript-app` — branch-switch invalidation benchmark (metadata under `tests/fixtures/`)
+- `stale-source-typescript-app` — dependency-stale invalidation benchmark (metadata under `tests/fixtures/`)
 
-## Fixture Matrix (aspirational)
-
-The table below is the target corpus for future tests and benchmarks. Only `clean-typescript-app` is implemented and exercised by `grape bench` today.
+## Fixture Matrix
 
 | Fixture | Purpose | Status |
 |---|---|---|
-| `clean-typescript-app` | baseline clean repo for sync, index, compile, no-change diff | **implemented** — `tests/fixtures/clean-typescript-app`, `grape bench --fixture clean-typescript-app` |
+| `clean-typescript-app` | baseline clean repo; two-turn `OMIT_UNCHANGED` token reduction | **implemented** — `grape bench --fixture clean-typescript-app` |
+| `branch-switch-typescript-app` | `INVALIDATE_PREVIOUS` after explicit session reuses a feature branch | **implemented** — `grape bench --fixture branch-switch-typescript-app` |
+| `stale-source-typescript-app` | `INVALIDATE_PREVIOUS` after depended-on source bytes change | **implemented** — `grape bench --fixture stale-source-typescript-app` |
 | `dirty-worktree-repo` | dirty facts are worktree-scoped | planned |
-| `branch-switch-repo` | branch-invalid claims excluded | planned (branch-switch behavior is covered in behavior tests on ephemeral repos) |
 | `stale-proof-repo` | proof hashes invalidate dependents | planned |
 | `ignored-files-secrets-repo` | privacy and redaction rules | planned (partial coverage in unit/behavior tests) |
 | `no-tests-repo` | missing verification surfaced honestly | planned |
@@ -46,16 +47,13 @@ The table below is the target corpus for future tests and benchmarks. Only `clea
 
 ## What `grape bench` validates today
 
-Against `clean-typescript-app` only:
+| Fixture | Benchmark id | Checks |
+|---|---|---|
+| `clean-typescript-app` | `bench_token_reduction_after_first_turn` | two-turn compile; `OMIT_UNCHANGED` + `RESTORE_AVAILABLE`; token reduction threshold; zero unsafe omissions |
+| `branch-switch-typescript-app` | `bench_branch_switch_invalidation` | turn 2 on `feature/context` emits `INVALIDATE_PREVIOUS`; zero unsafe omissions |
+| `stale-source-typescript-app` | `bench_stale_source_invalidation` | turn 2 after source edit emits `INVALIDATE_PREVIOUS`; zero unsafe omissions |
 
-- two-turn compile/diff on a copied temporary Git workspace
-- second-turn `OMIT_UNCHANGED` count greater than zero
-- restore-available metadata on the second turn
-- zero unsafe omissions and zero stale items sent on the happy path
-- second-turn token reduction above the configured benchmark threshold
-- deterministic JSON benchmark report fields (`benchmark`, `fixture`, `status`, `turns`, `failures`)
-
-It does **not** yet run the full matrix above, gold-label claim/proof checks, or multi-fixture regression suites.
+`grape bench` picks the scenario from the fixture name. It does **not** yet run gold-label claim/proof checks or the full planned matrix below.
 
 ## Fixture Metadata Template
 
