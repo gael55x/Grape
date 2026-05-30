@@ -259,4 +259,4 @@ This repository is public-facing but pre-release. APIs, schemas, and command nam
 
 ## License
 
-License information has not been finalized yet.
+[MIT](LICENSE)
