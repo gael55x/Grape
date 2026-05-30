@@ -12,14 +12,16 @@ Grape V1 needs local SQLite storage without making contributors install or compi
 
 ## Decision
 
-Grape V1 requires Node.js 22.5 or newer for the initial implementation path.
+Grape V1 requires Node.js 22.13 or newer for the default install and CI path.
+
+Node 22.5–22.12 expose `node:sqlite` only with `NODE_OPTIONS=--experimental-sqlite`. Grape does not set that flag inside the published CLI process today; use 22.13+ for the documented `npm install -g` path.
 
 The storage runtime will use `node:sqlite` and must keep SQLite driver-specific code inside `src/core/storage/`. The project will not add a native SQLite package unless a later ADR accepts the added install and support cost.
 
 ## Consequences
 
-- The package engine range must be `>=22.5.0`.
-- CI must run on Node 22.5 or newer.
+- The package engine range must be `>=22.13.0`.
+- CI must run on Node 22.13 or newer.
 - Documentation must not advertise Node 20 support.
 - Basic install remains native-package-free for the storage path.
 - A future Node 20 fallback would require a new ADR, compatibility tests, and storage-driver boundary documentation.
