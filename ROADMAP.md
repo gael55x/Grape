@@ -4,20 +4,21 @@ Grape is being built as a local-first context compiler for AI coding agents. The
 
 ## Now
 
-These are the capabilities needed for the first comprehensive human review:
+What a reviewer can verify from a clone today (`npm ci`, `npm run build`, `npm run check`, then `node dist/cli/index.js …`):
 
-- simple setup with `npm install -g grape-context` and `grape init --connect`
-- repository snapshot, worktree state, and local bootstrap recovery
-- allowed-source scanning with ignored/private/secret-safe behavior
-- lightweight file, lexical, symbol, and relationship indexing
-- task-specific source retrieval from task text, files, symbols, tests, and related imports
-- proof-backed exact source excerpts with dependency hashes and current source validation
-- scoped current-valid claim rendering without leaking unrelated active claims into artifacts
-- branch-aware and session-scoped context diffing
-- budget pruning that protects pinned, exact, safety-critical, omitted, and invalidation context
+- local bootstrap with `grape init --connect`, `grape status`, and `grape doctor`, including repairable malformed config and unusable-database recovery
+- Git-backed repository snapshot, worktree state, and privacy-safe allowed-source scanning
+- lightweight file, lexical, symbol, and relationship indexing over allowed snapshot sources
+- conservative task source retrieval from task text plus optional file/symbol/test seed refs
+- proof-backed exact source excerpts with dependency hashes and current source validation (narrow claim type today)
+- session-scoped context diffing with `OMIT_UNCHANGED`, `PINNED`, `INVALIDATE_PREVIOUS`, and restore lookup
+- optional token budgets that protect required pinned/exact/invalidation context
 - CLI and MCP inspection for status, doctor, artifacts, sessions, stale items, claims, proofs, conflicts, rules, and omitted context
-- package dry-run checks proving the global package contains the CLI and runtime migrations
+- one scripted benchmark fixture: `grape bench --fixture clean-typescript-app`
+- package dry-run checks proving a future global install would include the CLI and runtime migrations
 - behavior tests, docs checks, architecture checks, storage checks, typecheck, and package checks
+
+Not in the current review bar: published npm install, `grape export`/`grape purge`, Grape-observed runners, full semantic indexing, multi-fixture benchmarks, or finished durable-truth artifact retrieval.
 
 ## Next
 
@@ -30,7 +31,7 @@ These are the strongest follow-up slices after the current review target:
 - richer compression replacement policy without allowing summaries to become proof
 - stronger partial-bootstrap repair for interrupted local setup
 - broader fixture benchmark corpus with real token-reduction and safety thresholds
-- clearer package publishing checklist and release hardening
+- npm publication checklist and release hardening (without treating publish as proof of product completeness)
 
 ## Later
 
