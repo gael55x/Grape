@@ -180,6 +180,8 @@ flowchart LR
 
 ## Planned Usage
 
+**Alpha status:** The context transport slice is implemented and gated by `npm run check` (including install smoke). Registry publish is the remaining Phase 1A step; see [ROADMAP.md](ROADMAP.md) for alpha exit criteria.
+
 The intended setup is:
 
 ```bash

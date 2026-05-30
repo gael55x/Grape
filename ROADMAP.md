@@ -37,8 +37,10 @@ Implementation detail and goal order: [`docs/v1/planning/implementation-roadmap.
 
 ### 1A — Publish path
 
-- npm publish `grape-context` (semver `0.1.0-alpha.x`)
-- CI install smoke: pack → install → `init` → `compile` ×2 → `doctor`
+- [x] CI install smoke: pack → install → `init` → `compile` ×2 (`npm run install:check`)
+- [x] `grape` bin works after `npm install` (realpath entrypoint guard)
+- [x] Package version `0.1.0-alpha.1` + registry metadata prepared
+- [ ] npm publish `grape-context` to the registry (manual release step)
 - Package includes CLI + runtime SQL migrations (existing `package:check`)
 
 ### 1B — Protocol hardening (differentiator)
