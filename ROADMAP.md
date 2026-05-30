@@ -1,48 +1,132 @@
 # Roadmap
 
-Grape is being built as a local-first context compiler for AI coding agents. The roadmap is intentionally narrow: make the artifact useful, inspectable, and safe before adding broader integrations.
+Grape is a **local-first context transport layer** for coding agents: it compiles git-aware, proof-backed context from a repository, then ships only the **session-safe delta** each turn (`NEW`, `OMIT_UNCHANGED`, `INVALIDATE_PREVIOUS`, restore, pinned safety context).
 
-## Now
+It is not a chatbot, a cloud memory platform, or a full code-intelligence graph. Supporting compile features (snapshot, rules, excerpts, proofs, lightweight indexing) exist so the protocol is useful on real repos—not to duplicate heavyweight memory servers in V1.
 
-What a reviewer can verify from a clone today (`npm ci`, `npm run build`, `npm run check`, then `node dist/cli/index.js …`):
+Canonical protocol: [`docs/v1/contracts/context-diff.md`](docs/v1/contracts/context-diff.md). Product decision: [`docs/v1/decisions/adr-0010-context-transport-protocol.md`](docs/v1/decisions/adr-0010-context-transport-protocol.md).
 
-- local bootstrap with `grape init --connect`, `grape status`, and `grape doctor`, including repairable malformed config and unusable-database recovery
-- Git-backed repository snapshot, worktree state, and privacy-safe allowed-source scanning
-- lightweight file, lexical, symbol, and relationship indexing over allowed snapshot sources
-- conservative task source retrieval from task text plus optional file/symbol/test seed refs
-- proof-backed exact source excerpts with dependency hashes and current source validation (narrow claim type today)
-- session-scoped context diffing with `OMIT_UNCHANGED`, `PINNED`, `INVALIDATE_PREVIOUS`, and restore lookup
-- optional token budgets that protect required pinned/exact/invalidation context
-- CLI and MCP inspection for status, doctor, artifacts, sessions, stale items, claims, proofs, conflicts, rules, and omitted context
-- one scripted benchmark fixture: `grape bench --fixture clean-typescript-app`
-- package dry-run checks proving a future global install would include the CLI and runtime migrations
-- behavior tests, docs checks, architecture checks, storage checks, typecheck, and package checks
+Implementation detail and goal order: [`docs/v1/planning/implementation-roadmap.md`](docs/v1/planning/implementation-roadmap.md).
 
-Not in the current review bar: published npm install, `grape export`/`grape purge`, Grape-observed runners, full semantic indexing, multi-fixture benchmarks, or finished durable-truth artifact retrieval.
+---
 
-## Next
+## North star
 
-These are the strongest follow-up slices after the current review target:
+> Any MCP-capable agent on any git repo can call `grape_get_context`, receive a structured context pack diff, and pay fewer tokens on later turns without losing safety-critical or invalidated context.
 
-- broader exact-span ranking across symbol ranges, tests, config, and multiple task anchors
-- Grape-observed command and test runners that can create trusted execution proofs
-- broader durable claim types with contradiction and supersession handling
-- parsed durable project rules with scope resolution and conflict detection
-- richer compression replacement policy without allowing summaries to become proof
-- stronger partial-bootstrap repair for interrupted local setup
-- broader fixture benchmark corpus with real token-reduction and safety thresholds
-- npm publication checklist and release hardening (without treating publish as proof of product completeness)
+---
 
-## Later
+## Phase 0 — Lock V1 story (docs)
 
-These stay out of the current implementation target unless the core artifact contract needs them:
+**Goal:** One coherent contract before more feature surface.
 
-- model-assisted summaries as non-authoritative orientation
-- hybrid semantic search over already-allowed local inputs
-- framework-specific extractors for common stacks
-- imported CI or runtime evidence with verifiable hashes
-- multi-repo context once single-repo artifacts are reliable
-- team sync or cloud sync after the local trust boundary is proven
+| Deliverable | Status |
+|-------------|--------|
+| ADR-0010 Context Transport Protocol | Done |
+| Roadmap + implementation roadmap phases | Done |
+| SPEC §0 aligned with transport-first framing | Done |
+| Feature filter documented (build / integrate / defer) | Done |
+
+**Non-goals:** Rewriting all of `SPEC.md`; building embeddings or a 19-language graph product in V1.
+
+---
+
+## Phase 1 — V1 alpha: protocol you can ship
+
+**Goal:** Prove the transport wedge on a real repo with installable CLI/MCP.
+
+### 1A — Publish path
+
+- npm publish `grape-context` (semver `0.1.0-alpha.x`)
+- CI install smoke: pack → install → `init` → `compile` ×2 → `doctor`
+- Package includes CLI + runtime SQL migrations (existing `package:check`)
+
+### 1B — Protocol hardening (differentiator)
+
+- Golden tests for full `ContextPackItem` envelopes
+- Branch switch, session reset, dependency stale → `INVALIDATE_PREVIOUS` benchmarked
+- Stable `artifactFormatVersion` / wire contract docs
+- Restore path documented and tested (stale restore fails closed)
+
+### 1C — Minimum compiler (features for the diff)
+
+- Task retrieval + exact spans good enough on a real TypeScript repo
+- Pinned rules, high-risk gate, narrow source-excerpt proofs/claims
+- Token budget: required context never pruned
+
+### 1D — Proof it works
+
+- At least three benchmark scenarios (clean app, branch switch, stale file)
+- Public metrics: turn-1 vs turn-2 tokens, `OMIT_UNCHANGED` count, unsafe omissions = 0
+
+**Alpha exit:** `npm install -g` → `grape init --connect` → `grape_get_context` twice same session → second response omits safely; file change invalidates prior sends.
+
+---
+
+## Phase 1.5 — Daily-use compile features
+
+**Goal:** Compilation is strong enough that teams keep Grape enabled; protocol API unchanged.
+
+- Grape-observed command/test proofs
+- More durable claim types + user-confirmed decisions
+- Parsed durable project rules + scope
+- Conflict detection (inspectable edges first)
+- Richer exact-span ranking
+- Optional **integration** doc: external graph MCP supplies refs; Grape still outputs pack diffs
+
+---
+
+## Phase 2 — Deeper compile, same protocol
+
+**Goal:** Broader memory/trust without changing the outward pack contract.
+
+- Broader durable current-valid retrieval (less scaffold projection)
+- Optional local embeddings over allowed sources only
+- `grape export` / `grape purge` when privacy contracts exist
+- Multi-fixture benchmark suite + published baselines
+- Cross-platform CI hardening (Windows/WSL)
+
+---
+
+## Phase 3 — Ecosystem (optional)
+
+- Optional auto-sync hooks (every-turn repo refresh)
+- Multi-repo / team sync only after single-repo transport is boringly reliable
+
+---
+
+## Now (current codebase)
+
+What exists today on `main`:
+
+- local `.grape/` bootstrap, SQLite ledger, Git snapshot + privacy-safe scanning
+- lightweight file / lexical / symbol indexing
+- `grape compile` / `grape_get_context` with session-scoped diffing
+- `OMIT_UNCHANGED`, `PINNED`, `INVALIDATE_PREVIOUS`, restore lookup
+- CLI/MCP inspection (`artifacts`, `stale`, `omitted`, `doctor`, …)
+- one benchmark fixture (`clean-typescript-app`); package dry-run ready; **not published to npm yet**
+- scaffold-backed public artifacts (see [`context-artifact.md`](docs/v1/contracts/context-artifact.md))
+
+---
+
+## Next (immediate engineering after Phase 0 docs)
+
+1. npm publish + install smoke CI  
+2. Protocol golden tests + extra fixtures  
+3. Compiler hardening for turn-1 usefulness  
+4. Tag `v0.1.0-alpha.1`
+
+---
+
+## Later (explicit non-goals for V1)
+
+- Docker Compose memory server as a requirement
+- 19-language Leiden graph as the hero feature
+- Default cloud embeddings or team sync
+- Competing on hybrid memory search latency vs dedicated memory products
+- Full chat-session ingestion pipeline before pack diff is proven via npm
+
+---
 
 ## Non-Goals
 
@@ -51,7 +135,7 @@ Grape should not become:
 - a chatbot
 - an IDE clone
 - an autonomous patch runner
-- a cloud memory platform
-- a generic knowledge graph
+- a cloud memory platform by default
+- a generic knowledge graph product
 - a production observability connector
 - a complete code intelligence engine

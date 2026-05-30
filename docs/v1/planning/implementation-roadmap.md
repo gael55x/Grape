@@ -93,14 +93,50 @@ No product code should start before the Documentation Foundation is complete. In
 
 ## Current Goal
 
-Alpha setup/bootstrap foundation, Evidence Store, Symbol/File Index, compiler fallback, and first MCP get-context path.
+**V1 Alpha: Context Transport Protocol + publishable CLI/MCP.**
 
-Documentation Foundation, In-Memory Context Loop, Project Skeleton And Tooling, SQLite Schema And Migrations, Durable Context Build Proof, Repo Snapshot And Worktree State, Evidence Store, the first file-indexing foundation, repository-derived scaffold compilation, CLI compile fallback, MCP `grape_get_context`, deterministic `symbol_outline`/`rule_digest`/`context_pack_summary` compression-cache foundations, repairable malformed-config bootstrap recovery, bootstrap project detection, and the first fixture benchmark harness are complete enough for the next restore/inspection and final-artifact-schema goals. The product-shaped setup slice now exercises local storage, snapshot, evidence, indexing, compression metadata, compilation, session diffing, artifact output, MCP delivery, and a scripted token-reduction benchmark before final context artifact schema hardening.
+Foundations through the first MCP `grape_get_context` path, session diffing, and fixture benchmark shell are in place. Next work prioritizes **protocol hardening**, **npm publish + install smoke**, **minimum compiler quality for turn-1 packs**, and **multi-scenario benchmarks**—not a full memory-platform graph/search stack (see ADR-0010).
+
+## Product Phases
+
+Aligned with the root [`ROADMAP.md`](../../ROADMAP.md). Each phase keeps the outward `ContextPackItem` contract stable.
+
+| Phase | Focus | Primary code areas |
+|---|---|---|
+| **0 — Story lock** | ADR-0010, roadmap, SPEC §0, contracts | `docs/v1/` |
+| **1A — Publish** | npm package, install smoke CI | `package.json`, `scripts/check-package.mjs`, `.github/workflows/` |
+| **1B — Protocol** | pack golden tests, invalidation/restore | `src/core/diff/`, `src/core/sessions/`, `tests/behavior/` |
+| **1C — Compile** | excerpts, rules, retrieval, budgets | `src/core/compiler/`, `src/core/retrieval/`, `src/core/proofs/`, `src/core/claims/` |
+| **1D — Proof** | fixtures + `grape bench` thresholds | `src/app/benchmark/`, `tests/fixtures/` |
+| **1.5 — Trust depth** | observed runs, more claims, rules | `src/core/trust/`, `src/core/claims/`, `src/mcp/` |
+| **2 — Retrieval** | durable compile, optional embeddings | `src/core/retrieval/`, `src/core/compiler/artifact/` |
+
+## Feature Decision Filter
+
+Before adding V1 scope, confirm the work improves at least one of:
+
+1. **Compile quality** — task packs contain correct, proof-backed, current-valid spans.
+2. **Git validity** — branch/worktree/dependency changes invalidate or scope context correctly.
+3. **Diff correctness** — session ledger, omission, restore, and `INVALIDATE_PREVIOUS` behavior.
+
+| Category | V1 build | V1 integrate (defer deep build) | V1 defer |
+|---|---|---|---|
+| ContextPack protocol + ledger | yes | — | — |
+| Git snapshot / invalidation | yes | — | — |
+| Exact excerpts + narrow proofs | yes | — | — |
+| Pinned rules + high-risk gate | yes | — | — |
+| Lightweight index + lexical | yes | — | — |
+| Inspector CLI/MCP | yes | — | — |
+| Deep repo graph (19 langs, Leiden) | lite only | graph MCP refs in artifacts | own graph product |
+| Embeddings / hybrid memory search | — | optional later | default cloud search |
+| Session chat ingestion hooks | — | — | until protocol proven on npm |
+| Docker/Postgres/Chroma stack | — | — | local SQLite path |
 
 ## Human Review Bar
 
-- **Minimum bar (met for first review):** clone, `npm run check`, local `node dist/cli/index.js` flows documented in the root README, honest command/status docs, scaffold warnings, and passing gates.
-- **Full alpha bar (not met):** npm publication, multi-fixture benchmarks, Grape-observed runners, broad durable claim retrieval, and non-scaffold artifact compilation without the limitations listed in `implementation-status.md`.
+- **Minimum bar (met for first review):** clone, `npm run check`, honest docs/contracts, scaffold warnings, passing gates.
+- **V1 alpha bar (current target):** npm install, `grape_get_context` twice with safe `OMIT_UNCHANGED`, dependency invalidation benchmarks, install smoke CI.
+- **Full product bar (not V1):** broad durable retrieval, multi-fixture gold labels, Grape-observed runners, non-scaffold artifacts, optional graph-memory parity with dedicated memory products.
 
 Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations now uses the built-in Node 22.5+ `node:sqlite` runtime path to avoid native package compilation.
 
@@ -156,10 +192,18 @@ Status: complete enough to proceed to Evidence Store. Future snapshot changes sh
 
 ## Alpha Product Slice Exit Criteria
 
-- two-command setup works in a fixture repo
-- one CLI or MCP entrypoint returns structured context without manual sync/compile/diff
+Transport-first (ADR-0010):
+
+- `npm install -g grape-context` works on Node 22.5+ with install smoke CI
+- `grape init --connect` and `grape_get_context` work in a consumer git repo without cloning Grape
 - SQLite session ledger records sent and omitted items
-- second no-change request safely omits unchanged non-pinned context
-- stale dependency change emits `INVALIDATE_PREVIOUS`
+- second no-change request safely omits unchanged non-pinned context with restore metadata
+- stale dependency or branch change emits `INVALIDATE_PREVIOUS`
 - concurrent sessions do not corrupt sent or omitted ledgers
-- first-turn and later-turn token metrics are reported against a scripted naive baseline
+- turn-1 and turn-2 token metrics reported against a scripted naive baseline with zero unsafe omissions
+- `ContextPackItem` shapes match `docs/v1/contracts/context-diff.md` and examples under `docs/v1/examples/`
+
+Compile minimum (supports the protocol, not a separate product):
+
+- task compile returns useful exact spans + pinned rules on a real fixture repo
+- public artifacts remain inspectable; scaffold limitations documented honestly
