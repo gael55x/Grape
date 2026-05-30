@@ -1,13 +1,6 @@
-import { performance } from "node:perf_hooks";
-
-import { compileLocalContext } from "../local-project/compile.js";
-import type { CompileLocalContextResult } from "../local-project/types.js";
+import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
-import type {
-  BenchmarkTurnMetric,
-  TokenReductionBenchmarkInput,
-  TokenReductionBenchmarkResult
-} from "./types.js";
+import type { TokenReductionBenchmarkInput, TokenReductionBenchmarkResult } from "./types.js";
 
 const minSecondTurnReductionPercent = 30;
 
@@ -22,8 +15,8 @@ export function runTokenReductionBenchmark(
   });
 
   try {
-    const sessionId = `bench-${safeId(input.fixtureName)}`;
-    const first = runCompileTurn({
+    const sessionId = benchmarkSessionId(input.fixtureName, "tokens");
+    const first = runBenchmarkCompileTurn({
       repoPath: prepared.repoPath,
       task: input.task,
       sessionId,
@@ -32,7 +25,7 @@ export function runTokenReductionBenchmark(
       gitBinary: input.gitBinary,
       migrationsDir: input.migrationsDir
     });
-    const second = runCompileTurn({
+    const second = runBenchmarkCompileTurn({
       repoPath: prepared.repoPath,
       task: input.task,
       sessionId,
@@ -42,7 +35,7 @@ export function runTokenReductionBenchmark(
       migrationsDir: input.migrationsDir
     });
     const turns = [first, second];
-    const failures = benchmarkFailures(second);
+    const failures = tokenReductionFailures(second);
 
     return {
       benchmark: "bench_token_reduction_after_first_turn",
@@ -66,68 +59,13 @@ export function runTokenReductionBenchmark(
   }
 }
 
-function runCompileTurn(input: {
-  readonly repoPath: string;
-  readonly task: string;
-  readonly sessionId: string;
-  readonly turn: number;
-  readonly now?: string;
-  readonly gitBinary?: string;
-  readonly migrationsDir?: string;
-}): BenchmarkTurnMetric {
-  const started = performance.now();
-  const result = compileLocalContext({
-    rootPath: input.repoPath,
-    task: input.task,
-    sessionId: input.sessionId,
-    now: input.now,
-    gitBinary: input.gitBinary,
-    migrationsDir: input.migrationsDir
-  });
-  const durationMs = Math.round((performance.now() - started) * 100) / 100;
-
-  return turnMetric(input.turn, result, durationMs);
-}
-
-function turnMetric(
-  turn: number,
-  result: CompileLocalContextResult,
-  durationMs: number
-): BenchmarkTurnMetric {
-  const stateCounts = countStates(result);
-  return {
-    turn,
-    artifactId: result.artifactId,
-    artifactHash: result.artifactHash,
-    durationMs,
-    toolCallCount: 1,
-    contextPackItemCount: result.contextPackItems.length,
-    sentItemCount: result.sentItemCount,
-    omittedItemCount: result.omittedItemCount,
-    invalidationItemCount: stateCounts.INVALIDATE_PREVIOUS ?? 0,
-    restoreAvailableCount: stateCounts.RESTORE_AVAILABLE ?? 0,
-    stateCounts,
-    naiveTokens: result.tokenMetric.naiveTokens,
-    grapeTokens: result.tokenMetric.grapeTokens,
-    omittedUnchangedTokens: result.tokenMetric.omittedUnchangedTokens,
-    compressionSavedTokens: result.tokenMetric.compressionSavedTokens,
-    pinnedOverheadTokens: result.tokenMetric.pinnedOverheadTokens,
-    invalidationOverheadTokens: result.tokenMetric.invalidationOverheadTokens,
-    unsafeOmissions: result.tokenMetric.unsafeOmissions,
-    staleItemsSent: result.tokenMetric.staleItemsSent,
-    reductionPercent: result.tokenMetric.reductionPercent
-  };
-}
-
-function countStates(result: CompileLocalContextResult): Record<string, number> {
-  const counts: Record<string, number> = {};
-  for (const item of result.contextPackItems) {
-    counts[item.state] = (counts[item.state] ?? 0) + 1;
-  }
-  return counts;
-}
-
-function benchmarkFailures(secondTurn: BenchmarkTurnMetric): string[] {
+function tokenReductionFailures(secondTurn: {
+  readonly reductionPercent: number;
+  readonly unsafeOmissions: number;
+  readonly staleItemsSent: number;
+  readonly stateCounts: Record<string, number>;
+  readonly restoreAvailableCount: number;
+}): string[] {
   const failures: string[] = [];
   if (secondTurn.reductionPercent < minSecondTurnReductionPercent) {
     failures.push("second_turn_reduction_below_threshold");
@@ -147,7 +85,7 @@ function benchmarkFailures(secondTurn: BenchmarkTurnMetric): string[] {
   return failures;
 }
 
-function totalsFor(turns: readonly BenchmarkTurnMetric[]): TokenReductionBenchmarkResult["totals"] {
+function totalsFor(turns: readonly { readonly durationMs: number; readonly grapeTokens: number; readonly naiveTokens: number; readonly reductionPercent: number; readonly omittedUnchangedTokens: number; readonly pinnedOverheadTokens: number; readonly invalidationOverheadTokens: number; readonly invalidationItemCount: number; readonly restoreAvailableCount: number }[]): TokenReductionBenchmarkResult["totals"] {
   const [first, second] = turns;
   return {
     wallClockMs: Math.round(turns.reduce((total, turn) => total + turn.durationMs, 0) * 100) / 100,
@@ -161,9 +99,4 @@ function totalsFor(turns: readonly BenchmarkTurnMetric[]): TokenReductionBenchma
     invalidationItemCount: turns.reduce((total, turn) => total + turn.invalidationItemCount, 0),
     restoreAvailableCount: turns.reduce((total, turn) => total + turn.restoreAvailableCount, 0)
   };
-}
-
-function safeId(value: string): string {
-  const normalized = value.replace(/[^a-zA-Z0-9_-]/g, "-");
-  return normalized.length > 0 ? normalized : "fixture";
 }

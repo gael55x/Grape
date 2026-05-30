@@ -23,8 +23,8 @@ export async function runBench(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
-    const { runTokenReductionBenchmark } = await import("../../app/benchmark/index.js");
-    const result = runTokenReductionBenchmark({
+    const { runFixtureBenchmark } = await import("../../app/benchmark/index.js");
+    const result = runFixtureBenchmark({
       fixtureName,
       fixturePath: fixturePathFor(parsed, fixtureName),
       task: parsed.values.get("--task") ?? defaultBenchmarkTask,
@@ -36,21 +36,7 @@ export async function runBench(parsed: ParsedArgs): Promise<number> {
       return result.status === "pass" ? exitCodes.ok : exitCodes.unsafe;
     }
 
-    write([
-      `Grape benchmark: ${result.benchmark}`,
-      "",
-      `Fixture: ${result.fixture}`,
-      `Status: ${result.status}`,
-      result.workspacePath ? `Workspace: ${result.workspacePath}` : undefined,
-      "",
-      ...result.turns.map(renderTurn),
-      "",
-      `Second-turn reduction: ${result.totals.secondTurnReductionPercent}%`,
-      `Omitted unchanged tokens: ${result.totals.omittedUnchangedTokens}`,
-      `Restore hints: ${result.totals.restoreAvailableCount}`,
-      `Invalidation items: ${result.totals.invalidationItemCount}`,
-      ...renderProblems("Failures", result.failures)
-    ].filter((line): line is string => line !== undefined).join("\n"));
+    write(renderBenchmarkReport(result));
 
     return result.status === "pass" ? exitCodes.ok : exitCodes.unsafe;
   } catch (error) {
@@ -63,6 +49,62 @@ function fixturePathFor(parsed: ParsedArgs, fixtureName: string): string {
   const explicit = parsed.values.get("--fixture-path");
   if (explicit) return path.resolve(explicit);
   return path.resolve(repoPath(parsed), "tests", "fixtures", fixtureName);
+}
+
+function renderBenchmarkReport(result: {
+  readonly benchmark: string;
+  readonly fixture: string;
+  readonly status: string;
+  readonly workspacePath?: string;
+  readonly turns: readonly {
+    readonly turn: number;
+    readonly grapeTokens: number;
+    readonly naiveTokens: number;
+    readonly reductionPercent: number;
+    readonly contextPackItemCount: number;
+    readonly durationMs: number;
+    readonly stateCounts: Record<string, number>;
+  }[];
+  readonly failures: readonly string[];
+  readonly totals?: {
+    readonly secondTurnReductionPercent: number;
+    readonly omittedUnchangedTokens: number;
+    readonly restoreAvailableCount: number;
+    readonly invalidationItemCount: number;
+  };
+}): string {
+  const lines = [
+    `Grape benchmark: ${result.benchmark}`,
+    "",
+    `Fixture: ${result.fixture}`,
+    `Status: ${result.status}`,
+    result.workspacePath ? `Workspace: ${result.workspacePath}` : undefined,
+    "",
+    ...result.turns.map(renderTurn)
+  ];
+
+  if (result.totals) {
+    lines.push(
+      "",
+      `Second-turn reduction: ${result.totals.secondTurnReductionPercent}%`,
+      `Omitted unchanged tokens: ${result.totals.omittedUnchangedTokens}`,
+      `Restore hints: ${result.totals.restoreAvailableCount}`,
+      `Invalidation items: ${result.totals.invalidationItemCount}`
+    );
+  } else {
+    const second = result.turns[1];
+    if (second) {
+      lines.push(
+        "",
+        `Second-turn INVALIDATE_PREVIOUS: ${second.stateCounts.INVALIDATE_PREVIOUS ?? 0}`,
+        `Second-turn OMIT_UNCHANGED: ${second.stateCounts.OMIT_UNCHANGED ?? 0}`
+      );
+    }
+  }
+
+  return [...lines, ...renderProblems("Failures", result.failures)]
+    .filter((line): line is string => line !== undefined)
+    .join("\n");
 }
 
 function renderTurn(turn: {

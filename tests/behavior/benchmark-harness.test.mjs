@@ -4,7 +4,10 @@ import path from "node:path";
 import test from "node:test";
 
 const cliPath = path.join(process.cwd(), ".tmp/build/src/cli/index.js");
-const cleanFixturePath = path.join(process.cwd(), "tests/fixtures/clean-typescript-app");
+const fixturesRoot = path.join(process.cwd(), "tests/fixtures");
+const cleanFixturePath = path.join(fixturesRoot, "clean-typescript-app");
+const branchFixturePath = path.join(fixturesRoot, "branch-switch-typescript-app");
+const staleFixturePath = path.join(fixturesRoot, "stale-source-typescript-app");
 
 function runCli(args) {
   return spawnSync(process.execPath, [cliPath, ...args], {
@@ -41,6 +44,44 @@ test("cli bench reports deterministic token reduction for a named fixture", () =
     output.turns[1].reductionPercent >= output.thresholds.minSecondTurnReductionPercent,
     true
   );
+  assert.deepEqual(output.failures, []);
+});
+
+test("cli bench branch-switch fixture reports invalidation on feature branch", () => {
+  const result = runCli([
+    "bench",
+    "--fixture",
+    "branch-switch-typescript-app",
+    "--fixture-path",
+    branchFixturePath,
+    "--json"
+  ]);
+
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.benchmark, "bench_branch_switch_invalidation");
+  assert.equal(output.fixture, "branch-switch-typescript-app");
+  assert.equal(output.status, "pass");
+  assert.equal(output.turns[1].stateCounts.INVALIDATE_PREVIOUS > 0, true);
+  assert.deepEqual(output.failures, []);
+});
+
+test("cli bench stale-source fixture reports invalidation after source edit", () => {
+  const result = runCli([
+    "bench",
+    "--fixture",
+    "stale-source-typescript-app",
+    "--fixture-path",
+    staleFixturePath,
+    "--json"
+  ]);
+
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.benchmark, "bench_stale_source_invalidation");
+  assert.equal(output.fixture, "stale-source-typescript-app");
+  assert.equal(output.status, "pass");
+  assert.equal(output.turns[1].stateCounts.INVALIDATE_PREVIOUS > 0, true);
   assert.deepEqual(output.failures, []);
 });
 

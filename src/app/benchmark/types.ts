@@ -1,12 +1,20 @@
-export interface TokenReductionBenchmarkInput {
+export interface BenchmarkFixtureInput {
   readonly fixtureName: string;
   readonly fixturePath: string;
-  readonly task: string;
+  readonly task?: string;
   readonly keepWorkspace?: boolean;
   readonly now?: string;
   readonly gitBinary?: string;
   readonly migrationsDir?: string;
 }
+
+export interface TokenReductionBenchmarkInput extends BenchmarkFixtureInput {
+  readonly task: string;
+}
+
+export interface BranchSwitchBenchmarkInput extends BenchmarkFixtureInput {}
+
+export interface StaleSourceBenchmarkInput extends BenchmarkFixtureInput {}
 
 export type BenchmarkStatus = "pass" | "fail";
 
@@ -61,3 +69,28 @@ export interface TokenReductionBenchmarkResult {
   };
   readonly failures: readonly string[];
 }
+
+export interface BranchSwitchBenchmarkResult {
+  readonly benchmark: "bench_branch_switch_invalidation";
+  readonly fixture: string;
+  readonly task: string;
+  readonly status: BenchmarkStatus;
+  readonly workspacePath?: string;
+  readonly turns: readonly BenchmarkTurnMetric[];
+  readonly failures: readonly string[];
+}
+
+export interface StaleSourceBenchmarkResult {
+  readonly benchmark: "bench_stale_source_invalidation";
+  readonly fixture: string;
+  readonly task: string;
+  readonly status: BenchmarkStatus;
+  readonly workspacePath?: string;
+  readonly turns: readonly BenchmarkTurnMetric[];
+  readonly failures: readonly string[];
+}
+
+export type BenchmarkResult =
+  | TokenReductionBenchmarkResult
+  | BranchSwitchBenchmarkResult
+  | StaleSourceBenchmarkResult;
