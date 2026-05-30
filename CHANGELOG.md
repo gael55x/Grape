@@ -6,8 +6,15 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ## Unreleased
 
+## 0.1.0-alpha.1 - 2026-05-30
+
+### Fixed
+
+- `grape` npm bin entry now runs when installed via `node_modules/.bin` symlinks (macOS `/private` path normalization).
+
 ### Added
 
+- `npm run install:check` packs the tarball, installs it in a temp git repo, and smoke-tests `grape help`, `init`, and two-turn `compile`.
 - Initial public documentation architecture for V1 implementation preparation.
 - Committed V1 implementation contract and Documentation Foundation standards.
 - Organized V1 documentation into purpose-based folders while keeping `docs/v1/SPEC.md` canonical.
