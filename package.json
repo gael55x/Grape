@@ -2,6 +2,7 @@
   "name": "grape-context",
   "version": "0.0.0",
   "description": "The context infrastructure layer between a repository and an AI coding agent.",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "grape": "./dist/cli/index.js"
