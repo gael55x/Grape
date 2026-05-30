@@ -97,6 +97,11 @@ Alpha setup/bootstrap foundation, Evidence Store, Symbol/File Index, compiler fa
 
 Documentation Foundation, In-Memory Context Loop, Project Skeleton And Tooling, SQLite Schema And Migrations, Durable Context Build Proof, Repo Snapshot And Worktree State, Evidence Store, the first file-indexing foundation, repository-derived scaffold compilation, CLI compile fallback, MCP `grape_get_context`, deterministic `symbol_outline`/`rule_digest`/`context_pack_summary` compression-cache foundations, repairable malformed-config bootstrap recovery, bootstrap project detection, and the first fixture benchmark harness are complete enough for the next restore/inspection and final-artifact-schema goals. The product-shaped setup slice now exercises local storage, snapshot, evidence, indexing, compression metadata, compilation, session diffing, artifact output, MCP delivery, and a scripted token-reduction benchmark before final context artifact schema hardening.
 
+## Human Review Bar
+
+- **Minimum bar (met for first review):** clone, `npm run check`, local `node dist/cli/index.js` flows documented in the root README, honest command/status docs, scaffold warnings, and passing gates.
+- **Full alpha bar (not met):** npm publication, multi-fixture benchmarks, Grape-observed runners, broad durable claim retrieval, and non-scaffold artifact compilation without the limitations listed in `implementation-status.md`.
+
 Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations now uses the built-in Node 22.5+ `node:sqlite` runtime path to avoid native package compilation.
 
 ## Documentation Foundation Exit Criteria
