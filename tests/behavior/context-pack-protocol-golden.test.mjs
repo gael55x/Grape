@@ -61,7 +61,7 @@ test("protocol golden: branch switch emits INVALIDATE_PREVIOUS for prior sent co
       "# Feature branch\n\nBranch-specific protocol golden fixture.\n"
     );
     execGit(repoPath, ["add", "README.md"]);
-    execGit(repoPath, ["commit", "-m", "feature branch"]);
+    gitCommit(repoPath, "feature branch");
 
     const second = runCliJson(repoPath, [
       "compile",
@@ -147,4 +147,16 @@ function runCliJson(repoPath, args) {
 
 function execGit(repoPath, args) {
   execFileSync("git", ["-C", repoPath, ...args], { stdio: "ignore" });
+}
+
+function gitCommit(repoPath, message) {
+  execGit(repoPath, [
+    "-c",
+    "user.name=Grape Test",
+    "-c",
+    "user.email=grape@example.test",
+    "commit",
+    "-m",
+    message
+  ]);
 }
