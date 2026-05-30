@@ -72,9 +72,13 @@ function shouldCopyFixturePath(rootPath: string, sourcePath: string): boolean {
   return !localStateName.startsWith("config.invalid.");
 }
 
-function execGit(gitBinary: string, repoPath: string, args: readonly string[]): string {
+export function execGitInBenchmarkRepo(gitBinary: string, repoPath: string, args: readonly string[]): string {
   return execFileSync(gitBinary, ["-C", repoPath, ...args], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"]
   }).trim();
+}
+
+function execGit(gitBinary: string, repoPath: string, args: readonly string[]): string {
+  return execGitInBenchmarkRepo(gitBinary, repoPath, args);
 }
