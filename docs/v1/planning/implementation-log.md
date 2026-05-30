@@ -596,6 +596,13 @@ Keep entries simple:
 - Checks run: `npm run check`.
 - Risks/follow-ups: protocol golden tests and multi-fixture benchmarks remain open.
 
+### 2026-05-30 - E2E benchmark suite and CI git fix
+
+- Author/agent: Gaille Amolong / Composer
+- Summary: fixed protocol golden branch test git identity on CI, added `npm run benchmark:run` and `npm run e2e:alpha`, and recorded local benchmark baselines in `quality/benchmarks.md`.
+- Checks run: `npm run check`, `npm run e2e:alpha`, `npm run benchmark:run`.
+- Risks/follow-ups: refresh baseline table when fixtures or compiler output changes materially.
+
 ### 2026-05-30 - Protocol golden tests and multi-fixture benchmarks
 
 - Author/agent: Gaille Amolong / Composer
