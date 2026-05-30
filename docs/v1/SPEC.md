@@ -2,8 +2,8 @@
 
 **Status:** Canonical final V1.0 framework contract  
 **Canonical source of truth:** This file, `grape_v1_final_framework_spec.md`, is the final V1 implementation contract. If another V1 spec conflicts with this file, this file wins.  
-**Product:** Grape — local-first incremental context compiler for AI coding agents  
-**Primary goal:** save tokens by preventing AI agents from rereading, rediscovering, and resending unchanged codebase context  
+**Product:** Grape — local-first context transport layer for AI coding agents on git repositories  
+**Primary goal:** save tokens by compiling safe repository context once per task/session and shipping only the next session-safe context pack diff  
 **Safety model:** proof-backed, branch-aware, task-specific context artifacts with explicit uncertainty  
 **Runtime:** TypeScript on Node.js 22.5+  
 **Distribution:** `npm install -g grape-context`  
@@ -39,7 +39,9 @@ repo state
 → AI agent receives only what is new, changed, pinned, or invalidated
 ```
 
-The product is not “memory.” The product is the **Context Artifact** and the **Context Diff**.
+The product is not “memory.” The outward contract is the **ContextPack** diff protocol (`docs/v1/contracts/context-diff.md`). Internally, Grape also produces a **Context Artifact** with a dependency manifest.
+
+V1 product framing (accepted ADR-0010): Grape is a **lightweight extension** agents and repos plug into—enough compile features to be useful, with session-scoped transport as the hero—not a full graph/embedding memory platform in V1.
 
 Grape’s user-visible promise:
 

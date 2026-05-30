@@ -4,6 +4,13 @@
 
 Define the system layers, module boundaries, and dependency direction for Grape V1.
 
+V1 has two cooperating layers (ADR-0010):
+
+1. **Compile layer** — evidence, git snapshot, indexing, trust, compiler, compression → `ContextArtifact`.
+2. **Transport layer** — sessions, diff engine → `ContextPack` / `ContextPackItem` ledger.
+
+Adapters (`src/cli/`, `src/mcp/`) expose transport. Most product differentiation lives in `src/core/diff/` and `src/core/sessions/`, not in turning Grape into a standalone graph database.
+
 ## Source Of Truth
 
 This document explains how to implement the architecture in `docs/v1/SPEC.md`. If this document and `SPEC.md` disagree, stop and update the docs before coding.

@@ -581,3 +581,10 @@ Keep entries simple:
 - Summary: tightened task-specific context generation so exact-source proof creation and rendered current-valid claim sections stay scoped to task-selected source refs when retrieval has concrete matches. Broad exact-source fallback still keeps no-match artifacts inspectable, and broad active-claim inspection remains available through CLI/MCP.
 - Checks run: focused CLI local-project, task retrieval, repository artifact, and source-claim behavior tests before broader verification.
 - Risks/follow-ups: retrieval is still lexical/lightweight-symbol based. Broader durable claim types, contradiction/supersession, Grape-observed test/command proofs, and richer multi-span ranking remain pending.
+
+### 2026-05-30 - Context Transport Protocol Roadmap
+
+- Author/agent: Gaille Amolong / Composer
+- Summary: adopted ADR-0010 anchoring V1 on session-safe `ContextPack` transport, refocused root `ROADMAP.md` into product phases, and aligned `implementation-roadmap.md` with compile-vs-transport code ownership, a V1 feature filter, and transport-first alpha exit criteria.
+- Checks run: `npm run docs:check`.
+- Risks/follow-ups: implementation must follow the feature filter; Phase 1A–1D (npm publish, protocol golden tests, compiler hardening, multi-fixture benchmarks) is the next engineering work.

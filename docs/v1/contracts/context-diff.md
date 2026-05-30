@@ -2,7 +2,9 @@
 
 ## Purpose
 
-Define the session-scoped context delta protocol.
+Define the **canonical V1 outward protocol**: session-scoped context pack items agents receive from Grape.
+
+This document is the wire contract for context **transport**. Compilation inputs and artifact sections live in `context-artifact.md`. Product framing: `docs/v1/decisions/adr-0010-context-transport-protocol.md`.
 
 ## Source Of Truth
 
