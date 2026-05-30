@@ -11,7 +11,7 @@
 <p align="center">
   <a href="docs/README.md"><strong>Documentation</strong></a>
   ·
-  <a href="docs/v1/architecture/overview.md"><strong>Architecture</strong></a>
+  <a href="docs/README.md"><strong>Architecture</strong></a>
   ·
   <a href="ROADMAP.md"><strong>Roadmap</strong></a>
   ·
@@ -88,9 +88,9 @@ Core objects:
 
 ## Current Status
 
-Grape is under active implementation. The repository is suitable for a first technical review of docs, contracts, and the current local CLI/MCP slice. It is not a finished alpha product release.
+Grape is under active implementation. This repository is the official home for Grape’s documentation and framework scaffold.
 
-### Implemented today
+Implemented today:
 
 - committed implementation contract
 - documentation architecture and agent operating rules
@@ -117,44 +117,40 @@ Grape is under active implementation. The repository is suitable for a first tec
 - omitted context restore lookup through `grape omitted --session <id> --token <restoreToken>` and `grape_get_omitted_item`
 - recovery guidance through `grape status`, `grape doctor`, unsafe compile output, lock-conflict errors, stale restore output, privacy/redaction failures, and safe malformed-config repair during bootstrap
 - TypeScript, behavior tests, storage checks, docs checks, and architecture-boundary checks
-- optional token budgets that never prune required safety/pinned/exact/invalidation context (optional sections may be pruned when a budget is set)
 
-### Planned or deferred
+Not released yet:
 
-- npm publication and `npm install -g grape-context` as the primary install path (package dry-run checks exist; the package is not published)
-- `grape add-decision`, `grape decisions review`, `grape export`, and `grape purge`
+- npm package
+- full production CLI inspection surface
 - Grape-observed command/test runners for trusted execution evidence
-- full repository indexing, semantic search, and broad language parsing
-- broader durable claim types, parsed durable project rules, and conflict detection (conflict edges are inspectable only today)
-- multi-fixture benchmark matrix beyond `clean-typescript-app`
-- public artifacts still project repository-derived scaffold sections; treat them as inspectable orientation, not full durable-truth retrieval (see [Context Artifact](docs/v1/contracts/context-artifact.md))
+- full repository indexing
+- safe budget pruning and broader compression-policy hardening
 
 ## Documentation
 
 Start here:
 
 - [Documentation Index](docs/README.md)
-- [V1 Documentation](docs/v1/README.md)
-- [Implementation Contract](docs/v1/SPEC.md)
-- [Architecture Overview](docs/v1/architecture/overview.md)
-- [State Machine](docs/v1/architecture/state-machine.md)
-- [Invariants](docs/v1/architecture/invariants.md)
+- [Framework Documentation](docs/README.md)
+- [Implementation Contract](docs/README.md)
+- [Architecture](docs/README.md)
+- [State Machine](docs/README.md)
+- [Invariants](docs/README.md)
 - [Roadmap](ROADMAP.md)
 - [Contributing](CONTRIBUTING.md)
 
 Core contracts:
 
-- [Trust Model](docs/v1/core/trust-model.md)
-- [Context Artifact](docs/v1/contracts/context-artifact.md)
-- [Context Diff](docs/v1/contracts/context-diff.md)
-- [Compression](docs/v1/core/compression.md)
-- [Storage](docs/v1/core/storage.md)
-- [Security](docs/v1/core/security.md)
-- [MCP Tools](docs/v1/interfaces/mcp-tools.md)
-- [CLI](docs/v1/interfaces/cli.md)
-- [Testing](docs/v1/quality/testing.md)
-- [Benchmarks](docs/v1/quality/benchmarks.md)
-- [Examples](docs/v1/examples/README.md)
+- [Trust Model](docs/README.md)
+- [Context Artifact](docs/README.md)
+- [Context Diff](docs/README.md)
+- [Compression](docs/README.md)
+- [Storage](docs/README.md)
+- [Security](docs/README.md)
+- [MCP Tools](docs/README.md)
+- [CLI](docs/README.md)
+- [Testing](docs/README.md)
+- [Benchmarks](docs/README.md)
 
 ## Architecture
 
@@ -184,33 +180,42 @@ flowchart LR
 
 ## Planned Usage
 
-A future convenience install is `npm install -g grape-context` followed by `grape init --connect`. That global package is prepared in packaging checks but **not published to npm yet**. Use the [Review Grape locally](#review-grape-locally) flow from a clone today.
-
-An MCP-capable coding agent requests context through `grape_get_context` on `grape mcp --stdio`. Local inspection commands include `grape compile`, `grape artifacts`, `grape proofs`, `grape sessions`, `grape stale`, `grape conflicts`, `grape bench`, `grape status`, `grape doctor`, and `grape omitted`. Deferred CLI commands include `grape add-decision`, `grape decisions review`, `grape export`, and `grape purge` (see [CLI contract](docs/v1/interfaces/cli.md)).
-
-## Review Grape locally
-
-Clone this repository and verify the current slice from source:
+The intended setup is:
 
 ```bash
-git clone https://github.com/gael55x/Grape.git
-cd Grape
-npm ci
-npm run build
-npm run check
+npm install -g grape-context
+grape init --connect
 ```
 
-Run the CLI from the built entrypoint (or run `npm link` once per machine to expose the `grape` command):
+The repository now has the first local setup implementation path for that second command. It creates `.grape/`, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures the initial Git snapshot, reports bootstrap and scan diagnostics, and prints MCP connection guidance. The npm package is prepared for the documented global install path, including compiled CLI output and runtime SQL migrations in `dist/`; it has not been published to npm yet.
+
+An MCP-capable coding agent will request context through:
+
+```text
+grape_get_context
+```
+
+Inspection and debugging commands are planned:
 
 ```bash
-node dist/cli/index.js init --connect
-node dist/cli/index.js compile --task "Explain the repository entry points" --session review-1
-node dist/cli/index.js compile --task "Explain the repository entry points" --session review-1
-node dist/cli/index.js bench --fixture clean-typescript-app --fixture-path tests/fixtures/clean-typescript-app
-node dist/cli/index.js mcp --print-config
+grape compile --task "Explain the files I need to edit"
+grape compile --task "Explain the files I need to edit" --token-budget 4000
+grape artifacts
+grape artifacts --artifact <id>
+grape proofs
+grape proofs --proof <id>
+grape status
+grape doctor
+grape mcp --print-config
+grape mcp --stdio
+grape omitted --session <id>
+grape omitted --session <id> --token <restoreToken>
+grape stale
+grape conflicts
+grape bench --fixture clean-typescript-app
 ```
 
-The second `compile` call in the same session should emit `OMIT_UNCHANGED` rows for unchanged non-pinned context. `grape bench` currently runs only against the documented `clean-typescript-app` fixture.
+`grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape sessions`, `grape stale`, `grape conflicts`, `grape bench --fixture <name>`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, and `grape omitted` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, stale-invalidation inspection, conflict-edge inspection, scripted fixture benchmarking, omitted-context restore, and the first MCP context retrieval path. MCP also exposes stale invalidation inspection through `grape_get_stale_items`, conflict inspection through `grape_get_conflicts`, and the restricted write surface through non-promoting candidate, command/test observation, user-decision, and confirmation-request tools. Conflict detection/resolution, broader durable artifact retrieval, claim-linked proof inspection, and broader durable proof types are not implemented yet.
 
 ## Development
 
@@ -235,7 +240,7 @@ Grape is not ready for broad feature work yet. Contributions should preserve the
 Before contributing, read:
 
 - [Contributing Guide](CONTRIBUTING.md)
-- [Invariants](docs/v1/architecture/invariants.md)
+- [Invariants](docs/README.md)
 - [Roadmap](ROADMAP.md)
 
 Implementation standards are strict:
@@ -254,4 +259,4 @@ This repository is public-facing but pre-release. APIs, schemas, and command nam
 
 ## License
 
-[MIT](LICENSE)
+License information has not been finalized yet.
