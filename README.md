@@ -5,7 +5,7 @@
 <h1 align="center">Grape</h1>
 
 <p align="center">
-  An open-source context artifact system for AI agents.
+   Better context transport for AI agents.
 </p>
 
 <p align="center">
