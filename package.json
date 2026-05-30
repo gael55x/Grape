@@ -25,10 +25,11 @@
     "storage:check": "node scripts/check-storage-migrations.mjs",
     "typecheck": "tsc --noEmit",
     "package:check": "npm run build && node scripts/check-package.mjs",
+    "install:check": "node scripts/check-install-smoke.mjs",
     "prepack": "npm run build",
     "build:test": "tsc -p tsconfig.build.json",
     "test:behavior": "npm run build:test && node --no-warnings --test --test-concurrency=1 tests/behavior/*.test.mjs",
-    "check": "npm run docs:check && npm run fixtures:check && npm run memory:check && npm run architecture:check && npm run storage:check && npm run typecheck && npm run package:check && npm run test:behavior"
+    "check": "npm run docs:check && npm run fixtures:check && npm run memory:check && npm run architecture:check && npm run storage:check && npm run typecheck && npm run package:check && npm run install:check && npm run test:behavior"
   },
   "devDependencies": {
     "@types/node": "22.19.19",
