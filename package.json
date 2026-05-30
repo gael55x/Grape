@@ -1,6 +1,6 @@
 {
   "name": "grape-context",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "The context infrastructure layer between a repository and an AI coding agent.",
   "license": "MIT",
   "repository": {
@@ -21,7 +21,7 @@
     "CHANGELOG.md"
   ],
   "engines": {
-    "node": ">=22.5.0"
+    "node": ">=22.13.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.dist.json",

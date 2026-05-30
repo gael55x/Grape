@@ -4,7 +4,7 @@ export interface NodeRuntimeRequirement {
   readonly supported: boolean;
 }
 
-export const minimumNodeRuntimeVersion = "22.5.0";
+export const minimumNodeRuntimeVersion = "22.13.0";
 
 export function describeNodeRuntimeRequirement(
   actualVersion = process.versions.node

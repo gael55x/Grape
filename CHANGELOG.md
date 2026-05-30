@@ -6,6 +6,13 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ## Unreleased
 
+## 0.1.0-alpha.2 - 2026-05-30
+
+### Changed
+
+- Documented Node.js **22.13+** as the supported runtime (`node:sqlite` without `--experimental-sqlite`).
+- CI and install smoke use Node 22.13+; spawned `grape` inherits `NODE_OPTIONS=--experimental-sqlite` on Node 22.5–22.12 when needed.
+
 ## 0.1.0-alpha.1 - 2026-05-30
 
 ### Fixed
