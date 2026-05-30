@@ -1,6 +1,6 @@
 # V1 Examples
 
-This folder will contain example context artifacts, MCP responses, CLI outputs, diff packs, restore responses, and invalidation warnings.
+This folder contains example context artifacts, MCP responses, CLI outputs, diff packs, restore responses, and invalidation warnings.
 
 ## Required Metadata
 
@@ -16,22 +16,23 @@ Each example should state:
 
 Agents must update examples when serialized output contracts change.
 
-## Required Example Files
+## Example Files
 
-| File | Scenario | Must show |
-|---|---|---|
-| `context-artifact-basic.json` | clean TypeScript app artifact | `ContextArtifact`, sections, dependency manifest, artifact hash |
-| `mcp-get-context-basic.json` | first `grape_get_context` response | structured `contextPackItems` plus rendered Markdown |
-| `context-diff-unchanged.json` | second turn no-change request | `OMIT_UNCHANGED`, `PINNED`, restore tokens |
-| `context-diff-invalidated.json` | source hash changes after send | `INVALIDATE_PREVIOUS` with previous item IDs |
-| `unsafe-compile-secret.json` | secret scan blocks artifact | `unsafe_compile`, blocked reason, no raw secret |
-| `partial-with-risk-dynamic-imports.json` | partial graph fixture | blind spots and missing-context warnings |
-| `cli-status.txt` | `grape status` human output | repo state, session state, stale counts |
-| `cli-status.json` | `grape status --json` output | machine schema matching CLI docs |
+| File | Status | Scenario | Must show |
+|---|---|---|---|
+| `context-artifact-basic.json` | present | clean TypeScript app artifact | `ContextArtifact`, sections, dependency manifest, artifact hash |
+| `mcp-get-context-basic.json` | present | first `grape_get_context` response | structured `contextPackItems`, `diffSummary`, `artifactFiles` |
+| `context-diff-unchanged.json` | present | second turn no-change request | `OMIT_UNCHANGED`, `PINNED`, `RESTORE_AVAILABLE` |
+| `context-diff-invalidated.json` | present | dependency manifest changes after send | `INVALIDATE_PREVIOUS` with `invalidatesSentItemId` |
+| `unsafe-compile-secret.json` | present | secret scan blocks artifact | unsafe exit metadata, no raw secret |
+| `partial-with-risk-dynamic-imports.json` | not yet | partial graph fixture | blind spots and missing-context warnings |
+| `cli-status.txt` | not yet | `grape status` human output | repo state, session state, stale counts |
+| `cli-status.json` | not yet | `grape status --json` output | machine schema matching CLI docs |
 
 ## Example Rules
 
 - Examples must not contain raw secrets.
 - JSON examples must validate against documented schemas.
 - Markdown examples are renderings, not canonical contracts.
+- Placeholder hashes and IDs are illustrative; derive new examples from behavior tests rather than inventing fields.
 - Any serialized field rename updates examples, golden tests, and `../planning/spec-changelog.md`.
