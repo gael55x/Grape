@@ -1,0 +1,64 @@
+{
+  "name": "stale-source-typescript-app",
+  "purpose": "Repository fixture for dependency-stale invalidation benchmarks.",
+  "repoShape": {
+    "branches": ["main"],
+    "worktree": "clean",
+    "packageType": "typescript-app"
+  },
+  "files": [
+    {
+      "path": "package.json",
+      "sha256": "f116c068cbd55ec7acc3d3969ba46c500292ec4bde2b55f04836962cb5e1f150",
+      "purpose": "package identity"
+    },
+    {
+      "path": "src/calculateDiscount.ts",
+      "sha256": "b2527844393ea15f48d40210dd5debbaa06ad74bdfc214b352a36e1dca437597",
+      "purpose": "source proof"
+    },
+    {
+      "path": "src/calculateDiscount.test.ts",
+      "sha256": "3838f52277ce979bb06962ab62061ad085ee1c8a30aea6ef47116aa20fe44d79",
+      "purpose": "test proof"
+    },
+    {
+      "path": ".grape/rules.md",
+      "sha256": "212060e362a19b04f4476de2dd319011998ea0d0ae7f5779bb10fa00cc0fbaea",
+      "purpose": "pinned project rule"
+    }
+  ],
+  "expectedClaims": [
+    {
+      "id": "claim.calculate_discount.member_discount",
+      "text": "calculateDiscount returns the configured member discount for a positive subtotal and returns zero for non-positive subtotals.",
+      "verificationStatus": "verified",
+      "proofFiles": ["src/calculateDiscount.ts", "src/calculateDiscount.test.ts"]
+    }
+  ],
+  "expectedScopeResults": {
+    "branch:main": "match",
+    "worktree:clean": "match",
+    "feature_flags:unknown": "unknown"
+  },
+  "expectedArtifactSections": [
+    "task",
+    "pinned_rule",
+    "active_claim",
+    "code_span",
+    "test_span"
+  ],
+  "expectedFirstTurnDiffStates": ["NEW", "PINNED"],
+  "expectedSecondTurnDiffStates": ["OMIT_UNCHANGED", "PINNED", "RESTORE_AVAILABLE"],
+  "relatedTests": [
+    "fixture_clean_typescript_app_hashes_match",
+    "artifact_hash_is_deterministic",
+    "pinned_context_is_resent",
+    "omit_unchanged_requires_restore_or_safe_reason"
+  ],
+  "relatedBenchmarks": [
+    "bench_token_reduction_after_first_turn",
+    "bench_no_change_sync_time",
+    "bench_restore_omitted_item"
+  ]
+}
