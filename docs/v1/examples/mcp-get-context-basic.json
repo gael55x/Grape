@@ -1,0 +1,76 @@
+{
+  "_example": {
+    "scenario": "first MCP grape_get_context response",
+    "fixture": "clean-typescript-app",
+    "expectedState": "structured context pack with NEW or PINNED items",
+    "expectedWarnings": [
+      "repository_artifact_uses_lightweight_index"
+    ],
+    "relatedTests": [
+      "mcp grape_get_context compiles and returns structured context pack output",
+      "MCP context pack Markdown renders the structured context pack items"
+    ]
+  },
+  "artifactId": "artifact:example",
+  "artifactHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "dependencyManifestHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "sessionId": "mcp-session",
+  "branch": "main",
+  "headCommit": "cccccccccccccccccccccccccccccccccccccccc",
+  "dirtyWorktree": false,
+  "taskType": "analysis",
+  "riskOverlays": [],
+  "compileMode": "partial_with_risk",
+  "contextArtifact": {
+    "id": "artifact:example",
+    "artifactFormatVersion": 1,
+    "taskType": "analysis",
+    "compileMode": "partial_with_risk",
+    "branch": "main",
+    "headCommit": "cccccccccccccccccccccccccccccccccccccccc",
+    "dirtyWorktree": false,
+    "outputSections": []
+  },
+  "contextPackItems": [
+    {
+      "id": "item:example-new",
+      "state": "NEW",
+      "itemKind": "context_summary",
+      "itemRef": "repo-state",
+      "sectionId": "repo-state",
+      "title": "Repository State",
+      "content": "Branch: main",
+      "contentHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "tokenCount": 12,
+      "pinned": false,
+      "safetyCritical": false,
+      "inputRefs": [],
+      "warnings": []
+    }
+  ],
+  "contextPackMarkdown": "# Grape Context Pack\n\n## Artifact Summary\n",
+  "diffSummary": {
+    "newItems": 1,
+    "changedItems": 0,
+    "pinnedItems": 0,
+    "omittedItems": 0,
+    "invalidatedItems": 0,
+    "restoreAvailableItems": 0
+  },
+  "warnings": [],
+  "unsafeReasons": [],
+  "recoveryGuidance": [],
+  "budget": {
+    "status": "not_requested",
+    "estimatedPackTokens": 12,
+    "requiredContextTokens": 12,
+    "omittedDueToBudget": [],
+    "warnings": [],
+    "unsafeReasons": []
+  },
+  "restoreAvailable": false,
+  "artifactFiles": {
+    "json": ".grape/artifacts/ctx_example.json",
+    "markdown": ".grape/artifacts/ctx_example.md"
+  }
+}

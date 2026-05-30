@@ -1,0 +1,71 @@
+{
+  "_example": {
+    "scenario": "dependency manifest changes after prior send",
+    "fixture": "clean-typescript-app",
+    "expectedState": "prior sent context invalidated before resend",
+    "expectedWarnings": [],
+    "relatedTests": [
+      "durable context build invalidates stale dependency manifests before resending"
+    ]
+  },
+  "artifactFormat": "grape.context-pack.v1",
+  "artifactFormatVersion": 1,
+  "contextPackItemShape": "ContextPackItem",
+  "sessionId": "review-session",
+  "contextPackItems": [
+    {
+      "id": "item:invalidate-prior",
+      "state": "INVALIDATE_PREVIOUS",
+      "itemKind": "active_claim",
+      "itemRef": "current-valid-claims",
+      "sectionId": "current-valid-claims",
+      "title": "Current Valid Claims",
+      "content": "",
+      "contentHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "tokenCount": 0,
+      "pinned": false,
+      "safetyCritical": false,
+      "invalidatesSentItemId": "sent:artifact-1:current-valid-claims",
+      "inputRefs": [],
+      "warnings": []
+    },
+    {
+      "id": "item:resend-pinned",
+      "state": "PINNED",
+      "itemKind": "pinned_rule",
+      "itemRef": "active-project-rules",
+      "sectionId": "active-project-rules",
+      "title": "Active Project Rules",
+      "content": "Never store raw secrets.",
+      "contentHash": "2222222222222222222222222222222222222222222222222222222222222222",
+      "tokenCount": 8,
+      "pinned": true,
+      "safetyCritical": true,
+      "inputRefs": [],
+      "warnings": []
+    },
+    {
+      "id": "item:resend-body",
+      "state": "NEW",
+      "itemKind": "active_claim",
+      "itemRef": "current-valid-claims",
+      "sectionId": "current-valid-claims",
+      "title": "Current Valid Claims",
+      "content": "Claim text with updated dependency manifest.",
+      "contentHash": "3333333333333333333333333333333333333333333333333333333333333333",
+      "tokenCount": 24,
+      "pinned": false,
+      "safetyCritical": false,
+      "inputRefs": [],
+      "warnings": []
+    }
+  ],
+  "diffSummary": {
+    "newItems": 1,
+    "changedItems": 0,
+    "pinnedItems": 1,
+    "omittedItems": 0,
+    "invalidatedItems": 1,
+    "restoreAvailableItems": 0
+  }
+}

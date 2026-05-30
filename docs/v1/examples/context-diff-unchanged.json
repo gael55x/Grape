@@ -1,0 +1,80 @@
+{
+  "_example": {
+    "scenario": "second compile in the same session with no source changes",
+    "fixture": "clean-typescript-app",
+    "expectedState": "unchanged non-pinned context omitted with restore metadata",
+    "expectedWarnings": [],
+    "relatedTests": [
+      "cli diff-context compiles a session-scoped context diff",
+      "durable context build omits unchanged non-pinned sections on second turn"
+    ]
+  },
+  "artifactFormat": "grape.context-pack.v1",
+  "artifactFormatVersion": 1,
+  "contextPackItemShape": "ContextPackItem",
+  "sessionId": "review-session",
+  "contextPackItems": [
+    {
+      "id": "item:pinned-rules",
+      "state": "PINNED",
+      "itemKind": "pinned_rule",
+      "itemRef": "active-project-rules",
+      "sectionId": "active-project-rules",
+      "title": "Active Project Rules",
+      "content": "Never store raw secrets.",
+      "contentHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "tokenCount": 8,
+      "pinned": true,
+      "safetyCritical": true,
+      "inputRefs": [],
+      "warnings": []
+    },
+    {
+      "id": "item:omitted-claim",
+      "state": "OMIT_UNCHANGED",
+      "itemKind": "active_claim",
+      "itemRef": "current-valid-claims",
+      "sectionId": "current-valid-claims",
+      "title": "Current Valid Claims",
+      "content": "",
+      "contentHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "tokenCount": 0,
+      "pinned": false,
+      "safetyCritical": false,
+      "inputRefs": [],
+      "warnings": []
+    },
+    {
+      "id": "item:restore-hint",
+      "state": "RESTORE_AVAILABLE",
+      "itemKind": "active_claim",
+      "itemRef": "current-valid-claims",
+      "sectionId": "current-valid-claims",
+      "title": "Restore omitted context",
+      "content": "",
+      "contentHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "tokenCount": 0,
+      "pinned": false,
+      "safetyCritical": false,
+      "restoreId": "restore:review-session:artifact-2:current-valid-claims",
+      "inputRefs": [],
+      "warnings": []
+    }
+  ],
+  "omittedItems": [
+    {
+      "sectionId": "current-valid-claims",
+      "reasonOmitted": "unchanged_restorable",
+      "canRestore": true,
+      "restoreId": "restore:review-session:artifact-2:current-valid-claims"
+    }
+  ],
+  "diffSummary": {
+    "newItems": 0,
+    "changedItems": 0,
+    "pinnedItems": 1,
+    "omittedItems": 1,
+    "invalidatedItems": 0,
+    "restoreAvailableItems": 1
+  }
+}
