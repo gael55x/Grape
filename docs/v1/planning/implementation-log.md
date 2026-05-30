@@ -587,11 +587,18 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Composer
 - Summary: adopted ADR-0010 anchoring V1 on session-safe `ContextPack` transport, refocused root `ROADMAP.md` into product phases, and aligned `implementation-roadmap.md` with compile-vs-transport code ownership, a V1 feature filter, and transport-first alpha exit criteria.
 - Checks run: `npm run docs:check`.
-- Risks/follow-ups: implementation must follow the feature filter; Phase 1A–1D (npm publish, protocol golden tests, compiler hardening, multi-fixture benchmarks) is the next engineering work.
+- Risks/follow-ups: implementation must follow the feature filter; next work is protocol golden tests, compiler hardening, and multi-fixture benchmarks (see `ROADMAP.md`).
 
-### 2026-05-30 - Phase 1A Publish Path
+### 2026-05-30 - Publish path and install smoke
 
 - Author/agent: Gaille Amolong / Composer
-- Summary: fixed npm bin entry detection for symlinked `grape`, added `npm run install:check` (pack → install → help/init/two-turn compile), bumped package version to `0.1.0-alpha.1`, and aligned CI with Node 22.5+.
+- Summary: fixed npm bin entry detection for symlinked `grape`, added `npm run install:check` (pack → install → help/init/two-turn compile), bumped package version to `0.1.0-alpha.1`, and published `grape-context` to npm.
 - Checks run: `npm run check`.
-- Risks/follow-ups: registry publish remains manual; Phase 1B protocol golden tests and Phase 1D multi-fixture benchmarks are still open.
+- Risks/follow-ups: protocol golden tests and multi-fixture benchmarks remain open.
+
+### 2026-05-30 - CI Node 22.13 and roadmap wording
+
+- Author/agent: Gaille Amolong / Composer
+- Summary: raised the documented runtime floor to Node 22.13+ so CI and install smoke match `node:sqlite` without `--experimental-sqlite`; install smoke passes `NODE_OPTIONS` for spawned `grape` on 22.5–22.12; replaced roadmap “Phase N” headings with Done / Now / Next / Later.
+- Checks run: `npm run check`.
+- Risks/follow-ups: contributors on Node 22.5–22.12 must set `NODE_OPTIONS=--experimental-sqlite` until they upgrade.

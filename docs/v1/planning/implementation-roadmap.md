@@ -95,21 +95,20 @@ No product code should start before the Documentation Foundation is complete. In
 
 **V1 Alpha: Context Transport Protocol + publishable CLI/MCP.**
 
-Foundations through the first MCP `grape_get_context` path, session diffing, and fixture benchmark shell are in place. Next work prioritizes **protocol hardening**, **npm publish + install smoke**, **minimum compiler quality for turn-1 packs**, and **multi-scenario benchmarks**—not a full memory-platform graph/search stack (see ADR-0010).
+Foundations through the first MCP `grape_get_context` path, session diffing, and fixture benchmark shell are in place. Next work prioritizes **protocol hardening**, **compiler quality for turn-1 packs**, and **multi-scenario benchmarks**—not a full memory-platform graph/search stack (see ADR-0010). Publish path and install smoke are done; see root [`ROADMAP.md`](../../ROADMAP.md).
 
-## Product Phases
+## Priority workstreams
 
-Aligned with the root [`ROADMAP.md`](../../ROADMAP.md). Each phase keeps the outward `ContextPackItem` contract stable.
+Aligned with the root [`ROADMAP.md`](../../ROADMAP.md). The outward `ContextPackItem` contract stays stable across these streams.
 
-| Phase | Focus | Primary code areas |
+| Priority | Focus | Primary code areas |
 |---|---|---|
-| **0 — Story lock** | ADR-0010, roadmap, SPEC §0, contracts | `docs/v1/` |
-| **1A — Publish** | npm package, install smoke CI | `package.json`, `scripts/check-package.mjs`, `.github/workflows/` |
-| **1B — Protocol** | pack golden tests, invalidation/restore | `src/core/diff/`, `src/core/sessions/`, `tests/behavior/` |
-| **1C — Compile** | excerpts, rules, retrieval, budgets | `src/core/compiler/`, `src/core/retrieval/`, `src/core/proofs/`, `src/core/claims/` |
-| **1D — Proof** | fixtures + `grape bench` thresholds | `src/app/benchmark/`, `tests/fixtures/` |
-| **1.5 — Trust depth** | observed runs, more claims, rules | `src/core/trust/`, `src/core/claims/`, `src/mcp/` |
-| **2 — Retrieval** | durable compile, optional embeddings | `src/core/retrieval/`, `src/core/compiler/artifact/` |
+| Done — story + publish | ADR-0010, npm package, install smoke CI | `docs/v1/`, `package.json`, `scripts/check-package.mjs`, `.github/workflows/` |
+| Next — protocol | pack golden tests, invalidation/restore | `src/core/diff/`, `src/core/sessions/`, `tests/behavior/` |
+| Next — compile | excerpts, rules, retrieval, budgets | `src/core/compiler/`, `src/core/retrieval/`, `src/core/proofs/`, `src/core/claims/` |
+| Next — benchmarks | fixtures + `grape bench` thresholds | `src/app/benchmark/`, `tests/fixtures/` |
+| Soon — trust depth | observed runs, more claims, rules | `src/core/trust/`, `src/core/claims/`, `src/mcp/` |
+| Later — retrieval | durable compile, optional embeddings | `src/core/retrieval/`, `src/core/compiler/artifact/` |
 
 ## Feature Decision Filter
 
@@ -194,7 +193,7 @@ Status: complete enough to proceed to Evidence Store. Future snapshot changes sh
 
 Transport-first (ADR-0010):
 
-- `npm install -g grape-context` works on Node 22.5+ with install smoke CI
+- `npm install -g grape-context` works on Node 22.13+ with install smoke CI
 - `grape init --connect` and `grape_get_context` work in a consumer git repo without cloning Grape
 - SQLite session ledger records sent and omitted items
 - second no-change request safely omits unchanged non-pinned context with restore metadata

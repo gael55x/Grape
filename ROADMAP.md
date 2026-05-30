@@ -16,71 +16,81 @@ Implementation detail and goal order: [`docs/v1/planning/implementation-roadmap.
 
 ---
 
-## Phase 0 — Lock V1 story (docs)
+## Done (foundation)
 
-**Goal:** One coherent contract before more feature surface.
-
-| Deliverable | Status |
-|-------------|--------|
+| Area | Status |
+|------|--------|
 | ADR-0010 Context Transport Protocol | Done |
-| Roadmap + implementation roadmap phases | Done |
+| Roadmap + implementation roadmap | Done |
 | SPEC §0 aligned with transport-first framing | Done |
-| Feature filter documented (build / integrate / defer) | Done |
+| Feature filter (build / integrate / defer) | Done |
+| `grape-context@0.1.0-alpha.1` on npm | Done |
+| Install smoke in `npm run check` | Done |
+| `grape` bin after `npm install` | Done |
 
-**Non-goals:** Rewriting all of `SPEC.md`; building embeddings or a 19-language graph product in V1.
+**Non-goals for this slice:** Rewriting all of `SPEC.md`; building embeddings or a 19-language graph product in V1.
 
 ---
 
-## Phase 1 — V1 alpha: protocol you can ship
+## Now (current codebase)
 
-**Goal:** Prove the transport wedge on a real repo with installable CLI/MCP.
+What exists on `main` today:
 
-### 1A — Publish path
+- local `.grape/` bootstrap, SQLite ledger, Git snapshot + privacy-safe scanning
+- lightweight file / lexical / symbol indexing
+- `grape compile` / `grape_get_context` with session-scoped diffing
+- `OMIT_UNCHANGED`, `PINNED`, `INVALIDATE_PREVIOUS`, restore lookup
+- CLI/MCP inspection (`artifacts`, `stale`, `omitted`, `doctor`, …)
+- one benchmark fixture (`clean-typescript-app`)
+- published npm package [`grape-context`](https://www.npmjs.com/package/grape-context) (`0.1.0-alpha.1`)
+- scaffold-backed public artifacts (see [`context-artifact.md`](docs/v1/contracts/context-artifact.md))
 
-- [x] CI install smoke: pack → install → `init` → `compile` ×2 (`npm run install:check`)
-- [x] `grape` bin works after `npm install` (realpath entrypoint guard)
-- [x] Package version `0.1.0-alpha.1` + registry metadata prepared
-- [ ] npm publish `grape-context` to the registry (manual release step)
-- Package includes CLI + runtime SQL migrations (existing `package:check`)
+**Alpha exit criteria:** `npm install -g grape-context` → `grape init --connect` → `grape_get_context` twice in the same session → second response omits safely; a depended file change invalidates prior sends.
 
-### 1B — Protocol hardening (differentiator)
+---
 
-- Golden tests for full `ContextPackItem` envelopes
-- Branch switch, session reset, dependency stale → `INVALIDATE_PREVIOUS` benchmarked
-- Stable `artifactFormatVersion` / wire contract docs
+## Next (priority order)
+
+Work through these in order. Each item should land with tests and doc updates where behavior changes.
+
+### 1. CI and runtime reliability
+
+- [x] CI on Node 22.13+ (`node:sqlite` without `--experimental-sqlite`)
+- [x] Install smoke passes spawned `grape` on the same Node policy
+- [ ] Git tag `v0.1.0-alpha.1` on the published commit (if not already)
+
+### 2. Protocol hardening (differentiator)
+
+- Golden tests for full `ContextPackItem` envelopes (wire contract)
+- Named scenarios: branch switch, session reset, dependency stale → `INVALIDATE_PREVIOUS`
+- Stable `artifactFormatVersion` documented in contracts
 - Restore path documented and tested (stale restore fails closed)
 
-### 1C — Minimum compiler (features for the diff)
+### 3. Compiler quality (supports the diff)
 
 - Task retrieval + exact spans good enough on a real TypeScript repo
 - Pinned rules, high-risk gate, narrow source-excerpt proofs/claims
 - Token budget: required context never pruned
 
-### 1D — Proof it works
+### 4. Benchmark evidence
 
-- At least three benchmark scenarios (clean app, branch switch, stale file)
-- Public metrics: turn-1 vs turn-2 tokens, `OMIT_UNCHANGED` count, unsafe omissions = 0
-
-**Alpha exit:** `npm install -g` → `grape init --connect` → `grape_get_context` twice same session → second response omits safely; file change invalidates prior sends.
+- At least three fixture scenarios (clean app, branch switch, stale file)
+- Published metrics: turn-1 vs turn-2 tokens, `OMIT_UNCHANGED` count, unsafe omissions = 0
 
 ---
 
-## Phase 1.5 — Daily-use compile features
-
-**Goal:** Compilation is strong enough that teams keep Grape enabled; protocol API unchanged.
+## Soon (daily-use compile, same protocol API)
 
 - Grape-observed command/test proofs
 - More durable claim types + user-confirmed decisions
 - Parsed durable project rules + scope
 - Conflict detection (inspectable edges first)
 - Richer exact-span ranking
-- Optional **integration** doc: external graph MCP supplies refs; Grape still outputs pack diffs
+- Optional integration doc: external graph MCP supplies refs; Grape still outputs pack diffs
 
 ---
 
-## Phase 2 — Deeper compile, same protocol
-
-**Goal:** Broader memory/trust without changing the outward pack contract.
+## Later (deeper compile, same protocol)
 
 - Broader durable current-valid retrieval (less scaffold projection)
 - Optional local embeddings over allowed sources only
@@ -90,47 +100,24 @@ Implementation detail and goal order: [`docs/v1/planning/implementation-roadmap.
 
 ---
 
-## Phase 3 — Ecosystem (optional)
+## Optional (ecosystem)
 
 - Optional auto-sync hooks (every-turn repo refresh)
 - Multi-repo / team sync only after single-repo transport is boringly reliable
 
 ---
 
-## Now (current codebase)
-
-What exists today on `main`:
-
-- local `.grape/` bootstrap, SQLite ledger, Git snapshot + privacy-safe scanning
-- lightweight file / lexical / symbol indexing
-- `grape compile` / `grape_get_context` with session-scoped diffing
-- `OMIT_UNCHANGED`, `PINNED`, `INVALIDATE_PREVIOUS`, restore lookup
-- CLI/MCP inspection (`artifacts`, `stale`, `omitted`, `doctor`, …)
-- one benchmark fixture (`clean-typescript-app`); package dry-run ready; **not published to npm yet**
-- scaffold-backed public artifacts (see [`context-artifact.md`](docs/v1/contracts/context-artifact.md))
-
----
-
-## Next (immediate engineering after Phase 0 docs)
-
-1. npm publish + install smoke CI  
-2. Protocol golden tests + extra fixtures  
-3. Compiler hardening for turn-1 usefulness  
-4. Tag `v0.1.0-alpha.1`
-
----
-
-## Later (explicit non-goals for V1)
+## Explicit non-goals (V1)
 
 - Docker Compose memory server as a requirement
 - 19-language Leiden graph as the hero feature
 - Default cloud embeddings or team sync
 - Competing on hybrid memory search latency vs dedicated memory products
-- Full chat-session ingestion pipeline before pack diff is proven via npm
+- Full chat-session ingestion pipeline before pack diff is proven on npm
 
 ---
 
-## Non-Goals
+## Non-Goals (product shape)
 
 Grape should not become:
 

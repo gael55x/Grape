@@ -180,7 +180,7 @@ flowchart LR
 
 ## Planned Usage
 
-**Alpha status:** The context transport slice is implemented and gated by `npm run check` (including install smoke). Registry publish is the remaining Phase 1A step; see [ROADMAP.md](ROADMAP.md) for alpha exit criteria.
+**Alpha status:** The context transport slice is on npm as [`grape-context`](https://www.npmjs.com/package/grape-context) (`0.1.0-alpha.x`) and gated by `npm run check` (including install smoke). Requires **Node.js 22.13+**. See [ROADMAP.md](ROADMAP.md) for alpha exit criteria and what is still open.
 
 The intended setup is:
 
@@ -189,7 +189,7 @@ npm install -g grape-context
 grape init --connect
 ```
 
-The repository now has the first local setup implementation path for that second command. It creates `.grape/`, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures the initial Git snapshot, reports bootstrap and scan diagnostics, and prints MCP connection guidance. The npm package is prepared for the documented global install path, including compiled CLI output and runtime SQL migrations in `dist/`; it has not been published to npm yet.
+The repository now has the first local setup implementation path for that second command. It creates `.grape/`, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures the initial Git snapshot, reports bootstrap and scan diagnostics, and prints MCP connection guidance. The npm package is published for the documented global install path, including compiled CLI output and runtime SQL migrations in `dist/`.
 
 An MCP-capable coding agent will request context through:
 
