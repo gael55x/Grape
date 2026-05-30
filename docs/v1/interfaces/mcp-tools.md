@@ -4,6 +4,10 @@
 
 Define MCP tool contracts and safety boundaries.
 
+## Reviewer Note: Scaffold Vs Durable Truth
+
+`grape_get_context` returns V1-shaped `contextArtifact` and `contextPackItems`, but the compiled sections are still projected from the repository-derived scaffold in most cases. Compression orientation, lexical retrieval, and narrow `repository_source_excerpt_exists` claims do not replace proof-backed durable truth for the full repository. See `docs/v1/contracts/context-artifact.md`.
+
 ## Source Of Truth
 
 Tool schemas and safety rules are derived from `docs/v1/SPEC.md`.

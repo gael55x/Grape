@@ -28,6 +28,8 @@ Before editing artifact behavior, agents must verify:
 
 Canonical V1 artifact schemas live in `docs/v1/SPEC.md` sections 25.1 and 25.2. The current implementation keeps narrower `InMemory*Shape` types internally so the scaffold cannot masquerade as durable truth, then projects that scaffold into a public V1 `ContextArtifact` JSON shape for CLI/MCP consumers.
 
+**Reviewer warning:** a public `ContextArtifact` JSON file is not, by itself, evidence that Grape has promoted broad durable claims or verified runtime behavior. Inspect dependency refs, proof refs, `compileMode`, `unsafeReasons`, and `missingContext` before trusting an artifact. Internal `.scaffold.json` sidecars exist only for restore verification.
+
 ```ts
 interface InMemoryContextRequest {
   taskId: string;

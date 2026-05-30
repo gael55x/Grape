@@ -32,6 +32,32 @@ Before editing CLI behavior, agents must verify:
 - new commands have docs and snapshot tests
 - privacy-sensitive output is redacted
 
+## Reviewer Note: Scaffold Vs Durable Truth
+
+Public CLI JSON uses the V1 `ContextArtifact` envelope, but many sections are still compiled from the repository-derived scaffold rather than full durable current-valid retrieval. Treat artifacts as inspectable, dependency-tracked orientation—not as proof of runtime behavior or complete durable memory. See `docs/v1/contracts/context-artifact.md` (Canonical And In-Memory Schemas, Current Repository-Derived Compiler Foundation).
+
+## Command Status
+
+### Implemented
+
+| Group | Commands |
+|---|---|
+| Everyday | `grape help`, `grape status`, `grape doctor`, `grape doctor --privacy` |
+| Setup / MCP | `grape init --connect`, `grape sync`, `grape mcp --print-config`, `grape mcp --stdio` |
+| Fallback compile | `grape compile`, `grape diff-context` |
+| Inspection | `grape sessions`, `grape artifacts`, `grape claims --active`, `grape proofs`, `grape proofs --proof <id>`, `grape proofs --source <sourceId>`, `grape stale`, `grape conflicts`, `grape omitted` |
+| Benchmarks | `grape bench --fixture <name>` |
+
+### Specified / deferred
+
+| Command | Status |
+|---|---|
+| `grape add-decision` | Specified; not implemented. Would record user decision candidates and require direct confirmation before durable evidence. |
+| `grape decisions review` | Specified; not implemented. |
+| `grape export` | Specified; deferred until export data contract exists. |
+| `grape purge` | Specified; deferred until purge data contract exists. |
+| `grape proofs <claim_id>` | Specified claim-linked form; deferred. Use `grape proofs --proof <id>` today. |
+
 ## Required Command Groups
 
 - everyday: `grape help`, `grape status`, `grape doctor`
