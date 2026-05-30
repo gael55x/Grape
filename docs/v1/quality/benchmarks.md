@@ -61,7 +61,37 @@ Supported options:
 - `--json`: machine-readable output.
 - `--keep-workspace`: preserve the copied temporary benchmark workspace for debugging.
 
-The implemented benchmark is `bench_token_reduction_after_first_turn`. It reports first-turn and second-turn token costs separately, wall-clock duration for each compile call, context-pack item counts, sent and omitted ledger counts, restore hint counts, invalidation item counts, unsafe omissions, stale sends, and second-turn reduction percentage.
+Fixture name selects the benchmark scenario:
+
+| Fixture | Benchmark id |
+|---|---|
+| `clean-typescript-app` | `bench_token_reduction_after_first_turn` |
+| `branch-switch-typescript-app` | `bench_branch_switch_invalidation` |
+| `stale-source-typescript-app` | `bench_stale_source_invalidation` |
+
+Run all fixtures:
+
+```bash
+npm run benchmark:run
+```
+
+Full alpha e2e (dist build, pack install smoke, benchmark suite):
+
+```bash
+npm run e2e:alpha
+```
+
+### Recorded baselines (local reference, 2026-05-30)
+
+Machine-local reference run on `main` after the three-fixture harness landed. CI may differ slightly; use `npm run benchmark:run` to refresh.
+
+| Fixture | Turn 1 tokens | Turn 2 tokens | Turn 2 reduction | `OMIT_UNCHANGED` | `INVALIDATE_PREVIOUS` | Unsafe |
+|---|---:|---:|---:|---:|---:|---|
+| `clean-typescript-app` | 2069 | 1441 | 44.49% | 7 | 1 | 0 |
+| `branch-switch-typescript-app` | 2069 | 2697 | 0% | 0 | 9 | 0 |
+| `stale-source-typescript-app` | 2069 | 2861 | 0% | 0 | 9 | 0 |
+
+Token reduction thresholds apply only to `clean-typescript-app`. Invalidation benchmarks require `INVALIDATE_PREVIOUS > 0` on turn 2 with zero unsafe omissions.
 
 Current benchmark thresholds:
 
