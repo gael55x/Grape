@@ -588,3 +588,10 @@ Keep entries simple:
 - Summary: adopted ADR-0010 anchoring V1 on session-safe `ContextPack` transport, refocused root `ROADMAP.md` into product phases, and aligned `implementation-roadmap.md` with compile-vs-transport code ownership, a V1 feature filter, and transport-first alpha exit criteria.
 - Checks run: `npm run docs:check`.
 - Risks/follow-ups: implementation must follow the feature filter; Phase 1A–1D (npm publish, protocol golden tests, compiler hardening, multi-fixture benchmarks) is the next engineering work.
+
+### 2026-05-30 - Phase 1A Publish Path
+
+- Author/agent: Gaille Amolong / Composer
+- Summary: fixed npm bin entry detection for symlinked `grape`, added `npm run install:check` (pack → install → help/init/two-turn compile), bumped package version to `0.1.0-alpha.1`, and aligned CI with Node 22.5+.
+- Checks run: `npm run check`.
+- Risks/follow-ups: registry publish remains manual; Phase 1B protocol golden tests and Phase 1D multi-fixture benchmarks are still open.
