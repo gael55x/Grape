@@ -13,6 +13,7 @@ Each entry should include:
 
 ## Unreleased
 
+- Aligned the published alpha runtime floor with package enforcement: `grape-context@0.1.0-alpha.2` requires Node.js 22.13+.
 - Refocused V1 product framing on the Context Transport Protocol (`ContextPackItem` diff as the outward contract). Added ADR-0010, updated root `ROADMAP.md`, `implementation-roadmap.md`, `docs/v1/README.md`, and SPEC §0 executive summary. No schema or behavior change in this docs-only slice.
 - Established public V1 documentation architecture derived from the canonical V1 contract.
 - Published the canonical V1 implementation contract as `docs/v1/SPEC.md` so future implementation does not depend on ignored planning files.

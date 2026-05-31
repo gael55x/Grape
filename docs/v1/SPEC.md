@@ -5,7 +5,7 @@
 **Product:** Grape — local-first context transport layer for AI coding agents on git repositories  
 **Primary goal:** save tokens by compiling safe repository context once per task/session and shipping only the next session-safe context pack diff  
 **Safety model:** proof-backed, branch-aware, task-specific context artifacts with explicit uncertainty  
-**Runtime:** TypeScript on Node.js 22.5+  
+**Runtime:** TypeScript on Node.js 22.13+ for the published alpha package  
 **Distribution:** `npm install -g grape-context`  
 **Storage:** SQLite + WAL + portable lexical source index
 **Integration:** MCP server + CLI  
@@ -625,7 +625,7 @@ sequenceDiagram
 
 | Parameter | V1 value |
 |---|---|
-| Runtime | Node.js 22.5+ |
+| Runtime | Node.js 22.13+ for the published alpha package |
 | Language | TypeScript |
 | Package | `grape-context` |
 | CLI binary | `grape` |
