@@ -2,29 +2,29 @@
 
 ## Purpose
 
-Track the work required to move from the alpha.2 transport proof to serious human pre-beta review.
+Track the work required to move from the alpha transport proof to serious human pre-beta review.
 
 This checklist does not expand V1 scope. It makes the current transport slice easier to install, connect, verify, and recover from.
 
 The beta product promise is: install Grape, keep using the coding agent normally, and let Grape track seen context, send safe deltas, resend pinned safety context, invalidate stale prior sends, and restore omitted context in the background.
 
-## Current Alpha.2 Baseline
+## Current Alpha.3 Hardening Baseline
 
-- `grape-context@0.1.0-alpha.2` is the published alpha package for review.
+- `grape-context@0.1.0-alpha.3` is prepared as the current hardening candidate.
 - Node.js 22.13 or newer is the supported global-install runtime.
-- The happy path is `npm install -g grape-context@0.1.0-alpha.2`, then `grape init --connect`, then an MCP-capable agent calls `grape_get_context`.
+- The happy path after publish is `npm install -g grape-context@0.1.0-alpha.3`, then `grape init --connect`, then an MCP-capable agent calls `grape_get_context`.
 - Manual CLI commands are debugging and fallback surfaces.
 - Stable task/session identity is required for same-session omission.
 - The external benchmark workspace has a 13/13 scripted pass when run with the documented methodology.
 
 ## Human Review Checklist
 
-- [x] README install/setup story names alpha.2 and Node.js 22.13+.
+- [x] README install/setup story names alpha.3 and Node.js 22.13+.
 - [x] README explains that Grape is a controlled alpha transport slice, not a full memory platform.
 - [x] Agent session contract documents stable task/session identity, reset, mismatch recovery, diff states, and MCP framing.
 - [x] CLI and MCP interface docs link to the session contract.
 - [x] Roadmap separates Alpha, Beta, and 1.0 expectations.
-- [x] Roadmap/status docs use Done, Now, Next, Soon, and Later buckets for the real alpha.2 state.
+- [x] Roadmap/status docs use Done, Now, Next, Soon, and Later buckets for the real alpha.3 hardening-candidate state.
 - [x] Stale alpha.1 npm-cache recovery is documented.
 - [x] Task/session mismatch errors render recovery guidance that distinguishes same-task reset from new-task sessions.
 - [x] Packaged install smoke selects the exact just-packed tarball, asserts installed package metadata, runs MCP `initialize` and `tools/list`, performs two `grape_get_context` turns, and restores an omitted item through `grape_get_omitted_item`.
@@ -35,7 +35,9 @@ The beta product promise is: install Grape, keep using the coding agent normally
 - [x] Dedicated task/session mismatch exit classification is approved and implemented as exit code `6`.
 - [x] External benchmark workspace dependency metadata is aligned to alpha.2 after approval.
 - [x] Published-package smoke passed against the registry-installed alpha.2 package in the external benchmark workspace.
-- [ ] Global `npm install -g grape-context@0.1.0-alpha.2` smoke has been rerun if global install verification is requested.
+- [x] Alpha.3 package metadata is aligned and `npm run check`, `npm run benchmark:run`, and `npm run e2e:alpha` are green.
+- [ ] Publish/tag `0.1.0-alpha.3` after explicit release approval.
+- [ ] Global `npm install -g grape-context@0.1.0-alpha.3` smoke has been rerun if global install verification is requested after publish.
 
 ## Benchmark Workspace Alignment
 
@@ -59,7 +61,7 @@ npm install grape-context@0.1.0-alpha.2
 GRAPE_BIN=/Users/gailleamolong/Documents/Documents/Personal/grape-benchmark-pass/node_modules/.bin/grape node smoke-published.mjs
 ```
 
-The published-package smoke passed 8/8 checks. Benchmark methodology was not changed.
+The published-package smoke passed 8/8 checks for alpha.2. Benchmark methodology was not changed. Rerun this workspace against alpha.3 only after alpha.3 is published and that external mutation is approved.
 
 ## Verification Commands
 
@@ -75,7 +77,7 @@ npm run e2e:alpha
 Global package smoke for a consumer repo:
 
 ```bash
-npm install -g grape-context@0.1.0-alpha.2
+npm install -g grape-context@0.1.0-alpha.3
 grape init --connect
 grape mcp --print-config
 ```
@@ -84,7 +86,7 @@ If npm resolves stale alpha.1:
 
 ```bash
 npm cache clean --force
-npm install -g grape-context@0.1.0-alpha.2
+npm install -g grape-context@0.1.0-alpha.3
 ```
 
 ## Do Not Treat As Beta Complete

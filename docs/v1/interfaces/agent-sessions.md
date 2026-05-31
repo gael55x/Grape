@@ -2,24 +2,24 @@
 
 ## Purpose
 
-Define how an AI agent, CLI user, or MCP client must identify a Grape context session during the alpha.2 transport slice.
+Define how an AI agent, CLI user, or MCP client must identify a Grape context session during the alpha.3 transport slice.
 
 Grape only saves tokens when it can prove that the current request belongs to the same repository, task, branch/worktree scope, and session ledger as earlier turns. Session identity is therefore part of the safety contract, not a convenience label.
 
-## Alpha.2 Install Baseline
+## Alpha.3 Install Baseline
 
-The published alpha.2 package requires Node.js 22.13 or newer:
+The alpha.3 package requires Node.js 22.13 or newer:
 
 ```bash
-npm install -g grape-context@0.1.0-alpha.2
+npm install -g grape-context@0.1.0-alpha.3
 grape init --connect
 ```
 
-If a machine keeps resolving stale alpha.1 code after installing alpha.2, clear the npm cache and reinstall the exact alpha.2 package:
+If a machine keeps resolving older alpha code after installing alpha.3, clear the npm cache and reinstall the exact alpha.3 package:
 
 ```bash
 npm cache clean --force
-npm install -g grape-context@0.1.0-alpha.2
+npm install -g grape-context@0.1.0-alpha.3
 ```
 
 After `grape init --connect`, the intended path is a normal MCP-capable coding agent calling `grape_get_context`. Manual CLI commands such as `grape compile`, `grape sessions`, `grape stale`, and `grape omitted` are debugging and fallback surfaces.
@@ -71,7 +71,7 @@ The CLI returns exit code `6` for this mismatch. Exit code `2` remains the unsaf
 
 `grape_get_context` requires either an explicit `sessionId` or an `agentSessionId`.
 
-Preferred alpha.2 pattern:
+Preferred alpha.3 pattern:
 
 ```json
 {
@@ -138,7 +138,7 @@ Use the byte length of the JSON body, not the character count. Grape writes resp
 | Second turn sends a full pack unexpectedly | Confirm the exact task/query, task type, risk overlays, branch, and explicit `sessionId` are stable. |
 | Restore returns `stale` | Call `grape_get_context` again for current context; do not reuse the old omitted body. |
 | MCP client hangs or parse fails | Verify `Content-Length` is the UTF-8 byte length and the blank line separates headers from JSON. |
-| Installed CLI appears to be alpha.1 | Run `npm cache clean --force`, reinstall `grape-context@0.1.0-alpha.2`, and check `grape help` from the active shell path. |
+| Installed CLI appears to be older alpha code | Run `npm cache clean --force`, reinstall `grape-context@0.1.0-alpha.3`, and check `grape help` from the active shell path. |
 
 ## Related Contracts
 

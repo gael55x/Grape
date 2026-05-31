@@ -109,3 +109,6 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Simplified root README navigation/status language and rewrote the root roadmap into product-focused now/next/later buckets.
 - Hardened `context_pack_summary` rendering so current-turn stale dependency checks run before the prior sent ledger is summarized. Rows that the same compile will invalidate are excluded from the compression orientation.
 - Added safe local database repair for partial bootstrap. Bootstrap-capable flows back up unusable `.grape/grape.db` files before recreating local state, while status and doctor diagnose the condition without mutating local files.
+- Added the purpose-built session-reset benchmark fixture, restore-path protocol goldens, and dedicated task/session mismatch exit classification for alpha.3 hardening.
+- Refreshed implementation standards around functional core / imperative shell, purposeful same-shape transforms, boundary error classification, clear naming, and avoiding nested policy conditionals.
+- Split storage repository ownership into table-family directories while keeping `src/core/storage/repositories.ts` as the shared record-type and aggregate factory surface.

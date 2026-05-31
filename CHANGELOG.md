@@ -6,6 +6,21 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ## Unreleased
 
+## 0.1.0-alpha.3 - 2026-05-31
+
+### Added
+
+- Added a purpose-built session reset benchmark fixture proving `resetSession: true` / `--reset-session` emits `INVALIDATE_PREVIOUS`, forces a current resend, and avoids reset-turn omission.
+- Added restore-path protocol golden coverage for `RESTORE_AVAILABLE` restore IDs, session binding, restored body shape, and MCP output without absolute root paths.
+- Added dedicated task/session mismatch exit classification through CLI exit code `6`.
+- Added architecture standards for functional core / imperative shell, purposeful same-shape transforms, boundary error classification, clear naming, and avoiding nested policy conditionals.
+
+### Changed
+
+- Refreshed the README around the product promise: install Grape, keep using the coding agent normally, and let Grape track seen context, send safe deltas, invalidate stale context, resend pinned safety context, and restore omissions in the background.
+- Split storage repository ownership into table-family directories for project setup, sessions, context artifacts, context ledgers, evidence, claims, proofs, compression, and indexing while preserving the public storage barrel and aggregate factory.
+- Aligned package metadata for the `0.1.0-alpha.3` hardening candidate.
+
 ## 0.1.0-alpha.2 - 2026-05-30
 
 ### Changed

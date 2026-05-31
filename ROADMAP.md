@@ -21,6 +21,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 ## Done
 
 - `grape-context@0.1.0-alpha.2` is published on npm and has a GitHub release.
+- `grape-context@0.1.0-alpha.3` is prepared as a hardening candidate with package metadata bumped and local gates green.
 - The context transport wedge is proven through CLI and MCP `grape_get_context`.
 - MCP stdio smoke exists, including framed JSON-RPC transport.
 - Same-session two-turn omission works when task/session identity is stable.
@@ -32,7 +33,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - The session reset fixture benchmark proves reset invalidation, safe full resend, and zero reset-turn omissions.
 - Restore-path golden tests lock `RESTORE_AVAILABLE` restore IDs, session binding, restored body shape, and MCP no-root-path output.
 - Task/session mismatch now has a dedicated CLI exit classification instead of falling through the storage/schema bucket.
-- Package-lock metadata is aligned with alpha.2 version/runtime, and the external benchmark workspace dependency metadata now points at `grape-context@0.1.0-alpha.2`.
+- Package-lock metadata is aligned with alpha.3 version/runtime, and the external benchmark workspace dependency metadata points at `grape-context@0.1.0-alpha.2` until alpha.3 publish smoke is approved.
 - Published-package smoke passed against the registry-installed alpha.2 package in the external benchmark workspace.
 - The benchmark workspace reports 13/13 scripted scenarios passing when run with the documented methodology and stable task/session contract.
 - In-repo `grape bench` fixtures cover clean, branch-switch, stale-source, and session-reset scenarios.
@@ -41,11 +42,11 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 ## Now
 
 - Keep the seamless beta path explicit: install Grape, initialize once, keep using the coding agent normally, and let MCP `grape_get_context` handle context diffs in the background.
-- Run a global `npm install -g grape-context@0.1.0-alpha.2` smoke only if global install verification is requested.
+- Publish/tag `0.1.0-alpha.3` only after explicit release approval.
+- Run a global `npm install -g grape-context@0.1.0-alpha.3` smoke only if global install verification is requested after publish.
 
 ## Next
 
-- Optional `0.1.0-alpha.3` after the remaining alpha closeout gates are approved and green.
 - Beta candidate only after install/connect/recover flows are boring across clean consumer repos and the documented smoke/benchmark suite is reproducible.
 
 ## Soon
@@ -69,10 +70,10 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 
 ## Alpha Exit Check
 
-The current alpha path is:
+The alpha.3 install path after publish is:
 
 ```bash
-npm install -g grape-context@0.1.0-alpha.2
+npm install -g grape-context@0.1.0-alpha.3
 grape init --connect
 ```
 
