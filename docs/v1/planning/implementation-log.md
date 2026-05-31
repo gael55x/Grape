@@ -665,3 +665,10 @@ Keep entries simple:
 - Summary: bumped package metadata to `0.1.0-alpha.3` and refreshed README, roadmap, changelog, agent-session docs, beta-readiness/status docs, and implementation-facing changelog for the alpha.3 hardening candidate.
 - Checks run: user-provided `npm version 0.1.0-alpha.3 --no-git-tag-version`; `npm run check`; `npm run benchmark:run`; `npm run e2e:alpha`; follow-up `npm run docs:check`.
 - Risks/follow-ups: npm publish, Git tag creation, release creation, dist-tag changes, external benchmark workspace alpha.3 alignment, and global install smoke remain approval-gated.
+
+### 2026-05-31 - Alpha.3 Package Publish Hygiene
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: after the first publish attempt failed because the active npm auth could not publish `grape-context`, added a prebuild dist cleanup and package dry-run assertions so moved storage repository files cannot leave stale compiled JavaScript in the release tarball. Also aligned the package bin path with npm's normalized package metadata.
+- Checks run: failed `npm publish --tag alpha`; `npm whoami`; `npm view grape-context version dist-tags --json`; `npm run package:check`; `npm run docs:check`; `npm run install:check`.
+- Risks/follow-ups: npm publish still requires an authenticated account/token with package publish permission.

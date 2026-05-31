@@ -20,6 +20,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Refreshed the README around the product promise: install Grape, keep using the coding agent normally, and let Grape track seen context, send safe deltas, invalidate stale context, resend pinned safety context, and restore omissions in the background.
 - Split storage repository ownership into table-family directories for project setup, sessions, context artifacts, context ledgers, evidence, claims, proofs, compression, and indexing while preserving the public storage barrel and aggregate factory.
 - Aligned package metadata for the `0.1.0-alpha.3` hardening candidate.
+- Cleaned `dist/` before package builds and added package checks to block stale compiled files after source moves.
 
 ## 0.1.0-alpha.2 - 2026-05-30
 

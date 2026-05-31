@@ -13,7 +13,7 @@
   "homepage": "https://github.com/gael55x/Grape#readme",
   "type": "module",
   "bin": {
-    "grape": "./dist/cli/index.js"
+    "grape": "dist/cli/index.js"
   },
   "files": [
     "dist/",
@@ -24,6 +24,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "prebuild": "node scripts/clean-dist.mjs",
     "build": "tsc -p tsconfig.dist.json",
     "postbuild": "node scripts/copy-storage-migrations.mjs",
     "docs:check": "node scripts/check-docs-structure.mjs",

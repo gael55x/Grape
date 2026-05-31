@@ -6,7 +6,7 @@ const root = process.cwd();
 const packageJson = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
 
 assert(packageJson.private !== true, "package.json must not be private for the documented global install path");
-assert(packageJson.bin?.grape === "./dist/cli/index.js", "package.json bin.grape must point at dist/cli/index.js");
+assert(packageJson.bin?.grape === "dist/cli/index.js", "package.json bin.grape must point at dist/cli/index.js");
 assert(packageJson.engines?.node === ">=22.13.0", "package.json must keep the documented Node runtime floor");
 
 const requiredFiles = [
@@ -15,6 +15,15 @@ const requiredFiles = [
   "dist/core/storage/migrations/0002_indexing_foundation.sql",
   "dist/core/storage/migrations/0003_fts_entries.sql",
   "dist/core/storage/migrations/0004_compression_cache.sql"
+];
+
+const forbiddenStaleBuildFiles = [
+  "dist/core/storage/claim-repositories.js",
+  "dist/core/storage/compression-repositories.js",
+  "dist/core/storage/evidence-repositories.js",
+  "dist/core/storage/fts-repositories.js",
+  "dist/core/storage/indexing-repositories.js",
+  "dist/core/storage/proof-repositories.js"
 ];
 
 for (const file of requiredFiles) {
@@ -43,6 +52,10 @@ const packedFiles = new Set(packResult.files.map((file) => file.path));
 
 for (const file of ["package.json", "README.md", "CHANGELOG.md", ...requiredFiles]) {
   assert(packedFiles.has(file), `npm package is missing ${file}`);
+}
+
+for (const file of forbiddenStaleBuildFiles) {
+  assert(!packedFiles.has(file), `npm package includes stale build file ${file}`);
 }
 
 for (const file of packedFiles) {
