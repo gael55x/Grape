@@ -1,12 +1,15 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { assertNodeSqliteAvailable, envWithSqliteNodeOptions } from "./sqlite-node-env.mjs";
 
 const root = process.cwd();
+const sourcePackage = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
+const npmCacheDir = path.join(root, ".tmp", "npm-cache-e2e-alpha");
 assertNodeSqliteAvailable();
+mkdirSync(npmCacheDir, { recursive: true });
 
 const steps = [];
 
@@ -40,14 +43,21 @@ runStep("local grape help", () => {
 
 runStep("pack install smoke", () => {
   const packDir = path.join(root, ".tmp", "e2e-pack");
+  rmSync(packDir, { recursive: true, force: true });
   mkdirSync(packDir, { recursive: true });
   const pack = spawnSync("npm", ["pack", "--pack-destination", packDir, "--ignore-scripts"], {
     cwd: root,
-    encoding: "utf8"
+    encoding: "utf8",
+    env: npmEnv()
   });
   if (pack.status !== 0) throw new Error(pack.stderr.trim());
-  const tarball = readdirSync(packDir).find((name) => name.endsWith(".tgz"));
-  if (!tarball) throw new Error("npm pack produced no tarball");
+  const packedTarball = pack.stdout.trim().split(/\r?\n/).filter(Boolean).at(-1);
+  const tarballs = readdirSync(packDir).filter((name) => name.endsWith(".tgz"));
+  if (tarballs.length !== 1) throw new Error(`npm pack must produce exactly one tarball, found ${tarballs.length}`);
+  const tarball = tarballs[0];
+  if (tarball !== packedTarball) {
+    throw new Error(`selected tarball ${tarball} must match npm pack output ${packedTarball}`);
+  }
 
   const consumerRepo = mkdtempSync(path.join(tmpdir(), "grape-e2e-"));
   try {
@@ -63,19 +73,21 @@ runStep("pack install smoke", () => {
 
     const install = spawnSync("npm", ["install", path.join(packDir, tarball)], {
       cwd: consumerRepo,
-      encoding: "utf8"
+      encoding: "utf8",
+      env: npmEnv()
     });
     if (install.status !== 0) throw new Error(install.stderr.trim());
 
     const grapeBin = path.join(consumerRepo, "node_modules", ".bin", "grape");
     if (!existsSync(grapeBin)) throw new Error("missing node_modules/.bin/grape");
+    assertInstalledPackageMetadata(consumerRepo);
 
     const spawnGrape = (args) =>
       spawnSync(grapeBin, args, {
         cwd: consumerRepo,
         encoding: "utf8",
         maxBuffer: 16 * 1024 * 1024,
-        env: envWithSqliteNodeOptions()
+        env: envWithSqliteNodeOptions(npmEnv())
       });
 
     const help = spawnGrape(["help"]);
@@ -95,6 +107,11 @@ runStep("pack install smoke", () => {
     if (!secondJson.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED")) {
       throw new Error("second compile missing OMIT_UNCHANGED");
     }
+    if (!secondJson.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE")) {
+      throw new Error("second compile missing RESTORE_AVAILABLE");
+    }
+
+    runMcpInstalledSmoke(grapeBin, consumerRepo);
   } finally {
     rmSync(consumerRepo, { recursive: true, force: true });
   }
@@ -110,4 +127,124 @@ reportAndExit(0);
 function reportAndExit(code) {
   if (code === 0) console.log("\ne2e alpha smoke ok");
   process.exit(code);
+}
+
+function npmEnv() {
+  return {
+    ...process.env,
+    npm_config_audit: "false",
+    npm_config_cache: npmCacheDir,
+    npm_config_fund: "false",
+    npm_config_update_notifier: "false"
+  };
+}
+
+function assertInstalledPackageMetadata(consumerRepo) {
+  const packageJsonPath = path.join(consumerRepo, "node_modules", ...sourcePackage.name.split("/"), "package.json");
+  if (!existsSync(packageJsonPath)) throw new Error(`installed package is missing ${sourcePackage.name}/package.json`);
+  const installedPackage = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+  if (installedPackage.name !== sourcePackage.name) {
+    throw new Error(`installed package name must be ${sourcePackage.name}`);
+  }
+  if (installedPackage.version !== sourcePackage.version) {
+    throw new Error(`installed package version must be ${sourcePackage.version}`);
+  }
+  if (installedPackage.engines?.node !== sourcePackage.engines?.node) {
+    throw new Error(`installed package Node engine must be ${sourcePackage.engines?.node}`);
+  }
+}
+
+function runMcpInstalledSmoke(grapeBin, repoPath) {
+  const input = Buffer.concat([
+    encodeMcpFrame({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2024-11-05",
+        capabilities: {},
+        clientInfo: { name: "grape-e2e-alpha", version: sourcePackage.version }
+      }
+    }),
+    encodeMcpFrame({ jsonrpc: "2.0", method: "notifications/initialized" }),
+    encodeMcpFrame({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/list"
+    }),
+    encodeMcpFrame({
+      jsonrpc: "2.0",
+      id: 3,
+      method: "tools/call",
+      params: {
+        name: "grape_get_context",
+        arguments: { query: "e2e mcp smoke", sessionId: "e2e-alpha-mcp" }
+      }
+    }),
+    encodeMcpFrame({
+      jsonrpc: "2.0",
+      id: 4,
+      method: "tools/call",
+      params: {
+        name: "grape_get_context",
+        arguments: { query: "e2e mcp smoke", sessionId: "e2e-alpha-mcp" }
+      }
+    })
+  ]);
+
+  const result = spawnSync(grapeBin, ["mcp", "--stdio", "--repo", repoPath], {
+    cwd: repoPath,
+    input,
+    encoding: "buffer",
+    maxBuffer: 16 * 1024 * 1024,
+    env: envWithSqliteNodeOptions(npmEnv())
+  });
+  if (result.status !== 0) throw new Error(result.stderr.toString("utf8").trim() || "installed grape mcp failed");
+
+  const messages = parseMcpFrames(result.stdout);
+  const byId = new Map(messages.map((message) => [message.id, message]));
+  if (!byId.get(1)?.result?.capabilities?.tools) throw new Error("mcp initialize missing tool capabilities");
+
+  const toolNames = new Set(byId.get(2)?.result?.tools?.map((tool) => tool.name));
+  if (!toolNames.has("grape_get_context")) throw new Error("mcp tools/list missing grape_get_context");
+  if (!toolNames.has("grape_get_omitted_item")) throw new Error("mcp tools/list missing grape_get_omitted_item");
+
+  const first = byId.get(3)?.result;
+  if (!first || first.isError === true) throw new Error(first?.content?.[0]?.text ?? "first mcp context call failed");
+  if (!first.structuredContent.contextPackItems.some((item) => item.state === "NEW")) {
+    throw new Error("first mcp context call missing NEW items");
+  }
+
+  const second = byId.get(4)?.result;
+  if (!second || second.isError === true) throw new Error(second?.content?.[0]?.text ?? "second mcp context call failed");
+  if (!second.structuredContent.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED")) {
+    throw new Error("second mcp context call missing OMIT_UNCHANGED");
+  }
+  if (!second.structuredContent.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE")) {
+    throw new Error("second mcp context call missing RESTORE_AVAILABLE");
+  }
+}
+
+function encodeMcpFrame(message) {
+  const body = Buffer.from(JSON.stringify(message), "utf8");
+  return Buffer.concat([Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "utf8"), body]);
+}
+
+function parseMcpFrames(buffer) {
+  const messages = [];
+  let rest = Buffer.from(buffer);
+  while (rest.length > 0) {
+    const headerEnd = rest.indexOf("\r\n\r\n");
+    if (headerEnd < 0) break;
+    const header = rest.subarray(0, headerEnd).toString("utf8");
+    const match = /^Content-Length:\s*(\d+)$/im.exec(header);
+    if (!match) break;
+    const length = Number.parseInt(match[1], 10);
+    const bodyStart = headerEnd + 4;
+    const bodyEnd = bodyStart + length;
+    if (rest.length < bodyEnd) break;
+    messages.push(JSON.parse(rest.subarray(bodyStart, bodyEnd).toString("utf8")));
+    rest = rest.subarray(bodyEnd);
+  }
+  return messages;
 }
