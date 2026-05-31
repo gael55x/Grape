@@ -16,6 +16,8 @@ export interface BranchSwitchBenchmarkInput extends BenchmarkFixtureInput {}
 
 export interface StaleSourceBenchmarkInput extends BenchmarkFixtureInput {}
 
+export interface SessionResetBenchmarkInput extends BenchmarkFixtureInput {}
+
 export type BenchmarkStatus = "pass" | "fail";
 
 export interface BenchmarkTurnMetric {
@@ -90,7 +92,18 @@ export interface StaleSourceBenchmarkResult {
   readonly failures: readonly string[];
 }
 
+export interface SessionResetBenchmarkResult {
+  readonly benchmark: "bench_diff_vs_naive_resend";
+  readonly fixture: string;
+  readonly task: string;
+  readonly status: BenchmarkStatus;
+  readonly workspacePath?: string;
+  readonly turns: readonly BenchmarkTurnMetric[];
+  readonly failures: readonly string[];
+}
+
 export type BenchmarkResult =
   | TokenReductionBenchmarkResult
   | BranchSwitchBenchmarkResult
-  | StaleSourceBenchmarkResult;
+  | StaleSourceBenchmarkResult
+  | SessionResetBenchmarkResult;

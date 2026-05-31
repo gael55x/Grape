@@ -1,0 +1,61 @@
+{
+  "name": "session-reset-typescript-app",
+  "purpose": "Repository fixture for explicit session-reset invalidation benchmarks.",
+  "repoShape": {
+    "branches": ["main"],
+    "worktree": "clean",
+    "packageType": "typescript-app"
+  },
+  "files": [
+    {
+      "path": "package.json",
+      "sha256": "33f6873b22c04ea98d499fef7378f281802b0495e3ea165e70c33c0ab9fa3c35",
+      "purpose": "package identity"
+    },
+    {
+      "path": "src/sessionResetPolicy.ts",
+      "sha256": "85afacf1ffcc17472b0d976855bf5c6adb063c062eb7f6ce40e43068e023d2dc",
+      "purpose": "source proof"
+    },
+    {
+      "path": "src/sessionResetPolicy.test.ts",
+      "sha256": "ec81f1f051e9c3995f6142b03dc4eb609565db2b8e31a78f3d96c58b9ce99294",
+      "purpose": "test proof"
+    },
+    {
+      "path": ".grape/rules.md",
+      "sha256": "fec7a7295719701294d57993081378609f287dfad6591116bc17bc090edf9305",
+      "purpose": "pinned project rule"
+    }
+  ],
+  "expectedClaims": [
+    {
+      "id": "claim.session_reset.agent_context_loss",
+      "text": "planSessionReset invalidates prior context and resends pinned safety context when an agent lost context.",
+      "verificationStatus": "verified",
+      "proofFiles": ["src/sessionResetPolicy.ts", "src/sessionResetPolicy.test.ts"]
+    }
+  ],
+  "expectedScopeResults": {
+    "branch:main": "match",
+    "worktree:clean": "match",
+    "feature_flags:unknown": "unknown"
+  },
+  "expectedArtifactSections": [
+    "task",
+    "pinned_rule",
+    "active_claim",
+    "code_span",
+    "test_span"
+  ],
+  "expectedFirstTurnDiffStates": ["NEW", "PINNED"],
+  "expectedSecondTurnDiffStates": ["INVALIDATE_PREVIOUS", "NEW", "PINNED"],
+  "relatedTests": [
+    "session_reset_forces_full_resend",
+    "pinned_context_is_resent",
+    "context_pack_summary_excludes_currently_invalidated_sent_items"
+  ],
+  "relatedBenchmarks": [
+    "bench_diff_vs_naive_resend"
+  ]
+}

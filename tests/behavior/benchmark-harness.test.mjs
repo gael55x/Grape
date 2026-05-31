@@ -8,6 +8,7 @@ const fixturesRoot = path.join(process.cwd(), "tests/fixtures");
 const cleanFixturePath = path.join(fixturesRoot, "clean-typescript-app");
 const branchFixturePath = path.join(fixturesRoot, "branch-switch-typescript-app");
 const staleFixturePath = path.join(fixturesRoot, "stale-source-typescript-app");
+const sessionResetFixturePath = path.join(fixturesRoot, "session-reset-typescript-app");
 
 function runCli(args) {
   return spawnSync(process.execPath, [cliPath, ...args], {
@@ -82,6 +83,27 @@ test("cli bench stale-source fixture reports invalidation after source edit", ()
   assert.equal(output.fixture, "stale-source-typescript-app");
   assert.equal(output.status, "pass");
   assert.equal(output.turns[1].stateCounts.INVALIDATE_PREVIOUS > 0, true);
+  assert.deepEqual(output.failures, []);
+});
+
+test("cli bench session-reset fixture reports invalidation and full resend after reset", () => {
+  const result = runCli([
+    "bench",
+    "--fixture",
+    "session-reset-typescript-app",
+    "--fixture-path",
+    sessionResetFixturePath,
+    "--json"
+  ]);
+
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.benchmark, "bench_diff_vs_naive_resend");
+  assert.equal(output.fixture, "session-reset-typescript-app");
+  assert.equal(output.status, "pass");
+  assert.equal(output.turns[1].stateCounts.INVALIDATE_PREVIOUS > 0, true);
+  assert.equal(output.turns[1].stateCounts.NEW > 0, true);
+  assert.equal(output.turns[1].stateCounts.OMIT_UNCHANGED ?? 0, 0);
   assert.deepEqual(output.failures, []);
 });
 

@@ -1,4 +1,5 @@
 import { runBranchSwitchBenchmark } from "./branch-switch.js";
+import { runSessionResetBenchmark } from "./session-reset.js";
 import { runStaleSourceBenchmark } from "./stale-source.js";
 import { runTokenReductionBenchmark } from "./token-reduction.js";
 import type { BenchmarkFixtureInput, BenchmarkResult } from "./types.js";
@@ -7,6 +8,8 @@ export function runFixtureBenchmark(input: BenchmarkFixtureInput): BenchmarkResu
   switch (input.fixtureName) {
     case "branch-switch-typescript-app":
       return runBranchSwitchBenchmark(input);
+    case "session-reset-typescript-app":
+      return runSessionResetBenchmark(input);
     case "stale-source-typescript-app":
       return runStaleSourceBenchmark(input);
     default:

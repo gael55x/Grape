@@ -6,7 +6,8 @@ const cliPath = path.join(root, ".tmp/build/src/cli/index.js");
 const fixtures = [
   "clean-typescript-app",
   "branch-switch-typescript-app",
-  "stale-source-typescript-app"
+  "stale-source-typescript-app",
+  "session-reset-typescript-app"
 ];
 
 const build = spawnSync("npm", ["run", "build:test"], {
