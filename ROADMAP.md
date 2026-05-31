@@ -1,124 +1,93 @@
 # Roadmap
 
-Grape is a **local-first context transport layer** for coding agents: it compiles git-aware, proof-backed context from a repository, then ships only the **session-safe delta** each turn (`NEW`, `OMIT_UNCHANGED`, `INVALIDATE_PREVIOUS`, restore, pinned safety context).
+Grape is a **local-first context transport layer** for coding agents: it compiles git-aware, proof-backed context from a repository, then ships only the **session-safe delta** each turn (`NEW`, `OMIT_UNCHANGED`, `INVALIDATE_PREVIOUS`, restore hints, and pinned safety context).
 
-It is not a chatbot, a cloud memory platform, or a full code-intelligence graph. Supporting compile features (snapshot, rules, excerpts, proofs, lightweight indexing) exist so the protocol is useful on real repos—not to duplicate heavyweight memory servers in V1.
+It is not a chatbot, a cloud memory platform, or a full code-intelligence graph. Supporting compile features such as snapshots, rules, excerpts, proofs, lightweight indexing, and compression exist so the transport protocol is useful on real repos.
 
-Canonical protocol: [`docs/v1/contracts/context-diff.md`](docs/v1/contracts/context-diff.md). Product decision: [`docs/v1/decisions/adr-0010-context-transport-protocol.md`](docs/v1/decisions/adr-0010-context-transport-protocol.md).
+Canonical protocol: [`docs/v1/contracts/context-diff.md`](docs/v1/contracts/context-diff.md). Agent session contract: [`docs/v1/interfaces/agent-sessions.md`](docs/v1/interfaces/agent-sessions.md). Product decision: [`docs/v1/decisions/adr-0010-context-transport-protocol.md`](docs/v1/decisions/adr-0010-context-transport-protocol.md). Implementation detail and goal order: [`docs/v1/planning/implementation-roadmap.md`](docs/v1/planning/implementation-roadmap.md).
 
-Implementation detail and goal order: [`docs/v1/planning/implementation-roadmap.md`](docs/v1/planning/implementation-roadmap.md).
+## North Star
 
----
+Any MCP-capable agent on any git repo can call `grape_get_context`, receive a structured context pack diff, and pay fewer tokens on later turns without losing safety-critical or invalidated context.
 
-## North star
+## Release Shape
 
-> Any MCP-capable agent on any git repo can call `grape_get_context`, receive a structured context pack diff, and pay fewer tokens on later turns without losing safety-critical or invalidated context.
+| Stage | Meaning |
+|---|---|
+| Alpha | Protocol works. The CLI/MCP transport can install, initialize, return a context pack, safely omit unchanged same-session context, restore omitted context, and invalidate stale prior sends. |
+| Beta | Workflow works. A normal agent can use the happy path with clear install/setup docs, predictable task/session identity, useful mismatch recovery, reproducible smoke/benchmark coverage, and fewer manual debug steps. |
+| 1.0 | Stable safe contract. Public schemas, setup behavior, session safety, restore/invalidation semantics, and local privacy guarantees are stable enough for broad use. |
 
----
+## Done
 
-## Done (foundation)
+- `grape-context@0.1.0-alpha.2` is published on npm and has a GitHub release.
+- The context transport wedge is proven through CLI and MCP `grape_get_context`.
+- MCP stdio smoke exists, including framed JSON-RPC transport.
+- Same-session two-turn omission works when task/session identity is stable.
+- `PINNED`, `OMIT_UNCHANGED`, `RESTORE_AVAILABLE`, and `INVALIDATE_PREVIOUS` are implemented in the current transport slice.
+- Branch, dependency, session reset, and restore-path invalidation are proven through behavior coverage.
+- The benchmark workspace reports 13/13 scripted scenarios passing when run with the documented methodology and stable task/session contract.
+- In-repo `grape bench` fixtures cover clean, branch-switch, and stale-source scenarios.
+- Package dry-run and install smoke are part of the local gate.
 
-| Area | Status |
-|------|--------|
-| ADR-0010 Context Transport Protocol | Done |
-| Roadmap + implementation roadmap | Done |
-| SPEC §0 aligned with transport-first framing | Done |
-| Feature filter (build / integrate / defer) | Done |
-| `grape-context@0.1.0-alpha.1` on npm | Done |
-| Install smoke in `npm run check` | Done |
-| `grape` bin after `npm install` | Done |
+## Now
 
-**Non-goals for this slice:** Rewriting all of `SPEC.md`; building embeddings or a 19-language graph product in V1.
+- Finish agent session docs, README links, and setup troubleshooting for alpha.2.
+- Refresh roadmap and implementation status so pre-beta reviewers see the real state.
+- Align the external benchmark workspace dependency metadata to alpha.2 when approved, without changing benchmark methodology.
+- Document stale alpha.1 npm-cache recovery.
+- Clarify the two-command install/setup target: `npm install -g grape-context` then `grape init --connect`.
+- Make the seamless happy path explicit: after init, a normal MCP-capable agent calls `grape_get_context`; manual CLI commands are debugging fallbacks.
 
----
+## Next
 
-## Now (current codebase)
+- Clearer task/session mismatch UX for agents and humans.
+- Session reset fixture benchmark.
+- MCP install smoke against the globally installed package inside this repo's gate.
+- Restore-path golden tests beyond existing stale-restore behavior coverage.
+- Optional `0.1.0-alpha.3` after the docs/checks above land.
 
-What exists on `main` today:
+## Soon
 
-- local `.grape/` bootstrap, SQLite ledger, Git snapshot + privacy-safe scanning
-- lightweight file / lexical / symbol indexing
-- `grape compile` / `grape_get_context` with session-scoped diffing
-- `OMIT_UNCHANGED`, `PINNED`, `INVALIDATE_PREVIOUS`, restore lookup
-- CLI/MCP inspection (`artifacts`, `stale`, `omitted`, `doctor`, …)
-- one benchmark fixture (`clean-typescript-app`)
-- published npm package [`grape-context`](https://www.npmjs.com/package/grape-context) (`0.1.0-alpha.1`)
-- scaffold-backed public artifacts (see [`context-artifact.md`](docs/v1/contracts/context-artifact.md))
+- Better TypeScript compiler retrieval and exact-span ranking.
+- Grape-observed command/test recording with trusted run evidence.
+- Stronger trust/proof depth and broader durable claim types.
+- Broader fixtures and labeled benchmark expectations.
+- Better dirty-worktree, branch, and session handling for normal agent workflows.
+- Parsed durable project rules and richer conflict creation/resolution.
 
-**Alpha exit criteria:** `npm install -g grape-context` → `grape init --connect` → `grape_get_context` twice in the same session → second response omits safely; a depended file change invalidates prior sends.
+## Later
 
----
+- Optional local embeddings over allowed sources.
+- Rust or other performance rewrites only after the contract is stable.
+- Cloud/team sync after single-repo local transport is boringly reliable.
+- Full graph extraction and richer code-intelligence integrations.
+- Memory-platform features outside the V1 transport wedge.
+- IDE plugins and deeper agent-client integrations.
+- Stable `1.0.0`.
 
-## Next (priority order)
+## Alpha Exit Check
 
-Work through these in order. Each item should land with tests and doc updates where behavior changes.
+The current alpha path is:
 
-### 1. CI and runtime reliability
+```bash
+npm install -g grape-context@0.1.0-alpha.2
+grape init --connect
+```
 
-- [x] CI on Node 22.13+ (`node:sqlite` without `--experimental-sqlite`)
-- [x] Install smoke passes spawned `grape` on the same Node policy
-- [ ] Git tag `v0.1.0-alpha.2` on the published commit (if not already)
+Then an MCP client calls `grape_get_context` twice with the same task/session identity. The second response should omit unchanged non-pinned context safely, and a depended file, branch change, or explicit reset should invalidate prior sends instead of silently reusing stale context.
 
-### 2. Protocol hardening (differentiator)
+## Beta Readiness Bar
 
-- [x] Golden tests for `ContextPackItem` envelopes (`context-pack-protocol-golden.test.mjs`)
-- [x] Branch switch and stale-source `INVALIDATE_PREVIOUS` benchmarks
-- [x] Stable `artifactFormatVersion` documented in `context-diff.md`
-- [ ] Session reset scenario benchmark (behavior tests exist; fixture bench pending)
-- [ ] Restore path golden beyond existing stale-restore behavior tests
+Beta readiness is not a bigger feature list. It means the current transport slice is boring to install, connect, inspect, and recover from:
 
-### 3. Compiler quality (supports the diff)
+- setup docs match the published package and Node runtime
+- agent session/task identity is explicit and testable
+- common mismatch and stale-cache failures have recovery guidance
+- install smoke, MCP stdio smoke, restore, invalidation, and benchmark checks are reproducible
+- known scaffold and retrieval limitations are visible before users rely on them
 
-- Task retrieval + exact spans good enough on a real TypeScript repo
-- Pinned rules, high-risk gate, narrow source-excerpt proofs/claims
-- Token budget: required context never pruned
-
-### 4. Benchmark evidence
-
-- [x] Three fixture scenarios wired to `grape bench` (clean, branch switch, stale source)
-- [ ] Published baseline metrics in docs (turn-1 vs turn-2 tokens from CI or manual run log)
-
----
-
-## Soon (daily-use compile, same protocol API)
-
-- Grape-observed command/test proofs
-- More durable claim types + user-confirmed decisions
-- Parsed durable project rules + scope
-- Conflict detection (inspectable edges first)
-- Richer exact-span ranking
-- Optional integration doc: external graph MCP supplies refs; Grape still outputs pack diffs
-
----
-
-## Later (deeper compile, same protocol)
-
-- Broader durable current-valid retrieval (less scaffold projection)
-- Optional local embeddings over allowed sources only
-- `grape export` / `grape purge` when privacy contracts exist
-- Multi-fixture benchmark suite + published baselines
-- Cross-platform CI hardening (Windows/WSL)
-
----
-
-## Optional (ecosystem)
-
-- Optional auto-sync hooks (every-turn repo refresh)
-- Multi-repo / team sync only after single-repo transport is boringly reliable
-
----
-
-## Explicit non-goals (V1)
-
-- Docker Compose memory server as a requirement
-- 19-language Leiden graph as the hero feature
-- Default cloud embeddings or team sync
-- Competing on hybrid memory search latency vs dedicated memory products
-- Full chat-session ingestion pipeline before pack diff is proven on npm
-
----
-
-## Non-Goals (product shape)
+## Non-Goals For V1
 
 Grape should not become:
 
