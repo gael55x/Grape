@@ -88,7 +88,7 @@ Core objects:
 
 ## Current Status
 
-Grape is under active implementation. This repository is the official home for Grape’s documentation and framework scaffold.
+Grape is a controlled public alpha. The context transport slice is published as [`grape-context@0.1.0-alpha.2`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.2) and is ready for serious pre-beta review of the install flow, CLI/MCP transport, session contract, and diff semantics.
 
 Implemented today:
 
@@ -98,6 +98,7 @@ Implemented today:
 - in-memory context artifact and diff proof
 - durable SQLite session-ledger storage
 - durable context build proof for first-turn send, second-turn omission, stale manifest invalidation, and rollback
+- alpha.2 npm package and GitHub release for the transport wedge
 - first local setup CLI slice: `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`
 - bootstrap project detection during `grape init --connect` for language/framework, package manager, scripts, test command, entry points, config files, confidence levels, and non-durable candidate rules
 - setup/status scan diagnostics for visible and rejected files, including ignored, private, unreadable, oversized, and binary-file rejection counts without exposing skipped file bodies
@@ -110,47 +111,51 @@ Implemented today:
 - active narrow claim inspection through `grape claims --active` and MCP `grape_get_claims`
 - proof inspection through `grape proofs`, `grape proofs --proof <id>`, and MCP `grape_get_proofs`
 - conflict inspection through `grape conflicts` and MCP `grape_get_conflicts`, reading recorded claim conflict edges without resolving them
-- first fixture benchmark shell through `grape bench --fixture <name>`, measuring first-turn and second-turn token costs, omitted unchanged tokens, restore hints, stale sends, unsafe omissions, and wall-clock timings against a copied fixture repo
+- fixture benchmark shell through `grape bench --fixture <name>`, measuring first-turn and second-turn token costs, omitted unchanged tokens, restore hints, stale sends, unsafe omissions, and wall-clock timings against copied fixture repos
+- external benchmark workspace pass of 13/13 scripted scenarios when run with the documented methodology and stable task/session contract
 - first MCP stdio server: `grape mcp --stdio` supports `initialize`, `tools/list`, `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_rules`, `grape_get_omitted_item`, `grape_get_stale_items`, `grape_get_conflicts`, `grape_get_status`, `grape_record_candidate`, `grape_record_command_result`, `grape_record_test_result`, `grape_record_user_decision`, and `grape_request_user_confirmation` over framed stdio
 - MCP rule inspection through `grape_get_rules`, returning current Git-visible, hash-verified, secret-scanned rule excerpts without absolute root paths
 - restricted MCP candidate, command/test result, user-decision, and confirmation-request tools as temporary evidence/request surfaces without raw command/output/prompt/response persistence or durable claim promotion
 - omitted context restore lookup through `grape omitted --session <id> --token <restoreToken>` and `grape_get_omitted_item`
 - recovery guidance through `grape status`, `grape doctor`, unsafe compile output, lock-conflict errors, stale restore output, privacy/redaction failures, and safe malformed-config repair during bootstrap
-- TypeScript, behavior tests, storage checks, docs checks, and architecture-boundary checks
+- TypeScript, behavior tests, storage checks, docs checks, architecture-boundary checks, package dry-run checks, and install smoke
 
-Not released yet:
+Still alpha:
 
-- npm package
-- full production CLI inspection surface
+- this is a local context transport slice, not a full memory platform
+- stable task/session identity is required for reliable second-turn omission
+- broader durable current-valid retrieval is still scaffold-backed in places
 - Grape-observed command/test runners for trusted execution evidence
-- full repository indexing
-- safe budget pruning and broader compression-policy hardening
+- full repository indexing and richer exact-span ranking
+- broader durable claim types, parsed durable rules, and conflict creation/resolution
+- beta-grade mismatch UX and restore-path golden coverage
 
 ## Documentation
 
 Start here:
 
 - [Documentation Index](docs/README.md)
-- [Framework Documentation](docs/README.md)
-- [Implementation Contract](docs/README.md)
-- [Architecture](docs/README.md)
-- [State Machine](docs/README.md)
-- [Invariants](docs/README.md)
+- [V1 Documentation](docs/v1/README.md)
+- [Implementation Contract](docs/v1/SPEC.md)
+- [Architecture](docs/v1/architecture/overview.md)
+- [State Machine](docs/v1/architecture/state-machine.md)
+- [Invariants](docs/v1/architecture/invariants.md)
 - [Roadmap](ROADMAP.md)
 - [Contributing](CONTRIBUTING.md)
 
 Core contracts:
 
-- [Trust Model](docs/README.md)
-- [Context Artifact](docs/README.md)
-- [Context Diff](docs/README.md)
-- [Compression](docs/README.md)
-- [Storage](docs/README.md)
-- [Security](docs/README.md)
-- [MCP Tools](docs/README.md)
-- [CLI](docs/README.md)
-- [Testing](docs/README.md)
-- [Benchmarks](docs/README.md)
+- [Trust Model](docs/v1/core/trust-model.md)
+- [Context Artifact](docs/v1/contracts/context-artifact.md)
+- [Context Diff](docs/v1/contracts/context-diff.md)
+- [Agent Sessions](docs/v1/interfaces/agent-sessions.md)
+- [Compression](docs/v1/core/compression.md)
+- [Storage](docs/v1/core/storage.md)
+- [Security](docs/v1/core/security.md)
+- [MCP Tools](docs/v1/interfaces/mcp-tools.md)
+- [CLI](docs/v1/interfaces/cli.md)
+- [Testing](docs/v1/quality/testing.md)
+- [Benchmarks](docs/v1/quality/benchmarks.md)
 
 ## Architecture
 
@@ -178,18 +183,32 @@ flowchart LR
   Storage --> Diff
 ```
 
-## Planned Usage
+## Alpha Usage
 
-**Alpha status:** The context transport slice is on npm as [`grape-context`](https://www.npmjs.com/package/grape-context) (`0.1.0-alpha.x`) and gated by `npm run check` (including install smoke). Requires **Node.js 22.13+**. See [ROADMAP.md](ROADMAP.md) for alpha exit criteria and what is still open.
+**Alpha status:** The context transport slice is on npm as [`grape-context@0.1.0-alpha.2`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.2) and gated by `npm run check`, package checks, and install smoke. Requires **Node.js 22.13+**. See [ROADMAP.md](ROADMAP.md) for the alpha, beta, and 1.0 split.
 
-The intended setup is:
+For reproducible alpha.2 testing:
+
+```bash
+npm install -g grape-context@0.1.0-alpha.2
+grape init --connect
+```
+
+The two-command target for normal alpha users is:
 
 ```bash
 npm install -g grape-context
 grape init --connect
 ```
 
-The repository now has the first local setup implementation path for that second command. It creates `.grape/`, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures the initial Git snapshot, reports bootstrap and scan diagnostics, and prints MCP connection guidance. The npm package is published for the documented global install path, including compiled CLI output and runtime SQL migrations in `dist/`.
+`grape init --connect` creates `.grape/`, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures the initial Git snapshot, reports bootstrap and scan diagnostics, and prints MCP connection guidance. The npm package includes compiled CLI output and runtime SQL migrations in `dist/`.
+
+If npm appears to keep alpha.1 after installing alpha.2, clear the cache and reinstall the exact package:
+
+```bash
+npm cache clean --force
+npm install -g grape-context@0.1.0-alpha.2
+```
 
 An MCP-capable coding agent will request context through:
 
@@ -197,7 +216,9 @@ An MCP-capable coding agent will request context through:
 grape_get_context
 ```
 
-Inspection and debugging commands are planned:
+For continued turns, keep the same task/query and session identity. The alpha.2 session contract is strict by design: different task wording with the same explicit session is a mismatch, and derived MCP sessions change when the query changes. See [Agent Sessions](docs/v1/interfaces/agent-sessions.md) for the examples, recovery paths, exit-code notes, and JSON-RPC framing details.
+
+Manual CLI commands are debugging and fallback surfaces:
 
 ```bash
 grape compile --task "Explain the files I need to edit"
@@ -225,7 +246,7 @@ grape bench --fixture stale-source-typescript-app
 
 Requirements:
 
-- Node.js 22.5+
+- Node.js 22.13+
 - npm
 
 Run the full local gate:
@@ -259,7 +280,7 @@ Implementation standards are strict:
 
 ## Repository Status
 
-This repository is public-facing but pre-release. APIs, schemas, and command names may change until the alpha contract is complete.
+This repository is public-facing alpha software. APIs, schemas, command names, and setup guidance may change before 1.0, and the current package is not a broad beta or production memory platform.
 
 ## License
 
