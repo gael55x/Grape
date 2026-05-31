@@ -150,6 +150,7 @@ flowchart TD
 - Use composable same-shape transforms only when they make the pipeline clearer. A `CompilePlan -> CompilePlan` or `BenchmarkResult -> BenchmarkResult` transform is acceptable when each step has a named domain purpose; do not force IO-heavy orchestration into fake functional pipelines.
 - Keep logging, recovery guidance, and error rendering around core logic rather than embedded inside pure domain functions. Prefer typed domain errors or explicit result objects that CLI/MCP adapters classify at the boundary.
 - Name functions as verbs and parameters as nouns where practical. Avoid acronym-heavy names and single-letter domain variables outside tight local callbacks; clarity is more valuable than symbol compression.
+- Use guard clauses for invalid or missing inputs, but do not bury domain behavior in nested conditionals. When branching selects policy, transport shape, or recovery behavior, prefer named classifiers, typed result objects, dispatch tables, or small functions with one reason to change.
 - Keep modules small enough that a future agent can read the whole module before editing it.
 - Do not create generic `utils` folders for domain behavior. Prefer `path-normalization.ts`, `redaction.ts`, or `claim-scope.ts` with a single owner.
 - Centralize shared enums and serialized schemas in `src/shared/` only after two domain modules need the same contract.
@@ -178,7 +179,7 @@ Split a module when any of these happen:
 - a future agent cannot inspect the whole file quickly before editing
 - tests for the module need unrelated fixture setup paths
 
-Current pressure point: `src/core/storage/repositories.ts` is intentionally boring but already large. Do not add new table families to it without splitting storage repositories by ownership area. Evidence source/source-rejection persistence now lives in `src/core/storage/evidence-repositories.ts`, and file/symbol relationship persistence lives in `src/core/storage/indexing-repositories.ts`; future claim/proof table families should follow the same ownership split instead of expanding the session-ledger repository file.
+Storage repository ownership is split under `src/core/storage/` by table family. `repositories.ts` keeps shared storage record types and the public aggregate `createStorageRepositories` factory only. Project/repo setup lives in `project/`, session state/events in `session/`, context artifact/dependency persistence in `context-artifact/`, sent/omitted/pack ledger rows in `context-ledger/`, source evidence in `evidence/`, claims in `claims/`, proofs in `proofs/`, compression cache rows in `compression/`, and symbol/lexical indexing in `indexing/`. Future storage table families should follow the same subdirectory ownership pattern instead of expanding the aggregate repository file.
 
 The local setup path is split under `src/app/local-project/` by use case: config/layout, migration-backed local storage, Git exclusion, initialization, status, doctor diagnostics, and MCP guidance. CLI command handlers must keep calling those app services rather than taking ownership of filesystem, Git, storage, or diagnostic policy.
 

@@ -6,8 +6,8 @@ import type {
   SourceScope,
   SourceTrustClass,
   SourceType
-} from "../../shared/index.js";
-import { applySqliteConnectionPolicy } from "./sqlite-policy.js";
+} from "../../../shared/index.js";
+import { applySqliteConnectionPolicy } from "../sqlite-policy.js";
 
 export interface SourceRecord {
   readonly sourceId: string;

@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 
-import { applySqliteConnectionPolicy } from "./sqlite-policy.js";
+import { applySqliteConnectionPolicy } from "../sqlite-policy.js";
 
 export interface ClaimCandidateRecord {
   readonly candidateId: string;

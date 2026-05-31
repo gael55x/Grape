@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 
-import type { CompressionArtifactType, CompressionMethod } from "../../shared/index.js";
-import { applySqliteConnectionPolicy } from "./sqlite-policy.js";
+import type { CompressionArtifactType, CompressionMethod } from "../../../shared/index.js";
+import { applySqliteConnectionPolicy } from "../sqlite-policy.js";
 
 export type StoredCompressionArtifactType = Extract<
   CompressionArtifactType,

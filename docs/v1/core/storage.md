@@ -119,16 +119,20 @@ MCP restricted writes currently reuse existing V1 tables instead of adding prema
 - Application services own transaction boundaries for multi-repository state changes.
 - `runStorageTransaction` is the storage helper for one explicit writer transaction; app services decide the state transition, storage only guarantees commit/rollback.
 - Storage repositories do not decide trust, relevance, compression policy, or redaction policy.
-- The first repository slice in `src/core/storage/repositories.ts` covers only the tables needed to prove persisted session-scoped omission: project/repo/snapshot/worktree setup, context sessions, artifacts, dependencies, sent items, and omitted items.
-- Evidence source storage is split into `src/core/storage/evidence-repositories.ts` so source/source-rejection persistence does not expand the session-ledger repository file.
+- `src/core/storage/repositories.ts` owns shared storage record types and the public aggregate `createStorageRepositories` factory only.
+- Project/repo/snapshot/worktree setup storage lives in `src/core/storage/project/repositories.ts`.
+- Context session and session-event storage lives in `src/core/storage/session/repositories.ts`.
+- Context artifact and dependency storage lives in `src/core/storage/context-artifact/repositories.ts`.
+- Sent, omitted, and context-pack ledger storage lives in `src/core/storage/context-ledger/repositories.ts`.
+- Evidence source storage is split into `src/core/storage/evidence/repositories.ts` so source/source-rejection persistence does not expand the session-ledger repository file.
 - Evidence repositories persist already-classified records from `src/core/evidence/`; they do not decide trust, privacy policy, source relevance, or proof validity.
-- Claim storage is split into `src/core/storage/claim-repositories.ts` so claim candidates and durable claims do not expand session-ledger or proof repositories.
+- Claim storage is split into `src/core/storage/claims/repositories.ts` so claim candidates and durable claims do not expand session-ledger or proof repositories.
 - Claim repositories persist already-gated candidate/claim records and claim edge records only; extraction, belief gates, scope policy, contradiction detection, and current-valid filtering stay in claims/trust/retrieval/app modules.
-- Proof storage is split into `src/core/storage/proof-repositories.ts` so validated proof rows are persisted without expanding session-ledger or evidence repositories.
+- Proof storage is split into `src/core/storage/proofs/repositories.ts` so validated proof rows are persisted without expanding session-ledger or evidence repositories.
 - Proof repositories persist already-validated proof records only and can link a proof row to an accepted claim. Validation stays in `src/core/proofs/`; claim gating stays out of storage.
 - Initial source storage keeps branch, commit, repo ID, project ID, worktree hash, and worktree state ID inside `metadata_json` until a later migration promotes first-class `Source` shape fields that the compiler and MCP surface will query directly.
-- Indexing storage is split between `src/core/storage/indexing-repositories.ts` for aggregate wiring, `src/core/storage/fts-repositories.ts` for lexical rows/search, and symbol repository ownership for `symbol_nodes` and `symbol_edges` SQL and typed row mapping. The `fts` file/table names are retained for compatibility with earlier local databases.
-- Compression cache storage is split into `src/core/storage/compression-repositories.ts` so deterministic cache metadata and input hashes do not expand the session-ledger repository file.
+- Indexing storage is split under `src/core/storage/indexing/`: `repositories.ts` owns aggregate symbol repository wiring, `fts-repositories.ts` owns lexical rows/search, and symbol repository methods own `symbol_nodes` and `symbol_edges` SQL and typed row mapping. The `fts` file/table names are retained for compatibility with earlier local databases.
+- Compression cache storage is split into `src/core/storage/compression/repositories.ts` so deterministic cache metadata and input hashes do not expand the session-ledger repository file.
 - Repository tests must prove session-scoped sent/omitted ledgers and fail-closed foreign-key behavior before app services rely on those tables.
 
 ## SQLite Policy
