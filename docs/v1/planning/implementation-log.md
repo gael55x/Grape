@@ -644,3 +644,10 @@ Keep entries simple:
 - Summary: aligned this repo's package-lock root metadata with `grape-context@0.1.0-alpha.2` and Node `>=22.13.0`, aligned the external benchmark workspace dependency metadata to the registry alpha.2 package, and ran the external published-package smoke without changing benchmark methodology.
 - Checks run: external `npm install grape-context@0.1.0-alpha.2 --ignore-scripts --audit=false --fund=false`; external `GRAPE_BIN=.../node_modules/.bin/grape node smoke-published.mjs` passed 8/8 checks.
 - Risks/follow-ups: the external benchmark workspace is not a Git repository, so its dependency alignment is recorded in beta readiness docs rather than committed here. A true global `npm install -g` smoke remains optional if global install verification is requested.
+
+### 2026-05-31 - README And Code Standards Refresh
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: refreshed the root README to match the current alpha.2/pre-beta state after session-reset benchmark, restore-path golden, mismatch exit classification, and metadata-alignment work. Added architecture standards for functional core/imperative shell, purposeful same-shape transforms, boundary error classification, and clear non-acronym-heavy naming.
+- Checks run: documentation review only before storage refactor.
+- Risks/follow-ups: no runtime behavior changed. Future beta code changes should apply the standards incrementally instead of broad cosmetic churn.
