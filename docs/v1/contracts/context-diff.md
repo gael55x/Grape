@@ -6,6 +6,8 @@ Define the **canonical V1 outward protocol**: session-scoped context pack items 
 
 This document is the wire contract for context **transport**. Compilation inputs and artifact sections live in `context-artifact.md`. Product framing: `docs/v1/decisions/adr-0010-context-transport-protocol.md`.
 
+Agent-facing session/task identity and recovery guidance lives in [`../interfaces/agent-sessions.md`](../interfaces/agent-sessions.md).
+
 ## Source Of Truth
 
 This document derives from the diff and session contract in `docs/v1/SPEC.md`.

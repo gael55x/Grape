@@ -27,6 +27,7 @@ docs/v1/
     context-artifact.md
     context-diff.md
   interfaces/
+    agent-sessions.md
     mcp-tools.md
     cli.md
   quality/
@@ -57,6 +58,7 @@ docs/v1/
 | Core | `core/security.md` | Local-first privacy, ignored files, redaction, secret handling. | Security-sensitive behavior changes. | No raw secrets or silent ignored-file reads. |
 | Contracts | `contracts/context-artifact.md` | Context artifact schema, sections, dependency manifest, output rules. | Artifact schema or sections change. | Artifact changes include manifest and tests. |
 | Contracts | `contracts/context-diff.md` | Session-scoped diff protocol, sent ledger, omitted restore, invalidation. | Diff/session behavior changes. | The change remains session-scoped. |
+| Interfaces | `interfaces/agent-sessions.md` | Agent-facing session/task identity contract, recovery paths, and alpha install notes. | Session identity guidance, setup handoff, or mismatch recovery changes. | Continued turns keep stable task/session identity. |
 | Interfaces | `interfaces/mcp-tools.md` | MCP tool contracts and safety boundaries. | MCP tools change. | Write tools cannot promote durable truth. |
 | Interfaces | `interfaces/cli.md` | CLI commands, outputs, exit codes, inspection workflows. | CLI behavior changes. | CLI is adapter-only. |
 | Quality | `quality/testing.md` | Test categories, named tests, fixture mapping. | Test strategy or required tests change. | Required tests exist for touched invariant/transition. |

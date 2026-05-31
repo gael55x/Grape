@@ -4,5 +4,6 @@ Interface docs define adapters that expose Grape behavior without owning core lo
 
 - [MCP tools](mcp-tools.md)
 - [CLI](cli.md)
+- [Agent sessions](agent-sessions.md)
 
 Update this folder when MCP tools, CLI commands, request schemas, response schemas, output formats, or exit codes change.
