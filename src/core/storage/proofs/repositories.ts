@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 
-import { applySqliteConnectionPolicy } from "./sqlite-policy.js";
+import { applySqliteConnectionPolicy } from "../sqlite-policy.js";
 
 export type ProofSupportStatus = "direct" | "indirect" | "partial" | "context_only" | "contradicts";
 

@@ -651,3 +651,10 @@ Keep entries simple:
 - Summary: refreshed the root README to match the current alpha.2/pre-beta state after session-reset benchmark, restore-path golden, mismatch exit classification, and metadata-alignment work. Added architecture standards for functional core/imperative shell, purposeful same-shape transforms, boundary error classification, and clear non-acronym-heavy naming.
 - Checks run: documentation review only before storage refactor.
 - Risks/follow-ups: no runtime behavior changed. Future beta code changes should apply the standards incrementally instead of broad cosmetic churn.
+
+### 2026-05-31 - Storage Repository Ownership Split
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: split the oversized aggregate storage repository into table-family ownership directories for project setup, sessions, context artifacts, context ledgers, evidence, claims, proofs, compression, and indexing. Kept `src/core/storage/repositories.ts` as the shared type and aggregate factory surface so callers continue importing through the storage barrel.
+- Checks run: `npm run typecheck`; `npm run storage:check`; `npm run docs:check`; `npm run architecture:check`; behavior suite via storage/durable-context commands; `npm run check`.
+- Risks/follow-ups: no schema or repository behavior changes are intended. Future storage table families should start in their own ownership subdirectory rather than returning to a flat storage folder.

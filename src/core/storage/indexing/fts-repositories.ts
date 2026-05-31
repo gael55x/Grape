@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 
-import type { SourceType } from "../../shared/index.js";
+import type { SourceType } from "../../../shared/index.js";
 
 export interface FtsEntryRecord {
   readonly ftsEntryId: string;
