@@ -12,6 +12,8 @@ Define MCP tool contracts and safety boundaries.
 
 Tool schemas and safety rules are derived from `docs/v1/SPEC.md`.
 
+For stable agent session identity, task mismatch recovery, JSON-RPC framing examples, and alpha.2 install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
+
 ## Update Triggers
 
 - a tool is added, removed, or changed
@@ -84,7 +86,7 @@ The current implementation includes the first stdio MCP server:
 }
 ```
 
-`grape mcp --stdio` implements framed JSON-RPC stdio handling for `initialize`, `tools/list`, `tools/call`, and `ping`. The implemented Grape tools are:
+`grape mcp --stdio` implements framed JSON-RPC stdio handling for `initialize`, `tools/list`, `tools/call`, and `ping`. Messages use UTF-8 JSON bodies with `Content-Length: <byte-length>` headers and a blank line before the JSON body. The implemented Grape tools are:
 
 - `grape_get_context`
 - `grape_get_artifact`

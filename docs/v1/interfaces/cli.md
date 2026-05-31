@@ -36,6 +36,8 @@ Before editing CLI behavior, agents must verify:
 
 Public CLI JSON uses the V1 `ContextArtifact` envelope, but many sections are still compiled from the repository-derived scaffold rather than full durable current-valid retrieval. Treat artifacts as inspectable, dependency-tracked orientation—not as proof of runtime behavior or complete durable memory. See `docs/v1/contracts/context-artifact.md` (Canonical And In-Memory Schemas, Current Repository-Derived Compiler Foundation).
 
+For continued-turn behavior, task/session identity, mismatch recovery, and alpha.2 install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
+
 ## Command Status
 
 ### Implemented
@@ -164,7 +166,7 @@ The CLI must call application services. It must not:
 | 1 | validation or usage error |
 | 2 | unsafe compile or blocked privacy/security action |
 | 3 | stale local state or unsupported local runtime requires setup/sync/retry |
-| 4 | storage/schema failure |
+| 4 | storage/schema failure; in alpha.2, explicit session reuse with a different task currently falls into this bucket with `context session task mismatch; choose a different --session` |
 | 5 | lock conflict |
 
 ## Command Notes
