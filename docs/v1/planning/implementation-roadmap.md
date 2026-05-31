@@ -137,7 +137,7 @@ Before adding V1 scope, confirm the work improves at least one of:
 - **V1 alpha bar (current target):** npm install, `grape_get_context` twice with safe `OMIT_UNCHANGED`, dependency invalidation benchmarks, install smoke CI.
 - **Full product bar (not V1):** broad durable retrieval, multi-fixture gold labels, Grape-observed runners, non-scaffold artifacts, optional graph-memory parity with dedicated memory products.
 
-Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations now uses the built-in Node 22.5+ `node:sqlite` runtime path to avoid native package compilation.
+Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations uses the built-in `node:sqlite` runtime path to avoid native package compilation; the published alpha package requires Node.js 22.13+.
 
 ## Documentation Foundation Exit Criteria
 

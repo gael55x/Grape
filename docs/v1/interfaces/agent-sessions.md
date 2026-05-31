@@ -29,6 +29,7 @@ After `grape init --connect`, the intended path is a normal MCP-capable coding a
 - A Grape session is scoped to one local project, repo, task id, and task type.
 - The task id is derived from the exact task text, task type, and risk overlays.
 - Reusing an explicit session with different task wording is a task mismatch, not a follow-up turn.
+- CLI calls without `--session` derive the session from repo id, branch, and task id; use an explicit `--session` when one logical agent session must continue across a branch switch.
 - Reusing a session after a Git branch switch for the same task is allowed, but Grape emits `INVALIDATE_PREVIOUS` for stale branch-scoped context.
 - `--reset-session` or `resetSession: true` invalidates active prior sent items and forces a full resend for that session.
 - A session ledger from one agent or client cannot justify `OMIT_UNCHANGED` for another agent or client.
@@ -43,6 +44,8 @@ Use the same `--task` and `--session` for a continued task:
 grape compile --task "Explain checkout discount behavior and related tests" --session checkout-discount-review --json
 grape compile --task "Explain checkout discount behavior and related tests" --session checkout-discount-review --json
 ```
+
+If `--session` is omitted, Grape derives a session from the repo id, current Git branch, and task id. That is safe for single-branch fallback use, but it will create a different session on another branch. Use an explicit stable `--session` when you expect branch-switch invalidation inside one logical agent session.
 
 If the agent lost prior context but the task is still the same, reset that session:
 
