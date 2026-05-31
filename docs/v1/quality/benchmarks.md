@@ -57,7 +57,7 @@ Supported options:
 - `--fixture <name>`: required named fixture.
 - `--fixture-path <path>`: optional explicit fixture directory.
 - `--repo <path>`: base path for default fixture lookup at `<repo>/tests/fixtures/<name>`.
-- `--task <text>`: optional benchmark task; defaults to the fixture's discount explanation task for the current clean TypeScript fixture.
+- `--task <text>`: optional benchmark task; defaults to the fixture scenario task.
 - `--json`: machine-readable output.
 - `--keep-workspace`: preserve the copied temporary benchmark workspace for debugging.
 
@@ -68,6 +68,7 @@ Fixture name selects the benchmark scenario:
 | `clean-typescript-app` | `bench_token_reduction_after_first_turn` |
 | `branch-switch-typescript-app` | `bench_branch_switch_invalidation` |
 | `stale-source-typescript-app` | `bench_stale_source_invalidation` |
+| `session-reset-typescript-app` | `bench_diff_vs_naive_resend` |
 
 Run all fixtures:
 
@@ -83,15 +84,16 @@ npm run e2e:alpha
 
 ### Recorded baselines (local reference, 2026-05-30)
 
-Machine-local reference run on `main` after the three-fixture harness landed. CI may differ slightly; use `npm run benchmark:run` to refresh.
+Machine-local reference run on `main` after the three-fixture harness landed. CI may differ slightly; use `npm run benchmark:run` to refresh. The session-reset row is recorded as a threshold shape until the next baseline refresh lands with the four-fixture harness.
 
 | Fixture | Turn 1 tokens | Turn 2 tokens | Turn 2 reduction | `OMIT_UNCHANGED` | `INVALIDATE_PREVIOUS` | Unsafe |
 |---|---:|---:|---:|---:|---:|---|
 | `clean-typescript-app` | 2069 | 1441 | 44.49% | 7 | 1 | 0 |
 | `branch-switch-typescript-app` | 2069 | 2697 | 0% | 0 | 9 | 0 |
 | `stale-source-typescript-app` | 2069 | 2861 | 0% | 0 | 9 | 0 |
+| `session-reset-typescript-app` | 2091 | 3234 | 0% | 0 | 9 | 0 |
 
-Token reduction thresholds apply only to `clean-typescript-app`. Invalidation benchmarks require `INVALIDATE_PREVIOUS > 0` on turn 2 with zero unsafe omissions.
+Token reduction thresholds apply only to `clean-typescript-app`. Invalidation benchmarks require `INVALIDATE_PREVIOUS > 0` on turn 2 with zero unsafe omissions. The session-reset benchmark also requires `NEW > 0` and `OMIT_UNCHANGED = 0` on the reset turn to prove the agent receives a safe full resend instead of a no-change omission.
 
 Current benchmark thresholds:
 

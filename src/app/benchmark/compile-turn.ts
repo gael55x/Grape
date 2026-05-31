@@ -12,6 +12,7 @@ export function runBenchmarkCompileTurn(input: {
   readonly now?: string;
   readonly gitBinary?: string;
   readonly migrationsDir?: string;
+  readonly resetSession?: boolean;
 }): BenchmarkTurnMetric {
   const started = performance.now();
   const result = compileLocalContext({
@@ -20,7 +21,8 @@ export function runBenchmarkCompileTurn(input: {
     sessionId: input.sessionId,
     now: input.now,
     gitBinary: input.gitBinary,
-    migrationsDir: input.migrationsDir
+    migrationsDir: input.migrationsDir,
+    resetSession: input.resetSession
   });
   const durationMs = Math.round((performance.now() - started) * 100) / 100;
   return turnMetric(input.turn, result, durationMs);

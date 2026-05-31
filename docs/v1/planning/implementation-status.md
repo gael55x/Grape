@@ -27,18 +27,18 @@ Done:
 - Packaged install smoke now asserts exact tarball selection, installed package metadata, MCP `initialize` / `tools/list`, two-turn context diffing, and omitted-item restore.
 - Alpha e2e smoke now uses a repo-local npm cache, asserts exact tarball/package metadata, checks restore hints, and exercises installed MCP stdio setup.
 - Branch-switch and stale-source fixture metadata is aligned to invalidation benchmark behavior.
+- Session reset fixture benchmark proves explicit reset emits `INVALIDATE_PREVIOUS`, sends new current context, and avoids `OMIT_UNCHANGED` on the reset turn.
 - The external benchmark workspace has a 13/13 scripted pass when run with the documented methodology and stable task/session contract.
 
 Now:
 
 - Remaining approval-gated alpha closeout: package-lock metadata alignment, external benchmark workspace dependency alignment, and any published/global registry smoke rerun.
 - Dedicated task/session mismatch exit classification after approval.
-- Session reset fixture benchmark and restore-path golden tests.
+- Restore-path golden tests.
 
 Next:
 
 - Clearer task/session mismatch UX.
-- Session reset fixture benchmark.
 - MCP install smoke against the global package inside this repo's gate.
 - Restore-path golden tests.
 - Optional alpha.3 after docs/checks land.

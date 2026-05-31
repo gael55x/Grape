@@ -30,8 +30,8 @@ The beta product promise is: install Grape, keep using the coding agent normally
 - [x] Packaged install smoke selects the exact just-packed tarball, asserts installed package metadata, runs MCP `initialize` and `tools/list`, performs two `grape_get_context` turns, and restores an omitted item through `grape_get_omitted_item`.
 - [x] Alpha e2e smoke selects the exact just-packed tarball, uses a repo-local npm cache, asserts installed package metadata, checks two-turn omission/restore hints, and exercises installed MCP stdio setup.
 - [x] Branch-switch and stale-source fixture metadata now reflects `INVALIDATE_PREVIOUS` benchmark behavior instead of no-change omission behavior.
+- [x] Session reset fixture benchmark exists and proves reset emits `INVALIDATE_PREVIOUS`, sends new current context, and avoids `OMIT_UNCHANGED` on the reset turn.
 - [ ] Dedicated task/session mismatch exit classification is approved and implemented.
-- [ ] Session reset fixture benchmark exists.
 - [ ] Restore-path golden tests cover the happy path in addition to stale rejection.
 - [ ] External benchmark workspace dependency metadata is aligned to alpha.2 after approval.
 - [ ] Published/global npm install smoke has been rerun against the registry package after release approval.
