@@ -29,7 +29,9 @@
 
 Grape is the build system for AI coding-agent context.
 
-It compiles safe, current repository context and sends only the next safe delta to each agent session. Instead of making agents reread the same files, rediscover the same rules, and repeat the same mistakes, Grape turns repository knowledge into dependency-tracked context artifacts that can be diffed, restored, and invalidated.
+It automatically tracks what context an agent has seen, invalidates stale context when repo state changes, and sends only the safe delta needed for the next turn. Install Grape in two commands. Keep using your coding agent normally. Grape handles context diffs, stale invalidation, pinned safety context, and restorable omissions in the background.
+
+Instead of making agents reread the same files, rediscover the same rules, and repeat the same mistakes, Grape turns repository knowledge into dependency-tracked context artifacts that can be diffed, restored, and invalidated.
 
 Grape is not a coding assistant, chatbot, memory toy, or generic search layer. It is the missing context runtime for agentic software development: built to make coding agents cheaper to run, harder to mislead, and more consistent on real codebases.
 
@@ -112,7 +114,11 @@ Implemented today:
 - proof inspection through `grape proofs`, `grape proofs --proof <id>`, and MCP `grape_get_proofs`
 - conflict inspection through `grape conflicts` and MCP `grape_get_conflicts`, reading recorded claim conflict edges without resolving them
 - fixture benchmark shell through `grape bench --fixture <name>`, measuring first-turn and second-turn token costs, omitted unchanged tokens, restore hints, stale sends, unsafe omissions, and wall-clock timings against copied fixture repos
+- four-fixture in-repo benchmark suite covering clean omission, branch-switch invalidation, stale-source invalidation, and explicit session-reset invalidation
 - external benchmark workspace pass of 13/13 scripted scenarios when run with the documented methodology and stable task/session contract
+- restore-path protocol golden coverage for `RESTORE_AVAILABLE` restore IDs, session-bound lookup, restored body shape, and MCP output without absolute root paths
+- dedicated task/session mismatch exit classification through CLI exit code `6`
+- alpha.2 package-lock metadata alignment and external benchmark workspace dependency alignment
 - first MCP stdio server: `grape mcp --stdio` supports `initialize`, `tools/list`, `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_rules`, `grape_get_omitted_item`, `grape_get_stale_items`, `grape_get_conflicts`, `grape_get_status`, `grape_record_candidate`, `grape_record_command_result`, `grape_record_test_result`, `grape_record_user_decision`, and `grape_request_user_confirmation` over framed stdio
 - MCP rule inspection through `grape_get_rules`, returning current Git-visible, hash-verified, secret-scanned rule excerpts without absolute root paths
 - restricted MCP candidate, command/test result, user-decision, and confirmation-request tools as temporary evidence/request surfaces without raw command/output/prompt/response persistence or durable claim promotion
@@ -128,7 +134,7 @@ Still alpha:
 - Grape-observed command/test runners for trusted execution evidence
 - full repository indexing and richer exact-span ranking
 - broader durable claim types, parsed durable rules, and conflict creation/resolution
-- beta-grade mismatch UX and restore-path golden coverage
+- optional true global-install smoke if beta release verification requires it
 
 ## Documentation
 
@@ -238,6 +244,7 @@ grape conflicts
 grape bench --fixture clean-typescript-app
 grape bench --fixture branch-switch-typescript-app
 grape bench --fixture stale-source-typescript-app
+grape bench --fixture session-reset-typescript-app
 ```
 
 `grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape sessions`, `grape stale`, `grape conflicts`, `grape bench --fixture <name>`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, and `grape omitted` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, stale-invalidation inspection, conflict-edge inspection, scripted fixture benchmarking, omitted-context restore, and the first MCP context retrieval path. MCP also exposes stale invalidation inspection through `grape_get_stale_items`, conflict inspection through `grape_get_conflicts`, and the restricted write surface through non-promoting candidate, command/test observation, user-decision, and confirmation-request tools. Conflict detection/resolution, broader durable artifact retrieval, claim-linked proof inspection, and broader durable proof types are not implemented yet.

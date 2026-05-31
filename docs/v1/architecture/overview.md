@@ -146,6 +146,10 @@ flowchart TD
 - Use snake_case for state names, event names, database tables, and serialized enum values that are stored or sent across MCP.
 - Name state events as `verb_object`, for example `validate_proof` or `compile_context_artifact`.
 - Name implementation files and source symbols after their purpose, not their release phase. Avoid prefixes such as `v1`, `alpha`, `phase`, or `final` in implementation filenames unless the name is an external protocol, artifact format, or versioned documentation namespace.
+- Prefer a functional core and imperative shell. Pure planning, classification, row mapping, projection, and policy functions should accept explicit inputs and return explicit values; adapters and app services should own filesystem, Git, SQLite, clock, process, and transport effects.
+- Use composable same-shape transforms only when they make the pipeline clearer. A `CompilePlan -> CompilePlan` or `BenchmarkResult -> BenchmarkResult` transform is acceptable when each step has a named domain purpose; do not force IO-heavy orchestration into fake functional pipelines.
+- Keep logging, recovery guidance, and error rendering around core logic rather than embedded inside pure domain functions. Prefer typed domain errors or explicit result objects that CLI/MCP adapters classify at the boundary.
+- Name functions as verbs and parameters as nouns where practical. Avoid acronym-heavy names and single-letter domain variables outside tight local callbacks; clarity is more valuable than symbol compression.
 - Keep modules small enough that a future agent can read the whole module before editing it.
 - Do not create generic `utils` folders for domain behavior. Prefer `path-normalization.ts`, `redaction.ts`, or `claim-scope.ts` with a single owner.
 - Centralize shared enums and serialized schemas in `src/shared/` only after two domain modules need the same contract.
