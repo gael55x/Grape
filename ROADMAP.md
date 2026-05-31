@@ -30,6 +30,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - Alpha e2e smoke uses a repo-local npm cache, selects the exact just-packed tarball, asserts installed package metadata, and exercises installed MCP stdio setup.
 - Branch-switch and stale-source fixture metadata now matches their invalidation benchmark behavior.
 - The session reset fixture benchmark proves reset invalidation, safe full resend, and zero reset-turn omissions.
+- Restore-path golden tests lock `RESTORE_AVAILABLE` restore IDs, session binding, restored body shape, and MCP no-root-path output.
 - The benchmark workspace reports 13/13 scripted scenarios passing when run with the documented methodology and stable task/session contract.
 - In-repo `grape bench` fixtures cover clean, branch-switch, stale-source, and session-reset scenarios.
 - Package dry-run and install smoke are part of the local gate.
@@ -38,7 +39,6 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 
 - Finish the remaining approval-gated alpha closeout: package-lock metadata alignment, external benchmark workspace dependency alignment, and any published/global registry smoke rerun.
 - Decide and implement a dedicated task/session mismatch exit classification after approval.
-- Add restore-path golden tests for the happy path in addition to stale rejection.
 - Keep the seamless beta path explicit: install Grape, initialize once, keep using the coding agent normally, and let MCP `grape_get_context` handle context diffs in the background.
 
 ## Next
