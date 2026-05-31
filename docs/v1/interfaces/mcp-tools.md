@@ -12,7 +12,7 @@ Define MCP tool contracts and safety boundaries.
 
 Tool schemas and safety rules are derived from `docs/v1/SPEC.md`.
 
-For stable agent session identity, task mismatch recovery, JSON-RPC framing examples, and alpha.2 install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
+For stable agent session identity, task mismatch recovery, JSON-RPC framing examples, and alpha.3 install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
 
 ## Update Triggers
 

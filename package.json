@@ -1,6 +1,6 @@
 {
   "name": "grape-context",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "The context infrastructure layer between a repository and an AI coding agent.",
   "license": "MIT",
   "repository": {

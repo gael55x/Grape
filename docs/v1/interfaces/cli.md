@@ -36,7 +36,7 @@ Before editing CLI behavior, agents must verify:
 
 Public CLI JSON uses the V1 `ContextArtifact` envelope, but many sections are still compiled from the repository-derived scaffold rather than full durable current-valid retrieval. Treat artifacts as inspectable, dependency-tracked orientation—not as proof of runtime behavior or complete durable memory. See `docs/v1/contracts/context-artifact.md` (Canonical And In-Memory Schemas, Current Repository-Derived Compiler Foundation).
 
-For continued-turn behavior, task/session identity, mismatch recovery, and alpha.2 install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
+For continued-turn behavior, task/session identity, mismatch recovery, and alpha.3 install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
 
 ## Command Status
 

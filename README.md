@@ -90,7 +90,7 @@ Core objects:
 
 ## Current Status
 
-Grape is a controlled public alpha. The context transport slice is published as [`grape-context@0.1.0-alpha.2`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.2) and is ready for serious pre-beta review of the install flow, CLI/MCP transport, session contract, and diff semantics.
+Grape is a controlled public alpha. The context transport slice is prepared as [`grape-context@0.1.0-alpha.3`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.3) and is ready for serious pre-beta review of the install flow, CLI/MCP transport, session contract, and diff semantics.
 
 Implemented today:
 
@@ -101,6 +101,7 @@ Implemented today:
 - durable SQLite session-ledger storage
 - durable context build proof for first-turn send, second-turn omission, stale manifest invalidation, and rollback
 - alpha.2 npm package and GitHub release for the transport wedge
+- alpha.3 hardening candidate with README/product-promise refresh, storage repository ownership split, session reset benchmark, restore-path goldens, mismatch exit classification, and green local release gates
 - first local setup CLI slice: `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`
 - bootstrap project detection during `grape init --connect` for language/framework, package manager, scripts, test command, entry points, config files, confidence levels, and non-durable candidate rules
 - setup/status scan diagnostics for visible and rejected files, including ignored, private, unreadable, oversized, and binary-file rejection counts without exposing skipped file bodies
@@ -118,7 +119,7 @@ Implemented today:
 - external benchmark workspace pass of 13/13 scripted scenarios when run with the documented methodology and stable task/session contract
 - restore-path protocol golden coverage for `RESTORE_AVAILABLE` restore IDs, session-bound lookup, restored body shape, and MCP output without absolute root paths
 - dedicated task/session mismatch exit classification through CLI exit code `6`
-- alpha.2 package-lock metadata alignment and external benchmark workspace dependency alignment
+- alpha.3 package-lock metadata alignment and alpha.2 external benchmark workspace dependency alignment
 - first MCP stdio server: `grape mcp --stdio` supports `initialize`, `tools/list`, `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_rules`, `grape_get_omitted_item`, `grape_get_stale_items`, `grape_get_conflicts`, `grape_get_status`, `grape_record_candidate`, `grape_record_command_result`, `grape_record_test_result`, `grape_record_user_decision`, and `grape_request_user_confirmation` over framed stdio
 - MCP rule inspection through `grape_get_rules`, returning current Git-visible, hash-verified, secret-scanned rule excerpts without absolute root paths
 - restricted MCP candidate, command/test result, user-decision, and confirmation-request tools as temporary evidence/request surfaces without raw command/output/prompt/response persistence or durable claim promotion
@@ -191,12 +192,12 @@ flowchart LR
 
 ## Alpha Usage
 
-**Alpha status:** The context transport slice is on npm as [`grape-context@0.1.0-alpha.2`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.2) and gated by `npm run check`, package checks, and install smoke. Requires **Node.js 22.13+**. See [ROADMAP.md](ROADMAP.md) for the alpha, beta, and 1.0 split.
+**Alpha status:** The context transport slice is prepared as [`grape-context@0.1.0-alpha.3`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.3) and gated by `npm run check`, package checks, install smoke, benchmark smoke, and alpha e2e smoke. Requires **Node.js 22.13+**. See [ROADMAP.md](ROADMAP.md) for the alpha, beta, and 1.0 split.
 
-For reproducible alpha.2 testing:
+For reproducible alpha.3 testing after publish:
 
 ```bash
-npm install -g grape-context@0.1.0-alpha.2
+npm install -g grape-context@0.1.0-alpha.3
 grape init --connect
 ```
 
@@ -209,11 +210,11 @@ grape init --connect
 
 `grape init --connect` creates `.grape/`, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures the initial Git snapshot, reports bootstrap and scan diagnostics, and prints MCP connection guidance. The npm package includes compiled CLI output and runtime SQL migrations in `dist/`.
 
-If npm appears to keep alpha.1 after installing alpha.2, clear the cache and reinstall the exact package:
+If npm appears to keep older alpha code after installing alpha.3, clear the cache and reinstall the exact package:
 
 ```bash
 npm cache clean --force
-npm install -g grape-context@0.1.0-alpha.2
+npm install -g grape-context@0.1.0-alpha.3
 ```
 
 An MCP-capable coding agent will request context through:
@@ -222,7 +223,7 @@ An MCP-capable coding agent will request context through:
 grape_get_context
 ```
 
-For continued turns, keep the same task/query and session identity. The alpha.2 session contract is strict by design: different task wording with the same explicit session is a mismatch, and derived MCP sessions change when the query changes. See [Agent Sessions](docs/v1/interfaces/agent-sessions.md) for the examples, recovery paths, exit-code notes, and JSON-RPC framing details.
+For continued turns, keep the same task/query and session identity. The alpha.3 session contract is strict by design: different task wording with the same explicit session is a mismatch, and derived MCP sessions change when the query changes. See [Agent Sessions](docs/v1/interfaces/agent-sessions.md) for the examples, recovery paths, exit-code notes, and JSON-RPC framing details.
 
 Manual CLI commands are debugging and fallback surfaces:
 
