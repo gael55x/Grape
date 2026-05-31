@@ -26,26 +26,25 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - Same-session two-turn omission works when task/session identity is stable.
 - `PINNED`, `OMIT_UNCHANGED`, `RESTORE_AVAILABLE`, and `INVALIDATE_PREVIOUS` are implemented in the current transport slice.
 - Branch, dependency, session reset, and restore-path invalidation are proven through behavior coverage.
+- Packaged install smoke selects the exact just-packed tarball, asserts installed package metadata, exercises MCP `initialize` / `tools/list`, proves two-turn context diffing, and restores an omitted item.
+- Alpha e2e smoke uses a repo-local npm cache, selects the exact just-packed tarball, asserts installed package metadata, and exercises installed MCP stdio setup.
+- Branch-switch and stale-source fixture metadata now matches their invalidation benchmark behavior.
 - The benchmark workspace reports 13/13 scripted scenarios passing when run with the documented methodology and stable task/session contract.
 - In-repo `grape bench` fixtures cover clean, branch-switch, and stale-source scenarios.
 - Package dry-run and install smoke are part of the local gate.
 
 ## Now
 
-- Finish agent session docs, README links, and setup troubleshooting for alpha.2.
-- Refresh roadmap and implementation status so pre-beta reviewers see the real state.
-- Align the external benchmark workspace dependency metadata to alpha.2 when approved, without changing benchmark methodology.
-- Document stale alpha.1 npm-cache recovery.
-- Clarify the two-command install/setup target: `npm install -g grape-context` then `grape init --connect`.
-- Make the seamless happy path explicit: after init, a normal MCP-capable agent calls `grape_get_context`; manual CLI commands are debugging fallbacks.
+- Finish the remaining approval-gated alpha closeout: package-lock metadata alignment, external benchmark workspace dependency alignment, and any published/global registry smoke rerun.
+- Decide and implement a dedicated task/session mismatch exit classification after approval.
+- Add a session reset fixture benchmark.
+- Add restore-path golden tests for the happy path in addition to stale rejection.
+- Keep the seamless beta path explicit: install Grape, initialize once, keep using the coding agent normally, and let MCP `grape_get_context` handle context diffs in the background.
 
 ## Next
 
-- Clearer task/session mismatch UX for agents and humans.
-- Session reset fixture benchmark.
-- MCP install smoke against the globally installed package inside this repo's gate.
-- Restore-path golden tests beyond existing stale-restore behavior coverage.
-- Optional `0.1.0-alpha.3` after the docs/checks above land.
+- Optional `0.1.0-alpha.3` after the remaining alpha closeout gates are approved and green.
+- Beta candidate only after install/connect/recover flows are boring across clean consumer repos and the documented smoke/benchmark suite is reproducible.
 
 ## Soon
 

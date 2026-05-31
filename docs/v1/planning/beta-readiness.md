@@ -6,6 +6,8 @@ Track the work required to move from the alpha.2 transport proof to serious huma
 
 This checklist does not expand V1 scope. It makes the current transport slice easier to install, connect, verify, and recover from.
 
+The beta product promise is: install Grape, keep using the coding agent normally, and let Grape track seen context, send safe deltas, resend pinned safety context, invalidate stale prior sends, and restore omitted context in the background.
+
 ## Current Alpha.2 Baseline
 
 - `grape-context@0.1.0-alpha.2` is the published alpha package for review.
@@ -25,11 +27,14 @@ This checklist does not expand V1 scope. It makes the current transport slice ea
 - [x] Roadmap/status docs use Done, Now, Next, Soon, and Later buckets for the real alpha.2 state.
 - [x] Stale alpha.1 npm-cache recovery is documented.
 - [x] Task/session mismatch errors render recovery guidance that distinguishes same-task reset from new-task sessions.
+- [x] Packaged install smoke selects the exact just-packed tarball, asserts installed package metadata, runs MCP `initialize` and `tools/list`, performs two `grape_get_context` turns, and restores an omitted item through `grape_get_omitted_item`.
+- [x] Alpha e2e smoke selects the exact just-packed tarball, uses a repo-local npm cache, asserts installed package metadata, checks two-turn omission/restore hints, and exercises installed MCP stdio setup.
+- [x] Branch-switch and stale-source fixture metadata now reflects `INVALIDATE_PREVIOUS` benchmark behavior instead of no-change omission behavior.
 - [ ] Dedicated task/session mismatch exit classification is approved and implemented.
 - [ ] Session reset fixture benchmark exists.
-- [ ] MCP install smoke runs from the globally installed package inside this repo's gate.
 - [ ] Restore-path golden tests cover the happy path in addition to stale rejection.
 - [ ] External benchmark workspace dependency metadata is aligned to alpha.2 after approval.
+- [ ] Published/global npm install smoke has been rerun against the registry package after release approval.
 
 ## Benchmark Workspace Alignment
 
@@ -86,3 +91,4 @@ npm install -g grape-context@0.1.0-alpha.2
 - Grape-observed command/test runs are not implemented.
 - Full graph extraction, embeddings, cloud sync, and memory-platform features remain later work.
 - Current task/session mismatch recovery guidance is improved, but the CLI still uses the storage/schema exit bucket until an exit-code change is explicitly approved.
+- Package-lock metadata alignment, external benchmark workspace mutation, npm publish, version bumps, tags, releases, and dist-tags still require explicit approval.
