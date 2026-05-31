@@ -33,8 +33,9 @@ The beta product promise is: install Grape, keep using the coding agent normally
 - [x] Session reset fixture benchmark exists and proves reset emits `INVALIDATE_PREVIOUS`, sends new current context, and avoids `OMIT_UNCHANGED` on the reset turn.
 - [x] Restore-path golden tests cover `RESTORE_AVAILABLE` restore ID shape, session binding, restored body shape, and MCP no-root-path output.
 - [x] Dedicated task/session mismatch exit classification is approved and implemented as exit code `6`.
-- [ ] External benchmark workspace dependency metadata is aligned to alpha.2 after approval.
-- [ ] Published/global npm install smoke has been rerun against the registry package after release approval.
+- [x] External benchmark workspace dependency metadata is aligned to alpha.2 after approval.
+- [x] Published-package smoke passed against the registry-installed alpha.2 package in the external benchmark workspace.
+- [ ] Global `npm install -g grape-context@0.1.0-alpha.2` smoke has been rerun if global install verification is requested.
 
 ## Benchmark Workspace Alignment
 
@@ -47,17 +48,18 @@ Inspected workspace:
 Observed state:
 
 - `README.md` and `smoke-published.mjs` already name `grape-context@0.1.0-alpha.2`.
-- `package.json`, `package-lock.json`, and installed `node_modules/grape-context` still point at alpha.1.
-- The workspace is outside this repo's writable root, and package-lock/package version changes require explicit approval under the alpha.2 task constraints.
+- `package.json`, `package-lock.json`, and installed `node_modules/grape-context` now point at alpha.2 with Node `>=22.13.0`.
+- The workspace is outside this repo's writable root and is not a Git repository, so its dependency alignment is recorded here instead of committed in this repo.
 
-Required follow-up after approval:
+Command run after approval:
 
 ```bash
 cd <external-benchmark-workspace>
 npm install grape-context@0.1.0-alpha.2
+GRAPE_BIN=<external-benchmark-workspace>/node_modules/.bin/grape node smoke-published.mjs
 ```
 
-Do not change benchmark methodology as part of dependency alignment.
+The published-package smoke passed 8/8 checks. Benchmark methodology was not changed.
 
 ## Verification Commands
 

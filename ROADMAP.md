@@ -32,14 +32,16 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - The session reset fixture benchmark proves reset invalidation, safe full resend, and zero reset-turn omissions.
 - Restore-path golden tests lock `RESTORE_AVAILABLE` restore IDs, session binding, restored body shape, and MCP no-root-path output.
 - Task/session mismatch now has a dedicated CLI exit classification instead of falling through the storage/schema bucket.
+- Package-lock metadata is aligned with alpha.2 version/runtime, and the external benchmark workspace dependency metadata now points at `grape-context@0.1.0-alpha.2`.
+- Published-package smoke passed against the registry-installed alpha.2 package in the external benchmark workspace.
 - The benchmark workspace reports 13/13 scripted scenarios passing when run with the documented methodology and stable task/session contract.
 - In-repo `grape bench` fixtures cover clean, branch-switch, stale-source, and session-reset scenarios.
 - Package dry-run and install smoke are part of the local gate.
 
 ## Now
 
-- Finish the remaining approval-gated alpha closeout: package-lock metadata alignment, external benchmark workspace dependency alignment, and any published/global registry smoke rerun.
 - Keep the seamless beta path explicit: install Grape, initialize once, keep using the coding agent normally, and let MCP `grape_get_context` handle context diffs in the background.
+- Run a global `npm install -g grape-context@0.1.0-alpha.2` smoke only if global install verification is requested.
 
 ## Next
 

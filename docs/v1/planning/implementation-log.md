@@ -637,3 +637,10 @@ Keep entries simple:
 - Summary: moved explicit task/session mismatch failures out of the generic storage/schema CLI exit bucket and documented the dedicated exit code while preserving the existing recovery guidance.
 - Checks run: focused CLI local-project behavior test; `npm run docs:check` before broader beta gates.
 - Risks/follow-ups: arbitrary prompt rewording still creates a distinct task/session identity by design; beta docs and clients must keep the stable-session contract visible.
+
+### 2026-05-31 - Alpha.2 Metadata Alignment And Published Smoke
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: aligned this repo's package-lock root metadata with `grape-context@0.1.0-alpha.2` and Node `>=22.13.0`, aligned the external benchmark workspace dependency metadata to the registry alpha.2 package, and ran the external published-package smoke without changing benchmark methodology.
+- Checks run: external `npm install grape-context@0.1.0-alpha.2 --ignore-scripts --audit=false --fund=false`; external `GRAPE_BIN=.../node_modules/.bin/grape node smoke-published.mjs` passed 8/8 checks.
+- Risks/follow-ups: the external benchmark workspace is not a Git repository, so its dependency alignment is recorded in beta readiness docs rather than committed here. A true global `npm install -g` smoke remains optional if global install verification is requested.
