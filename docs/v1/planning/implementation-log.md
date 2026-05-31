@@ -616,3 +616,24 @@ Keep entries simple:
 - Summary: raised the documented runtime floor to Node 22.13+ so CI and install smoke match `node:sqlite` without `--experimental-sqlite`; install smoke passes `NODE_OPTIONS` for spawned `grape` on 22.5–22.12; replaced roadmap “Phase N” headings with Done / Now / Next / Later.
 - Checks run: `npm run check`.
 - Risks/follow-ups: contributors on Node 22.5–22.12 must set `NODE_OPTIONS=--experimental-sqlite` until they upgrade.
+
+### 2026-05-31 - Agent Session And Beta Readiness Alignment
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added the agent session contract, refreshed alpha.2 setup and roadmap/status docs, documented beta readiness gates, improved task/session mismatch recovery guidance, hardened packaged install and alpha e2e smoke around exact tarball/package metadata and MCP stdio coverage, and aligned branch/stale fixture metadata with invalidation benchmark behavior.
+- Checks run: `npm run install:check`; `npm run fixtures:check`; `npm run e2e:alpha`; `npm run docs:check`; `npm run check`; `npm run benchmark:run`.
+- Risks/follow-ups: task/session mismatch still needs dedicated exit classification; package-lock metadata alignment and external benchmark workspace alignment remain approval-gated.
+
+### 2026-05-31 - Session Reset And Restore Protocol Hardening
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added the purpose-built `session-reset-typescript-app` fixture and `bench_diff_vs_naive_resend` benchmark to prove explicit reset invalidates prior context, sends fresh current context, and avoids reset-turn omission. Added restore-path protocol golden coverage for `RESTORE_AVAILABLE` restore IDs, session-bound lookup, restored body shape, and MCP no-root-path output.
+- Checks run: focused benchmark harness test; `npm run fixtures:check`; `npm run benchmark:run`; focused context-pack protocol golden test; `npm run docs:check`.
+- Risks/follow-ups: full beta gates still need to be rerun after the remaining exit-classification and metadata alignment work.
+
+### 2026-05-31 - Task Session Mismatch Exit Classification
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: moved explicit task/session mismatch failures out of the generic storage/schema CLI exit bucket and documented the dedicated exit code while preserving the existing recovery guidance.
+- Checks run: focused CLI local-project behavior test; `npm run docs:check` before broader beta gates.
+- Risks/follow-ups: arbitrary prompt rewording still creates a distinct task/session identity by design; beta docs and clients must keep the stable-session contract visible.

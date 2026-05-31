@@ -32,7 +32,7 @@ The beta product promise is: install Grape, keep using the coding agent normally
 - [x] Branch-switch and stale-source fixture metadata now reflects `INVALIDATE_PREVIOUS` benchmark behavior instead of no-change omission behavior.
 - [x] Session reset fixture benchmark exists and proves reset emits `INVALIDATE_PREVIOUS`, sends new current context, and avoids `OMIT_UNCHANGED` on the reset turn.
 - [x] Restore-path golden tests cover `RESTORE_AVAILABLE` restore ID shape, session binding, restored body shape, and MCP no-root-path output.
-- [ ] Dedicated task/session mismatch exit classification is approved and implemented.
+- [x] Dedicated task/session mismatch exit classification is approved and implemented as exit code `6`.
 - [ ] External benchmark workspace dependency metadata is aligned to alpha.2 after approval.
 - [ ] Published/global npm install smoke has been rerun against the registry package after release approval.
 
@@ -90,5 +90,5 @@ npm install -g grape-context@0.1.0-alpha.2
 - Scaffold-backed artifact sections are still documented limitations.
 - Grape-observed command/test runs are not implemented.
 - Full graph extraction, embeddings, cloud sync, and memory-platform features remain later work.
-- Current task/session mismatch recovery guidance is improved, but the CLI still uses the storage/schema exit bucket until an exit-code change is explicitly approved.
+- Task/session mismatch recovery guidance has a dedicated exit code, but arbitrary prompt rewording still creates a distinct task/session identity in the current alpha transport contract.
 - Package-lock metadata alignment, external benchmark workspace mutation, npm publish, version bumps, tags, releases, and dist-tags still require explicit approval.

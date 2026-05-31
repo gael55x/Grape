@@ -166,8 +166,9 @@ The CLI must call application services. It must not:
 | 1 | validation or usage error |
 | 2 | unsafe compile or blocked privacy/security action |
 | 3 | stale local state or unsupported local runtime requires setup/sync/retry |
-| 4 | storage/schema failure; in alpha.2, explicit session reuse with a different task currently falls into this bucket with `context session task mismatch; choose a different --session` |
+| 4 | storage/schema failure |
 | 5 | lock conflict |
+| 6 | explicit context session reused with a different task or task type |
 
 ## Command Notes
 

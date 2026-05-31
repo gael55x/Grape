@@ -101,6 +101,9 @@ function compileErrorExitCode(error: unknown): number {
   if (message.includes("may only contain letters")) return exitCodes.usage;
   if (message.includes("secret scan blocked")) return exitCodes.unsafe;
   if (message.includes("session is locked")) return exitCodes.lock;
+  if (message.startsWith("context session task mismatch") || message.startsWith("context session task type mismatch")) {
+    return exitCodes.sessionMismatch;
+  }
   if (message.includes("config root path does not match")) return exitCodes.stale;
   return exitCodes.storage;
 }
