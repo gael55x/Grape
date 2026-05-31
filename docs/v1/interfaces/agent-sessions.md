@@ -59,13 +59,13 @@ If the task wording changes, create a different session:
 grape compile --task "Plan a safe refactor of checkout discount behavior" --session checkout-discount-refactor --json
 ```
 
-Today, reusing a session with a different task fails with a message like:
+Reusing a session with a different task fails with a message like:
 
 ```text
 context session task mismatch; choose a different --session
 ```
 
-The current CLI exit mapping returns code `4` for this mismatch because it falls through the storage/schema failure bucket. Exit code `2` remains the unsafe compile bucket for cases such as missing high-risk exact context or token budgets below required context. A clearer dedicated task/session mismatch UX is a planned pre-beta improvement; do not depend on a more specific exit code until that behavior lands.
+The CLI returns exit code `6` for this mismatch. Exit code `2` remains the unsafe compile bucket for cases such as missing high-risk exact context or token budgets below required context.
 
 ## MCP Contract
 

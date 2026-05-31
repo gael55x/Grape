@@ -964,7 +964,7 @@ test("cli compile gives recovery guidance for task and session mismatches", () =
       "mismatch-session"
     ]);
 
-    assert.equal(mismatch.status, 4);
+    assert.equal(mismatch.status, 6);
     assert.equal(mismatch.stdout, "");
     assert.match(mismatch.stderr, /context session task mismatch/);
     assert.match(mismatch.stderr, /Recovery:/);

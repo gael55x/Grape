@@ -4,5 +4,6 @@ export const exitCodes = {
   unsafe: 2,
   stale: 3,
   storage: 4,
-  lock: 5
+  lock: 5,
+  sessionMismatch: 6
 } as const;
