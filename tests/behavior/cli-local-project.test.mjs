@@ -946,6 +946,33 @@ test("cli compile reports contended session locks", () => {
   });
 });
 
+test("cli compile gives recovery guidance for task and session mismatches", () => {
+  withGitRepo((repoPath) => {
+    runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository entry points",
+      "--session",
+      "mismatch-session"
+    ]);
+
+    const mismatch = runCli(repoPath, [
+      "compile",
+      "--task",
+      "Plan a refactor of repository entry points",
+      "--session",
+      "mismatch-session"
+    ]);
+
+    assert.equal(mismatch.status, 4);
+    assert.equal(mismatch.stdout, "");
+    assert.match(mismatch.stderr, /context session task mismatch/);
+    assert.match(mismatch.stderr, /Recovery:/);
+    assert.match(mismatch.stderr, /Reuse the exact original --task\/query/);
+    assert.match(mismatch.stderr, /does not rebind a session to different task text/);
+  });
+});
+
 function localSourceRejectionRefs(repoPath) {
   const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
   try {

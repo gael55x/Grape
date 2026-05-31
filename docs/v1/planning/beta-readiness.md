@@ -24,7 +24,8 @@ This checklist does not expand V1 scope. It makes the current transport slice ea
 - [x] Roadmap separates Alpha, Beta, and 1.0 expectations.
 - [x] Roadmap/status docs use Done, Now, Next, Soon, and Later buckets for the real alpha.2 state.
 - [x] Stale alpha.1 npm-cache recovery is documented.
-- [ ] Task/session mismatch UX is clearer than the current storage-bucket exit code.
+- [x] Task/session mismatch errors render recovery guidance that distinguishes same-task reset from new-task sessions.
+- [ ] Dedicated task/session mismatch exit classification is approved and implemented.
 - [ ] Session reset fixture benchmark exists.
 - [ ] MCP install smoke runs from the globally installed package inside this repo's gate.
 - [ ] Restore-path golden tests cover the happy path in addition to stale rejection.
@@ -84,4 +85,4 @@ npm install -g grape-context@0.1.0-alpha.2
 - Scaffold-backed artifact sections are still documented limitations.
 - Grape-observed command/test runs are not implemented.
 - Full graph extraction, embeddings, cloud sync, and memory-platform features remain later work.
-- Current task/session mismatch behavior is accurate but not yet friendly enough for beta.
+- Current task/session mismatch recovery guidance is improved, but the CLI still uses the storage/schema exit bucket until an exit-code change is explicitly approved.

@@ -86,6 +86,10 @@ export function recoveryGuidanceForErrorMessage(message: string): readonly strin
   if (message.includes("session is locked")) {
     guidance.add("Run grape sessions to inspect the lock; wait for the active run or use a different --session.");
   }
+  if (message.includes("context session") && message.includes("mismatch")) {
+    guidance.add("Reuse the exact original --task/query and task type for this session, or choose a new --session/sessionId for a new task.");
+    guidance.add("Use --reset-session or resetSession only when the agent lost prior context for the same task; it does not rebind a session to different task text.");
+  }
   if (
     message.includes("config is missing") ||
     message.includes("Grape config is repairable") ||
