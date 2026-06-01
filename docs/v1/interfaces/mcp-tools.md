@@ -129,7 +129,7 @@ Unsafe or risky context outputs include `recoveryGuidance` so MCP consumers can 
 
 `grape_get_status` returns local bootstrap, migration, and Git-state diagnostics including `recoveryGuidance` for missing config/database, pending migrations, root mismatch, dirty worktree scope, or missing Git metadata.
 
-`grape_record_command_result` and `grape_record_test_result` persist agent-reported command/test observations as temporary `command_run` / `test_run` source evidence rows scoped to the current repo snapshot and an existing current context session. The adapter accepts the raw command only to verify `commandHash`; raw command, stdout, and stderr bodies are not persisted or returned. MCP callers cannot mint `observedRunId`, cannot self-declare `observedByGrape`, and cannot promote these rows to durable claims or proofs.
+`grape_record_command_result` and `grape_record_test_result` persist agent-reported command/test observations as temporary `command_run` / `test_run` source evidence rows scoped to the current repo snapshot and an existing current context session. The adapter accepts the raw command only to verify `commandHash`; raw command, stdout, and stderr bodies are not persisted or returned. MCP callers cannot mint `observedRunId`, cannot self-declare `observedByGrape`, and cannot promote these rows to durable claims or proofs. The trusted observed-run path is the local CLI runner (`grape run` / `grape test`), which executes the command outside the MCP adapter and writes Grape-observed trusted source evidence.
 
 `grape_record_candidate` persists an agent-reported claim candidate as a non-durable `claim_candidates` row and links it to a temporary `assistant_response` source when the caller does not provide an existing current source. It returns candidate/source IDs only, not the raw claim text, and cannot promote the candidate to a durable claim.
 
@@ -137,7 +137,7 @@ Unsafe or risky context outputs include `recoveryGuidance` so MCP consumers can 
 
 `grape_request_user_confirmation` returns a deterministic non-durable confirmation request ID for a prompt hash and scope. It does not persist durable truth and tells the caller to collect direct user confirmation before calling `grape_record_user_decision`.
 
-The V1 MCP surface is now implemented as a local-first foundation. Remaining work is hardening final durable current-valid retrieval, broader proof types, and future Grape-observed command/test runners without allowing MCP writes to promote truth directly.
+The V1 MCP surface is now implemented as a local-first foundation. Remaining work is hardening final durable current-valid retrieval and broader proof types without allowing MCP writes to promote truth directly.
 
 V1 does not use restricted write tools as free-form artifact annotation channels. Agent-authored observations remain temporary evidence, candidates, hashes, or confirmation requests until a proof/scope flow validates them. Rendered artifact annotations are deferred by ADR-0008 so the Context Artifact remains a compiled, proof-backed output rather than an agent notebook.
 
@@ -505,7 +505,7 @@ Write rules:
 - MCP callers cannot self-declare Grape-observed authority or mint `observedRunId`.
 - MCP write tools require an existing current context session, so callers should call `grape_get_context` first.
 - Raw command, stdout, stderr, prompt, and response bodies are not persisted or returned; only hashes and scoped metadata are stored.
-- Only a local Grape command runner may create Grape-observed command/test evidence with an observed run ID.
+- Only a local Grape command runner may create Grape-observed command/test evidence with an observed run ID. The current runner commands are `grape run --session <id> -- <cmd...>` and `grape test --session <id> -- <cmd...>`.
 - A Grape-observed run must include command hash, cwd, exit code, stdout/stderr hashes, and timestamps, and it must be created outside the MCP adapter.
 - User decisions require direct confirmation with prompt hash, response hash, timestamp, and confirmation channel.
 - Write tools return evidence IDs or candidate IDs only. They do not return claim IDs for newly durable claims.

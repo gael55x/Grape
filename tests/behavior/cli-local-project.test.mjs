@@ -84,6 +84,8 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.match(result.stdout, /grape sync/);
   assert.match(result.stdout, /grape compile --task <text>/);
   assert.match(result.stdout, /grape diff-context --task <text>/);
+  assert.match(result.stdout, /grape run --session <id> -- <cmd\.\.\.>/);
+  assert.match(result.stdout, /grape test --session <id> -- <cmd\.\.\.>/);
   assert.match(result.stdout, /grape artifacts/);
   assert.match(result.stdout, /grape bench --fixture <name>/);
   assert.match(result.stdout, /grape sessions/);
@@ -96,6 +98,93 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.match(result.stdout, /grape doctor --privacy/);
   assert.match(result.stdout, /grape mcp --print-config/);
   assert.match(result.stdout, /grape mcp --stdio/);
+});
+
+test("cli run and test record Grape-observed trusted evidence without raw output bodies", () => {
+  withGitRepo((repoPath) => {
+    runCliJson(repoPath, ["compile", "--task", "Observe local commands", "--session", "observed-session"]);
+
+    const command = runCli(repoPath, [
+      "run",
+      "--session",
+      "observed-session",
+      "--json",
+      "--",
+      process.execPath,
+      "-e",
+      "console.log('observed command output')"
+    ]);
+    assert.equal(command.status, 0, command.stderr);
+    const commandJson = JSON.parse(command.stdout);
+    assert.equal(commandJson.sourceType, "command_run");
+    assert.equal(commandJson.trustClass, "trusted");
+    assert.equal(commandJson.observedBy, "grape");
+    assert.match(commandJson.observedRunId, /^run:[a-f0-9]{24}$/);
+    assert.equal(command.stdout.includes("observed command output"), false);
+
+    const testRun = runCli(repoPath, [
+      "test",
+      "--session",
+      "observed-session",
+      "--test-framework",
+      "node",
+      "--json",
+      "--",
+      process.execPath,
+      "-e",
+      "console.error('observed test output')"
+    ]);
+    assert.equal(testRun.status, 0, testRun.stderr);
+    const testJson = JSON.parse(testRun.stdout);
+    assert.equal(testJson.sourceType, "test_run");
+    assert.equal(testJson.trustClass, "trusted");
+    assert.equal(testJson.observedBy, "grape");
+    assert.equal(testJson.passed, true);
+    assert.equal(testRun.stdout.includes("observed test output"), false);
+
+    const commandSource = localSourceById(repoPath, commandJson.sourceId);
+    assert.equal(commandSource.trustClass, "trusted");
+    assert.equal(commandSource.sourceType, "command_run");
+    const commandMetadata = JSON.parse(commandSource.metadataJson);
+    assert.equal(commandMetadata.observedBy, "grape");
+    assert.equal(commandMetadata.observedByGrape, true);
+    assert.equal(commandMetadata.observedRunId, commandJson.observedRunId);
+    assert.equal("command" in commandMetadata, false);
+    assert.equal("stdout" in commandMetadata, false);
+    assert.equal("stderr" in commandMetadata, false);
+
+    const testSource = localSourceById(repoPath, testJson.sourceId);
+    assert.equal(testSource.trustClass, "trusted");
+    assert.equal(testSource.sourceType, "test_run");
+    const testMetadata = JSON.parse(testSource.metadataJson);
+    assert.equal(testMetadata.observedBy, "grape");
+    assert.equal(testMetadata.observedByGrape, true);
+    assert.equal(testMetadata.passed, true);
+    assert.equal(testMetadata.testFramework, "node");
+  });
+});
+
+test("cli observed runner rejects secret-looking commands before execution", () => {
+  withGitRepo((repoPath) => {
+    runCliJson(repoPath, ["compile", "--task", "Observe local commands", "--session", "observed-session"]);
+    const markerPath = path.join(repoPath, "secret-command-executed.txt");
+
+    const command = runCli(repoPath, [
+      "run",
+      "--session",
+      "observed-session",
+      "--json",
+      "--",
+      process.execPath,
+      "-e",
+      `require('node:fs').writeFileSync(${JSON.stringify(markerPath)}, 'ran')`,
+      "SECRET=super-secret"
+    ]);
+
+    assert.equal(command.status, 2);
+    assert.match(command.stderr, /secret scan blocked/);
+    assert.equal(existsSync(markerPath), false);
+  });
 });
 
 test("cli init --connect bootstraps local .grape state and keeps it out of git status", () => {
@@ -977,6 +1066,17 @@ function localSourceRejectionRefs(repoPath) {
   const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
   try {
     return createEvidenceStorageRepositories(database).sourceRejections.listAll().map((row) => row.sourceRef);
+  } finally {
+    database.close();
+  }
+}
+
+function localSourceById(repoPath, sourceId) {
+  const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
+  try {
+    const source = createEvidenceStorageRepositories(database).sources.get(sourceId);
+    assert.ok(source);
+    return source;
   } finally {
     database.close();
   }

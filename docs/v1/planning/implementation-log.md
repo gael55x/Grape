@@ -679,3 +679,10 @@ Keep entries simple:
 - Summary: verified the live `grape-context@0.1.0-alpha.3` npm dist-tags and GitHub tag/release state, refreshed beta-readiness/status docs from that deployed state, added `npm run beta:check` as the combined local beta gate, added `npm run global:smoke` for the registry-installed global package, and hardened packaged install smoke to prove CLI omitted restore, task/session mismatch recovery, and reset recovery in the installed consumer-repo path.
 - Checks run: live `npm view grape-context version dist-tags time --json`; live `git ls-remote --tags origin`; live `gh release view v0.1.0-alpha.3`; `npm install -g grape-context@0.1.0-alpha.3`; `npm run global:smoke`; external `npm install grape-context@0.1.0-alpha.3 --ignore-scripts --audit=false --fund=false`; external `GRAPE_BIN=.../node_modules/.bin/grape node smoke-published.mjs` passed 8/8; focused `npm run install:check`; full `npm run beta:check`.
 - Risks/follow-ups: real clean-repo MCP client trials still need to prove the workflow beyond scripted smoke before beta sign-off.
+
+### 2026-06-01 - Grape-Observed Local Runner
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added `grape run` and `grape test` as the first local Grape-observed command/test runner path. The commands execute from the repository root against an existing current context session, reject secret-looking command text before execution, create Grape observed run IDs, and persist trusted redacted `command_run` / `test_run` source evidence with command/output hashes, exit status, timestamps, branch/commit/worktree/session scope, and no raw command/stdout/stderr bodies.
+- Checks run: `npm run typecheck`; `npm run docs:check`; `npm run build:test`; focused `tests/behavior/cli-local-project.test.mjs`; full `npm run beta:check`.
+- Risks/follow-ups: observed-run source rows are trusted evidence, not durable truth. Durable proof/claim promotion from observed runs, broader claim types, parsed durable rules, and conflict creation/resolution remain pending.

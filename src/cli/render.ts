@@ -32,6 +32,8 @@ export function helpText(): string {
     "  grape sync                  Refresh local snapshot, evidence, and file index",
     "  grape compile --task <text> Compile a task context pack",
     "  grape diff-context --task <text> Compile and diff a task context pack",
+    "  grape run --session <id> -- <cmd...> Record a Grape-observed command run",
+    "  grape test --session <id> -- <cmd...> Record a Grape-observed test run",
     "  grape artifacts             Inspect compiled context artifacts",
     "  grape bench --fixture <name> Run scripted fixture benchmarks",
     "  grape sessions              Inspect context sessions and diff ledgers",
@@ -61,6 +63,7 @@ export function helpText(): string {
     "  --fixture <name>            Run a named benchmark fixture",
     "  --fixture-path <path>       Use an explicit benchmark fixture path",
     "  --keep-workspace            Keep benchmark temp workspace for debugging",
+    "  --test-framework <name>     Label a Grape-observed test run",
     "  --json                      Emit machine-readable JSON"
   ].join("\n");
 }

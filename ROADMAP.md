@@ -54,7 +54,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 ## Soon
 
 - Better TypeScript compiler retrieval and exact-span ranking.
-- Grape-observed command/test recording with trusted run evidence.
+- Durable proof/claim promotion from Grape-observed command/test evidence.
 - Stronger trust/proof depth and broader durable claim types.
 - Broader fixtures and labeled benchmark expectations.
 - Better dirty-worktree, branch, and session handling for normal agent workflows.

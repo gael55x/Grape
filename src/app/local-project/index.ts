@@ -14,6 +14,7 @@ export * from "./initialize.js";
 export * from "./mcp-guide.js";
 export * from "./omitted.js";
 export * from "./observations.js";
+export * from "./observed-runner.js";
 export * from "./proofs.js";
 export * from "./recovery.js";
 export * from "./rules.js";

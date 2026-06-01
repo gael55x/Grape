@@ -122,7 +122,7 @@ npm install -g grape-context@0.1.0-alpha.3
 ## Do Not Treat As Beta Complete
 
 - Scaffold-backed artifact sections are still documented limitations.
-- Grape-observed command/test runs are not implemented.
+- Grape-observed command/test runners exist, but durable proof/claim promotion from those observed runs is not implemented.
 - Full graph extraction, embeddings, cloud sync, and memory-platform features remain later work.
 - Task/session mismatch recovery guidance has a dedicated exit code, but arbitrary prompt rewording still creates a distinct task/session identity in the current alpha transport contract.
 - Package-lock metadata alignment, external benchmark workspace mutation, future npm publishes, version bumps, tags, releases, and dist-tags still require explicit approval.

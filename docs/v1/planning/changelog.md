@@ -12,6 +12,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added `npm run global:smoke` for post-publish verification of the registry-installed global package.
 - Hardened packaged install smoke to prove CLI omitted restore, task/session mismatch recovery, and reset recovery in the installed consumer-repo path.
 - Updated beta-readiness/status docs for the verified published alpha.3 npm package, npm `latest`/`alpha` dist-tags, remote Git tag, GitHub release state, global install smoke, and external alpha.3 published-package smoke.
+- Added local Grape-observed command/test runners through `grape run` and `grape test`. They execute from the repository root, require a current context session, create observed run IDs, persist trusted redacted `command_run` / `test_run` source evidence with command/output hashes and session scope, and intentionally do not create durable proof or claim rows yet.
 - Initial V1 documentation architecture.
 - Committed canonical V1 implementation contract at `docs/v1/SPEC.md`.
 - Implementation planning now uses goal names: Documentation Foundation, In-Memory Context Loop, and Alpha Product Slice.

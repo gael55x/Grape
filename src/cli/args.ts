@@ -2,6 +2,7 @@ export interface ParsedArgs {
   readonly command: string;
   readonly flags: Set<string>;
   readonly values: Map<string, string>;
+  readonly positionals: readonly string[];
 }
 
 export function parseArgs(argv: readonly string[]): ParsedArgs {
@@ -20,11 +21,17 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     "--proof",
     "--source",
     "--fixture",
-    "--fixture-path"
+    "--fixture-path",
+    "--test-framework"
   ]);
+  const positionals: string[] = [];
 
   for (let index = 0; index < rest.length; index += 1) {
     const arg = rest[index];
+    if (arg === "--") {
+      positionals.push(...rest.slice(index + 1));
+      break;
+    }
     if (valueOptions.has(arg)) {
       const value = rest[index + 1];
       if (!value) throw new Error(`${arg} requires a value`);
@@ -35,7 +42,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     flags.add(arg);
   }
 
-  return { command, flags, values };
+  return { command, flags, values, positionals };
 }
 
 export function repoPath(parsed: ParsedArgs): string {

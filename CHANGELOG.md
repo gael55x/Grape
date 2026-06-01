@@ -10,6 +10,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 - Added `npm run beta:check` as the extended local beta-readiness gate over `check`, benchmark, and alpha e2e smoke.
 - Added `npm run global:smoke` for post-publish verification of the registry-installed global package.
+- Added `grape run` and `grape test` for local Grape-observed command/test execution. The commands record trusted redacted `command_run` / `test_run` evidence with observed run IDs, command/output hashes, exit status, timestamps, and session scope without persisting raw command output or promoting durable claims.
 
 ### Changed
 

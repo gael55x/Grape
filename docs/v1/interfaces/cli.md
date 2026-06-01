@@ -47,6 +47,7 @@ For continued-turn behavior, task/session identity, mismatch recovery, and alpha
 | Everyday | `grape help`, `grape status`, `grape doctor`, `grape doctor --privacy` |
 | Setup / MCP | `grape init --connect`, `grape sync`, `grape mcp --print-config`, `grape mcp --stdio` |
 | Fallback compile | `grape compile`, `grape diff-context` |
+| Observed runs | `grape run --session <id> -- <cmd...>`, `grape test --session <id> -- <cmd...>` |
 | Inspection | `grape sessions`, `grape artifacts`, `grape claims --active`, `grape proofs`, `grape proofs --proof <id>`, `grape proofs --source <sourceId>`, `grape stale`, `grape conflicts`, `grape omitted` |
 | Benchmarks | `grape bench --fixture <name>` |
 
@@ -65,6 +66,7 @@ For continued-turn behavior, task/session identity, mismatch recovery, and alpha
 - everyday: `grape help`, `grape status`, `grape doctor`
 - setup/MCP: `grape init --connect`, `grape mcp`, `grape mcp --print-config`, `grape mcp --stdio`
 - fallback: `grape sync`, `grape compile`, `grape diff-context`
+- observed runs: `grape run`, `grape test`
 - inspection: `grape sessions`, `grape artifacts`, `grape claims --active`, `grape proofs`, `grape proofs <claim_id>`, `grape stale`, `grape conflicts`, `grape omitted`
 - decisions: `grape add-decision`, `grape decisions review`
 - benchmarks: `grape bench`, `grape bench --fixture <name>`
@@ -80,6 +82,8 @@ The current implementation includes the first CLI setup/debugging slice:
 - `grape compile --task <text>`
 - `grape compile --task <text> --reset-session`
 - `grape diff-context --task <text>`
+- `grape run --session <id> -- <cmd...>`
+- `grape test --session <id> -- <cmd...>`
 - `grape sessions`
 - `grape stale`
 - `grape artifacts`
@@ -104,6 +108,8 @@ The current implementation includes the first CLI setup/debugging slice:
 `grape compile --task <text>` auto-bootstraps local `.grape/` state if needed, including repairable malformed local config backup/rewrite and unusable local database backup/recreation, captures the current Git snapshot, persists source evidence and the lightweight file/lexical index, resolves task source hints from lexical terms plus symbol/path matches, validates and persists accepted exact source proof rows, persists deterministic `symbol_outline` and `rule_digest` compression cache records before compilation, rebuilds and renders a deterministic prior-turn `context_pack_summary` only after filtering prior sent rows through current artifact staleness, compiles a repository-derived context artifact with pinned active project rules, non-proof compression orientation, and bounded exact-source evidence prioritized toward selected allowed sources. When task retrieval selects source refs, exact-source proof rows and rendered current-valid claim sections stay scoped to those refs instead of filling the artifact with unrelated active claims from the same commit; if retrieval selects no refs, compile may fall back to bounded generic exact-source evidence. Exact-source proof windows prefer task-selected symbol anchors and can include up to two non-overlapping windows per selected source; query-term windows are used only when no symbol anchors exist for that source. The compiler projects the artifact to the public V1 `ContextArtifact` JSON shape, runs section-scoped session diffing, persists the durable context build, then persists the next deterministic `context_pack_summary` from the current sent ledger. It applies any requested token budget before context-pack rows are persisted: task summary, pinned, exact/safety-critical, omission/restore, and invalidation context is never pruned; optional non-safety context may be pruned and recorded in `contextArtifact.omittedDueToBudget` plus `budget.omittedDueToBudget`. It writes inspectable JSON and Markdown under `.grape/artifacts/`. The public JSON contains `contextArtifact` plus `contextPackItems`; Markdown renders artifact summary, diff counts, item input refs, omitted/restore metadata, output sections, dependency manifest details, token/budget status, and warnings/safety fields for human and agent inspection. The internal `.scaffold.json` sidecar is used only for omitted-item restore verification. Supported options are `--task-type <type>`, `--risk <overlay,overlay>`, `--session <id>`, `--reset-session`, `--token-budget <tokens>`, `--repo <path>`, and `--json`. Risk overlays can be detected from the task text or supplied explicitly through `--risk`; they return exit code `2` with `risk_overlay_missing_exact_context` unless task retrieval or explicit seed refs select proof-backed exact source/config/rule evidence. If a token budget cannot fit pinned/exact/invalidation context, compile also returns exit code `2` with `token_budget_below_required_context`.
 
 `grape diff-context --task <text>` is an explicit manual fallback for the compile-plus-session-diff path. It accepts the same task/session/risk/budget flags as `grape compile`, returns the same JSON shape, writes the same artifact files, and labels human output as a context diff. It exists so scripts and agents can request the V1 diff operation by name without knowing that `compile` already performs diffing.
+
+`grape run --session <id> -- <cmd...>` and `grape test --session <id> -- <cmd...>` execute local commands from the repository root and persist Grape-observed `command_run` / `test_run` source evidence rows against the existing current context session. These commands are the trusted local runner path: they reject secret-looking command text before execution, create an `observedRunId`, mark the source row `trust_class = "trusted"`, set `observedBy = "grape"` / `observedByGrape = true`, and store command/stdout/stderr hashes, exit code, cwd, timestamps, branch, commit, worktree hash, and session scope. Raw command, stdout, and stderr bodies are not persisted or emitted in JSON. `grape test` sets `passed` from the command exit code and accepts `--test-framework <name>` as a label. Observed run rows are trusted source evidence, not durable claims by themselves; broader observed-run proof promotion remains a later Trust Kernel slice.
 
 Unsafe compile results include `recoveryGuidance` in JSON and human output. Current guidance covers missing exact context for risk overlays, token budgets below required context, dirty worktree scope, and over-budget packs. Lock, stale, privacy/redaction, missing config, root mismatch, and missing Git metadata errors render recovery guidance on stderr where applicable.
 
@@ -131,7 +137,7 @@ When `--reset-session` is supplied for an existing compile session, `grape compi
 
 `grape doctor --privacy` narrows doctor output to privacy and local-first diagnostics. It reports local-first defaults, `.grape/` Git exclusion, aggregate scanner rejection counts, ignored/private input handling, and artifact secret-scan coverage without returning file bodies, secret values, or raw rejected-file contents. It does not approve ignored/private reads, export data, purge data, or change scanner policy.
 
-`grape mcp --print-config` prints the V1 MCP connection shape for stdio clients, including `--repo <root>` and `cwd` guidance so MCP clients do not accidentally launch Grape against their own working directory. `grape mcp --stdio` serves the first MCP adapter with `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_rules`, `grape_get_omitted_item`, `grape_get_stale_items`, `grape_get_conflicts`, `grape_get_status`, `grape_record_candidate`, `grape_record_command_result`, `grape_record_test_result`, `grape_record_user_decision`, and `grape_request_user_confirmation`; the context tool reuses the local compile service and returns V1-shaped context-pack items while the stored artifact body remains the documented scaffold artifact shape. The write tools record temporary agent-reported evidence or confirmation requests only and do not promote durable claims.
+`grape mcp --print-config` prints the V1 MCP connection shape for stdio clients, including `--repo <root>` and `cwd` guidance so MCP clients do not accidentally launch Grape against their own working directory. `grape mcp --stdio` serves the first MCP adapter with `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_rules`, `grape_get_omitted_item`, `grape_get_stale_items`, `grape_get_conflicts`, `grape_get_status`, `grape_record_candidate`, `grape_record_command_result`, `grape_record_test_result`, `grape_record_user_decision`, and `grape_request_user_confirmation`; the context tool reuses the local compile service and returns V1-shaped context-pack items while the stored artifact body remains the documented scaffold artifact shape. The write tools record temporary agent-reported evidence or confirmation requests only and do not promote durable claims. Use the local CLI runner commands, not MCP writes, when command/test evidence must be Grape-observed.
 
 All implemented commands support `--repo <path>` where relevant and `--json` for machine-readable output. Unsupported options fail with a usage error instead of being silently ignored; privacy export and purge workflows remain deferred until their data contracts exist.
 
@@ -177,6 +183,7 @@ The CLI must call application services. It must not:
 - `grape stale` shows invalidated prior sent item refs without context bodies.
 - `grape proofs --proof <id>` shows proof refs, source refs, support status, and hashes. It must not show raw secrets. Claim-linked `grape proofs <claim_id>` remains pending until broader claim-linked proof inspection exists.
 - `grape bench` runs scripted benchmarks only. It must not use ad hoc baselines.
+- `grape run` and `grape test` create trusted Grape-observed source evidence rows only after executing the command locally. They must not persist raw command/output bodies or promote durable claims directly.
 - `grape add-decision` records a user decision candidate and requires direct confirmation before it can become durable evidence.
 - `grape decisions review` lists decisions, scope, prompt hashes, response hashes, and stale status.
 
@@ -188,3 +195,4 @@ The CLI must call application services. It must not:
 - `cli_proofs_does_not_show_raw_secret`
 - `cli_add_decision_requires_confirmation`
 - `cli_bench_requires_named_fixture`
+- `cli_observed_run_records_trusted_source_without_raw_output`

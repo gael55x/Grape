@@ -19,6 +19,9 @@ export interface AgentCommandObservationInput {
   readonly startedAt: string;
   readonly endedAt: string;
   readonly recordedAt: string;
+  readonly observedRunId?: string;
+  readonly observedBy?: "agent_reported" | "grape";
+  readonly observedByGrape?: boolean;
 }
 
 export interface AgentTestObservationInput extends AgentCommandObservationInput {
@@ -36,7 +39,7 @@ export interface ReportedObservationEvidence {
 export function buildAgentCommandObservationSource(
   input: AgentCommandObservationInput
 ): ReportedObservationEvidence {
-  return buildObservationSource("command_run", input, {});
+  return buildObservationSource("command_run", input, {}, "temporary");
 }
 
 export function buildAgentTestObservationSource(input: AgentTestObservationInput): ReportedObservationEvidence {
@@ -44,18 +47,48 @@ export function buildAgentTestObservationSource(input: AgentTestObservationInput
     passed: input.passed,
     testFramework: input.testFramework,
     testFiles: input.testFiles
-  });
+  }, "temporary");
+}
+
+export function buildGrapeCommandObservationSource(
+  input: AgentCommandObservationInput & { readonly observedRunId: string }
+): ReportedObservationEvidence {
+  return buildObservationSource("command_run", {
+    ...input,
+    observedBy: "grape",
+    observedByGrape: true
+  }, {}, "trusted");
+}
+
+export function buildGrapeTestObservationSource(
+  input: AgentTestObservationInput & { readonly observedRunId: string }
+): ReportedObservationEvidence {
+  return buildObservationSource("test_run", {
+    ...input,
+    observedBy: "grape",
+    observedByGrape: true
+  }, {
+    passed: input.passed,
+    testFramework: input.testFramework,
+    testFiles: input.testFiles
+  }, "trusted");
 }
 
 function buildObservationSource(
   sourceType: ObservationSourceType,
   input: AgentCommandObservationInput,
-  extraMetadata: Record<string, unknown>
+  extraMetadata: Record<string, unknown>,
+  trustClass: "temporary" | "trusted"
 ): ReportedObservationEvidence {
   const redactedFields = ["command", "stdout", "stderr"] as const;
+  const observedBy = input.observedBy ?? "agent_reported";
+  const observedByGrape = input.observedByGrape ?? false;
   const evidenceHash = hashStableJson({
     sourceType,
     sessionId: input.sessionId,
+    observedRunId: input.observedRunId,
+    observedBy,
+    observedByGrape,
     commandHash: input.commandHash,
     cwd: input.cwd,
     exitCode: input.exitCode,
@@ -74,10 +107,10 @@ function buildObservationSource(
       sourceId: `source:${hashStableParts([input.repoId, input.snapshotId, input.sessionId, sourceType, evidenceHash]).slice(0, 24)}`,
       snapshotId: input.snapshotId,
       sourceType,
-      sourceRef: `${sourceType}:${shortHash}`,
+      sourceRef: input.observedRunId ? `${sourceType}:${input.observedRunId}` : `${sourceType}:${shortHash}`,
       sourceHash: evidenceHash,
       sourceScope: "external",
-      trustClass: "temporary",
+      trustClass,
       privacyStatus: "allowed",
       redactionStatus: "redacted",
       metadataJson: JSON.stringify({
@@ -88,8 +121,9 @@ function buildObservationSource(
         snapshotId: input.snapshotId,
         sessionId: input.sessionId,
         worktreeHash: input.worktreeHash,
-        observedBy: "agent_reported",
-        observedByGrape: false,
+        observedRunId: input.observedRunId,
+        observedBy,
+        observedByGrape,
         commandHash: input.commandHash,
         cwd: input.cwd,
         exitCode: input.exitCode,

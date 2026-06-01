@@ -6,6 +6,7 @@ import { runCompile } from "./commands/compile.js";
 import { runConflicts } from "./commands/conflicts.js";
 import { runDiffContext } from "./commands/diff-context.js";
 import { runOmitted } from "./commands/omitted.js";
+import { runObservedCommand } from "./commands/observed-run.js";
 import { runProofs } from "./commands/proofs.js";
 import { runSessions } from "./commands/sessions.js";
 import { runStale } from "./commands/stale.js";
@@ -81,10 +82,14 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
       return runOmitted(parsed);
     case "proofs":
       return runProofs(parsed);
+    case "run":
+      return runObservedCommand(parsed, "command");
     case "sessions":
       return runSessions(parsed);
     case "stale":
       return runStale(parsed);
+    case "test":
+      return runObservedCommand(parsed, "test");
     default:
       writeError(`Unknown command: ${parsed.command}`);
       writeError("Run grape help for available commands.");

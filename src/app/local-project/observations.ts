@@ -2,7 +2,9 @@ import path from "node:path";
 
 import {
   buildAgentCommandObservationSource,
-  buildAgentTestObservationSource
+  buildAgentTestObservationSource,
+  buildGrapeCommandObservationSource,
+  buildGrapeTestObservationSource
 } from "../../core/evidence/index.js";
 import { assertArtifactTextHasNoSecrets } from "../../core/security/index.js";
 import { createEvidenceStorageRepositories } from "../../core/storage/index.js";
@@ -25,10 +27,18 @@ export interface RecordLocalCommandResultInput {
   readonly migrationsDir?: string;
 }
 
+export interface RecordLocalGrapeObservedCommandResultInput extends RecordLocalCommandResultInput {
+  readonly observedRunId: string;
+}
+
 export interface RecordLocalTestResultInput extends RecordLocalCommandResultInput {
   readonly passed: boolean;
   readonly testFramework?: string;
   readonly testFiles?: readonly string[];
+}
+
+export interface RecordLocalGrapeObservedTestResultInput extends RecordLocalTestResultInput {
+  readonly observedRunId: string;
 }
 
 export interface RecordLocalObservationResult {
@@ -38,9 +48,10 @@ export interface RecordLocalObservationResult {
   readonly sourceType: "command_run" | "test_run";
   readonly sourceRef: string;
   readonly sourceHash: string;
-  readonly trustClass: "temporary";
+  readonly trustClass: "temporary" | "trusted";
   readonly durable: false;
-  readonly observedBy: "agent_reported";
+  readonly observedBy: "agent_reported" | "grape";
+  readonly observedRunId?: string;
   readonly inserted: boolean;
   readonly redactedFields: readonly string[];
   readonly warnings: readonly string[];
@@ -54,9 +65,22 @@ export function recordLocalTestResult(input: RecordLocalTestResultInput): Record
   return recordObservation(input, "test_run");
 }
 
+export function recordLocalGrapeObservedCommandResult(
+  input: RecordLocalGrapeObservedCommandResultInput
+): RecordLocalObservationResult {
+  return recordObservation(input, "command_run", "grape");
+}
+
+export function recordLocalGrapeObservedTestResult(
+  input: RecordLocalGrapeObservedTestResultInput
+): RecordLocalObservationResult {
+  return recordObservation(input, "test_run", "grape");
+}
+
 function recordObservation(
   input: RecordLocalCommandResultInput | RecordLocalTestResultInput,
-  sourceType: "command_run" | "test_run"
+  sourceType: "command_run" | "test_run",
+  authority: "agent_reported" | "grape" = "agent_reported"
 ): RecordLocalObservationResult {
   const now = input.now ?? new Date().toISOString();
   assertCommandInput(input);
@@ -83,15 +107,8 @@ function recordObservation(
 
       const observation =
         sourceType === "command_run"
-          ? buildAgentCommandObservationSource({
-              ...baseObservationInput(input, context, cwd, now)
-            })
-          : buildAgentTestObservationSource({
-              ...baseObservationInput(input, context, cwd, now),
-              passed: (input as RecordLocalTestResultInput).passed,
-              testFramework: normalizedOptionalString((input as RecordLocalTestResultInput).testFramework),
-              testFiles
-            });
+          ? buildCommandObservation(input, context, cwd, now, authority)
+          : buildTestObservation(input as RecordLocalTestResultInput, context, cwd, testFiles, now, authority);
       const inserted = evidenceRepositories.sources.insertOrIgnore(observation.source);
       return { observation, inserted };
     }
@@ -104,13 +121,57 @@ function recordObservation(
     sourceType,
     sourceRef: databaseResult.value.observation.source.sourceRef,
     sourceHash: databaseResult.value.observation.source.sourceHash,
-    trustClass: "temporary",
+    trustClass: authority === "grape" ? "trusted" : "temporary",
     durable: false,
-    observedBy: "agent_reported",
+    observedBy: authority,
+    observedRunId: authority === "grape" ? (input as RecordLocalGrapeObservedCommandResultInput).observedRunId : undefined,
     inserted: databaseResult.value.inserted,
     redactedFields: databaseResult.value.observation.redactedFields,
-    warnings: ["agent_reported_evidence_is_temporary", "raw_command_and_output_not_persisted"]
+    warnings:
+      authority === "grape"
+        ? ["grape_observed_evidence_is_trusted_source_not_durable_claim", "raw_command_and_output_not_persisted"]
+        : ["agent_reported_evidence_is_temporary", "raw_command_and_output_not_persisted"]
   };
+}
+
+function buildCommandObservation(
+  input: RecordLocalCommandResultInput,
+  context: Parameters<typeof baseObservationInput>[1],
+  cwd: string,
+  now: string,
+  authority: "agent_reported" | "grape"
+) {
+  const base = baseObservationInput(input, context, cwd, now);
+  if (authority === "grape") {
+    return buildGrapeCommandObservationSource({
+      ...base,
+      observedRunId: assertObservedRunId((input as RecordLocalGrapeObservedCommandResultInput).observedRunId)
+    });
+  }
+  return buildAgentCommandObservationSource(base);
+}
+
+function buildTestObservation(
+  input: RecordLocalTestResultInput,
+  context: Parameters<typeof baseObservationInput>[1],
+  cwd: string,
+  testFiles: readonly string[],
+  now: string,
+  authority: "agent_reported" | "grape"
+) {
+  const base = {
+    ...baseObservationInput(input, context, cwd, now),
+    passed: input.passed,
+    testFramework: normalizedOptionalString(input.testFramework),
+    testFiles
+  };
+  if (authority === "grape") {
+    return buildGrapeTestObservationSource({
+      ...base,
+      observedRunId: assertObservedRunId((input as RecordLocalGrapeObservedTestResultInput).observedRunId)
+    });
+  }
+  return buildAgentTestObservationSource(base);
 }
 
 function baseObservationInput(
@@ -166,6 +227,16 @@ function assertCommandInput(input: RecordLocalCommandResultInput | RecordLocalTe
   const ended = Date.parse(normalizeTimestamp("endedAt", input.endedAt));
   if (ended < started) throw new Error("endedAt must be greater than or equal to startedAt");
   if ("passed" in input && typeof input.passed !== "boolean") throw new Error("passed must be a boolean");
+  if ("observedRunId" in input) {
+    assertObservedRunId((input as RecordLocalGrapeObservedCommandResultInput).observedRunId);
+  }
+}
+
+function assertObservedRunId(value: string): string {
+  if (typeof value !== "string" || !/^run:[a-f0-9]{24}$/i.test(value)) {
+    throw new Error("observedRunId must be a Grape run id");
+  }
+  return value.toLowerCase();
 }
 
 function normalizeSha256(label: string, value: string): string {

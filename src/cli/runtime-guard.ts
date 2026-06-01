@@ -17,10 +17,12 @@ const storageBackedCommands = new Set([
   "init",
   "omitted",
   "proofs",
+  "run",
   "sessions",
   "stale",
   "status",
-  "sync"
+  "sync",
+  "test"
 ]);
 
 export function checkCliNodeRuntime(
