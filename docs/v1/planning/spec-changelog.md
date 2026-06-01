@@ -13,7 +13,7 @@ Each entry should include:
 
 ## Unreleased
 
-- Clarified the local Grape-observed command/test runner contract: `grape run` and `grape test` execute from the repository root against an existing current context session, create observed run IDs, persist trusted redacted `command_run` / `test_run` source evidence with command/output hashes, reject secret-looking commands before execution, and do not promote durable proof or claim rows.
+- Clarified the local Grape-observed command/test runner contract: `grape run` and `grape test` execute from the repository root against an existing current context session, create observed run IDs, persist trusted redacted `command_run` / `test_run` source evidence with command/output hashes, reject secret-looking commands before execution, and promote only the narrow `grape_observed_run_result` proof/claim.
 - Clarified the current V1 retrieval contract: lightweight source selection uses explicit seeds, safe lexical rows, lightweight symbols/imports, and current-valid narrow source-excerpt claims; it reports truncation/no-match warnings and remains an impact candidate selector rather than full graph or semantic retrieval.
 - Clarified local-project observation ownership: public observation APIs stay exported from `src/app/local-project/observations.ts`, while validation, path normalization, source construction, and persistence orchestration live in focused files under `src/app/local-project/observation/`.
 - Aligned the published alpha runtime floor with package enforcement: `grape-context@0.1.0-alpha.2` requires Node.js 22.13+.

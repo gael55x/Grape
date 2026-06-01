@@ -39,7 +39,11 @@ export interface RecordLocalObservationResult {
   readonly sourceRef: string;
   readonly sourceHash: string;
   readonly trustClass: "temporary" | "trusted";
-  readonly durable: false;
+  readonly durable: boolean;
+  readonly durableClaim: boolean;
+  readonly proofId?: string;
+  readonly claimId?: string;
+  readonly claimType?: string;
   readonly observedBy: ObservationAuthority;
   readonly observedRunId?: string;
   readonly inserted: boolean;

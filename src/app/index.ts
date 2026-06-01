@@ -2,6 +2,7 @@ export * from "./benchmark/index.js";
 export * from "./durable-context-build.js";
 export * from "./local-project/index.js";
 export * from "./persist-file-index.js";
+export * from "./persist-observed-run-claims.js";
 export * from "./persist-repo-snapshot.js";
 export * from "./persist-snapshot-evidence.js";
 export * from "./persist-source-proofs.js";

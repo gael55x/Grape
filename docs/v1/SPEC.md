@@ -2667,6 +2667,7 @@ Rules:
 
 - Agent-reported command/test results are temporary unless tied to a Grape-observed `observedRunId`.
 - A command/test result is trusted only when `observedByGrape = true`, hashes are recorded, and the working directory is scoped.
+- A Grape-observed command/test result may promote only a narrow `grape_observed_run_result` proof/claim from hashes and scoped metadata. It proves the observed run result only, never product correctness or root cause.
 - User decisions require direct confirmation with prompt hash, response hash, timestamp, confirmation channel, and scope.
 - `grape_record_user_decision` may record a candidate decision, but durable decision claims require Trust Kernel promotion from direct confirmation proof.
 

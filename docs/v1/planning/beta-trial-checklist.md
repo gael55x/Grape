@@ -55,7 +55,7 @@ Run these in each serious trial:
 - Switch branches and verify prior branch context is invalidated.
 - Call `resetSession: true` and verify prior sent context is invalidated and current context is resent.
 - Try a stale restore token after a file edit and verify no stale body is returned.
-- Run `grape run --session <id> -- <cmd...>` or `grape test --session <id> -- <cmd...>` after a current context session exists and verify trusted redacted source evidence is recorded.
+- Run `grape run --session <id> -- <cmd...>` or `grape test --session <id> -- <cmd...>` after a current context session exists and verify trusted redacted source evidence plus a narrow observed-run result proof/claim are recorded.
 
 ## Pass Criteria
 
@@ -66,7 +66,7 @@ A trial passes only if:
 - omission, restore, branch switch, stale source, and reset behavior match the docs
 - recovery guidance is actionable when a flow is rejected
 - `grape doctor` or `grape_get_status` can explain setup failures
-- observed command/test evidence is trusted source evidence only, not promoted durable truth
+- observed command/test evidence promotes only the narrow observed-run result claim, not broader durable truth
 
 ## Fail Criteria
 
@@ -85,8 +85,8 @@ Block beta promotion if any trial shows:
 
 The trial notes must explicitly confirm these are not treated as beta promises:
 
-- durable proof/claim promotion from Grape-observed command/test runs
-- broad durable claim types beyond current narrow source-excerpt claims
+- broad durable claim types beyond current narrow source-excerpt and observed-run result claims
+- broader behavior/correctness/root-cause claims from Grape-observed command/test runs
 - parsed durable project rules
 - conflict detection, creation, and resolution
 - full graph retrieval, embeddings, semantic ranking, or broad AST-backed language support

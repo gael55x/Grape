@@ -40,6 +40,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - In-repo `grape bench` fixtures cover clean, branch-switch, stale-source, and session-reset scenarios.
 - Package dry-run and install smoke are part of the local gate.
 - `npm run beta:check` runs the full local beta-readiness gate.
+- Local `grape run` / `grape test` can promote narrow `grape_observed_run_result` proofs/claims from trusted observed run metadata.
 
 ## Now
 
@@ -54,8 +55,8 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 ## Soon
 
 - Better TypeScript compiler retrieval and exact-span ranking.
-- Durable proof/claim promotion from Grape-observed command/test evidence.
-- Stronger trust/proof depth and broader durable claim types.
+- Stronger trust/proof depth beyond the narrow observed-run result claim.
+- Broader durable claim types.
 - Broader fixtures and labeled benchmark expectations.
 - Better dirty-worktree, branch, and session handling for normal agent workflows.
 - Parsed durable project rules and richer conflict creation/resolution.

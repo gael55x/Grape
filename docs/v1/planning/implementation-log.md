@@ -559,7 +559,7 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: fed lightweight import relationships into task retrieval so test files that import task-selected source files can be selected as related exact source context and rendered as related test refs.
 - Checks run: focused task retrieval, repository artifact, and MCP stdio behavior tests before broader verification.
-- Risks/follow-ups: import-related tests are orientation only. They do not prove the test was run or that behavior is correct; Grape-observed test-run proofs remain pending.
+- Risks/follow-ups: import-related tests are orientation only. They do not prove the test was run or that behavior is correct; Grape-observed result claims prove only a specific observed run result, not behavior correctness.
 
 ### 2026-05-28 - Global Package Readiness
 
@@ -580,7 +580,7 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: tightened task-specific context generation so exact-source proof creation and rendered current-valid claim sections stay scoped to task-selected source refs when retrieval has concrete matches. Broad exact-source fallback still keeps no-match artifacts inspectable, and broad active-claim inspection remains available through CLI/MCP.
 - Checks run: focused CLI local-project, task retrieval, repository artifact, and source-claim behavior tests before broader verification.
-- Risks/follow-ups: retrieval is still lexical/lightweight-symbol based. Broader durable claim types, contradiction/supersession, Grape-observed test/command proofs, and richer multi-span ranking remain pending.
+- Risks/follow-ups: retrieval is still lexical/lightweight-symbol based. Broader durable claim types, contradiction/supersession, behavior/correctness claims from observed runs, and richer multi-span ranking remain pending.
 
 ### 2026-05-30 - Context Transport Protocol Roadmap
 
@@ -685,7 +685,14 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: added `grape run` and `grape test` as the first local Grape-observed command/test runner path. The commands execute from the repository root against an existing current context session, reject secret-looking command text before execution, create Grape observed run IDs, and persist trusted redacted `command_run` / `test_run` source evidence with command/output hashes, exit status, timestamps, branch/commit/worktree/session scope, and no raw command/stdout/stderr bodies.
 - Checks run: `npm run typecheck`; `npm run docs:check`; `npm run build:test`; focused `tests/behavior/cli-local-project.test.mjs`; full `npm run beta:check`.
-- Risks/follow-ups: observed-run source rows are trusted evidence, not durable truth. Durable proof/claim promotion from observed runs, broader claim types, parsed durable rules, and conflict creation/resolution remain pending.
+- Risks/follow-ups: this initial runner slice did not promote durable truth until the follow-up observed-run result proof/claim slice. Broader claim types, parsed durable rules, behavior/correctness claims, and conflict creation/resolution remain pending.
+
+### 2026-06-01 - Observed Run Result Proofs And Claims
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added the narrow `grape_observed_run_result` proof and claim path for trusted local `grape run` / `grape test` executions. The runner now writes the source row, validates observed-run metadata, persists a direct proof row, creates a claim candidate, persists a verified durable result claim, and links the proof to the claim in one transaction. MCP command/test writes remain temporary and cannot mint observed-run authority.
+- Checks run: `npm run typecheck`; `npm run build:test`; focused `tests/behavior/observed-run-claim-store.test.mjs`; focused `tests/behavior/cli-local-project.test.mjs`; focused `tests/behavior/mcp-stdio.test.mjs`.
+- Risks/follow-ups: the observed-run claim proves only the command/test result Grape observed. Broader behavior, correctness, root-cause, durable rule, and conflict workflows remain pending.
 
 ### 2026-06-01 - Retrieval Contract And TypeScript Symbol Signal
 
@@ -697,7 +704,7 @@ Keep entries simple:
 ### 2026-06-01 - Beta Trial Checklist And Durable Workflow Exclusions
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: added a dedicated beta trial checklist for real MCP client trials across install, setup, first/second context turns, restore, stale source recovery, branch switch recovery, reset recovery, and Grape-observed command/test evidence. The checklist requires trial notes to confirm that durable observed-run promotion, broader claim types, parsed rules, conflict workflows, and full graph/semantic retrieval are excluded from the beta transport promise.
+- Summary: added a dedicated beta trial checklist for real MCP client trials across install, setup, first/second context turns, restore, stale source recovery, branch switch recovery, reset recovery, and Grape-observed command/test evidence. The checklist now requires trial notes to confirm that broader observed-run behavior claims, broader claim types, parsed rules, conflict workflows, and full graph/semantic retrieval are excluded from the beta transport promise.
 - Checks run: `npm run docs:check`.
 - Risks/follow-ups: this does not implement broader durable workflows. It makes the beta gate explicit so those gaps cannot be accidentally marketed as complete.
 

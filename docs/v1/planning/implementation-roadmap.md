@@ -107,7 +107,7 @@ Aligned with the root [`ROADMAP.md`](../../ROADMAP.md). The outward `ContextPack
 | Next — protocol | pack golden tests, invalidation/restore | `src/core/diff/`, `src/core/sessions/`, `tests/behavior/` |
 | Next — compile | excerpts, rules, retrieval, budgets | `src/core/compiler/`, `src/core/retrieval/`, `src/core/proofs/`, `src/core/claims/` |
 | Next — benchmarks | fixtures + `grape bench` thresholds | `src/app/benchmark/`, `tests/fixtures/` |
-| Soon — trust depth | observed-run proof promotion, more claims, rules | `src/core/trust/`, `src/core/claims/`, `src/mcp/` |
+| Soon — trust depth | more observed-run claim workflows, more claims, rules | `src/core/trust/`, `src/core/claims/`, `src/mcp/` |
 | Later — retrieval | durable compile, optional embeddings | `src/core/retrieval/`, `src/core/compiler/artifact/` |
 
 ## Feature Decision Filter
@@ -135,7 +135,7 @@ Before adding V1 scope, confirm the work improves at least one of:
 
 - **Minimum bar (met for first review):** clone, `npm run check`, honest docs/contracts, scaffold warnings, passing gates.
 - **V1 alpha bar (current target):** npm install, `grape_get_context` twice with safe `OMIT_UNCHANGED`, dependency invalidation benchmarks, install smoke CI.
-- **Full product bar (not V1):** broad durable retrieval, multi-fixture gold labels, observed-run proof promotion, non-scaffold artifacts, optional graph-memory parity with dedicated memory products.
+- **Full product bar (not V1):** broad durable retrieval, multi-fixture gold labels, observed-run result-to-behavior workflows, non-scaffold artifacts, optional graph-memory parity with dedicated memory products.
 
 Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations uses the built-in `node:sqlite` runtime path to avoid native package compilation; the published alpha package requires Node.js 22.13+.
 

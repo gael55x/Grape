@@ -43,6 +43,8 @@ export async function runObservedCommand(parsed: ParsedArgs, mode: "command" | "
       "",
       `Observed run: ${result.observedRunId}`,
       `Source: ${result.sourceId}`,
+      result.claimId ? `Claim: ${result.claimId}` : undefined,
+      result.proofId ? `Proof: ${result.proofId}` : undefined,
       `Trust class: ${result.trustClass}`,
       `Exit code: ${result.exitCode}`,
       result.passed === undefined ? undefined : `Passed: ${result.passed ? "yes" : "no"}`,

@@ -125,7 +125,7 @@ npm install -g grape-context@0.1.0-alpha.3
 ## Do Not Treat As Beta Complete
 
 - Scaffold-backed artifact sections are still documented limitations.
-- Grape-observed command/test runners exist, but durable proof/claim promotion from those observed runs is not implemented.
+- Grape-observed command/test runners can promote the narrow `grape_observed_run_result` proof/claim, but broader runtime truth from those runs is not implemented.
 - Broader durable claim types, parsed durable project rules, and conflict creation/resolution are explicitly excluded from the beta transport promise.
 - Retrieval remains a lightweight impact candidate selector; full graph retrieval, embeddings, semantic ranking, and broad AST-backed language support are later work.
 - Cloud sync and memory-platform features remain later work.

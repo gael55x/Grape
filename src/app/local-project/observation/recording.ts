@@ -1,4 +1,10 @@
-import { createEvidenceStorageRepositories } from "../../../core/storage/index.js";
+import { persistObservedRunResultClaim } from "../../persist-observed-run-claims.js";
+import {
+  createClaimStorageRepositories,
+  createEvidenceStorageRepositories,
+  createProofStorageRepositories,
+  runStorageTransaction
+} from "../../../core/storage/index.js";
 import { withCurrentLocalContextSession } from "../write-session-context.js";
 import { normalizeRepoRelativePath } from "./path.js";
 import { buildCommandObservation, buildTestObservation } from "./source-builders.js";
@@ -53,6 +59,8 @@ function recordObservation(
     },
     ({ database, context }) => {
       const evidenceRepositories = createEvidenceStorageRepositories(database);
+      const claimRepositories = createClaimStorageRepositories(database);
+      const proofRepositories = createProofStorageRepositories(database);
       const cwd = normalizeRepoRelativePath(context.rootPath, input.cwd, "cwd");
       const testFiles =
         sourceType === "test_run"
@@ -65,10 +73,22 @@ function recordObservation(
         sourceType === "command_run"
           ? buildCommandObservation(input, context, cwd, now, authority)
           : buildTestObservation(input as RecordLocalTestResultInput, context, cwd, testFiles, now, authority);
-      const inserted = evidenceRepositories.sources.insertOrIgnore(observation.source);
-      return { observation, inserted };
+      return runStorageTransaction(database, () => {
+        const inserted = evidenceRepositories.sources.insertOrIgnore(observation.source);
+        const promotion = authority === "grape"
+          ? persistObservedRunResultClaim({
+              repositories: claimRepositories,
+              proofRepositories,
+              source: observation.source,
+              now
+            })
+          : undefined;
+        return { observation, inserted, promotion };
+      });
     }
   );
+  const promotion = databaseResult.value.promotion;
+  const durableClaim = Boolean(promotion?.claimId && promotion.rejectedCandidates.length === 0);
 
   return {
     rootPath: databaseResult.context.rootPath,
@@ -78,7 +98,11 @@ function recordObservation(
     sourceRef: databaseResult.value.observation.source.sourceRef,
     sourceHash: databaseResult.value.observation.source.sourceHash,
     trustClass: authority === "grape" ? "trusted" : "temporary",
-    durable: false,
+    durable: durableClaim,
+    durableClaim,
+    proofId: promotion?.proofId,
+    claimId: durableClaim ? promotion?.claimId : undefined,
+    claimType: durableClaim ? promotion?.claimType : undefined,
     observedBy: authority,
     observedRunId:
       authority === "grape" ? (input as RecordLocalGrapeObservedCommandResultInput).observedRunId : undefined,
@@ -86,7 +110,24 @@ function recordObservation(
     redactedFields: databaseResult.value.observation.redactedFields,
     warnings:
       authority === "grape"
-        ? ["grape_observed_evidence_is_trusted_source_not_durable_claim", "raw_command_and_output_not_persisted"]
+        ? observedRunWarnings(promotion)
         : ["agent_reported_evidence_is_temporary", "raw_command_and_output_not_persisted"]
   };
+}
+
+function observedRunWarnings(
+  promotion: ReturnType<typeof persistObservedRunResultClaim> | undefined
+): readonly string[] {
+  const warnings = ["raw_command_and_output_not_persisted", "observed_run_claim_proves_result_only"];
+  if (!promotion) return warnings;
+  if (promotion.rejectedProofs.length > 0 || promotion.rejectedCandidates.length > 0) {
+    return [
+      "grape_observed_run_result_promotion_rejected",
+      ...warnings
+    ];
+  }
+  return [
+    "grape_observed_run_result_promoted_to_durable_claim",
+    ...warnings
+  ];
 }

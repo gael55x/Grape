@@ -93,7 +93,7 @@ function toCurrentValidCandidate(input: {
     proofRefs: input.proofs.map((proof) => proof.proofId),
     verificationStatus: input.claim.verificationStatus,
     scopeResult: scopeMatchesCurrentSnapshot(scope, input.snapshot) ? "match" : "mismatch",
-    sourceHashStatus: sourceHashesMatch(input.proofs, sources, input.currentFiles),
+    sourceHashStatus: sourceHashesMatch(input.proofs, sources, input.currentFiles, scope),
     proofHashStatus: proofHashesMatch(input.proofs, scope),
     contradictionStatus: "none",
     privacyStatus: sources.every((source) => source?.privacyStatus === "allowed" && source.redactionStatus !== "blocked")
@@ -130,14 +130,21 @@ function scopeMatchesCurrentSnapshot(
 function sourceHashesMatch(
   proofs: readonly ProofRecord[],
   sources: readonly (SourceRecord | undefined)[],
-  currentFiles: ReadonlyMap<string, string>
+  currentFiles: ReadonlyMap<string, string>,
+  scope: Record<string, unknown>
 ): CurrentValidCandidate["sourceHashStatus"] {
   if (proofs.length === 0) return "unknown";
   for (let index = 0; index < proofs.length; index += 1) {
     const source = sources[index];
+    const proof = proofs[index];
     if (!source) return "mismatch";
-    if (source.sourceHash !== proofs[index].sourceHash) return "mismatch";
-    if (currentFiles.get(source.sourceRef) !== proofs[index].sourceHash) return "mismatch";
+    if (source.sourceHash !== proof.sourceHash) return "mismatch";
+    if (isObservedRunProof(proof, source)) {
+      const scopedSourceHash = stringScope(scope, "sourceHash");
+      if (scopedSourceHash && scopedSourceHash !== proof.sourceHash) return "mismatch";
+      continue;
+    }
+    if (currentFiles.get(source.sourceRef) !== proof.sourceHash) return "mismatch";
   }
   return "match";
 }
@@ -148,8 +155,16 @@ function proofHashesMatch(
 ): CurrentValidCandidate["proofHashStatus"] {
   if (proofs.length === 0) return "unknown";
   const expectedExcerptHash = stringScope(scope, "excerptHash");
-  if (!expectedExcerptHash) return "unknown";
-  return proofs.every((proof) => proof.excerptHash === expectedExcerptHash) ? "match" : "mismatch";
+  const expectedResultHash = stringScope(scope, "resultHash");
+  if (!expectedExcerptHash && !expectedResultHash) return "unknown";
+  return proofs.every((proof) => {
+    const expected = proof.proofType === "grape_observed_run_result"
+      ? expectedResultHash
+      : expectedExcerptHash;
+    return expected.length > 0 && proof.excerptHash === expected;
+  })
+    ? "match"
+    : "mismatch";
 }
 
 function dirtyScopeStatus(
@@ -171,4 +186,11 @@ function parseScope(scopeJson: string): Record<string, unknown> {
 function stringScope(scope: Record<string, unknown>, key: string): string {
   const value = scope[key];
   return typeof value === "string" ? value : "";
+}
+
+function isObservedRunProof(proof: ProofRecord, source: SourceRecord): boolean {
+  return (
+    proof.proofType === "grape_observed_run_result" &&
+    (source.sourceType === "command_run" || source.sourceType === "test_run")
+  );
 }

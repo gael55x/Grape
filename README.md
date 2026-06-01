@@ -123,7 +123,7 @@ Implemented today:
 - first MCP stdio server: `grape mcp --stdio` supports `initialize`, `tools/list`, `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_rules`, `grape_get_omitted_item`, `grape_get_stale_items`, `grape_get_conflicts`, `grape_get_status`, `grape_record_candidate`, `grape_record_command_result`, `grape_record_test_result`, `grape_record_user_decision`, and `grape_request_user_confirmation` over framed stdio
 - MCP rule inspection through `grape_get_rules`, returning current Git-visible, hash-verified, secret-scanned rule excerpts without absolute root paths
 - restricted MCP candidate, command/test result, user-decision, and confirmation-request tools as temporary evidence/request surfaces without raw command/output/prompt/response persistence or durable claim promotion
-- Grape-observed command/test execution through `grape run` and `grape test`, recording trusted redacted source evidence with observed run IDs and command/output hashes
+- Grape-observed command/test execution through `grape run` and `grape test`, recording trusted redacted source evidence with observed run IDs and command/output hashes and promoting narrow observed-run result proofs/claims
 - omitted context restore lookup through `grape omitted --session <id> --token <restoreToken>` and `grape_get_omitted_item`
 - recovery guidance through `grape status`, `grape doctor`, unsafe compile output, lock-conflict errors, stale restore output, privacy/redaction failures, and safe malformed-config repair during bootstrap
 - TypeScript, behavior tests, storage checks, docs checks, architecture-boundary checks, package dry-run checks, and install smoke
@@ -133,7 +133,7 @@ Still alpha:
 - this is a local context transport slice, not a full memory platform
 - stable task/session identity is required for reliable second-turn omission
 - broader durable current-valid retrieval is still scaffold-backed in places
-- durable proof/claim promotion from Grape-observed command/test runs
+- broader runtime truth from Grape-observed command/test runs beyond the narrow observed-run result claim
 - full repository indexing and richer exact-span ranking
 - broader durable claim types, parsed durable rules, and conflict creation/resolution
 - real clean-repo MCP client trials beyond scripted smoke before beta sign-off
@@ -249,7 +249,7 @@ grape bench --fixture stale-source-typescript-app
 grape bench --fixture session-reset-typescript-app
 ```
 
-`grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape sessions`, `grape stale`, `grape conflicts`, `grape bench --fixture <name>`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, `grape omitted`, `grape run`, and `grape test` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, stale-invalidation inspection, conflict-edge inspection, scripted fixture benchmarking, omitted-context restore, Grape-observed command/test evidence, and the first MCP context retrieval path. MCP also exposes stale invalidation inspection through `grape_get_stale_items`, conflict inspection through `grape_get_conflicts`, and the restricted write surface through non-promoting candidate, command/test observation, user-decision, and confirmation-request tools. Conflict detection/resolution, broader durable artifact retrieval, claim-linked proof inspection, observed-run proof promotion, and broader durable proof types are not implemented yet.
+`grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape sessions`, `grape stale`, `grape conflicts`, `grape bench --fixture <name>`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, `grape omitted`, `grape run`, and `grape test` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, stale-invalidation inspection, conflict-edge inspection, scripted fixture benchmarking, omitted-context restore, Grape-observed command/test evidence, narrow observed-run result proof/claim promotion, and the first MCP context retrieval path. MCP also exposes stale invalidation inspection through `grape_get_stale_items`, conflict inspection through `grape_get_conflicts`, and the restricted write surface through non-promoting candidate, command/test observation, user-decision, and confirmation-request tools. Conflict detection/resolution, broader durable artifact retrieval, claim-linked proof inspection, and broader durable proof types are not implemented yet.
 
 ## Development
 

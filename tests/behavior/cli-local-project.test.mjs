@@ -119,7 +119,12 @@ test("cli run and test record Grape-observed trusted evidence without raw output
     assert.equal(commandJson.sourceType, "command_run");
     assert.equal(commandJson.trustClass, "trusted");
     assert.equal(commandJson.observedBy, "grape");
+    assert.equal(commandJson.durable, true);
+    assert.equal(commandJson.durableClaim, true);
     assert.match(commandJson.observedRunId, /^run:[a-f0-9]{24}$/);
+    assert.match(commandJson.proofId, /^proof:[a-f0-9]{24}$/);
+    assert.match(commandJson.claimId, /^claim:[a-f0-9]{24}$/);
+    assert.equal(commandJson.claimType, "grape_observed_run_result");
     assert.equal(command.stdout.includes("observed command output"), false);
 
     const testRun = runCli(repoPath, [
@@ -139,7 +144,12 @@ test("cli run and test record Grape-observed trusted evidence without raw output
     assert.equal(testJson.sourceType, "test_run");
     assert.equal(testJson.trustClass, "trusted");
     assert.equal(testJson.observedBy, "grape");
+    assert.equal(testJson.durable, true);
+    assert.equal(testJson.durableClaim, true);
     assert.equal(testJson.passed, true);
+    assert.match(testJson.proofId, /^proof:[a-f0-9]{24}$/);
+    assert.match(testJson.claimId, /^claim:[a-f0-9]{24}$/);
+    assert.equal(testJson.claimType, "grape_observed_run_result");
     assert.equal(testRun.stdout.includes("observed test output"), false);
 
     const commandSource = localSourceById(repoPath, commandJson.sourceId);
@@ -161,6 +171,34 @@ test("cli run and test record Grape-observed trusted evidence without raw output
     assert.equal(testMetadata.observedByGrape, true);
     assert.equal(testMetadata.passed, true);
     assert.equal(testMetadata.testFramework, "node");
+
+    const commandProofs = runCliJson(repoPath, ["proofs", "--source", commandJson.sourceId]).proofs;
+    assert.equal(commandProofs.length, 1);
+    assert.equal(commandProofs[0].proofId, commandJson.proofId);
+    assert.equal(commandProofs[0].claimId, commandJson.claimId);
+    assert.equal(commandProofs[0].proofType, "grape_observed_run_result");
+    assert.equal(commandProofs[0].supportStatus, "direct");
+    assert.equal("excerpt" in commandProofs[0], false);
+    assert.equal("body" in commandProofs[0], false);
+
+    const testProofs = runCliJson(repoPath, ["proofs", "--source", testJson.sourceId]).proofs;
+    assert.equal(testProofs.length, 1);
+    assert.equal(testProofs[0].proofId, testJson.proofId);
+    assert.equal(testProofs[0].claimId, testJson.claimId);
+    assert.equal(testProofs[0].proofType, "grape_observed_run_result");
+
+    const activeClaims = runCliJson(repoPath, ["claims", "--active"]).claims;
+    const commandClaim = activeClaims.find((claim) => claim.claimId === commandJson.claimId);
+    assert.ok(commandClaim);
+    assert.equal(commandClaim.claimType, "grape_observed_run_result");
+    assert.match(commandClaim.claimText, /Grape observed command run/);
+    assert.equal(commandClaim.scope.commandHash, commandJson.commandHash);
+    assert.equal(commandClaim.scope.resultHash, commandProofs[0].excerptHash);
+    const testClaim = activeClaims.find((claim) => claim.claimId === testJson.claimId);
+    assert.ok(testClaim);
+    assert.equal(testClaim.claimType, "grape_observed_run_result");
+    assert.match(testClaim.claimText, /Grape observed test run/);
+    assert.equal(testClaim.scope.passed, true);
   });
 });
 

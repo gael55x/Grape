@@ -30,7 +30,11 @@ export interface RunLocalObservedCommandResult {
   readonly sourceHash: string;
   readonly trustClass: "trusted";
   readonly observedBy: "grape";
-  readonly durable: false;
+  readonly durable: boolean;
+  readonly durableClaim: boolean;
+  readonly proofId?: string;
+  readonly claimId?: string;
+  readonly claimType?: string;
   readonly commandHash: string;
   readonly cwd: string;
   readonly exitCode: number;
@@ -99,7 +103,11 @@ export function runLocalObservedCommand(input: RunLocalObservedCommandInput): Ru
     sourceHash: observation.sourceHash,
     trustClass: "trusted",
     observedBy: "grape",
-    durable: false,
+    durable: observation.durable,
+    durableClaim: observation.durableClaim,
+    proofId: observation.proofId,
+    claimId: observation.claimId,
+    claimType: observation.claimType,
     commandHash,
     cwd: ".",
     exitCode,

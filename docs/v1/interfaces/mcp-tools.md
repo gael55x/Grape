@@ -115,7 +115,7 @@ Unsafe or risky context outputs include `recoveryGuidance` so MCP consumers can 
 
 `grape_get_artifact` returns stored artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative public artifact file refs for one `artifactId`. It does not return raw scaffold sidecar bodies. MCP output omits absolute local root paths.
 
-`grape_get_claims` returns current-valid durable claim metadata, defaulting to `activeOnly: true`. Current V1 implementation exposes only the narrow `repository_source_excerpt_exists` claim type created from validated exact-source proof rows. It returns claim IDs, subjects, claim text, scope metadata, proof refs, source refs, and current-valid rejection counts. It does not return raw proof excerpts, source file bodies, or absolute local root paths.
+`grape_get_claims` returns current-valid durable claim metadata, defaulting to `activeOnly: true`. Current V1 implementation exposes narrow `repository_source_excerpt_exists` claims from validated exact-source proof rows and narrow `grape_observed_run_result` claims from trusted local Grape-observed command/test runs. It returns claim IDs, subjects, claim text, scope metadata, proof refs, source refs, and current-valid rejection counts. It does not return raw proof excerpts, source file bodies, raw command bodies, raw command output, or absolute local root paths.
 
 `grape_get_proofs` returns persisted proof row metadata, optionally filtered by `proofId` or `sourceId`. It returns proof IDs, source IDs/refs, proof type, support status, source hashes, excerpt hashes, and optional claim IDs. It does not return raw proof excerpts or source file bodies. MCP output omits absolute local root paths.
 
@@ -129,7 +129,7 @@ Unsafe or risky context outputs include `recoveryGuidance` so MCP consumers can 
 
 `grape_get_status` returns local bootstrap, migration, and Git-state diagnostics including `recoveryGuidance` for missing config/database, pending migrations, root mismatch, dirty worktree scope, or missing Git metadata.
 
-`grape_record_command_result` and `grape_record_test_result` persist agent-reported command/test observations as temporary `command_run` / `test_run` source evidence rows scoped to the current repo snapshot and an existing current context session. The adapter accepts the raw command only to verify `commandHash`; raw command, stdout, and stderr bodies are not persisted or returned. MCP callers cannot mint `observedRunId`, cannot self-declare `observedByGrape`, and cannot promote these rows to durable claims or proofs. The trusted observed-run path is the local CLI runner (`grape run` / `grape test`), which executes the command outside the MCP adapter and writes Grape-observed trusted source evidence.
+`grape_record_command_result` and `grape_record_test_result` persist agent-reported command/test observations as temporary `command_run` / `test_run` source evidence rows scoped to the current repo snapshot and an existing current context session. The adapter accepts the raw command only to verify `commandHash`; raw command, stdout, and stderr bodies are not persisted or returned. MCP callers cannot mint `observedRunId`, cannot self-declare `observedByGrape`, and cannot promote these rows to durable claims or proofs. The trusted observed-run path is the local CLI runner (`grape run` / `grape test`), which executes the command outside the MCP adapter, writes Grape-observed trusted source evidence, and may promote the narrow `grape_observed_run_result` proof/claim.
 
 `grape_record_candidate` persists an agent-reported claim candidate as a non-durable `claim_candidates` row and links it to a temporary `assistant_response` source when the caller does not provide an existing current source. It returns candidate/source IDs only, not the raw claim text, and cannot promote the candidate to a durable claim.
 
@@ -506,10 +506,10 @@ Write rules:
 - MCP write tools require an existing current context session, so callers should call `grape_get_context` first.
 - Raw command, stdout, stderr, prompt, and response bodies are not persisted or returned; only hashes and scoped metadata are stored.
 - Only a local Grape command runner may create Grape-observed command/test evidence with an observed run ID. The current runner commands are `grape run --session <id> -- <cmd...>` and `grape test --session <id> -- <cmd...>`.
-- A Grape-observed run must include command hash, cwd, exit code, stdout/stderr hashes, and timestamps, and it must be created outside the MCP adapter.
+- A Grape-observed run must include command hash, cwd, exit code, stdout/stderr hashes, and timestamps, and it must be created outside the MCP adapter. The local runner may promote only the narrow `grape_observed_run_result` proof/claim.
 - User decisions require direct confirmation with prompt hash, response hash, timestamp, and confirmation channel.
 - Write tools return evidence IDs or candidate IDs only. They do not return claim IDs for newly durable claims.
-- Promotion, if later allowed, must replay Trust Kernel gates outside the MCP adapter.
+- Any broader promotion must replay Trust Kernel gates outside the MCP adapter.
 
 ## Contract Tests
 

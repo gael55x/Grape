@@ -12,6 +12,7 @@ The current retrieval path may use:
 - lightweight symbol nodes for modules, functions, classes, interfaces, types, constants, and variables
 - local import relationships discovered from static import specifiers
 - current-valid narrow source-excerpt claims after proof validation
+- current-valid narrow observed-run result claims after trusted local `grape run` / `grape test` promotion
 
 Private, ignored, unreadable, oversized, binary, stale-hash, and secret-looking files are not valid retrieval inputs.
 
@@ -29,7 +30,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 
 ## Beta Boundary
 
-The beta promise is reliable context transport over this lightweight retrieval contract. Beta does not promise complete call graphs, semantic ranking, broad language AST support, runtime behavior proof, or durable project-rule reasoning.
+The beta promise is reliable context transport over this lightweight retrieval contract. Beta does not promise complete call graphs, semantic ranking, broad language AST support, runtime behavior correctness, root-cause proof, or durable project-rule reasoning. Observed-run result claims prove that Grape observed one command/test result only.
 
 The current TypeScript/JavaScript signal includes function declarations, class declarations, interfaces, type aliases, constants, variables, and const-assigned arrow/function declarations. These symbols guide source selection and excerpt anchoring, but exact excerpts remain source-existence proof only.
 
@@ -38,5 +39,5 @@ The current TypeScript/JavaScript signal includes function declarations, class d
 - broader language extraction and AST-backed symbol spans
 - stronger TypeScript compiler-backed import and declaration resolution
 - richer exact-span ranking across tests and source files
-- durable retrieval over broader claim/proof types
+- durable retrieval over broader claim/proof types beyond source excerpts and observed-run results
 - conflict-aware and rule-aware retrieval once those durable workflows exist
