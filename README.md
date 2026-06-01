@@ -11,7 +11,7 @@
 <p align="center">
   <a href="docs/README.md"><strong>Documentation</strong></a>
   ·
-  <a href="docs/README.md"><strong>Architecture</strong></a>
+  <a href="docs/v1/architecture/overview.md"><strong>Architecture</strong></a>
   ·
   <a href="ROADMAP.md"><strong>Roadmap</strong></a>
   ·
@@ -25,6 +25,12 @@
   <img alt="Dependency-tracked" src="https://img.shields.io/badge/tracking-dependency%20hashes-111827" />
 </p>
 
+<p align="center">
+  <a href="https://star-history.com/#gael55x/Grape&amp;Date">
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=gael55x/Grape&amp;type=Date" width="600" />
+  </a>
+</p>
+
 ---
 
 Grape is the build system for AI coding-agent context.
@@ -34,6 +40,34 @@ It automatically tracks what context an agent has seen, invalidates stale contex
 Instead of making agents reread the same files, rediscover the same rules, and repeat the same mistakes, Grape turns repository knowledge into dependency-tracked context artifacts that can be diffed, restored, and invalidated.
 
 Grape is not a coding assistant, chatbot, memory toy, or generic search layer. It is the missing context runtime for agentic software development: built to make coding agents cheaper to run, harder to mislead, and more consistent on real codebases.
+
+## Quickstart
+
+**Alpha status:** the current transport slice is published as [`grape-context@0.1.0-alpha.3`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.3). It requires **Node.js 22.13+**.
+
+For reproducible alpha.3 testing:
+
+```bash
+npm install -g grape-context@0.1.0-alpha.3
+grape init --connect
+```
+
+The normal alpha install path is:
+
+```bash
+npm install -g grape-context
+grape init --connect
+```
+
+`grape init --connect` creates `.grape/`, applies local SQLite migrations, captures the initial Git snapshot, reports scan diagnostics, and prints MCP connection guidance.
+
+An MCP-capable coding agent then requests context through:
+
+```text
+grape_get_context
+```
+
+For continued turns, keep the same task/query and session identity. The alpha.3 session contract is strict by design: different task wording with the same explicit session is a mismatch, and derived MCP sessions change when the query changes. See [Agent Sessions](docs/v1/interfaces/agent-sessions.md) for examples and recovery paths.
 
 ## Why Grape Exists
 
@@ -50,7 +84,18 @@ Search, embeddings, repo maps, and graph retrieval can find related information.
 
 The goal is not just smaller prompts. The goal is trustworthy incremental context: token savings without hiding uncertainty, stale evidence, or safety-critical constraints.
 
-## What Grape Is Building
+## What Grape Does
+
+Grape compiles safe, current repository context into a dependency-tracked artifact, diffs it against what the current agent session already received, and sends a structured context pack:
+
+- `NEW` for context the agent has not seen
+- `CHANGED` for updated context
+- `PINNED` for safety-critical context that must be resent
+- `OMIT_UNCHANGED` for safe token savings
+- `RESTORE_AVAILABLE` for omitted content that can be fetched back
+- `INVALIDATE_PREVIOUS` for stale prior context
+
+## Core Guarantees
 
 Grape is designed around a few hard rules:
 
@@ -90,84 +135,29 @@ Core objects:
 
 ## Current Status
 
-Grape is a controlled public alpha. The context transport slice is published as [`grape-context@0.1.0-alpha.3`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.3) and is ready for serious pre-beta review of the install flow, CLI/MCP transport, session contract, and diff semantics.
+Grape is a controlled public alpha. The current package is ready for serious pre-beta review of install flow, CLI/MCP transport, session identity, context diffing, stale invalidation, and omitted-context restore.
 
-Implemented today:
+Implemented in the alpha transport slice:
 
-- committed implementation contract
-- documentation architecture and agent operating rules
-- explicit state machine and invariants
-- in-memory context artifact and diff proof
-- durable SQLite session-ledger storage
-- durable context build proof for first-turn send, second-turn omission, stale manifest invalidation, and rollback
-- alpha.2 npm package and GitHub release for the transport wedge
-- alpha.3 hardening release with README/product-promise refresh, storage repository ownership split, session reset benchmark, restore-path goldens, mismatch exit classification, green local release gates, npm `latest`/`alpha` tags, and GitHub tag/release
-- first local setup CLI slice: `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`
-- bootstrap project detection during `grape init --connect` for language/framework, package manager, scripts, test command, entry points, config files, confidence levels, and non-durable candidate rules
-- setup/status scan diagnostics for visible and rejected files, including ignored, private, unreadable, oversized, and binary-file rejection counts without exposing skipped file bodies
-- first CLI context compile fallback: `grape compile --task <text>` auto-bootstraps local state, compiles from real repo inputs, evaluates optional token budgets, persists session diff rows, and writes inspectable `.grape/artifacts/ctx_*.json` and `.md` context-pack artifacts
-- hardened Markdown context-pack artifacts with artifact summary, diff counts, item input refs, omitted/restore metadata, dependency details, token/budget status, and warnings/safety fields
-- compiled current-valid narrow source-excerpt claims in context artifacts with claim/proof dependencies
-- deterministic `symbol_outline`, `rule_digest`, and prior-turn `context_pack_summary` compression records with input hashes and non-proof artifact orientation sections
-- artifact inspection through `grape artifacts`, `grape artifacts --artifact <id>`, and MCP `grape_get_artifact`
-- session and stale-invalidation debugging through `grape sessions` and `grape stale`
-- active narrow claim inspection through `grape claims --active` and MCP `grape_get_claims`
-- proof inspection through `grape proofs`, `grape proofs --proof <id>`, and MCP `grape_get_proofs`
-- project-rule conflict creation, inspection, and manual CLI resolution through `grape conflicts` / `grape conflicts --resolve <edge> --as coexists_with`, with MCP `grape_get_conflicts` remaining read-only
-- fixture benchmark shell through `grape bench --fixture <name>`, measuring first-turn and second-turn token costs, omitted unchanged tokens, restore hints, stale sends, unsafe omissions, and wall-clock timings against copied fixture repos
-- four-fixture in-repo benchmark suite covering clean omission, branch-switch invalidation, stale-source invalidation, and explicit session-reset invalidation
-- external benchmark workspace pass of 13/13 scripted scenarios when run with the documented methodology and stable task/session contract
-- restore-path protocol golden coverage for `RESTORE_AVAILABLE` restore IDs, session-bound lookup, restored body shape, and MCP output without absolute root paths
-- dedicated task/session mismatch exit classification through CLI exit code `6`
-- alpha.3 package-lock metadata alignment and alpha.2 external benchmark workspace dependency alignment
-- first MCP stdio server: `grape mcp --stdio` supports `initialize`, `tools/list`, `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_rules`, `grape_get_omitted_item`, `grape_get_stale_items`, `grape_get_conflicts`, `grape_get_status`, `grape_record_candidate`, `grape_record_command_result`, `grape_record_test_result`, `grape_record_user_decision`, and `grape_request_user_confirmation` over framed stdio
-- MCP rule inspection through `grape_get_rules`, returning current Git-visible, hash-verified, secret-scanned rule excerpts without absolute root paths
-- restricted MCP candidate, command/test result, user-decision, and confirmation-request tools as temporary evidence/request surfaces without raw command/output/prompt/response persistence or durable claim promotion
-- Grape-observed command/test execution through `grape run` and `grape test`, recording trusted redacted source evidence with observed run IDs and command/output hashes and promoting narrow observed-run result proofs/claims
-- omitted context restore lookup through `grape omitted --session <id> --token <restoreToken>` and `grape_get_omitted_item`
-- recovery guidance through `grape status`, `grape doctor`, unsafe compile output, lock-conflict errors, stale restore output, privacy/redaction failures, and safe malformed-config repair during bootstrap
-- TypeScript, behavior tests, storage checks, docs checks, architecture-boundary checks, package dry-run checks, and install smoke
+- global npm install and `grape init --connect`
+- local SQLite session ledger and dependency manifests
+- CLI and MCP `grape_get_context` transport
+- session-scoped `NEW`, `PINNED`, `OMIT_UNCHANGED`, `RESTORE_AVAILABLE`, and `INVALIDATE_PREVIOUS` context packs
+- branch switch, stale source, and explicit session reset invalidation
+- omitted-context restore through CLI and MCP
+- exact source/rule proof rows, narrow current-valid claims, parsed project rules, and conservative conflict inspection
+- deterministic TypeScript/JavaScript AST graph indexing for common imports, exports, symbols, calls, and related test hints
+- Grape-observed `grape run` / `grape test` evidence and narrow observed-run result claims
+- local checks for docs, architecture boundaries, storage, typechecking, package contents, install smoke, behavior tests, benchmarks, and alpha e2e smoke
 
-Still alpha:
+Still alpha / not a full beta promise:
 
 - this is a local context transport slice, not a full memory platform
 - stable task/session identity is required for reliable second-turn omission
-- broader durable current-valid retrieval is still scaffold-backed in places
-- broader runtime truth from Grape-observed command/test runs beyond the narrow observed-run result claim
-- full repository indexing and richer exact-span ranking
-- broader durable claim types, parsed durable rules, and conflict creation/resolution
+- broader runtime truth from Grape-observed command/test runs is not promoted beyond the narrow observed-run result claim
+- retrieval has AST-backed TypeScript/JavaScript graph expansion, but not full semantic ranking, embeddings, complete call graphs, or broad language parsing
+- broader durable claim types, nested rule scope resolution, and automatic conflict resolution remain outside the beta transport promise
 - real clean-repo MCP client trials beyond scripted smoke before beta sign-off
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=gael55x/Grape&type=Date)](https://star-history.com/#gael55x/Grape&Date)
-
-## Documentation
-
-Start here:
-
-- [Documentation Index](docs/README.md)
-- [V1 Documentation](docs/v1/README.md)
-- [Implementation Contract](docs/v1/SPEC.md)
-- [Architecture](docs/v1/architecture/overview.md)
-- [State Machine](docs/v1/architecture/state-machine.md)
-- [Invariants](docs/v1/architecture/invariants.md)
-- [Roadmap](ROADMAP.md)
-- [Contributing](CONTRIBUTING.md)
-
-Core contracts:
-
-- [Trust Model](docs/v1/core/trust-model.md)
-- [Context Artifact](docs/v1/contracts/context-artifact.md)
-- [Context Diff](docs/v1/contracts/context-diff.md)
-- [Agent Sessions](docs/v1/interfaces/agent-sessions.md)
-- [Compression](docs/v1/core/compression.md)
-- [Storage](docs/v1/core/storage.md)
-- [Security](docs/v1/core/security.md)
-- [MCP Tools](docs/v1/interfaces/mcp-tools.md)
-- [CLI](docs/v1/interfaces/cli.md)
-- [Testing](docs/v1/quality/testing.md)
-- [Benchmarks](docs/v1/quality/benchmarks.md)
 
 ## Architecture
 
@@ -195,40 +185,7 @@ flowchart LR
   Storage --> Diff
 ```
 
-## Alpha Usage
-
-**Alpha status:** The context transport slice is published as [`grape-context@0.1.0-alpha.3`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.3) and gated by `npm run check`, package checks, install smoke, benchmark smoke, and alpha e2e smoke. Requires **Node.js 22.13+**. See [ROADMAP.md](ROADMAP.md) for the alpha, beta, and 1.0 split.
-
-For reproducible alpha.3 testing:
-
-```bash
-npm install -g grape-context@0.1.0-alpha.3
-grape init --connect
-```
-
-The two-command target for normal alpha users is:
-
-```bash
-npm install -g grape-context
-grape init --connect
-```
-
-`grape init --connect` creates `.grape/`, writes `.grape/config.json`, applies SQLite migrations to `.grape/grape.db`, captures the initial Git snapshot, reports bootstrap and scan diagnostics, and prints MCP connection guidance. The npm package includes compiled CLI output and runtime SQL migrations in `dist/`.
-
-If npm appears to keep older alpha code after installing alpha.3, clear the cache and reinstall the exact package:
-
-```bash
-npm cache clean --force
-npm install -g grape-context@0.1.0-alpha.3
-```
-
-An MCP-capable coding agent will request context through:
-
-```text
-grape_get_context
-```
-
-For continued turns, keep the same task/query and session identity. The alpha.3 session contract is strict by design: different task wording with the same explicit session is a mismatch, and derived MCP sessions change when the query changes. See [Agent Sessions](docs/v1/interfaces/agent-sessions.md) for the examples, recovery paths, exit-code notes, and JSON-RPC framing details.
+## CLI And MCP
 
 Manual CLI commands are debugging and fallback surfaces:
 
@@ -239,6 +196,8 @@ grape artifacts
 grape artifacts --artifact <id>
 grape proofs
 grape proofs --proof <id>
+grape claims --active
+grape sessions
 grape status
 grape doctor
 grape mcp --print-config
@@ -248,13 +207,49 @@ grape omitted --session <id> --token <restoreToken>
 grape stale
 grape conflicts
 grape conflicts --resolve <edge_id> --as coexists_with
+grape run --session <id> -- <cmd...>
+grape test --session <id> -- <cmd...>
 grape bench --fixture clean-typescript-app
 grape bench --fixture branch-switch-typescript-app
 grape bench --fixture stale-source-typescript-app
 grape bench --fixture session-reset-typescript-app
 ```
 
-`grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape sessions`, `grape stale`, `grape conflicts`, `grape bench --fixture <name>`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, `grape omitted`, `grape run`, and `grape test` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, stale-invalidation inspection, project-rule conflict creation/inspection/manual CLI resolution, scripted fixture benchmarking, omitted-context restore, Grape-observed command/test evidence, narrow observed-run result proof/claim promotion, and the first MCP context retrieval path. MCP also exposes stale invalidation inspection through `grape_get_stale_items`, read-only conflict inspection through `grape_get_conflicts`, and the restricted write surface through non-promoting candidate, command/test observation, user-decision, and confirmation-request tools. Broader durable artifact retrieval, claim-linked proof inspection, automatic conflict resolution, semantic retrieval, and broader durable proof types are not implemented yet.
+MCP exposes the same local transport path through `grape mcp --stdio`. Read tools include context retrieval, artifacts, claims, proofs, rules, omitted restore, stale items, conflicts, and status. Restricted write tools can record temporary candidates, command/test observations, user decisions, and confirmation requests, but they cannot promote durable truth directly.
+
+If npm appears to keep older alpha code after installing alpha.3, clear the cache and reinstall the exact package:
+
+```bash
+npm cache clean --force
+npm install -g grape-context@0.1.0-alpha.3
+```
+
+## Documentation
+
+Start here:
+
+- [Documentation Index](docs/README.md)
+- [V1 Documentation](docs/v1/README.md)
+- [Implementation Contract](docs/v1/SPEC.md)
+- [Architecture](docs/v1/architecture/overview.md)
+- [State Machine](docs/v1/architecture/state-machine.md)
+- [Invariants](docs/v1/architecture/invariants.md)
+- [Roadmap](ROADMAP.md)
+- [Contributing](CONTRIBUTING.md)
+
+Core contracts:
+
+- [Trust Model](docs/v1/core/trust-model.md)
+- [Context Artifact](docs/v1/contracts/context-artifact.md)
+- [Context Diff](docs/v1/contracts/context-diff.md)
+- [Agent Sessions](docs/v1/interfaces/agent-sessions.md)
+- [Compression](docs/v1/core/compression.md)
+- [Storage](docs/v1/core/storage.md)
+- [Security](docs/v1/core/security.md)
+- [MCP Tools](docs/v1/interfaces/mcp-tools.md)
+- [CLI](docs/v1/interfaces/cli.md)
+- [Testing](docs/v1/quality/testing.md)
+- [Benchmarks](docs/v1/quality/benchmarks.md)
 
 ## Development
 
@@ -291,7 +286,7 @@ Grape is not ready for broad feature work yet. Contributions should preserve the
 Before contributing, read:
 
 - [Contributing Guide](CONTRIBUTING.md)
-- [Invariants](docs/README.md)
+- [Invariants](docs/v1/architecture/invariants.md)
 - [Roadmap](ROADMAP.md)
 
 Implementation standards are strict:
