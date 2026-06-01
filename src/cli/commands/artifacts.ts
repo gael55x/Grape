@@ -11,7 +11,7 @@ export async function runArtifacts(parsed: ParsedArgs): Promise<number> {
 
   try {
     const artifactId = parsed.values.get("--artifact");
-    const { getLocalArtifact, listLocalArtifacts } = await import("../../app/local-project/artifacts.js");
+    const { getLocalArtifact, listLocalArtifacts } = await import("../../app/local-project/inspection/artifacts.js");
 
     if (artifactId) {
       const result = getLocalArtifact({ rootPath: repoPath(parsed), artifactId });

@@ -10,7 +10,7 @@ export async function runSessions(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
-    const { listLocalSessions } = await import("../../app/local-project/sessions.js");
+    const { listLocalSessions } = await import("../../app/local-project/inspection/sessions.js");
     const result = listLocalSessions({ rootPath: repoPath(parsed) });
     if (parsed.flags.has("--json")) {
       writeJson(result);

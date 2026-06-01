@@ -714,3 +714,10 @@ Keep entries simple:
 - Summary: split the local command/test observation recording path out of the near-checkpoint `observations.ts` file. The public import surface remains `src/app/local-project/observations.ts`, while `observation/` now owns public types, validation/normalization, source construction, repo-relative path handling, and persistence orchestration separately.
 - Checks run: `npm run typecheck`; focused local-project CLI behavior test; `npm run docs:check`; `npm run architecture:check`; `npm run beta:check`.
 - Risks/follow-ups: this is a structural refactor only. `compile.ts`, `candidates.ts`, `types.ts`, and `config.ts` remain near the 300-line review checkpoint and should be split before adding unrelated responsibilities.
+
+### 2026-06-01 - Local Project Workflow Directory Split
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: reorganized `src/app/local-project/` into workflow-owned subdirectories. Setup/bootstrap/status/doctor/sync code now lives in `setup/`; compile/session/compression/task-retrieval code lives in `context/`; read-only artifact/claim/proof/rule/session/stale/conflict services live in `inspection/`; omitted restore code lives in `omission/`; restricted write code lives in `writes/`; observed command/test runner code lives under `observation/`; and public local-project contract interfaces are split under `types/` with root files kept as narrow export surfaces.
+- Checks run: `npm run typecheck`; `npm run docs:check`; `npm run architecture:check`; `npm run build:test`; focused local-project/MCP/compression/observed-run behavior tests; `npm run beta:check`.
+- Risks/follow-ups: this is a structural refactor only. `compile.ts` and `candidates.ts` remain near the 300-line review checkpoint and should be split before adding unrelated responsibilities.

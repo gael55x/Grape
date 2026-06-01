@@ -10,7 +10,7 @@ import type {
   RecordLocalUserDecisionResult,
   RequestLocalUserConfirmationInput,
   RequestLocalUserConfirmationResult
-} from "../app/local-project/candidates.js";
+} from "../app/local-project/writes/candidates.js";
 import {
   assertAllowedFields,
   assertReportedByAgent,

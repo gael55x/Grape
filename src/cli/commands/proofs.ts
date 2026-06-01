@@ -11,7 +11,7 @@ export async function runProofs(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
-    const { listLocalProofs } = await import("../../app/local-project/proofs.js");
+    const { listLocalProofs } = await import("../../app/local-project/inspection/proofs.js");
     const result = listLocalProofs({
       rootPath: repoPath(parsed),
       proofId: parsed.values.get("--proof"),

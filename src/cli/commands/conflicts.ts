@@ -11,7 +11,7 @@ export async function runConflicts(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
-    const { listLocalConflicts } = await import("../../app/local-project/conflicts.js");
+    const { listLocalConflicts } = await import("../../app/local-project/inspection/conflicts.js");
     const result = listLocalConflicts({ rootPath: repoPath(parsed) });
 
     if (parsed.flags.has("--json")) {

@@ -1,4 +1,4 @@
-import { recoveryGuidanceForErrorMessage } from "../../app/local-project/recovery.js";
+import { recoveryGuidanceForErrorMessage } from "../../app/local-project/setup/recovery.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
 import { errorMessage, renderProblems, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
@@ -44,7 +44,7 @@ export async function runCompileLike(
   }
 
   try {
-    const { compileLocalContext } = await import("../../app/local-project/compile.js");
+    const { compileLocalContext } = await import("../../app/local-project/context/compile.js");
     const result = compileLocalContext({
       rootPath: repoPath(parsed),
       task,

@@ -11,7 +11,7 @@ export async function runStale(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
-    const { listLocalStaleItems } = await import("../../app/local-project/stale.js");
+    const { listLocalStaleItems } = await import("../../app/local-project/inspection/stale.js");
     const result = listLocalStaleItems({
       rootPath: repoPath(parsed),
       sessionId: parsed.values.get("--session")

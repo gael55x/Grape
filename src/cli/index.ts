@@ -107,7 +107,7 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
-    const { initializeLocalProject } = await import("../app/local-project/initialize.js");
+    const { initializeLocalProject } = await import("../app/local-project/setup/initialize.js");
     const result = initializeLocalProject({
       rootPath: repoPath(parsed),
       connect: parsed.flags.has("--connect")
@@ -176,7 +176,7 @@ async function runStatus(parsed: ParsedArgs): Promise<number> {
   if (usageError) return usageError;
 
   try {
-    const { readLocalProjectStatus } = await import("../app/local-project/status.js");
+    const { readLocalProjectStatus } = await import("../app/local-project/setup/status.js");
     const status = readLocalProjectStatus(repoPath(parsed));
     if (parsed.flags.has("--json")) {
       writeJson(status);
@@ -211,7 +211,7 @@ async function runDoctor(parsed: ParsedArgs): Promise<number> {
   if (usageError) return usageError;
 
   try {
-    const { doctorLocalProject } = await import("../app/local-project/doctor.js");
+    const { doctorLocalProject } = await import("../app/local-project/setup/doctor.js");
     const doctor = doctorLocalProject(repoPath(parsed), { privacyOnly: parsed.flags.has("--privacy") });
     if (parsed.flags.has("--json")) {
       writeJson(doctor);
@@ -240,7 +240,7 @@ async function runMcp(parsed: ParsedArgs): Promise<number> {
   if (usageError) return usageError;
 
   if (parsed.flags.has("--print-config")) {
-    const { mcpConnectionGuide } = await import("../app/local-project/mcp-guide.js");
+    const { mcpConnectionGuide } = await import("../app/local-project/setup/mcp-guide.js");
     writeJson({
       grapeMcp: mcpConnectionGuide(repoPath(parsed))
     });

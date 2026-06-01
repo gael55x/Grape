@@ -24,7 +24,7 @@ export async function runObservedCommand(parsed: ParsedArgs, mode: "command" | "
   }
 
   try {
-    const { runLocalObservedCommand } = await import("../../app/local-project/observed-runner.js");
+    const { runLocalObservedCommand } = await import("../../app/local-project/observation/observed-runner.js");
     const result = runLocalObservedCommand({
       rootPath: repoPath(parsed),
       sessionId,

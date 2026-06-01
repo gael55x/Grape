@@ -1,5 +1,5 @@
 import { listLocalConflicts } from "../app/local-project/index.js";
-import type { ListLocalConflictsResult } from "../app/local-project/conflicts.js";
+import type { ListLocalConflictsResult } from "../app/local-project/inspection/conflicts.js";
 
 export interface GrapeGetConflictsInput {}
 

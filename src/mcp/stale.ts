@@ -1,5 +1,5 @@
 import { listLocalStaleItems } from "../app/local-project/index.js";
-import type { ListLocalStaleItemsResult } from "../app/local-project/stale.js";
+import type { ListLocalStaleItemsResult } from "../app/local-project/inspection/stale.js";
 
 export interface GrapeGetStaleItemsInput {
   readonly sessionId?: string;

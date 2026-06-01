@@ -10,7 +10,7 @@ export async function runSync(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
-    const { syncLocalProject } = await import("../../app/local-project/sync.js");
+    const { syncLocalProject } = await import("../../app/local-project/setup/sync.js");
     const result = syncLocalProject({ rootPath: repoPath(parsed) });
 
     if (parsed.flags.has("--json")) {

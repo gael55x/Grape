@@ -1,5 +1,5 @@
 import { listLocalRules } from "../app/local-project/index.js";
-import type { ListLocalRulesResult } from "../app/local-project/rules.js";
+import type { ListLocalRulesResult } from "../app/local-project/inspection/rules.js";
 
 export interface GrapeGetRulesInput {}
 

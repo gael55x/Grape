@@ -11,7 +11,7 @@ export async function runClaims(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
-    const { listLocalClaims } = await import("../../app/local-project/claims.js");
+    const { listLocalClaims } = await import("../../app/local-project/inspection/claims.js");
     const result = listLocalClaims({
       rootPath: repoPath(parsed),
       activeOnly: true

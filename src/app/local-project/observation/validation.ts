@@ -1,5 +1,5 @@
 import { assertArtifactTextHasNoSecrets } from "../../../core/security/index.js";
-import { sha256 } from "../compile-ids.js";
+import { sha256 } from "../context/compile-ids.js";
 import type {
   RecordLocalCommandResultInput,
   RecordLocalGrapeObservedCommandResultInput,

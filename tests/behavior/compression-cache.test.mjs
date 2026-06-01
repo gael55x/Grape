@@ -10,7 +10,7 @@ import {
   buildRuleDigestCompressionArtifact,
   buildSymbolOutlineCompressionArtifact
 } from "../../.tmp/build/src/core/compression/index.js";
-import { listContextPackSummarySentItems } from "../../.tmp/build/src/app/local-project/context-pack-summary.js";
+import { listContextPackSummarySentItems } from "../../.tmp/build/src/app/local-project/context/context-pack-summary.js";
 import {
   applyStorageMigrations,
   createCompressionStorageRepositories,

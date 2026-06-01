@@ -1,6 +1,6 @@
 import { performance } from "node:perf_hooks";
 
-import { compileLocalContext } from "../local-project/compile.js";
+import { compileLocalContext } from "../local-project/context/compile.js";
 import type { CompileLocalContextResult } from "../local-project/types.js";
 import type { BenchmarkTurnMetric } from "./types.js";
 

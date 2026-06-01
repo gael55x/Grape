@@ -1,4 +1,4 @@
-import { recoveryGuidanceForErrorMessage } from "../../app/local-project/recovery.js";
+import { recoveryGuidanceForErrorMessage } from "../../app/local-project/setup/recovery.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
 import { errorMessage, renderProblems, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
@@ -22,7 +22,7 @@ export async function runOmitted(parsed: ParsedArgs): Promise<number> {
       return await runRestoreOmitted(parsed, sessionId, token);
     }
 
-    const { listOmittedContext } = await import("../../app/local-project/omitted.js");
+    const { listOmittedContext } = await import("../../app/local-project/omission/omitted.js");
     const result = listOmittedContext({ rootPath: repoPath(parsed), sessionId });
     if (parsed.flags.has("--json")) {
       writeJson(result);
@@ -51,7 +51,7 @@ async function runRestoreOmitted(
   sessionId: string,
   token: string
 ): Promise<number> {
-  const { restoreOmittedContext } = await import("../../app/local-project/omitted.js");
+  const { restoreOmittedContext } = await import("../../app/local-project/omission/omitted.js");
   const result = restoreOmittedContext({
     rootPath: repoPath(parsed),
     sessionId,

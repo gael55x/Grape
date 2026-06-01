@@ -5,7 +5,7 @@ import {
   createProofStorageRepositories,
   runStorageTransaction
 } from "../../../core/storage/index.js";
-import { withCurrentLocalContextSession } from "../write-session-context.js";
+import { withCurrentLocalContextSession } from "../writes/write-session-context.js";
 import { normalizeRepoRelativePath } from "./path.js";
 import { buildCommandObservation, buildTestObservation } from "./source-builders.js";
 import type {
