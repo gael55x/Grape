@@ -693,3 +693,10 @@ Keep entries simple:
 - Summary: documented the current retrieval contract and beta boundary, then improved the lightweight TypeScript/JavaScript symbol signal so const-assigned arrow/function declarations are indexed as function symbols for task source retrieval and exact excerpt anchoring.
 - Checks run: focused `tests/behavior/file-index.test.mjs`; `npm run typecheck`; `npm run docs:check`.
 - Risks/follow-ups: retrieval is still lightweight. Full AST-backed language extraction, complete call graphs, semantic ranking, broader durable-claim retrieval, and richer test/source exact-span ranking remain pending.
+
+### 2026-06-01 - Beta Trial Checklist And Durable Workflow Exclusions
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added a dedicated beta trial checklist for real MCP client trials across install, setup, first/second context turns, restore, stale source recovery, branch switch recovery, reset recovery, and Grape-observed command/test evidence. The checklist requires trial notes to confirm that durable observed-run promotion, broader claim types, parsed rules, conflict workflows, and full graph/semantic retrieval are excluded from the beta transport promise.
+- Checks run: `npm run docs:check`.
+- Risks/follow-ups: this does not implement broader durable workflows. It makes the beta gate explicit so those gaps cannot be accidentally marketed as complete.

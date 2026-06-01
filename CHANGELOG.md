@@ -17,6 +17,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Hardened packaged install smoke to prove CLI omitted restore, task/session mismatch recovery, and reset recovery in the installed consumer-repo path.
 - Refreshed beta-readiness docs to reflect the published `0.1.0-alpha.3` npm package, npm `latest`/`alpha` dist-tags, GitHub tag/release state, global install smoke, and external alpha.3 published-package smoke.
 - Improved lightweight TypeScript/JavaScript retrieval by treating const-assigned arrow/function declarations as function symbols and documenting the beta retrieval boundary.
+- Added a beta trial checklist for real MCP client trials, pass/fail criteria, recovery scenarios, and explicit durable-workflow beta exclusions.
 
 ## 0.1.0-alpha.3 - 2026-05-31
 

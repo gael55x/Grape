@@ -36,6 +36,7 @@ docs/v1/
     benchmarks.md
   planning/
     beta-readiness.md
+    beta-trial-checklist.md
     implementation-roadmap.md
     implementation-status.md
     implementation-log.md
@@ -69,6 +70,7 @@ docs/v1/
 | Planning | `planning/implementation-roadmap.md` | Goal order, deliverables, exit criteria. | Scope or build order changes. | Work belongs to the current goal. |
 | Planning | `planning/implementation-status.md` | Acceptance matrix for the V1 core pipeline. | A core-pipeline area changes status. | Status reflects implementation, tests, docs, and known limitations honestly. |
 | Planning | `planning/beta-readiness.md` | Pre-beta review checklist, setup verification commands, and benchmark workspace alignment notes. | Alpha/beta readiness criteria, human-review checklist, or external benchmark alignment changes. | Checklist does not expand V1 scope or change benchmark methodology. |
+| Planning | `planning/beta-trial-checklist.md` | Real client trial steps, pass/fail criteria, and beta exclusions. | Trial requirements, supported clients, or beta scope changes. | Trials prove transport reliability and do not promise unfinished memory features. |
 | Planning | `planning/implementation-log.md` | Chronological implementation-preparation and implementation log. | Substantial work is completed. | Read recent entries before continuing. |
 | Planning | `planning/changelog.md` | V1 implementation-facing changelog. | V1 behavior or docs change. | Root changelog is updated when user-facing behavior changes. |
 | Planning | `planning/spec-changelog.md` | Spec-contract change log. | V1 contract changes. | Update before implementing changed behavior. |

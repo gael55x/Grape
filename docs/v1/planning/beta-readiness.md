@@ -8,6 +8,8 @@ This checklist does not expand V1 scope. It makes the current transport slice ea
 
 The beta product promise is: install Grape, keep using the coding agent normally, and let Grape track seen context, send safe deltas, resend pinned safety context, invalidate stale prior sends, and restore omitted context in the background.
 
+Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client trials and pass/fail criteria.
+
 ## Current Alpha.3 Hardening Baseline
 
 - `grape-context@0.1.0-alpha.3` is published on npm and currently tagged as both `latest` and `alpha`.
@@ -40,6 +42,7 @@ The beta product promise is: install Grape, keep using the coding agent normally
 - [x] `0.1.0-alpha.3` is published on npm and GitHub after release approval.
 - [x] Global `npm install -g grape-context@0.1.0-alpha.3` smoke has been rerun against the published package.
 - [x] External benchmark workspace published-package smoke has been rerun against registry-installed alpha.3.
+- [x] Beta trial checklist exists with required client trials, pass/fail criteria, and explicit durable-workflow exclusions.
 
 ## Verified Registry And GitHub State
 
@@ -123,6 +126,8 @@ npm install -g grape-context@0.1.0-alpha.3
 
 - Scaffold-backed artifact sections are still documented limitations.
 - Grape-observed command/test runners exist, but durable proof/claim promotion from those observed runs is not implemented.
-- Full graph extraction, embeddings, cloud sync, and memory-platform features remain later work.
+- Broader durable claim types, parsed durable project rules, and conflict creation/resolution are explicitly excluded from the beta transport promise.
+- Retrieval remains a lightweight impact candidate selector; full graph retrieval, embeddings, semantic ranking, and broad AST-backed language support are later work.
+- Cloud sync and memory-platform features remain later work.
 - Task/session mismatch recovery guidance has a dedicated exit code, but arbitrary prompt rewording still creates a distinct task/session identity in the current alpha transport contract.
 - Package-lock metadata alignment, external benchmark workspace mutation, future npm publishes, version bumps, tags, releases, and dist-tags still require explicit approval.
