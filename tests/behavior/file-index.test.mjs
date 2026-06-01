@@ -63,16 +63,26 @@ function withGitRepo(fn) {
     writeFileSync(path.join(dir, ".aiignore"), "private.ts\n");
     writeFileSync(
       path.join(dir, "src", "lib.ts"),
-      ["export class Calculator {}", "export function calculateDiscount() { return 10; }", ""].join("\n")
+      [
+        "export class Calculator {",
+        "  apply(value: number) { return value; }",
+        "}",
+        "export function calculateDiscount() { return 10; }",
+        ""
+      ].join("\n")
     );
     writeFileSync(
       path.join(dir, "src", "app.ts"),
       [
-        "import { calculateDiscount } from './lib';",
+        "import { Calculator, calculateDiscount } from './lib';",
         "import outside from '../../../outside';",
         "const localValue = calculateDiscount();",
         "export const loadUser = async () => localValue;",
-        "export function runApp() { return localValue; }",
+        "export function runApp() {",
+        "  const calculator = new Calculator();",
+        "  return calculateDiscount() + calculator.apply(localValue);",
+        "}",
+        "export { calculateDiscount } from './lib';",
         ""
       ].join("\n")
     );
@@ -124,6 +134,8 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
       const nodeByPathAndName = new Map(nodes.map((node) => [`${node.path}:${node.name}`, node]));
       const appModule = nodeByPathAndName.get("src/app.ts:src/app.ts");
       const libModule = nodeByPathAndName.get("src/lib.ts:src/lib.ts");
+      const runAppSymbol = nodeByPathAndName.get("src/app.ts:runApp");
+      const calculateDiscountSymbol = nodeByPathAndName.get("src/lib.ts:calculateDiscount");
 
       assert.equal(result.index.nodesInserted, nodes.length);
       assert.equal(result.index.edgesInserted, edges.length);
@@ -134,11 +146,14 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
       assert.equal(secretMatches.length, 0);
       assert.equal(appModule?.symbolKind, "module");
       assert.equal(libModule?.symbolKind, "module");
-      assert.equal(nodeByPathAndName.get("src/app.ts:runApp")?.symbolKind, "function");
+      assert.equal(runAppSymbol?.symbolKind, "function");
       assert.equal(nodeByPathAndName.get("src/app.ts:loadUser")?.symbolKind, "function");
       assert.equal(nodeByPathAndName.get("src/app.ts:localValue")?.symbolKind, "constant");
       assert.equal(nodeByPathAndName.get("src/lib.ts:Calculator")?.symbolKind, "class");
-      assert.equal(nodeByPathAndName.get("src/lib.ts:calculateDiscount")?.symbolKind, "function");
+      assert.equal(nodeByPathAndName.get("src/lib.ts:apply")?.symbolKind, "method");
+      assert.equal(calculateDiscountSymbol?.symbolKind, "function");
+      assert.equal(runAppSymbol?.confidence, "high");
+      assert.equal(JSON.parse(runAppSymbol?.metadataJson ?? "{}").extractor, "typescript_ast");
       assert.equal(nodes.some((node) => node.path === "private.ts"), false);
       assert.ok(nodes.every((node) => typeof node.sourceId === "string" && node.sourceId.startsWith("source:")));
 
@@ -147,7 +162,15 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
           (edge) =>
             edge.edgeType === "contains" &&
             edge.fromSymbolId === appModule?.symbolId &&
-            edge.toSymbolId === nodeByPathAndName.get("src/app.ts:runApp")?.symbolId
+            edge.toSymbolId === runAppSymbol?.symbolId
+        )
+      );
+      assert.ok(
+        edges.some(
+          (edge) =>
+            edge.edgeType === "exports" &&
+            edge.fromSymbolId === libModule?.symbolId &&
+            edge.toSymbolId === calculateDiscountSymbol?.symbolId
         )
       );
       assert.ok(
@@ -167,6 +190,14 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
             edge.toSymbolId === undefined &&
             edge.toRef === "../../../outside" &&
             edge.confidence === "low"
+        )
+      );
+      assert.ok(
+        edges.some(
+          (edge) =>
+            edge.edgeType === "calls" &&
+            edge.fromSymbolId === runAppSymbol?.symbolId &&
+            edge.toSymbolId === calculateDiscountSymbol?.symbolId
         )
       );
 

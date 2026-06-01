@@ -90,10 +90,10 @@ Tables outside this subset stay documented for V1, but they require explicit imp
 
 Migration `0002_indexing_foundation.sql` implements the first indexing-specific tables after source ingestion made file relationship tracking possible:
 
-- `symbol_nodes` stores module/file nodes and lightweight detected symbols for allowed snapshot files, with a non-null `source_id` anchor to the source evidence row.
+- `symbol_nodes` stores module/file nodes and detected symbols for allowed snapshot files, with a non-null `source_id` anchor to the source evidence row.
 - `symbol_edges` stores `contains` and import-resolution relationship edges between indexed nodes or unresolved import refs.
 
-This is intentionally a foundation, not a complete code intelligence graph. The current extractor is deterministic and regex-based for common JavaScript/TypeScript symbols and imports. It records confidence and discovery method so downstream compiler logic cannot mistake the index for a complete impact graph.
+This is intentionally a foundation, not a complete code intelligence graph. The current extractor is deterministic and AST-backed for TypeScript/JavaScript modules, symbols, exports, imports, methods, and direct call expressions, with regex fallback only for unsupported inputs. It records confidence and discovery method so downstream compiler logic cannot mistake the index for proof or complete semantic coverage.
 
 Migration `0003_fts_entries.sql` adds the first portable lexical index foundation:
 
@@ -107,7 +107,7 @@ Migration `0004_compression_cache.sql` adds the first deterministic compression 
 - `compression_artifacts` stores cache metadata for V1 deterministic `symbol_outline`, `rule_digest`, and `context_pack_summary` records.
 - `compression_inputs` stores each input ref and input hash used to derive a compression artifact.
 
-The current implementation writes `symbol_outline` records from the lightweight symbol index, `rule_digest` records from verified active rule excerpt proofs, and `context_pack_summary` records from the session-scoped sent ledger after durable pack persistence. Compression repositories persist derived cache records only; they do not decide compiler policy, trust, proof validity, or whether a summary can replace context.
+The current implementation writes `symbol_outline` records from the deterministic symbol index, `rule_digest` records from verified active rule excerpt proofs, and `context_pack_summary` records from the session-scoped sent ledger after durable pack persistence. Compression repositories persist derived cache records only; they do not decide compiler policy, trust, proof validity, or whether a summary can replace context.
 
 MCP restricted writes currently reuse existing V1 tables instead of adding premature write-specific migrations. Command/test observation writes use `sources` with `source_type = 'command_run'` or `source_type = 'test_run'`, `trust_class = 'temporary'`, and `redaction_status = 'redacted'`. The local CLI observed runner also reuses `sources` for Grape-observed command/test rows, but writes them with `trust_class = 'trusted'`, `redaction_status = 'redacted'`, `observedBy = 'grape'`, `observedByGrape = true`, and a Grape-created `observedRunId` in metadata. In the same application-owned transaction it can also write a direct `proofs` row with `proof_type = 'grape_observed_run_result'`, a `claim_candidates` row, a verified `claims` row with `claim_type = 'grape_observed_run_result'`, and a proof-to-claim link. For this proof type, `excerpt_hash` stores the deterministic observed-run result hash because the existing proof table has not yet split excerpt hashes from other proof support hashes. Candidate writes create a temporary `assistant_response` source when needed and link it to `claim_candidates` with `rejection_reason = 'mcp_candidate_requires_proof'`. User decisions use `sources` with `source_type = 'user_message'`, `trust_class = 'temporary'`, and `redaction_status = 'redacted'`. Raw command, stdout, stderr, prompt, response, and candidate evidence bodies are not stored in source metadata; only hashes and scoped metadata are persisted.
 

@@ -530,6 +530,7 @@ test("repository risk policy accepts task-selected exact source spans", () => {
           explicitSourceRefs: [],
           testSourceRefs: [],
           relatedTestSourceRefs: [],
+          graphSourceRefs: [],
           symbolSourceRefs: ["src/app.ts"],
           lexicalSourceRefs: [],
           queryTerms: ["auth"],

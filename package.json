@@ -44,8 +44,10 @@
     "test:behavior": "npm run build:test && node --no-warnings --test --test-concurrency=1 tests/behavior/*.test.mjs",
     "check": "npm run docs:check && npm run fixtures:check && npm run memory:check && npm run architecture:check && npm run storage:check && npm run typecheck && npm run package:check && npm run install:check && npm run test:behavior"
   },
-  "devDependencies": {
-    "@types/node": "22.19.19",
+  "dependencies": {
     "typescript": "5.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.19"
   }
 }

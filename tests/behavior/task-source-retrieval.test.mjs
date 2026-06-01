@@ -41,6 +41,7 @@ test("task source retrieval merges explicit, symbol, and lexical source matches"
   assert.deepEqual(result.explicitSourceRefs, ["src/auth.ts"]);
   assert.deepEqual(result.testSourceRefs, []);
   assert.deepEqual(result.relatedTestSourceRefs, []);
+  assert.deepEqual(result.graphSourceRefs, []);
   assert.deepEqual(result.symbolSourceRefs, ["src/billing.ts"]);
   assert.deepEqual(result.lexicalSourceRefs, ["src/billing.ts", "README.md"]);
   assert.deepEqual(result.sourceAnchors, [
@@ -103,8 +104,39 @@ test("task source retrieval includes related tests that import selected source f
 
   assert.deepEqual(result.selectedSourceRefs, ["src/billing.ts", "tests/billing.test.ts"]);
   assert.deepEqual(result.relatedTestSourceRefs, ["tests/billing.test.ts"]);
+  assert.deepEqual(result.graphSourceRefs, []);
   assert.deepEqual(result.symbolSourceRefs, ["src/billing.ts"]);
   assert.deepEqual(result.lexicalSourceRefs, []);
+});
+
+test("task source retrieval expands selected sources through graph relationships", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix runCheckout",
+    sources: [
+      source("source-checkout", "src/checkout.ts"),
+      source("source-pricing", "src/pricing.ts"),
+      source("source-pricing-test", "tests/pricing.test.ts")
+    ],
+    symbols: [symbol("source-checkout", "src/checkout.ts", "runCheckout")],
+    relationships: [
+      {
+        sourceRef: "src/checkout.ts",
+        targetSourceRef: "src/pricing.ts",
+        relationship: "calls"
+      },
+      {
+        sourceRef: "tests/pricing.test.ts",
+        targetSourceRef: "src/pricing.ts",
+        relationship: "calls"
+      }
+    ],
+    lexicalMatches: []
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, ["src/checkout.ts", "src/pricing.ts", "tests/pricing.test.ts"]);
+  assert.deepEqual(result.symbolSourceRefs, ["src/checkout.ts"]);
+  assert.deepEqual(result.graphSourceRefs, ["src/pricing.ts"]);
+  assert.deepEqual(result.relatedTestSourceRefs, ["tests/pricing.test.ts"]);
 });
 
 test("task source retrieval includes related tests for lexical source matches", () => {
@@ -127,6 +159,7 @@ test("task source retrieval includes related tests for lexical source matches", 
 
   assert.deepEqual(result.selectedSourceRefs, ["src/invoice.ts", "src/invoice.spec.ts"]);
   assert.deepEqual(result.lexicalSourceRefs, ["src/invoice.ts"]);
+  assert.deepEqual(result.graphSourceRefs, []);
   assert.deepEqual(result.relatedTestSourceRefs, ["src/invoice.spec.ts"]);
 });
 

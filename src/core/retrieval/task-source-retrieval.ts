@@ -24,7 +24,7 @@ export interface TaskRetrievalLexicalMatch {
 export interface TaskRetrievalRelationship {
   readonly sourceRef: string;
   readonly targetSourceRef: string;
-  readonly relationship: "imports" | string;
+  readonly relationship: "imports" | "calls" | string;
 }
 
 export interface TaskRetrievalTermInput {
@@ -50,6 +50,7 @@ export interface TaskSourceRetrievalResult {
   readonly explicitSourceRefs: readonly string[];
   readonly testSourceRefs: readonly string[];
   readonly relatedTestSourceRefs: readonly string[];
+  readonly graphSourceRefs: readonly string[];
   readonly symbolSourceRefs: readonly string[];
   readonly lexicalSourceRefs: readonly string[];
   readonly sourceAnchors: readonly TaskSourceRetrievalAnchor[];
@@ -65,7 +66,13 @@ export interface TaskSourceRetrievalAnchor {
   readonly endLine: number;
 }
 
-type SelectionReason = "explicit_seed" | "test_seed" | "related_test" | "symbol_match" | "lexical_match";
+type SelectionReason =
+  | "explicit_seed"
+  | "test_seed"
+  | "related_test"
+  | "graph_related"
+  | "symbol_match"
+  | "lexical_match";
 
 const defaultMaxTerms = 12;
 const defaultMaxSelectedSources = 8;
@@ -161,12 +168,14 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   }
 
   const relationships = input.relationships ?? [];
+  addGraphRelatedSources(selectedReasons, sourceByRef, relationships, new Set(selectedReasons.keys()));
   addRelatedTests(selectedReasons, sourceByRef, relationships, new Set(selectedReasons.keys()));
 
   for (const match of input.lexicalMatches) {
     const sourceRef = sourceRefById.get(match.sourceId) ?? match.sourceRef;
     if (!sourceByRef.has(sourceRef)) continue;
     addReason(selectedReasons, sourceRef, "lexical_match");
+    addGraphRelatedSources(selectedReasons, sourceByRef, relationships, new Set([sourceRef]));
     addRelatedTests(selectedReasons, sourceByRef, relationships, new Set([sourceRef]));
   }
 
@@ -179,12 +188,28 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     explicitSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "explicit_seed"),
     testSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "test_seed"),
     relatedTestSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "related_test"),
+    graphSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "graph_related"),
     symbolSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "symbol_match"),
     lexicalSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "lexical_match"),
     sourceAnchors: sourceAnchors.filter((anchor) => selectedSourceRefs.includes(anchor.sourceRef)),
     queryTerms,
     warnings
   };
+}
+
+function addGraphRelatedSources(
+  selectedReasons: Map<string, Set<SelectionReason>>,
+  sourceByRef: ReadonlyMap<string, TaskRetrievalSource>,
+  relationships: readonly TaskRetrievalRelationship[],
+  sourceRefs: ReadonlySet<string>
+): void {
+  for (const relationship of relationships) {
+    if (!isGraphExpansionRelationship(relationship.relationship)) continue;
+    if (!sourceRefs.has(relationship.sourceRef)) continue;
+    if (!sourceByRef.has(relationship.targetSourceRef)) continue;
+    if (relationship.targetSourceRef === relationship.sourceRef) continue;
+    addReason(selectedReasons, relationship.targetSourceRef, "graph_related");
+  }
 }
 
 function addRelatedTests(
@@ -194,12 +219,16 @@ function addRelatedTests(
   targetSourceRefs: ReadonlySet<string>
 ): void {
   for (const relationship of relationships) {
-    if (relationship.relationship !== "imports") continue;
+    if (!isGraphExpansionRelationship(relationship.relationship)) continue;
     if (!targetSourceRefs.has(relationship.targetSourceRef)) continue;
     if (!sourceByRef.has(relationship.sourceRef)) continue;
     if (!isTestSourceRef(relationship.sourceRef)) continue;
     addReason(selectedReasons, relationship.sourceRef, "related_test");
   }
+}
+
+function isGraphExpansionRelationship(relationship: string): boolean {
+  return relationship === "imports" || relationship === "calls";
 }
 
 function addReason(

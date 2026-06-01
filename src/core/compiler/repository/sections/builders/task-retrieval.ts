@@ -50,6 +50,8 @@ function taskRetrievalBody(
     ...listOrNone(retrieval.testSourceRefs),
     "Related test refs:",
     ...listOrNone(retrieval.relatedTestSourceRefs),
+    "Graph-expanded refs:",
+    ...listOrNone(retrieval.graphSourceRefs),
     "Symbol-matched refs:",
     ...listOrNone(retrieval.symbolSourceRefs),
     "Exact source anchors:",

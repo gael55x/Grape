@@ -59,20 +59,16 @@ export function resolveLocalTaskRetrieval(
 function importRelationships(
   symbolNodes: readonly RepositoryArtifactSymbolNodeInput[],
   symbolEdges: readonly RepositoryArtifactSymbolEdgeInput[]
-): Array<{ sourceRef: string; targetSourceRef: string; relationship: "imports" }> {
-  const modulePathBySymbolId = new Map(
-    symbolNodes
-      .filter((node) => node.symbolKind === "module")
-      .map((node) => [node.symbolId, node.path])
-  );
-  const relationships: Array<{ sourceRef: string; targetSourceRef: string; relationship: "imports" }> = [];
+): Array<{ sourceRef: string; targetSourceRef: string; relationship: "imports" | "calls" }> {
+  const pathBySymbolId = new Map(symbolNodes.map((node) => [node.symbolId, node.path]));
+  const relationships: Array<{ sourceRef: string; targetSourceRef: string; relationship: "imports" | "calls" }> = [];
 
   for (const edge of symbolEdges) {
-    if (edge.edgeType !== "imports") continue;
-    const sourceRef = modulePathBySymbolId.get(edge.fromSymbolId);
-    const targetSourceRef = edge.toSymbolId ? modulePathBySymbolId.get(edge.toSymbolId) : edge.toRef;
+    if (edge.edgeType !== "imports" && edge.edgeType !== "calls") continue;
+    const sourceRef = pathBySymbolId.get(edge.fromSymbolId);
+    const targetSourceRef = edge.toSymbolId ? pathBySymbolId.get(edge.toSymbolId) : edge.toRef;
     if (!sourceRef || !targetSourceRef) continue;
-    relationships.push({ sourceRef, targetSourceRef, relationship: "imports" });
+    relationships.push({ sourceRef, targetSourceRef, relationship: edge.edgeType });
   }
 
   return relationships;
