@@ -700,3 +700,10 @@ Keep entries simple:
 - Summary: added a dedicated beta trial checklist for real MCP client trials across install, setup, first/second context turns, restore, stale source recovery, branch switch recovery, reset recovery, and Grape-observed command/test evidence. The checklist requires trial notes to confirm that durable observed-run promotion, broader claim types, parsed rules, conflict workflows, and full graph/semantic retrieval are excluded from the beta transport promise.
 - Checks run: `npm run docs:check`.
 - Risks/follow-ups: this does not implement broader durable workflows. It makes the beta gate explicit so those gaps cannot be accidentally marketed as complete.
+
+### 2026-06-01 - Local Observation Module Split
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: split the local command/test observation recording path out of the near-checkpoint `observations.ts` file. The public import surface remains `src/app/local-project/observations.ts`, while `observation/` now owns public types, validation/normalization, source construction, repo-relative path handling, and persistence orchestration separately.
+- Checks run: `npm run typecheck`; focused local-project CLI behavior test; `npm run docs:check`; `npm run architecture:check`; `npm run beta:check`.
+- Risks/follow-ups: this is a structural refactor only. `compile.ts`, `candidates.ts`, `types.ts`, and `config.ts` remain near the 300-line review checkpoint and should be split before adding unrelated responsibilities.

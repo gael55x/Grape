@@ -15,6 +15,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added local Grape-observed command/test runners through `grape run` and `grape test`. They execute from the repository root, require a current context session, create observed run IDs, persist trusted redacted `command_run` / `test_run` source evidence with command/output hashes and session scope, and intentionally do not create durable proof or claim rows yet.
 - Documented the current V1 retrieval contract and beta boundary, and improved lightweight TypeScript/JavaScript symbol detection so const-assigned arrow/function declarations are classified as function symbols instead of constants.
 - Added the beta trial checklist for real MCP client install/connect/recover trials, pass/fail criteria, feedback capture, and explicit exclusions for durable observed-run promotion, broader claims, parsed rules, conflicts, and full graph retrieval.
+- Split local observation recording internals under `src/app/local-project/observation/` while preserving the public `observations.ts` export surface.
 - Initial V1 documentation architecture.
 - Committed canonical V1 implementation contract at `docs/v1/SPEC.md`.
 - Implementation planning now uses goal names: Documentation Foundation, In-Memory Context Loop, and Alpha Product Slice.
