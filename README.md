@@ -90,7 +90,7 @@ Core objects:
 
 ## Current Status
 
-Grape is a controlled public alpha. The context transport slice is prepared as [`grape-context@0.1.0-alpha.3`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.3) and is ready for serious pre-beta review of the install flow, CLI/MCP transport, session contract, and diff semantics.
+Grape is a controlled public alpha. The context transport slice is published as [`grape-context@0.1.0-alpha.3`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.3) and is ready for serious pre-beta review of the install flow, CLI/MCP transport, session contract, and diff semantics.
 
 Implemented today:
 
@@ -101,7 +101,7 @@ Implemented today:
 - durable SQLite session-ledger storage
 - durable context build proof for first-turn send, second-turn omission, stale manifest invalidation, and rollback
 - alpha.2 npm package and GitHub release for the transport wedge
-- alpha.3 hardening candidate with README/product-promise refresh, storage repository ownership split, session reset benchmark, restore-path goldens, mismatch exit classification, and green local release gates
+- alpha.3 hardening release with README/product-promise refresh, storage repository ownership split, session reset benchmark, restore-path goldens, mismatch exit classification, green local release gates, npm `latest`/`alpha` tags, and GitHub tag/release
 - first local setup CLI slice: `grape init --connect`, `grape help`, `grape status`, `grape doctor`, and `grape mcp --print-config`
 - bootstrap project detection during `grape init --connect` for language/framework, package manager, scripts, test command, entry points, config files, confidence levels, and non-durable candidate rules
 - setup/status scan diagnostics for visible and rejected files, including ignored, private, unreadable, oversized, and binary-file rejection counts without exposing skipped file bodies
@@ -135,7 +135,7 @@ Still alpha:
 - Grape-observed command/test runners for trusted execution evidence
 - full repository indexing and richer exact-span ranking
 - broader durable claim types, parsed durable rules, and conflict creation/resolution
-- optional true global-install smoke if beta release verification requires it
+- real clean-repo MCP client trials beyond scripted smoke before beta sign-off
 
 ## Documentation
 
@@ -192,9 +192,9 @@ flowchart LR
 
 ## Alpha Usage
 
-**Alpha status:** The context transport slice is prepared as [`grape-context@0.1.0-alpha.3`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.3) and gated by `npm run check`, package checks, install smoke, benchmark smoke, and alpha e2e smoke. Requires **Node.js 22.13+**. See [ROADMAP.md](ROADMAP.md) for the alpha, beta, and 1.0 split.
+**Alpha status:** The context transport slice is published as [`grape-context@0.1.0-alpha.3`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.3) and gated by `npm run check`, package checks, install smoke, benchmark smoke, and alpha e2e smoke. Requires **Node.js 22.13+**. See [ROADMAP.md](ROADMAP.md) for the alpha, beta, and 1.0 split.
 
-For reproducible alpha.3 testing after publish:
+For reproducible alpha.3 testing:
 
 ```bash
 npm install -g grape-context@0.1.0-alpha.3
@@ -265,6 +265,18 @@ npm run check
 ```
 
 The check suite currently covers documentation structure, fixtures, in-memory context loop checks, architecture boundaries, storage migrations, TypeScript typechecking, package dry-run contents, and behavior tests.
+
+Run the extended beta-readiness gate before release sign-off:
+
+```bash
+npm run beta:check
+```
+
+After installing the published package globally, run the global smoke:
+
+```bash
+npm run global:smoke
+```
 
 ## Contributing
 

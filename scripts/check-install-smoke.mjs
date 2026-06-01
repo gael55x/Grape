@@ -61,7 +61,7 @@ try {
   const init = spawnGrape(["init", "--connect"]);
   assert(init.status === 0, `grape init failed: ${init.stderr.trim()}`);
 
-  const compileArgs = ["compile", "--task", "install smoke", "--json"];
+  const compileArgs = ["compile", "--task", "install smoke", "--session", "install-smoke-cli", "--json"];
   const compile1 = spawnGrape(compileArgs);
   assert(compile1.status === 0, `first grape compile failed: ${compile1.stderr.trim() || compile1.error?.message}`);
   const first = JSON.parse(compile1.stdout);
@@ -78,6 +78,48 @@ try {
   assert(
     second.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE"),
     "second compile must include RESTORE_AVAILABLE"
+  );
+  const restorable = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE");
+  assert(restorable?.restoreId, "second compile must include a restoreId");
+
+  const restoredCli = spawnGrape([
+    "omitted",
+    "--session",
+    "install-smoke-cli",
+    "--token",
+    restorable.restoreId,
+    "--json"
+  ]);
+  assert(restoredCli.status === 0, `CLI omitted restore failed: ${restoredCli.stderr.trim()}`);
+  const restoredCliJson = JSON.parse(restoredCli.stdout);
+  assert(restoredCliJson.status === "restored", "CLI omitted restore must return restored status");
+  assert(typeof restoredCliJson.body === "string" && restoredCliJson.body.length > 0, "CLI omitted restore must return a body");
+
+  const mismatch = spawnGrape([
+    "compile",
+    "--task",
+    "different install smoke",
+    "--session",
+    "install-smoke-cli",
+    "--json"
+  ]);
+  assert(mismatch.status === 6, `task/session mismatch must exit 6, got ${mismatch.status}`);
+  assert(mismatch.stdout === "", "task/session mismatch must not emit JSON stdout");
+  assert(mismatch.stderr.includes("context session task mismatch"), "task/session mismatch must explain the mismatch");
+  assert(mismatch.stderr.includes("Recovery:"), "task/session mismatch must include recovery guidance");
+
+  const reset = spawnGrape([...compileArgs, "--reset-session"]);
+  assert(reset.status === 0, `reset compile failed: ${reset.stderr.trim() || reset.error?.message}`);
+  const resetJson = JSON.parse(reset.stdout);
+  assert(resetJson.sessionId === "install-smoke-cli", "reset compile must keep the explicit session");
+  assert(/^reset:/.test(resetJson.sessionResetId), "reset compile must report a reset id");
+  assert(
+    resetJson.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"),
+    "reset compile must invalidate prior sent context"
+  );
+  assert(
+    resetJson.contextPackItems.some((item) => item.state === "NEW"),
+    "reset compile must resend current context"
   );
 
   const mcp = await runMcpStdioSession(grapeBin, consumerRepo, {

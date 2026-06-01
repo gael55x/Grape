@@ -6,6 +6,16 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ## Unreleased
 
+### Added
+
+- Added `npm run beta:check` as the extended local beta-readiness gate over `check`, benchmark, and alpha e2e smoke.
+- Added `npm run global:smoke` for post-publish verification of the registry-installed global package.
+
+### Changed
+
+- Hardened packaged install smoke to prove CLI omitted restore, task/session mismatch recovery, and reset recovery in the installed consumer-repo path.
+- Refreshed beta-readiness docs to reflect the published `0.1.0-alpha.3` npm package, npm `latest`/`alpha` dist-tags, GitHub tag/release state, global install smoke, and external alpha.3 published-package smoke.
+
 ## 0.1.0-alpha.3 - 2026-05-31
 
 ### Added

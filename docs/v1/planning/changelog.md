@@ -8,6 +8,10 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Added
 
+- Added `npm run beta:check` as the extended local beta-readiness gate over `check`, benchmark, and alpha e2e smoke.
+- Added `npm run global:smoke` for post-publish verification of the registry-installed global package.
+- Hardened packaged install smoke to prove CLI omitted restore, task/session mismatch recovery, and reset recovery in the installed consumer-repo path.
+- Updated beta-readiness/status docs for the verified published alpha.3 npm package, npm `latest`/`alpha` dist-tags, remote Git tag, GitHub release state, global install smoke, and external alpha.3 published-package smoke.
 - Initial V1 documentation architecture.
 - Committed canonical V1 implementation contract at `docs/v1/SPEC.md`.
 - Implementation planning now uses goal names: Documentation Foundation, In-Memory Context Loop, and Alpha Product Slice.

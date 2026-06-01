@@ -672,3 +672,10 @@ Keep entries simple:
 - Summary: after the first publish attempt failed because the active npm auth could not publish `grape-context`, added a prebuild dist cleanup and package dry-run assertions so moved storage repository files cannot leave stale compiled JavaScript in the release tarball. Also aligned the package bin path with npm's normalized package metadata.
 - Checks run: failed `npm publish --tag alpha`; `npm whoami`; `npm view grape-context version dist-tags --json`; `npm run package:check`; `npm run docs:check`; `npm run install:check`.
 - Risks/follow-ups: npm publish still requires an authenticated account/token with package publish permission.
+
+### 2026-06-01 - Post-Publish Beta Gate Hardening
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: verified the live `grape-context@0.1.0-alpha.3` npm dist-tags and GitHub tag/release state, refreshed beta-readiness/status docs from that deployed state, added `npm run beta:check` as the combined local beta gate, added `npm run global:smoke` for the registry-installed global package, and hardened packaged install smoke to prove CLI omitted restore, task/session mismatch recovery, and reset recovery in the installed consumer-repo path.
+- Checks run: live `npm view grape-context version dist-tags time --json`; live `git ls-remote --tags origin`; live `gh release view v0.1.0-alpha.3`; `npm install -g grape-context@0.1.0-alpha.3`; `npm run global:smoke`; external `npm install grape-context@0.1.0-alpha.3 --ignore-scripts --audit=false --fund=false`; external `GRAPE_BIN=.../node_modules/.bin/grape node smoke-published.mjs` passed 8/8; focused `npm run install:check`; full `npm run beta:check`.
+- Risks/follow-ups: real clean-repo MCP client trials still need to prove the workflow beyond scripted smoke before beta sign-off.

@@ -21,29 +21,31 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 ## Done
 
 - `grape-context@0.1.0-alpha.2` is published on npm and has a GitHub release.
-- `grape-context@0.1.0-alpha.3` is prepared as a hardening candidate with package metadata bumped and local gates green.
+- `grape-context@0.1.0-alpha.3` is published on npm, tagged as both `latest` and `alpha`, and has a GitHub tag/release.
 - The context transport wedge is proven through CLI and MCP `grape_get_context`.
 - MCP stdio smoke exists, including framed JSON-RPC transport.
 - Same-session two-turn omission works when task/session identity is stable.
 - `PINNED`, `OMIT_UNCHANGED`, `RESTORE_AVAILABLE`, and `INVALIDATE_PREVIOUS` are implemented in the current transport slice.
 - Branch, dependency, session reset, and restore-path invalidation are proven through behavior coverage.
-- Packaged install smoke selects the exact just-packed tarball, asserts installed package metadata, exercises MCP `initialize` / `tools/list`, proves two-turn context diffing, and restores an omitted item.
+- Packaged install smoke selects the exact just-packed tarball, asserts installed package metadata, exercises CLI help/init/two-turn compile, restores omitted CLI context, proves task/session mismatch recovery, proves reset recovery, exercises MCP `initialize` / `tools/list`, proves two-turn MCP context diffing, and restores an omitted MCP item.
 - Alpha e2e smoke uses a repo-local npm cache, selects the exact just-packed tarball, asserts installed package metadata, and exercises installed MCP stdio setup.
 - Branch-switch and stale-source fixture metadata now matches their invalidation benchmark behavior.
 - The session reset fixture benchmark proves reset invalidation, safe full resend, and zero reset-turn omissions.
 - Restore-path golden tests lock `RESTORE_AVAILABLE` restore IDs, session binding, restored body shape, and MCP no-root-path output.
 - Task/session mismatch now has a dedicated CLI exit classification instead of falling through the storage/schema bucket.
-- Package-lock metadata is aligned with alpha.3 version/runtime, and the external benchmark workspace dependency metadata points at `grape-context@0.1.0-alpha.2` until alpha.3 publish smoke is approved.
-- Published-package smoke passed against the registry-installed alpha.2 package in the external benchmark workspace.
+- Package-lock metadata is aligned with alpha.3 version/runtime.
+- Global install smoke passed against `grape-context@0.1.0-alpha.3`.
+- Published-package smoke passed against registry-installed alpha.3 in the external benchmark workspace.
 - The benchmark workspace reports 13/13 scripted scenarios passing when run with the documented methodology and stable task/session contract.
 - In-repo `grape bench` fixtures cover clean, branch-switch, stale-source, and session-reset scenarios.
 - Package dry-run and install smoke are part of the local gate.
+- `npm run beta:check` runs the full local beta-readiness gate.
 
 ## Now
 
 - Keep the seamless beta path explicit: install Grape, initialize once, keep using the coding agent normally, and let MCP `grape_get_context` handle context diffs in the background.
-- Publish/tag `0.1.0-alpha.3` only after explicit release approval.
-- Run a global `npm install -g grape-context@0.1.0-alpha.3` smoke only if global install verification is requested after publish.
+- Prove the published alpha.3 workflow across clean consumer repos with real MCP clients, not only scripted smoke.
+- Keep release mutations such as version bumps, tags, GitHub releases, and npm dist-tag changes approval-gated.
 
 ## Next
 
@@ -70,7 +72,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 
 ## Alpha Exit Check
 
-The alpha.3 install path after publish is:
+The published alpha.3 install path is:
 
 ```bash
 npm install -g grape-context@0.1.0-alpha.3
