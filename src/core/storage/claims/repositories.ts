@@ -62,6 +62,7 @@ export interface ClaimStorageRepositories {
   readonly claimEdges: {
     insertOrIgnore(record: ClaimEdgeRecord): boolean;
     get(edgeId: string): ClaimEdgeRecord | undefined;
+    list(): readonly ClaimEdgeRecord[];
     listConflictEdges(): readonly ClaimEdgeRecord[];
   };
 }
@@ -167,6 +168,13 @@ export function createClaimStorageRepositories(database: DatabaseSync): ClaimSto
             .prepare("SELECT * FROM claim_edges WHERE edge_id = ?")
             .get(edgeId) as Record<string, unknown> | undefined
         );
+      },
+      list() {
+        return (
+          database
+            .prepare("SELECT * FROM claim_edges ORDER BY created_at DESC, edge_id ASC")
+            .all() as Array<Record<string, unknown>>
+        ).map(mapRequiredClaimEdge);
       },
       listConflictEdges() {
         return (

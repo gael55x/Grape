@@ -126,8 +126,8 @@ npm install -g grape-context@0.1.0-alpha.3
 
 - Scaffold-backed artifact sections are still documented limitations.
 - Grape-observed command/test runners can promote the narrow `grape_observed_run_result` proof/claim, but broader runtime truth from those runs is not implemented.
-- Broader durable claim types, parsed durable project rules, and conflict creation/resolution are explicitly excluded from the beta transport promise.
-- Retrieval remains a lightweight impact candidate selector; full graph retrieval, embeddings, semantic ranking, and broad AST-backed language support are later work.
+- Broader durable claim types, generated/candidate rule promotion, nested rule scope resolution, and automatic conflict resolution are explicitly excluded from the beta transport promise. Conservative parsed-rule conflict creation and manual CLI resolution are included.
+- Retrieval includes deterministic TypeScript/JavaScript AST graph expansion, but embeddings, semantic ranking, complete call graphs, and broad language support are later work.
 - Cloud sync and memory-platform features remain later work.
 - Task/session mismatch recovery guidance has a dedicated exit code, but arbitrary prompt rewording still creates a distinct task/session identity in the current alpha transport contract.
 - Package-lock metadata alignment, external benchmark workspace mutation, future npm publishes, version bumps, tags, releases, and dist-tags still require explicit approval.

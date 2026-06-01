@@ -1,16 +1,38 @@
-import type { ListLocalConflictsResult, LocalConflictSummary } from "../../app/local-project/index.js";
+import type {
+  ListLocalConflictsResult,
+  LocalConflictSummary,
+  ResolveLocalConflictResult
+} from "../../app/local-project/index.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
 import { exitCodes } from "../exit-codes.js";
 import { errorMessage, write, writeError, writeJson } from "../render.js";
 
 export async function runConflicts(parsed: ParsedArgs): Promise<number> {
-  const flag = unsupportedFlag(parsed, new Set(["--json", "--repo"]));
+  const flag = unsupportedFlag(parsed, new Set(["--json", "--repo", "--resolve", "--as"]));
   if (flag) {
     writeError(`Unsupported option for grape ${parsed.command}: ${flag}`);
     return exitCodes.usage;
   }
 
   try {
+    if (parsed.values.has("--resolve")) {
+      const { resolveLocalConflict } = await import("../../app/local-project/inspection/conflicts.js");
+      const resolution = parseConflictResolution(parsed.values.get("--as"));
+      const result = resolveLocalConflict({
+        rootPath: repoPath(parsed),
+        edgeId: parsed.values.get("--resolve") ?? "",
+        resolution
+      });
+
+      if (parsed.flags.has("--json")) {
+        writeJson(result);
+        return exitCodes.ok;
+      }
+
+      write(renderConflictResolution(result));
+      return exitCodes.ok;
+    }
+
     const { listLocalConflicts } = await import("../../app/local-project/inspection/conflicts.js");
     const result = listLocalConflicts({ rootPath: repoPath(parsed) });
 
@@ -27,6 +49,11 @@ export async function runConflicts(parsed: ParsedArgs): Promise<number> {
   }
 }
 
+function parseConflictResolution(value: string | undefined): "coexists_with" | "variant_of" {
+  if (value === "coexists_with" || value === "variant_of") return value;
+  throw new Error("--as must be one of: coexists_with, variant_of");
+}
+
 function renderConflicts(result: ListLocalConflictsResult): string {
   return [
     `Conflicts: ${result.conflicts.length}`,
@@ -34,6 +61,14 @@ function renderConflicts(result: ListLocalConflictsResult): string {
     result.warnings.length > 0 ? `Warnings: ${result.warnings.join(", ")}` : "Warnings: none",
     "",
     ...result.conflicts.map(renderConflict)
+  ].join("\n");
+}
+
+function renderConflictResolution(result: ResolveLocalConflictResult): string {
+  return [
+    `Resolved conflict: ${result.edgeId}`,
+    `Resolution: ${result.resolution}`,
+    `Resolution edge: ${result.resolutionEdgeId}`
   ].join("\n");
 }
 

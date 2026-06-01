@@ -721,3 +721,10 @@ Keep entries simple:
 - Summary: reorganized `src/app/local-project/` into workflow-owned subdirectories. Setup/bootstrap/status/doctor/sync code now lives in `setup/`; compile/session/compression/task-retrieval code lives in `context/`; read-only artifact/claim/proof/rule/session/stale/conflict services live in `inspection/`; omitted restore code lives in `omission/`; restricted write code lives in `writes/`; observed command/test runner code lives under `observation/`; and public local-project contract interfaces are split under `types/` with root files kept as narrow export surfaces.
 - Checks run: `npm run typecheck`; `npm run docs:check`; `npm run architecture:check`; `npm run build:test`; focused local-project/MCP/compression/observed-run behavior tests; `npm run beta:check`.
 - Risks/follow-ups: this is a structural refactor only. `compile.ts` and `candidates.ts` remain near the 300-line review checkpoint and should be split before adding unrelated responsibilities.
+
+### 2026-06-01 - Project Rule Conflict Creation And Manual Resolution
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added conservative parsed-project-rule conflict creation and manual CLI resolution. Local compile now creates deterministic `needs_review` claim edges when verified `project_rule` claims contain opposing rule language over the same normalized topic. `grape conflicts` lists open conflict edges, while `grape conflicts --resolve <edge> --as coexists_with|variant_of` records a non-conflict resolution edge so the conflict no longer appears as open. MCP conflict access remains read-only.
+- Checks run: `npm run typecheck`; `npm run build:test`; focused claim-conflicts, CLI local-project, MCP stdio, and repository artifact behavior tests.
+- Risks/follow-ups: this is not automatic contradiction judgment or rule precedence. It only creates review edges for obvious deterministic text conflicts and records manual local resolution; broader claim conflicts, automatic resolution, nested rule scope, and behavior/root-cause claims remain pending.

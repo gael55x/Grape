@@ -19,7 +19,9 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     "--token",
     "--artifact",
     "--proof",
+    "--resolve",
     "--source",
+    "--as",
     "--fixture",
     "--fixture-path",
     "--test-framework"

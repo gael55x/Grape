@@ -113,7 +113,7 @@ Implemented today:
 - session and stale-invalidation debugging through `grape sessions` and `grape stale`
 - active narrow claim inspection through `grape claims --active` and MCP `grape_get_claims`
 - proof inspection through `grape proofs`, `grape proofs --proof <id>`, and MCP `grape_get_proofs`
-- conflict inspection through `grape conflicts` and MCP `grape_get_conflicts`, reading recorded claim conflict edges without resolving them
+- project-rule conflict creation, inspection, and manual CLI resolution through `grape conflicts` / `grape conflicts --resolve <edge> --as coexists_with`, with MCP `grape_get_conflicts` remaining read-only
 - fixture benchmark shell through `grape bench --fixture <name>`, measuring first-turn and second-turn token costs, omitted unchanged tokens, restore hints, stale sends, unsafe omissions, and wall-clock timings against copied fixture repos
 - four-fixture in-repo benchmark suite covering clean omission, branch-switch invalidation, stale-source invalidation, and explicit session-reset invalidation
 - external benchmark workspace pass of 13/13 scripted scenarios when run with the documented methodology and stable task/session contract
@@ -243,13 +243,14 @@ grape omitted --session <id>
 grape omitted --session <id> --token <restoreToken>
 grape stale
 grape conflicts
+grape conflicts --resolve <edge_id> --as coexists_with
 grape bench --fixture clean-typescript-app
 grape bench --fixture branch-switch-typescript-app
 grape bench --fixture stale-source-typescript-app
 grape bench --fixture session-reset-typescript-app
 ```
 
-`grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape sessions`, `grape stale`, `grape conflicts`, `grape bench --fixture <name>`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, `grape omitted`, `grape run`, and `grape test` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, stale-invalidation inspection, conflict-edge inspection, scripted fixture benchmarking, omitted-context restore, Grape-observed command/test evidence, narrow observed-run result proof/claim promotion, and the first MCP context retrieval path. MCP also exposes stale invalidation inspection through `grape_get_stale_items`, conflict inspection through `grape_get_conflicts`, and the restricted write surface through non-promoting candidate, command/test observation, user-decision, and confirmation-request tools. Conflict detection/resolution, broader durable artifact retrieval, claim-linked proof inspection, and broader durable proof types are not implemented yet.
+`grape compile --task <text>`, `grape artifacts`, `grape proofs`, `grape sessions`, `grape stale`, `grape conflicts`, `grape bench --fixture <name>`, `grape status`, `grape doctor`, `grape mcp --print-config`, `grape mcp --stdio`, `grape omitted`, `grape run`, and `grape test` are implemented for local inspection, CLI-first fallback context generation, proof-row inspection, stale-invalidation inspection, project-rule conflict creation/inspection/manual CLI resolution, scripted fixture benchmarking, omitted-context restore, Grape-observed command/test evidence, narrow observed-run result proof/claim promotion, and the first MCP context retrieval path. MCP also exposes stale invalidation inspection through `grape_get_stale_items`, read-only conflict inspection through `grape_get_conflicts`, and the restricted write surface through non-promoting candidate, command/test observation, user-decision, and confirmation-request tools. Broader durable artifact retrieval, claim-linked proof inspection, automatic conflict resolution, semantic retrieval, and broader durable proof types are not implemented yet.
 
 ## Development
 

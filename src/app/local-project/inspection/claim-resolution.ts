@@ -67,6 +67,7 @@ function selectTaskScopedClaims(
   return claims
     .filter((claim) =>
       claim.sourceRefs.some((sourceRef) => taskSourceOrder.has(sourceRef)) ||
+      isProjectRuleClaim(claim) ||
       isCurrentSessionObservedRunClaim(claim, sessionId)
     )
     .sort(
@@ -84,8 +85,13 @@ function claimTaskOrder(
     .map((sourceRef) => taskSourceOrder.get(sourceRef))
     .filter((position): position is number => position !== undefined);
   if (positions.length > 0) return Math.min(...positions);
+  if (isProjectRuleClaim(claim)) return Number.MAX_SAFE_INTEGER - 2;
   if (isCurrentSessionObservedRunClaim(claim, sessionId)) return Number.MAX_SAFE_INTEGER - 1;
   return Number.MAX_SAFE_INTEGER;
+}
+
+function isProjectRuleClaim(claim: LocalClaimSummary): boolean {
+  return claim.claimType === "project_rule";
 }
 
 function isCurrentSessionObservedRunClaim(claim: LocalClaimSummary, sessionId: string | undefined): boolean {

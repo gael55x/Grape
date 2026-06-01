@@ -85,11 +85,11 @@ Block beta promotion if any trial shows:
 
 The trial notes must explicitly confirm these are not treated as beta promises:
 
-- broad durable claim types beyond current narrow source-excerpt and observed-run result claims
+- broad durable claim types beyond current narrow source-excerpt, project-rule, and observed-run result claims
 - broader behavior/correctness/root-cause claims from Grape-observed command/test runs
-- parsed durable project rules
-- conflict detection, creation, and resolution
-- full graph retrieval, embeddings, semantic ranking, or broad AST-backed language support
+- generated/candidate rule promotion and nested rule scope resolution
+- automatic conflict resolution beyond manual local CLI resolution edges
+- embeddings, semantic ranking, complete call graphs, or broad AST-backed language support
 - runtime behavior correctness from source excerpts alone
 
 ## Feedback To Capture

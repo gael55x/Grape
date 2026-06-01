@@ -16,7 +16,9 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Documented the current V1 retrieval contract and beta boundary, and improved lightweight TypeScript/JavaScript symbol detection so const-assigned arrow/function declarations are classified as function symbols instead of constants.
 - Defined the Beta Retrieval V2 contract for deterministic TypeScript/JavaScript AST graph expansion while keeping exact proof-backed context authoritative.
 - Render current-valid `grape_observed_run_result` claims in task-scoped context when they belong to the current compile session, while preserving the narrow "observed result only" proof boundary.
-- Added the beta trial checklist for real MCP client install/connect/recover trials, pass/fail criteria, feedback capture, and explicit exclusions for broader observed-run behavior claims, broader claims, parsed rules, conflicts, and full graph retrieval.
+- Promote parsed `project_rule` claims from verified rule-file lines with direct `exact_project_rule_excerpt` proofs while keeping exact rule excerpts pinned as authoritative context.
+- Added conservative project-rule conflict creation plus manual CLI resolution through claim edges. Parsed rules with opposing overlapping instructions create `needs_review` edges; local CLI resolution records `coexists_with` or `variant_of` edges; MCP conflict access remains read-only.
+- Added the beta trial checklist for real MCP client install/connect/recover trials, pass/fail criteria, feedback capture, and explicit exclusions for broader observed-run behavior claims, broader claim types, generated/candidate rule promotion, automatic conflict resolution, and semantic/broad-language retrieval.
 - Split local observation recording internals under `src/app/local-project/observation/` while preserving the public `observations.ts` export surface.
 - Reorganized `src/app/local-project/` into workflow-owned subdirectories for setup, context compilation, inspection, omission restore, restricted writes, observation, source excerpts, and public contract types.
 - Initial V1 documentation architecture.

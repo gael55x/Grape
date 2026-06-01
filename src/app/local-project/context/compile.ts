@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { buildDurableContext } from "../../durable-context-build.js";
 import { persistGitRepoSnapshot } from "../../persist-repo-snapshot.js";
+import { persistProjectRuleClaims } from "../../persist-project-rules.js";
 import { persistSourceExcerptClaims } from "../../persist-source-claims.js";
 import { toContextPackItems } from "../../../core/compiler/index.js";
 import { createGitRepoSnapshot } from "../../../core/git/index.js";
@@ -128,6 +129,16 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         now
       });
       persistSourceExcerptClaims({
+        repositories: claimRepositories,
+        proofRepositories,
+        sources,
+        sourceExcerpts: proofs.sourceExcerpts,
+        branch: snapshotResult.snapshot.branch,
+        commit: snapshotResult.snapshot.commit,
+        worktreeHash: snapshotResult.snapshot.worktreeHash,
+        now
+      });
+      persistProjectRuleClaims({
         repositories: claimRepositories,
         proofRepositories,
         sources,

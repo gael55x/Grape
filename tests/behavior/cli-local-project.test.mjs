@@ -480,6 +480,8 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(currentValidClaims?.requiresExactCode, true);
     assert.equal(currentValidClaims?.itemRefs.some((ref) => ref.kind === "claim"), true);
     assert.equal(currentValidClaims?.itemRefs.some((ref) => ref.kind === "proof"), true);
+    assert.match(currentValidClaims?.text ?? "", /Type: project_rule/);
+    assert.match(currentValidClaims?.text ?? "", /Prefer focused tests for changed behavior/);
     assert.equal(first.contextPackItems.some((item) => item.itemKind === "claim"), true);
     const compressionOrientation = artifactJson.contextArtifact.outputSections.find(
       (section) => section.id === "compression-orientation"
@@ -512,19 +514,29 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(stale.staleItems.length, 0);
     const claims = runCliJson(repoPath, ["claims", "--active"]);
     assert.equal(claims.claims.length > 0, true);
-    assert.equal(claims.claims[0].claimType, "repository_source_excerpt_exists");
-    assert.equal(claims.claims[0].verificationStatus, "verified");
-    assert.equal(claims.claims[0].proofRefs.length > 0, true);
+    const sourceClaim = claims.claims.find((claim) => claim.claimType === "repository_source_excerpt_exists");
+    assert.ok(sourceClaim);
+    assert.equal(sourceClaim.verificationStatus, "verified");
+    assert.equal(sourceClaim.proofRefs.length > 0, true);
+    const projectRuleClaim = claims.claims.find((claim) => claim.claimType === "project_rule");
+    assert.ok(projectRuleClaim);
+    assert.equal(projectRuleClaim.verificationStatus, "verified");
+    assert.match(projectRuleClaim.claimText, /Prefer focused tests for changed behavior/);
+    assert.equal(projectRuleClaim.proofRefs.length > 0, true);
     const conflicts = runCliJson(repoPath, ["conflicts"]);
     assert.equal(conflicts.conflicts.length, 0);
     assert.deepEqual(conflicts.warnings, []);
     const proofs = runCliJson(repoPath, ["proofs"]);
     assert.equal(proofs.proofs.length > 0, true);
-    const proof = proofs.proofs[0];
+    const proof = proofs.proofs.find((candidate) => candidate.proofType === "exact_source_excerpt");
+    assert.ok(proof);
     assert.equal(proof.supportStatus, "direct");
     assert.equal(proof.proofType, "exact_source_excerpt");
     assert.equal("excerpt" in proof, false);
     assert.equal("body" in proof, false);
+    const ruleProof = proofs.proofs.find((candidate) => candidate.proofType === "exact_project_rule_excerpt");
+    assert.ok(ruleProof);
+    assert.equal(ruleProof.supportStatus, "direct");
     const proofDetail = runCliJson(repoPath, ["proofs", "--proof", proof.proofId]);
     assert.equal(proofDetail.proofs.length, 1);
     assert.equal(proofDetail.proofs[0].proofId, proof.proofId);
@@ -646,6 +658,53 @@ test("cli compile uses task retrieval to prioritize matching exact source eviden
     assert.match(exactEvidence.text, /refundInvoice/);
     assert.doesNotMatch(exactEvidence.text, /Source: src\/a-0\.ts/);
     assert.equal(result.warnings.includes("task_retrieval_no_source_matches"), false);
+  });
+});
+
+test("cli compile creates project-rule conflict edges and conflicts can be resolved", () => {
+  withGitRepo((repoPath) => {
+    writeFileSync(
+      path.join(repoPath, "AGENTS.md"),
+      [
+        "# Rules",
+        "",
+        "- Never use console logs in production code",
+        "- Use console logs in production code"
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "AGENTS.md"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add conflicting rules"
+    ]);
+
+    runCliJson(repoPath, ["compile", "--task", "Review console logging rules", "--session", "conflict-session"]);
+    const conflicts = runCliJson(repoPath, ["conflicts"]);
+
+    assert.equal(conflicts.conflicts.length, 1);
+    assert.equal(conflicts.conflicts[0].edgeType, "needs_review");
+    assert.match(conflicts.conflicts[0].edgeId, /^edge:[a-f0-9]{24}$/);
+    assert.match(conflicts.conflicts[0].sourceClaim.claimText, /console logs in production code/);
+    assert.match(conflicts.conflicts[0].targetClaim.claimText, /console logs in production code/);
+
+    const resolution = runCliJson(repoPath, [
+      "conflicts",
+      "--resolve",
+      conflicts.conflicts[0].edgeId,
+      "--as",
+      "coexists_with"
+    ]);
+
+    assert.equal(resolution.resolved, true);
+    assert.equal(resolution.resolution, "coexists_with");
+    assert.match(resolution.resolutionEdgeId, /^edge:[a-f0-9]{24}$/);
+    const afterResolution = runCliJson(repoPath, ["conflicts"]);
+    assert.equal(afterResolution.conflicts.length, 0);
   });
 });
 

@@ -10,6 +10,7 @@ import {
   createClaimStorageRepositories,
   storageMigrationReferences
 } from "../../.tmp/build/src/core/storage/index.js";
+import { detectProjectRuleConflicts } from "../../.tmp/build/src/core/claims/index.js";
 
 const now = "2026-05-26T00:00:00.000Z";
 const hashA = "a".repeat(64);
@@ -62,6 +63,32 @@ test("claim edge repository lists conflict relationships without non-conflict ed
     assert.equal(conflicts[0].edgeType, "contradicts");
     assert.equal(repositories.claimEdges.get("edge-related")?.edgeType, "related_to");
   });
+});
+
+test("project rule conflict detector creates review edges for opposing overlapping rules", () => {
+  const conflicts = detectProjectRuleConflicts([
+    {
+      claimId: "claim-a",
+      claimType: "project_rule",
+      claimText: "Project rule from AGENTS.md line 1: Never use console logs in production code"
+    },
+    {
+      claimId: "claim-b",
+      claimType: "project_rule",
+      claimText: "Project rule from AGENTS.md line 2: Use console logs in production code"
+    },
+    {
+      claimId: "claim-c",
+      claimType: "project_rule",
+      claimText: "Project rule from AGENTS.md line 3: Prefer focused tests for changed behavior"
+    }
+  ]);
+
+  assert.equal(conflicts.length, 1);
+  assert.equal(conflicts[0].edgeType, "needs_review");
+  assert.equal(conflicts[0].sourceClaimId, "claim-a");
+  assert.equal(conflicts[0].targetClaimId, "claim-b");
+  assert.match(conflicts[0].edgeId, /^edge:[a-f0-9]{24}$/);
 });
 
 function claim(claimId, claimText, scopeHash) {

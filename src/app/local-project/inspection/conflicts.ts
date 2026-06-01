@@ -1,8 +1,10 @@
 import path from "node:path";
+import { createHash } from "node:crypto";
 
 import { createGitRepoSnapshot } from "../../../core/git/index.js";
 import {
   createClaimStorageRepositories,
+  type ClaimEdgeType,
   type ClaimEdgeRecord,
   type ClaimRecord
 } from "../../../core/storage/index.js";
@@ -44,6 +46,26 @@ export interface ListLocalConflictsResult {
   readonly warnings: readonly string[];
 }
 
+export interface ResolveLocalConflictInput {
+  readonly rootPath: string;
+  readonly edgeId: string;
+  readonly resolution: Extract<ClaimEdgeType, "coexists_with" | "variant_of">;
+  readonly now?: string;
+  readonly gitBinary?: string;
+  readonly migrationsDir?: string;
+}
+
+export interface ResolveLocalConflictResult {
+  readonly rootPath: string;
+  readonly edgeId: string;
+  readonly resolutionEdgeId: string;
+  readonly resolution: Extract<ClaimEdgeType, "coexists_with" | "variant_of">;
+  readonly resolved: boolean;
+}
+
+const conflictEdgeTypes = new Set<ClaimEdgeType>(["contradicts", "needs_review", "violates", "unknown_scope_overlap"]);
+const resolutionEdgeTypes = new Set<ClaimEdgeType>(["coexists_with", "variant_of", "supersedes"]);
+
 export function listLocalConflicts(input: ListLocalConflictsInput): ListLocalConflictsResult {
   const rootPath = path.resolve(input.rootPath);
   const snapshot = createGitRepoSnapshot({
@@ -64,7 +86,8 @@ export function listLocalConflicts(input: ListLocalConflictsInput): ListLocalCon
     now: () => input.now ?? new Date().toISOString(),
     operation(database) {
       const claimRepositories = createClaimStorageRepositories(database);
-      const edges = claimRepositories.claimEdges.listConflictEdges();
+      const allEdges = claimRepositories.claimEdges.list();
+      const edges = openConflictEdges(allEdges);
       const conflicts = edges.map((edge) =>
         toConflictSummary(
           edge,
@@ -91,6 +114,68 @@ export function listLocalConflicts(input: ListLocalConflictsInput): ListLocalCon
   };
 }
 
+export function resolveLocalConflict(input: ResolveLocalConflictInput): ResolveLocalConflictResult {
+  const rootPath = path.resolve(input.rootPath);
+  const snapshot = createGitRepoSnapshot({
+    rootPath,
+    createdAt: input.now ?? new Date().toISOString(),
+    gitBinary: input.gitBinary
+  });
+  const layout = ensureLocalProjectLayout(snapshot.rootPath);
+  const config = readLocalProjectConfig(layout.configPath);
+  if (!config) throw new Error("Grape config is missing. Run grape init --connect.");
+  if (path.resolve(config.project.rootPath) !== snapshot.rootPath) {
+    throw new Error("Grape config root path does not match the current repository path.");
+  }
+
+  const now = input.now ?? new Date().toISOString();
+  const resolutionEdgeId = withMigratedLocalDatabase({
+    databasePath: layout.databasePath,
+    migrationsDir: input.migrationsDir,
+    now: () => now,
+    operation(database) {
+      const claimRepositories = createClaimStorageRepositories(database);
+      const edge = claimRepositories.claimEdges.get(input.edgeId);
+      if (!edge) throw new Error(`conflict edge not found: ${input.edgeId}`);
+      if (!conflictEdgeTypes.has(edge.edgeType)) {
+        throw new Error(`edge is not an open conflict: ${input.edgeId}`);
+      }
+      const record: ClaimEdgeRecord = {
+        edgeId: conflictResolutionEdgeId(edge, input.resolution),
+        sourceClaimId: edge.sourceClaimId,
+        targetClaimId: edge.targetClaimId,
+        edgeType: input.resolution,
+        createdAt: now
+      };
+      claimRepositories.claimEdges.insertOrIgnore(record);
+      return record.edgeId;
+    }
+  }).value;
+
+  return {
+    rootPath: snapshot.rootPath,
+    edgeId: input.edgeId,
+    resolutionEdgeId,
+    resolution: input.resolution,
+    resolved: true
+  };
+}
+
+function openConflictEdges(edges: readonly ClaimEdgeRecord[]): readonly ClaimEdgeRecord[] {
+  const resolutionsByPair = new Map<string, string>();
+  for (const edge of edges) {
+    if (!resolutionEdgeTypes.has(edge.edgeType)) continue;
+    const previous = resolutionsByPair.get(claimPairKey(edge));
+    if (!previous || previous < edge.createdAt) resolutionsByPair.set(claimPairKey(edge), edge.createdAt);
+  }
+
+  return edges.filter((edge) => {
+    if (!conflictEdgeTypes.has(edge.edgeType)) return false;
+    const resolvedAt = resolutionsByPair.get(claimPairKey(edge));
+    return !resolvedAt || resolvedAt < edge.createdAt;
+  });
+}
+
 function toConflictSummary(
   edge: ClaimEdgeRecord,
   sourceClaim: ClaimRecord | undefined,
@@ -105,6 +190,21 @@ function toConflictSummary(
     targetClaim: targetClaim ? toClaimSummary(targetClaim) : undefined,
     createdAt: edge.createdAt
   };
+}
+
+function conflictResolutionEdgeId(
+  edge: ClaimEdgeRecord,
+  resolution: Extract<ClaimEdgeType, "coexists_with" | "variant_of">
+): string {
+  return `edge:${sha256(JSON.stringify(["claim_conflict_resolution_v1", edge.edgeId, resolution])).slice(0, 24)}`;
+}
+
+function claimPairKey(edge: Pick<ClaimEdgeRecord, "sourceClaimId" | "targetClaimId">): string {
+  return [edge.sourceClaimId, edge.targetClaimId].sort().join("\0");
+}
+
+function sha256(text: string): string {
+  return createHash("sha256").update(text).digest("hex");
 }
 
 function toClaimSummary(claim: ClaimRecord): LocalConflictClaimSummary {

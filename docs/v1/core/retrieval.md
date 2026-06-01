@@ -13,8 +13,8 @@ The beta planner may include:
 - AST-backed TypeScript/JavaScript module, export, import, symbol, method, call, and test/source relationship edges
 - current-valid source-excerpt claims
 - current-valid observed-run result claims
-- parsed durable project-rule claims once rule parsing lands
-- deterministic conflict/supersession filters once conflict creation lands
+- current-valid parsed `project_rule` claims from rule-file excerpts
+- deterministic conflict/supersession filters for conflict edges and manual resolution edges
 
 The beta planner must not:
 
@@ -49,6 +49,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 - Related tests may be selected when a test imports or calls a selected source file.
 - Lexical matches may add source refs from safe indexed text.
 - Current-valid `grape_observed_run_result` claims from the current compile session may be rendered with task-scoped claims. Compile sessions are task-bound, and current-valid checks still require matching branch, commit, worktree hash, source hash, and result hash.
+- Current-valid parsed `project_rule` claims may render with task-scoped claims, while exact rule text remains pinned in the active-project-rules section.
 - Selection is capped; truncation is reported as a warning.
 - If query terms exist but no source matches, retrieval reports a warning instead of inventing context.
 
@@ -56,7 +57,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 
 The beta promise is reliable context transport over the Beta Retrieval V2 contract. Beta may promise deterministic TypeScript/JavaScript graph expansion for common modules, symbols, imports, exports, calls, related tests, and session-scoped observed-run result recall. Beta does not promise embeddings, semantic ranking, complete call graphs, broad language AST support, runtime behavior correctness, root-cause proof, automatic conflict resolution, or automatic behavior claims from tests. Observed-run result claims prove that Grape observed one command/test result only.
 
-The current TypeScript/JavaScript signal includes function declarations, class declarations, methods, interfaces, type aliases, constants, variables, const-assigned arrow/function declarations, static imports/exports, and direct call expressions. These graph facts guide source selection and excerpt anchoring, but exact excerpts remain source-existence proof only.
+The current TypeScript/JavaScript signal includes function declarations, class declarations, methods, interfaces, type aliases, constants, variables, const-assigned arrow/function declarations, static imports/exports, and direct call expressions. These graph facts guide source selection and excerpt anchoring, but exact excerpts remain source-existence proof only. Parsed project rules prove only that exact rule text exists in the scoped rule file; they do not infer generated policy or automatically resolve rule conflicts.
 
 ## Remaining Work
 
@@ -64,4 +65,4 @@ The current TypeScript/JavaScript signal includes function declarations, class d
 - stronger TypeScript checker-backed declaration resolution
 - richer exact-span ranking across tests and source files
 - durable retrieval over broader claim/proof types beyond source excerpts and observed-run results
-- conflict-aware and rule-aware retrieval once those durable workflows exist
+- richer conflict-aware ranking once broader durable claim types exist
