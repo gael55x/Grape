@@ -142,6 +142,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         proofs: proofRepositories.proofs,
         sources: evidenceRepositories.sources,
         snapshot: snapshotResult.snapshot,
+        sessionId,
         taskSourceRefs: proofs.taskRetrieval.selectedSourceRefs.length > 0
           ? proofs.taskRetrieval.selectedSourceRefs
           : undefined

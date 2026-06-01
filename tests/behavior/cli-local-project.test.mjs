@@ -73,6 +73,10 @@ function runCliJson(repoPath, args) {
   return JSON.parse(result.stdout);
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 test("cli help exposes setup, status, doctor, and mcp guidance commands", () => {
   const result = spawnSync(process.execPath, [cliPath, "help"], {
     encoding: "utf8"
@@ -199,6 +203,24 @@ test("cli run and test record Grape-observed trusted evidence without raw output
     assert.equal(testClaim.claimType, "grape_observed_run_result");
     assert.match(testClaim.claimText, /Grape observed test run/);
     assert.equal(testClaim.scope.passed, true);
+
+    const nextContext = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Observe local commands",
+      "--session",
+      "observed-session"
+    ]);
+    const artifactJson = JSON.parse(readFileSync(nextContext.artifactJsonPath, "utf8"));
+    const currentValidClaims = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "current-valid-claims"
+    );
+    assert.ok(currentValidClaims);
+    assert.match(currentValidClaims.text, new RegExp(escapeRegExp(commandJson.claimId)));
+    assert.match(currentValidClaims.text, new RegExp(escapeRegExp(testJson.claimId)));
+    assert.match(currentValidClaims.text, /observed_run_result/);
+    assert.equal(currentValidClaims.text.includes("observed command output"), false);
+    assert.equal(currentValidClaims.text.includes("observed test output"), false);
   });
 });
 

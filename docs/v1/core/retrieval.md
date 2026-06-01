@@ -48,12 +48,13 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 - Graph expansion may select directly related source files through supported import and call edges.
 - Related tests may be selected when a test imports or calls a selected source file.
 - Lexical matches may add source refs from safe indexed text.
+- Current-valid `grape_observed_run_result` claims from the current compile session may be rendered with task-scoped claims. Compile sessions are task-bound, and current-valid checks still require matching branch, commit, worktree hash, source hash, and result hash.
 - Selection is capped; truncation is reported as a warning.
 - If query terms exist but no source matches, retrieval reports a warning instead of inventing context.
 
 ## Beta Boundary
 
-The beta promise is reliable context transport over the Beta Retrieval V2 contract. Beta may promise deterministic TypeScript/JavaScript graph expansion for common modules, symbols, imports, exports, calls, and related tests. Beta does not promise embeddings, semantic ranking, complete call graphs, broad language AST support, runtime behavior correctness, root-cause proof, automatic conflict resolution, or automatic behavior claims from tests. Observed-run result claims prove that Grape observed one command/test result only.
+The beta promise is reliable context transport over the Beta Retrieval V2 contract. Beta may promise deterministic TypeScript/JavaScript graph expansion for common modules, symbols, imports, exports, calls, related tests, and session-scoped observed-run result recall. Beta does not promise embeddings, semantic ranking, complete call graphs, broad language AST support, runtime behavior correctness, root-cause proof, automatic conflict resolution, or automatic behavior claims from tests. Observed-run result claims prove that Grape observed one command/test result only.
 
 The current TypeScript/JavaScript signal includes function declarations, class declarations, methods, interfaces, type aliases, constants, variables, const-assigned arrow/function declarations, static imports/exports, and direct call expressions. These graph facts guide source selection and excerpt anchoring, but exact excerpts remain source-existence proof only.
 

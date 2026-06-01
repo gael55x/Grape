@@ -16,6 +16,7 @@ export interface ResolveLocalCurrentValidClaimsInput {
   readonly proofs: ProofStorageRepositories["proofs"];
   readonly sources: EvidenceStorageRepositories["sources"];
   readonly snapshot: ReturnType<typeof createGitRepoSnapshot>;
+  readonly sessionId?: string;
   readonly taskSourceRefs?: readonly string[];
 }
 
@@ -48,7 +49,7 @@ export function resolveLocalCurrentValidClaims(
     .map((claim) => toClaimSummary(claim, input.proofs.listByClaim(claim.claimId)));
 
   return {
-    activeClaims: selectTaskScopedClaims(allActiveClaims, input.taskSourceRefs),
+    activeClaims: selectTaskScopedClaims(allActiveClaims, input.taskSourceRefs, input.sessionId),
     visibleClaims: claims.map((claim) => toClaimSummary(claim, input.proofs.listByClaim(claim.claimId))),
     rejectedCount: resolved.rejected.length,
     warnings: resolved.warnings
@@ -57,24 +58,42 @@ export function resolveLocalCurrentValidClaims(
 
 function selectTaskScopedClaims(
   claims: readonly LocalClaimSummary[],
-  taskSourceRefs: readonly string[] | undefined
+  taskSourceRefs: readonly string[] | undefined,
+  sessionId: string | undefined
 ): readonly LocalClaimSummary[] {
   if (taskSourceRefs === undefined) return claims;
 
   const taskSourceOrder = new Map(taskSourceRefs.map((sourceRef, index) => [sourceRef, index]));
   return claims
-    .filter((claim) => claim.sourceRefs.some((sourceRef) => taskSourceOrder.has(sourceRef)))
-    .sort((left, right) => claimTaskOrder(left, taskSourceOrder) - claimTaskOrder(right, taskSourceOrder));
+    .filter((claim) =>
+      claim.sourceRefs.some((sourceRef) => taskSourceOrder.has(sourceRef)) ||
+      isCurrentSessionObservedRunClaim(claim, sessionId)
+    )
+    .sort(
+      (left, right) =>
+        claimTaskOrder(left, taskSourceOrder, sessionId) - claimTaskOrder(right, taskSourceOrder, sessionId)
+    );
 }
 
 function claimTaskOrder(
   claim: LocalClaimSummary,
-  taskSourceOrder: ReadonlyMap<string, number>
+  taskSourceOrder: ReadonlyMap<string, number>,
+  sessionId: string | undefined
 ): number {
   const positions = claim.sourceRefs
     .map((sourceRef) => taskSourceOrder.get(sourceRef))
     .filter((position): position is number => position !== undefined);
-  return positions.length > 0 ? Math.min(...positions) : Number.MAX_SAFE_INTEGER;
+  if (positions.length > 0) return Math.min(...positions);
+  if (isCurrentSessionObservedRunClaim(claim, sessionId)) return Number.MAX_SAFE_INTEGER - 1;
+  return Number.MAX_SAFE_INTEGER;
+}
+
+function isCurrentSessionObservedRunClaim(claim: LocalClaimSummary, sessionId: string | undefined): boolean {
+  return (
+    claim.claimType === "grape_observed_run_result" &&
+    typeof claim.scope.sessionId === "string" &&
+    claim.scope.sessionId === sessionId
+  );
 }
 
 function toCurrentValidCandidate(input: {
