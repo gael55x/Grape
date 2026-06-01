@@ -726,5 +726,5 @@ Keep entries simple:
 
 - Author/agent: Gaille Amolong / Codex
 - Summary: added conservative parsed-project-rule conflict creation and manual CLI resolution. Local compile now creates deterministic `needs_review` claim edges when verified `project_rule` claims contain opposing rule language over the same normalized topic. `grape conflicts` lists open conflict edges, while `grape conflicts --resolve <edge> --as coexists_with|variant_of` records a non-conflict resolution edge so the conflict no longer appears as open. MCP conflict access remains read-only.
-- Checks run: `npm run typecheck`; `npm run build:test`; focused claim-conflicts, CLI local-project, MCP stdio, and repository artifact behavior tests.
+- Checks run: `npm run typecheck`; `npm run build:test`; focused `tests/behavior/claim-conflicts.test.mjs tests/behavior/cli-local-project.test.mjs tests/behavior/mcp-stdio.test.mjs`; `npm run docs:check`; `npm run architecture:check`; full `npm run check`.
 - Risks/follow-ups: this is not automatic contradiction judgment or rule precedence. It only creates review edges for obvious deterministic text conflicts and records manual local resolution; broader claim conflicts, automatic resolution, nested rule scope, and behavior/root-cause claims remain pending.
