@@ -138,6 +138,10 @@ Still alpha:
 - broader durable claim types, parsed durable rules, and conflict creation/resolution
 - real clean-repo MCP client trials beyond scripted smoke before beta sign-off
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=gael55x/Grape&type=Date)](https://star-history.com/#gael55x/Grape&Date)
+
 ## Documentation
 
 Start here:
