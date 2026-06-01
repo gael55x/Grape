@@ -20,6 +20,12 @@ export function detectSymbolOnLine(line: string): DetectedSymbol | undefined {
   const typeMatch = /^(?:export\s+)?type\s+([A-Za-z_$][\w$]*)/.exec(trimmed);
   if (typeMatch) return { name: typeMatch[1], kind: "type", confidence: "medium" };
 
+  const constFunctionMatch =
+    /^(?:export\s+)?const\s+([A-Za-z_$][\w$]*)\s*(?::\s*[^=]+)?=\s*(?:async\s+)?(?:function\b|\([^)]*\)\s*=>|[A-Za-z_$][\w$]*\s*=>)/.exec(
+      trimmed
+    );
+  if (constFunctionMatch) return { name: constFunctionMatch[1], kind: "function", confidence: "medium" };
+
   const constMatch = /^(?:export\s+)?const\s+([A-Za-z_$][\w$]*)/.exec(trimmed);
   if (constMatch) return { name: constMatch[1], kind: "constant", confidence: "medium" };
 

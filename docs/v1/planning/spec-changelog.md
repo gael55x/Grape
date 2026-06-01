@@ -14,6 +14,7 @@ Each entry should include:
 ## Unreleased
 
 - Clarified the local Grape-observed command/test runner contract: `grape run` and `grape test` execute from the repository root against an existing current context session, create observed run IDs, persist trusted redacted `command_run` / `test_run` source evidence with command/output hashes, reject secret-looking commands before execution, and do not promote durable proof or claim rows.
+- Clarified the current V1 retrieval contract: lightweight source selection uses explicit seeds, safe lexical rows, lightweight symbols/imports, and current-valid narrow source-excerpt claims; it reports truncation/no-match warnings and remains an impact candidate selector rather than full graph or semantic retrieval.
 - Aligned the published alpha runtime floor with package enforcement: `grape-context@0.1.0-alpha.2` requires Node.js 22.13+.
 - Refocused V1 product framing on the Context Transport Protocol (`ContextPackItem` diff as the outward contract). Added ADR-0010, updated root `ROADMAP.md`, `implementation-roadmap.md`, `docs/v1/README.md`, and SPEC §0 executive summary. No schema or behavior change in this docs-only slice.
 - Established public V1 documentation architecture derived from the canonical V1 contract.

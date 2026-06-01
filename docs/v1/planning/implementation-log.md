@@ -686,3 +686,10 @@ Keep entries simple:
 - Summary: added `grape run` and `grape test` as the first local Grape-observed command/test runner path. The commands execute from the repository root against an existing current context session, reject secret-looking command text before execution, create Grape observed run IDs, and persist trusted redacted `command_run` / `test_run` source evidence with command/output hashes, exit status, timestamps, branch/commit/worktree/session scope, and no raw command/stdout/stderr bodies.
 - Checks run: `npm run typecheck`; `npm run docs:check`; `npm run build:test`; focused `tests/behavior/cli-local-project.test.mjs`; full `npm run beta:check`.
 - Risks/follow-ups: observed-run source rows are trusted evidence, not durable truth. Durable proof/claim promotion from observed runs, broader claim types, parsed durable rules, and conflict creation/resolution remain pending.
+
+### 2026-06-01 - Retrieval Contract And TypeScript Symbol Signal
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: documented the current retrieval contract and beta boundary, then improved the lightweight TypeScript/JavaScript symbol signal so const-assigned arrow/function declarations are indexed as function symbols for task source retrieval and exact excerpt anchoring.
+- Checks run: focused `tests/behavior/file-index.test.mjs`; `npm run typecheck`; `npm run docs:check`.
+- Risks/follow-ups: retrieval is still lightweight. Full AST-backed language extraction, complete call graphs, semantic ranking, broader durable-claim retrieval, and richer test/source exact-span ranking remain pending.

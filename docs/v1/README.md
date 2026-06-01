@@ -20,6 +20,7 @@ docs/v1/
     invariants.md
   core/
     trust-model.md
+    retrieval.md
     compression.md
     storage.md
     security.md
@@ -54,6 +55,7 @@ docs/v1/
 | Architecture | `architecture/state-machine.md` | Explicit V1 states, transitions, validations, persistence, tests. | Any state or transition changes. | No hidden transition is introduced. |
 | Architecture | `architecture/invariants.md` | Non-negotiable correctness and safety rules. | Invariants or enforcement locations change. | The touched invariant has tests. |
 | Core | `core/trust-model.md` | Evidence, proofs, claims, Trust Kernel, scope, current-valid gates. | Trust behavior changes. | The change cannot bypass proof validation. |
+| Core | `core/retrieval.md` | Lightweight task source retrieval, selection rules, warnings, and beta boundary. | Retrieval behavior changes. | Retrieval stays current-valid and reports blind spots. |
 | Core | `core/compression.md` | Derived compression cache, input hashes, invalidation, high-risk restrictions. | Compression behavior changes. | Summaries remain non-authoritative. |
 | Core | `core/storage.md` | SQLite schema, repositories, migrations, WAL/concurrency, path rules. | Schema or persistence changes. | No direct SQLite writes outside repositories. |
 | Core | `core/security.md` | Local-first privacy, ignored files, redaction, secret handling. | Security-sensitive behavior changes. | No raw secrets or silent ignored-file reads. |

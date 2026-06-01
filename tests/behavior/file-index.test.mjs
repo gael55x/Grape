@@ -71,6 +71,7 @@ function withGitRepo(fn) {
         "import { calculateDiscount } from './lib';",
         "import outside from '../../../outside';",
         "const localValue = calculateDiscount();",
+        "export const loadUser = async () => localValue;",
         "export function runApp() { return localValue; }",
         ""
       ].join("\n")
@@ -134,6 +135,7 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
       assert.equal(appModule?.symbolKind, "module");
       assert.equal(libModule?.symbolKind, "module");
       assert.equal(nodeByPathAndName.get("src/app.ts:runApp")?.symbolKind, "function");
+      assert.equal(nodeByPathAndName.get("src/app.ts:loadUser")?.symbolKind, "function");
       assert.equal(nodeByPathAndName.get("src/app.ts:localValue")?.symbolKind, "constant");
       assert.equal(nodeByPathAndName.get("src/lib.ts:Calculator")?.symbolKind, "class");
       assert.equal(nodeByPathAndName.get("src/lib.ts:calculateDiscount")?.symbolKind, "function");
