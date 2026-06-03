@@ -71,6 +71,7 @@ export function withCurrentLocalContextSession<T>(
         evidenceRepositories,
         indexingRepositories,
         rootPath: snapshot.rootPath,
+        snapshot,
         projectId: config.project.projectId,
         repoId: config.project.repoId,
         gitBinary: input.gitBinary,

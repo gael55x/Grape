@@ -136,14 +136,14 @@ function sentItem(overrides = {}) {
     sentItemId: overrides.sentItemId ?? "sent-1",
     sessionId: overrides.sessionId ?? "session-1",
     artifactId: overrides.artifactId ?? "artifact-1",
-    sectionId: "section-1",
+    sectionId: overrides.sectionId ?? "section-1",
     taskId: "task-1",
-    itemKind: "claim",
+    itemKind: overrides.itemKind ?? "claim",
     itemRef: "claim-1",
     itemHash: hashA,
     contentHash: hashA,
-    branchName: "main",
-    commitSha: "abc123",
+    branchName: overrides.branchName ?? "main",
+    commitSha: overrides.commitSha ?? "abc123",
     dependencyManifestHash: hashB,
     wasPinned: false,
     lastDiffState: "NEW",
@@ -188,14 +188,15 @@ function packItem(overrides = {}) {
     packItemId: overrides.packItemId ?? "pack-1",
     sessionId: overrides.sessionId ?? "session-1",
     artifactId: overrides.artifactId ?? "artifact-1",
-    sectionId: "section-1",
-    diffState: "NEW",
-    itemKind: "claim",
+    sectionId: overrides.sectionId ?? "section-1",
+    diffState: overrides.diffState ?? "NEW",
+    itemKind: overrides.itemKind ?? "claim",
     itemRef: "claim-1",
     contentHash: hashA,
     tokenCount: 42,
     pinned: false,
     safetyCritical: false,
+    invalidatesSentItemId: overrides.invalidatesSentItemId,
     inputRefsJson: "[\"dep-1\"]",
     createdAt: now
   };
@@ -277,6 +278,60 @@ test("storage repositories keep sent and omitted ledgers session scoped", () => 
     assert.deepEqual(
       repositories.omittedContextItems.listBySession("session-2").map((item) => item.omittedItemId),
       ["omitted-2"]
+    );
+  });
+});
+
+test("storage repositories expose scoped active ledger query helpers", () => {
+  withMigratedDatabase((_database, repositories) => {
+    insertBaseGraph(repositories);
+    insertSession(repositories, "session-1");
+    insertArtifact(repositories, "artifact-1", "session-1");
+
+    repositories.contextSentItems.insert(sentItem({ sentItemId: "sent-1" }));
+    repositories.contextSentItems.insert(sentItem({
+      sentItemId: "sent-2",
+      itemKind: "compression_artifact",
+      sectionId: "compression-orientation"
+    }));
+    repositories.contextSentItems.insert(sentItem({
+      sentItemId: "sent-3",
+      branchName: "feature/context",
+      commitSha: "def456",
+      sectionId: "feature-section"
+    }));
+    repositories.contextPackItems.insert(packItem({ packItemId: "sent-1" }));
+    repositories.contextPackItems.insert(packItem({
+      packItemId: "pack-invalidate-sent-1",
+      diffState: "INVALIDATE_PREVIOUS",
+      itemKind: "invalidation",
+      invalidatesSentItemId: "sent-1"
+    }));
+
+    assert.deepEqual(
+      repositories.contextSentItems
+        .listBySessionScope({
+          sessionId: "session-1",
+          branchName: "main",
+          commitSha: "abc123",
+          excludedKind: "compression_artifact"
+        })
+        .map((item) => item.sentItemId),
+      ["sent-1"]
+    );
+    assert.deepEqual(
+      repositories.contextSentItems
+        .listBySessionWithoutKind("session-1", "compression_artifact")
+        .map((item) => item.sentItemId),
+      ["sent-1", "sent-3"]
+    );
+    assert.deepEqual(
+      repositories.contextPackItems.listSentPayloadsBySession("session-1").map((item) => item.packItemId),
+      ["sent-1"]
+    );
+    assert.deepEqual(
+      repositories.contextPackItems.listInvalidatedSentItemIdsBySession("session-1"),
+      ["sent-1"]
     );
   });
 });

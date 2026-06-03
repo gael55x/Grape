@@ -23,6 +23,7 @@ export interface FtsEntryInsertRecord extends FtsEntryRecord {
 export interface FtsEntriesRepository {
   insertOrIgnore(record: FtsEntryInsertRecord): boolean;
   get(ftsEntryId: string): FtsEntryRecord | undefined;
+  countBySnapshot(snapshotId: string): number;
   listBySnapshot(snapshotId: string): readonly FtsEntryRecord[];
   searchSnapshot(snapshotId: string, query: string, limit?: number): readonly FtsEntryRecord[];
 }
@@ -71,6 +72,14 @@ export function createFtsEntriesRepository(database: DatabaseSync): FtsEntriesRe
           .get(ftsEntryId) as Record<string, unknown> | undefined
       );
     },
+    countBySnapshot(snapshotId) {
+      return numberField(
+        database
+          .prepare("SELECT count(*) AS count FROM fts_entries WHERE snapshot_id = ?")
+          .get(snapshotId) as Record<string, unknown>,
+        "count"
+      );
+    },
     listBySnapshot(snapshotId) {
       return (
         database
@@ -81,8 +90,34 @@ export function createFtsEntriesRepository(database: DatabaseSync): FtsEntriesRe
     searchSnapshot(snapshotId, query, limit = 20) {
       const trimmedQuery = query.trim();
       if (!trimmedQuery) return [];
+      const normalizedQuery = normalizeSearchText(trimmedQuery);
+      if (!normalizedQuery) return [];
+      const candidateLimit = Math.max(limit * 8, limit);
+      const candidates = (
+        database
+          .prepare(
+            [
+              "SELECT e.*, t.body FROM fts_entries e",
+              "JOIN fts_entry_text t ON t.fts_entry_id = e.fts_entry_id",
+              "WHERE e.snapshot_id = ?",
+              "AND (",
+              normalizedSqlExpression("t.body"),
+              "LIKE ?",
+              "OR",
+              normalizedSqlExpression("e.source_ref"),
+              "LIKE ?",
+              ")",
+              "ORDER BY e.source_ref ASC, e.fts_entry_id ASC",
+              "LIMIT ?"
+            ].join(" ")
+          )
+          .all(snapshotId, `%${normalizedQuery}%`, `%${normalizedQuery}%`, candidateLimit) as Array<Record<string, unknown>>
+      );
+      const matches = candidates.filter((row) => bodyMatchesQuery(stringField(row, "body"), trimmedQuery));
+      if (matches.length >= limit) return matches.slice(0, limit).map(mapRequiredFtsEntry);
 
-      return (
+      const seen = new Set(candidates.map((row) => stringField(row, "fts_entry_id")));
+      const fallbackMatches = (
         database
           .prepare(
             [
@@ -93,12 +128,30 @@ export function createFtsEntriesRepository(database: DatabaseSync): FtsEntriesRe
             ].join(" ")
           )
           .all(snapshotId) as Array<Record<string, unknown>>
-      )
-        .filter((row) => bodyMatchesQuery(stringField(row, "body"), trimmedQuery))
-        .slice(0, limit)
-        .map(mapRequiredFtsEntry);
+      ).filter((row) =>
+        !seen.has(stringField(row, "fts_entry_id")) &&
+        bodyMatchesQuery(stringField(row, "body"), trimmedQuery)
+      );
+
+      return [...matches, ...fallbackMatches].slice(0, limit).map(mapRequiredFtsEntry);
     }
   };
+}
+
+function normalizedSqlExpression(column: string): string {
+  return [
+    "replace(",
+    "replace(",
+    "replace(",
+    "replace(",
+    "replace(",
+    `lower(${column})`,
+    ", '_', '')",
+    ", '-', '')",
+    ", '.', '')",
+    ", '/', '')",
+    ", ' ', '')"
+  ].join("");
 }
 
 function bodyMatchesQuery(body: string, query: string): boolean {
@@ -134,4 +187,8 @@ function mapRequiredFtsEntry(row: Record<string, unknown>): FtsEntryRecord {
 
 function stringField(row: Record<string, unknown>, key: string): string {
   return String(row[key]);
+}
+
+function numberField(row: Record<string, unknown>, key: string): number {
+  return Number(row[key]);
 }

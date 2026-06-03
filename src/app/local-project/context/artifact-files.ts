@@ -1,4 +1,5 @@
-import { writeFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import type { InMemoryContextArtifactShape } from "../../../shared/index.js";
@@ -22,10 +23,25 @@ export function writeLocalArtifactFiles(input: LocalArtifactWriteInput): LocalAr
   const jsonPath = path.join(input.artifactDirPath, `${baseName}.json`);
   const markdownPath = path.join(input.artifactDirPath, `${baseName}.md`);
   const scaffoldJsonPath = path.join(input.artifactDirPath, `${baseName}.scaffold.json`);
+  const tempSuffix = `.tmp-${process.pid}-${randomUUID()}`;
+  const writes = [
+    { finalPath: jsonPath, tempPath: `${jsonPath}${tempSuffix}`, body: input.json },
+    { finalPath: markdownPath, tempPath: `${markdownPath}${tempSuffix}`, body: input.markdown },
+    { finalPath: scaffoldJsonPath, tempPath: `${scaffoldJsonPath}${tempSuffix}`, body: input.scaffoldJson }
+  ];
 
-  writeFileSync(jsonPath, input.json);
-  writeFileSync(markdownPath, input.markdown);
-  writeFileSync(scaffoldJsonPath, input.scaffoldJson);
+  try {
+    for (const write of writes) {
+      writeFileSync(write.tempPath, write.body);
+    }
+    for (const write of writes) {
+      renameSync(write.tempPath, write.finalPath);
+    }
+  } finally {
+    for (const write of writes) {
+      rmSync(write.tempPath, { force: true });
+    }
+  }
 
   return { jsonPath, markdownPath, scaffoldJsonPath };
 }

@@ -123,14 +123,16 @@ export function buildDurableContext(input: DurableContextBuildInput): DurableCon
     });
 
     const priorSentItems = input.repositories.contextSentItems.listBySession(input.sessionId);
-    const packItems = input.repositories.contextPackItems.listBySession(input.sessionId);
-    const alreadyInvalidatedSentItemIds = listAlreadyInvalidatedSentItemIds(packItems);
+    const sentPackItems = input.repositories.contextPackItems.listSentPayloadsBySession(input.sessionId);
+    const alreadyInvalidatedSentItemIds = new Set(
+      input.repositories.contextPackItems.listInvalidatedSentItemIdsBySession(input.sessionId)
+    );
     const activePriorItems = priorSentItems.filter(
       (item) => !alreadyInvalidatedSentItemIds.has(item.sentItemId)
     );
     const { currentPriorItems, stalePriorItems } = partitionPriorContextByStaleness({
       activePriorItems,
-      packItems,
+      packItems: sentPackItems,
       artifact: input.artifact,
       listDependenciesByArtifact: (artifactId) =>
         input.repositories.contextDependencies.listByArtifact(artifactId),
@@ -220,14 +222,4 @@ function assertArtifactMatchesSession(input: DurableContextBuildInput): void {
   if (input.artifact.input.sessionId !== input.sessionId) {
     throw new Error("context build artifact session does not match build session");
   }
-}
-
-function listAlreadyInvalidatedSentItemIds(packItems: readonly { diffState: string; invalidatesSentItemId?: string }[]): Set<string> {
-  const invalidatedIds = new Set<string>();
-  for (const item of packItems) {
-    if (item.diffState === "INVALIDATE_PREVIOUS" && item.invalidatesSentItemId) {
-      invalidatedIds.add(item.invalidatesSentItemId);
-    }
-  }
-  return invalidatedIds;
 }

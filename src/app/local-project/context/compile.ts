@@ -85,6 +85,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         evidenceRepositories,
         indexingRepositories,
         rootPath: snapshot.rootPath,
+        snapshot,
         projectId: config.project.projectId,
         repoId: config.project.repoId,
         gitBinary: input.gitBinary,

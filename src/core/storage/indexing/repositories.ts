@@ -77,11 +77,13 @@ export interface IndexingStorageRepositories {
   readonly symbolNodes: {
     insertOrIgnore(record: SymbolNodeRecord): boolean;
     get(symbolId: string): SymbolNodeRecord | undefined;
+    countBySnapshot(snapshotId: string): number;
     listBySnapshot(snapshotId: string): readonly SymbolNodeRecord[];
   };
   readonly symbolEdges: {
     insertOrIgnore(record: SymbolEdgeRecord): boolean;
     get(edgeId: string): SymbolEdgeRecord | undefined;
+    countBySnapshot(snapshotId: string): number;
     listBySnapshot(snapshotId: string): readonly SymbolEdgeRecord[];
   };
 }
@@ -131,6 +133,14 @@ export function createIndexingStorageRepositories(database: DatabaseSync): Index
             .get(symbolId) as Record<string, unknown> | undefined
         );
       },
+      countBySnapshot(snapshotId) {
+        return numberField(
+          database
+            .prepare("SELECT count(*) AS count FROM symbol_nodes WHERE snapshot_id = ?")
+            .get(snapshotId) as Record<string, unknown>,
+          "count"
+        );
+      },
       listBySnapshot(snapshotId) {
         return (
           database
@@ -173,6 +183,14 @@ export function createIndexingStorageRepositories(database: DatabaseSync): Index
           database
             .prepare("SELECT * FROM symbol_edges WHERE edge_id = ?")
             .get(edgeId) as Record<string, unknown> | undefined
+        );
+      },
+      countBySnapshot(snapshotId) {
+        return numberField(
+          database
+            .prepare("SELECT count(*) AS count FROM symbol_edges WHERE snapshot_id = ?")
+            .get(snapshotId) as Record<string, unknown>,
+          "count"
         );
       },
       listBySnapshot(snapshotId) {

@@ -263,6 +263,13 @@ export interface StorageRepositories {
   readonly contextSentItems: {
     insert(record: ContextSentItemRecord): void;
     listBySession(sessionId: string): readonly ContextSentItemRecord[];
+    listBySessionWithoutKind(sessionId: string, excludedKind: ContextPackItemKind): readonly ContextSentItemRecord[];
+    listBySessionScope(input: {
+      readonly sessionId: string;
+      readonly branchName: string;
+      readonly commitSha: string;
+      readonly excludedKind?: ContextPackItemKind;
+    }): readonly ContextSentItemRecord[];
   };
   readonly omittedContextItems: {
     insert(record: OmittedContextItemRecord): void;
@@ -272,6 +279,8 @@ export interface StorageRepositories {
   readonly contextPackItems: {
     insert(record: ContextPackItemRecord): void;
     listBySession(sessionId: string): readonly ContextPackItemRecord[];
+    listSentPayloadsBySession(sessionId: string): readonly ContextPackItemRecord[];
+    listInvalidatedSentItemIdsBySession(sessionId: string): readonly string[];
   };
 }
 

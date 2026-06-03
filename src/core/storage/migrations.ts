@@ -31,6 +31,12 @@ export const storageMigrationReferences = [
     filename: "0004_compression_cache.sql",
     checksumSha256: "9f712aaacc32972c8e2d694197745b1e9c97bd49ca655679b9fc912caf64589e",
     description: "Create deterministic compression artifact and input hash cache tables."
+  },
+  {
+    id: "0005",
+    filename: "0005_context_performance_indexes.sql",
+    checksumSha256: "70013da6ec154c753af733c5232833e049e3e8b9eacb3175fde4a5150e4a1318",
+    description: "Add lookup indexes for context transport performance-critical session and lexical queries."
   }
 ] as const satisfies readonly StorageMigrationReference[];
 

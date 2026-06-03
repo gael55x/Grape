@@ -57,6 +57,37 @@ export function createContextLedgerStorageRepositories(
             .prepare("SELECT * FROM context_sent_items WHERE session_id = ? ORDER BY sent_item_id ASC")
             .all(sessionId) as Array<Record<string, unknown>>
         ).map(mapContextSentItem);
+      },
+      listBySessionWithoutKind(sessionId, excludedKind) {
+        return (
+          database
+            .prepare(
+              [
+                "SELECT * FROM context_sent_items",
+                "WHERE session_id = ? AND item_kind != ?",
+                "ORDER BY sent_item_id ASC"
+              ].join(" ")
+            )
+            .all(sessionId, excludedKind) as Array<Record<string, unknown>>
+        ).map(mapContextSentItem);
+      },
+      listBySessionScope(input) {
+        const excludedKindClause = input.excludedKind ? "AND item_kind != ?" : "";
+        const args = input.excludedKind
+          ? [input.sessionId, input.branchName, input.commitSha, input.excludedKind]
+          : [input.sessionId, input.branchName, input.commitSha];
+        return (
+          database
+            .prepare(
+              [
+                "SELECT * FROM context_sent_items",
+                "WHERE session_id = ? AND branch_name = ? AND commit_sha = ?",
+                excludedKindClause,
+                "ORDER BY sent_item_id ASC"
+              ].join(" ")
+            )
+            .all(...args) as Array<Record<string, unknown>>
+        ).map(mapContextSentItem);
       }
     },
     omittedContextItems: {
@@ -155,6 +186,35 @@ export function createContextLedgerStorageRepositories(
             .prepare("SELECT * FROM context_pack_items WHERE session_id = ? ORDER BY created_at ASC, pack_item_id ASC")
             .all(sessionId) as Array<Record<string, unknown>>
         ).map(mapContextPackItem);
+      },
+      listSentPayloadsBySession(sessionId) {
+        return (
+          database
+            .prepare(
+              [
+                "SELECT * FROM context_pack_items",
+                "WHERE session_id = ? AND diff_state IN ('NEW', 'CHANGED', 'PINNED')",
+                "ORDER BY created_at ASC, pack_item_id ASC"
+              ].join(" ")
+            )
+            .all(sessionId) as Array<Record<string, unknown>>
+        ).map(mapContextPackItem);
+      },
+      listInvalidatedSentItemIdsBySession(sessionId) {
+        return (
+          database
+            .prepare(
+              [
+                "SELECT invalidates_sent_item_id",
+                "FROM context_pack_items",
+                "WHERE session_id = ?",
+                "AND diff_state = 'INVALIDATE_PREVIOUS'",
+                "AND invalidates_sent_item_id IS NOT NULL",
+                "ORDER BY created_at ASC, pack_item_id ASC"
+              ].join(" ")
+            )
+            .all(sessionId) as Array<Record<string, unknown>>
+        ).map((row) => stringField(row, "invalidates_sent_item_id"));
       }
     }
   };

@@ -56,6 +56,7 @@ export function initializeLocalProject(
         evidenceRepositories,
         indexingRepositories,
         rootPath: snapshot.rootPath,
+        snapshot,
         projectId,
         repoId: snapshot.repoId,
         gitBinary: input.gitBinary,

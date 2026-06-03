@@ -296,7 +296,7 @@ test("context pack summary inputs exclude invalidated and compression sent items
   const inputs = listContextPackSummarySentItems({
     repositories: {
       contextSentItems: {
-        listBySession() {
+        listBySessionScope({ branchName, commitSha, excludedKind }) {
           return [
             sentItem(),
             sentItem({
@@ -318,17 +318,16 @@ test("context pack summary inputs exclude invalidated and compression sent items
               sectionId: "branch",
               branchName: "feature"
             })
-          ];
+          ].filter((item) =>
+            item.branchName === branchName &&
+            item.commitSha === commitSha &&
+            item.itemKind !== excludedKind
+          );
         }
       },
       contextPackItems: {
-        listBySession() {
-          return [
-            {
-              diffState: "INVALIDATE_PREVIOUS",
-              invalidatesSentItemId: "sent:stale"
-            }
-          ];
+        listInvalidatedSentItemIdsBySession() {
+          return ["sent:stale"];
         }
       }
     },

@@ -14,7 +14,8 @@ const requiredFiles = [
   "dist/core/storage/migrations/0001_initial_storage.sql",
   "dist/core/storage/migrations/0002_indexing_foundation.sql",
   "dist/core/storage/migrations/0003_fts_entries.sql",
-  "dist/core/storage/migrations/0004_compression_cache.sql"
+  "dist/core/storage/migrations/0004_compression_cache.sql",
+  "dist/core/storage/migrations/0005_context_performance_indexes.sql"
 ];
 
 const forbiddenStaleBuildFiles = [

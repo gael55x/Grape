@@ -68,6 +68,7 @@ function withGitRepo(fn) {
         "  apply(value: number) { return value; }",
         "}",
         "export function calculateDiscount() { return 10; }",
+        "export function calculate_discount_alias() { return calculateDiscount(); }",
         ""
       ].join("\n")
     );
@@ -130,6 +131,10 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
       const edges = indexingRepositories.symbolEdges.listBySnapshot(result.snapshotId);
       const ftsEntries = indexingRepositories.ftsEntries.listBySnapshot(result.snapshotId);
       const lexicalMatches = indexingRepositories.ftsEntries.searchSnapshot(result.snapshotId, "calculateDiscount");
+      const normalizedLexicalMatches = indexingRepositories.ftsEntries.searchSnapshot(
+        result.snapshotId,
+        "calculateDiscountAlias"
+      );
       const secretMatches = indexingRepositories.ftsEntries.searchSnapshot(result.snapshotId, "TOKEN");
       const nodeByPathAndName = new Map(nodes.map((node) => [`${node.path}:${node.name}`, node]));
       const appModule = nodeByPathAndName.get("src/app.ts:src/app.ts");
@@ -143,6 +148,7 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
       assert.equal(ftsEntries.some((entry) => entry.sourceRef === "src/app.ts"), true);
       assert.equal(ftsEntries.some((entry) => entry.sourceRef === "src/secret.ts"), false);
       assert.equal(lexicalMatches.some((entry) => entry.sourceRef === "src/app.ts"), true);
+      assert.equal(normalizedLexicalMatches.some((entry) => entry.sourceRef === "src/lib.ts"), true);
       assert.equal(secretMatches.length, 0);
       assert.equal(appModule?.symbolKind, "module");
       assert.equal(libModule?.symbolKind, "module");
@@ -342,6 +348,73 @@ test("snapshot file indexing is idempotent for unchanged snapshots", () => {
       assert.equal(second.index.nodesInserted, 0);
       assert.equal(second.index.edgesInserted, 0);
       assert.equal(second.index.ftsEntriesInserted, 0);
+    });
+  });
+});
+
+test("snapshot file indexing rebuilds missing symbol rows for an existing snapshot", () => {
+  withGitRepo((repoPath) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const first = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+      database.prepare("DELETE FROM symbol_edges WHERE snapshot_id = ?").run(first.snapshotId);
+      database.prepare("DELETE FROM symbol_nodes WHERE snapshot_id = ?").run(first.snapshotId);
+
+      const second = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+
+      assert.ok(second.index.nodesInserted > 0);
+      assert.ok(second.index.edgesInserted > 0);
+      assert.equal(second.index.ftsEntriesInserted, 0);
+    });
+  });
+});
+
+test("snapshot file indexing rebuilds missing lexical rows for an existing snapshot", () => {
+  withGitRepo((repoPath) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const first = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+      database.prepare("DELETE FROM fts_entries WHERE snapshot_id = ?").run(first.snapshotId);
+
+      const second = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+
+      assert.equal(second.index.nodesInserted, 0);
+      assert.equal(second.index.edgesInserted, 0);
+      assert.ok(second.index.ftsEntriesInserted > 0);
     });
   });
 });

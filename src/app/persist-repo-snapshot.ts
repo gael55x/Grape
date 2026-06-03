@@ -3,6 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 
 import type { RepoSnapshot } from "../core/git/index.js";
 import { createGitRepoSnapshot } from "../core/git/index.js";
+import { collectRepoSnapshotEvidence } from "../core/evidence/index.js";
 import type {
   EvidenceStorageRepositories,
   IndexingStorageRepositories,
@@ -22,6 +23,7 @@ export interface PersistGitRepoSnapshotInput {
   readonly evidenceRepositories: EvidenceStorageRepositories;
   readonly indexingRepositories: IndexingStorageRepositories;
   readonly rootPath: string;
+  readonly snapshot?: RepoSnapshot;
   readonly now: string;
   readonly projectId?: string;
   readonly repoId?: string;
@@ -59,12 +61,13 @@ export interface PersistGitRepoSnapshotResult {
 }
 
 export function persistGitRepoSnapshot(input: PersistGitRepoSnapshotInput): PersistGitRepoSnapshotResult {
-  const snapshot = createGitRepoSnapshot({
+  const snapshot = input.snapshot ?? createGitRepoSnapshot({
     rootPath: input.rootPath,
     repoId: input.repoId,
     gitBinary: input.gitBinary,
     createdAt: input.now
   });
+  assertSnapshotMatchesInput(input, snapshot);
   const projectId = input.projectId ?? `project:${snapshot.repoId.replace(/^repo:/, "")}`;
   const worktreeStateId = `${snapshot.snapshotId}:worktree`;
 
@@ -76,20 +79,31 @@ export function persistGitRepoSnapshot(input: PersistGitRepoSnapshotInput): Pers
       input.repositories,
       worktreeStateRecord(snapshot, worktreeStateId, input.now)
     );
-    const evidence = persistSnapshotEvidence({
+    const snapshotAlreadyMaterialized = !repoSnapshot && !worktreeState;
+    const evidence = snapshotAlreadyMaterialized && existingEvidenceIsComplete({
       repositories: input.evidenceRepositories,
       projectId,
       worktreeStateId,
       snapshot,
       now: input.now
-    });
-    const index = persistFileIndex({
-      evidenceRepositories: input.evidenceRepositories,
-      indexingRepositories: input.indexingRepositories,
-      projectId,
-      snapshot,
-      now: input.now
-    });
+    })
+      ? existingEvidenceResult({ projectId, worktreeStateId, snapshot, now: input.now })
+      : persistSnapshotEvidence({
+          repositories: input.evidenceRepositories,
+          projectId,
+          worktreeStateId,
+          snapshot,
+          now: input.now
+        });
+    const index = snapshotAlreadyMaterialized && existingIndexIsPresent(input.indexingRepositories, snapshot)
+      ? existingIndexResult(input.indexingRepositories, snapshot)
+      : persistFileIndex({
+          evidenceRepositories: input.evidenceRepositories,
+          indexingRepositories: input.indexingRepositories,
+          projectId,
+          snapshot,
+          now: input.now
+        });
 
     return {
       projectId,
@@ -107,6 +121,112 @@ export function persistGitRepoSnapshot(input: PersistGitRepoSnapshotInput): Pers
       index
     };
   });
+}
+
+function assertSnapshotMatchesInput(input: PersistGitRepoSnapshotInput, snapshot: RepoSnapshot): void {
+  if (input.snapshot && path.resolve(input.rootPath) !== snapshot.rootPath) {
+    throw new Error("provided repo snapshot root path does not match persist input");
+  }
+  if (input.snapshot && input.repoId && input.repoId !== snapshot.repoId) {
+    throw new Error("provided repo snapshot repo id does not match persist input");
+  }
+}
+
+function existingEvidenceIsComplete(input: {
+  readonly repositories: EvidenceStorageRepositories;
+  readonly projectId: string;
+  readonly worktreeStateId: string;
+  readonly snapshot: RepoSnapshot;
+  readonly now: string;
+}): boolean {
+  const expected = collectEvidenceForSnapshot(input);
+  if (input.repositories.sources.listBySnapshot(input.snapshot.snapshotId).length !== expected.sources.length) {
+    return false;
+  }
+  return expected.sourceRejections.every((rejection) =>
+    Boolean(input.repositories.sourceRejections.get(rejection.rejectionId))
+  );
+}
+
+function existingEvidenceResult(input: {
+  readonly projectId: string;
+  readonly worktreeStateId: string;
+  readonly snapshot: RepoSnapshot;
+  readonly now: string;
+}): PersistGitRepoSnapshotResult["evidence"] {
+  const expected = collectEvidenceForSnapshot(input);
+  return {
+    sourcesInserted: 0,
+    sourceRejectionsInserted: 0,
+    sourcesSeen: expected.sources.length,
+    sourceRejectionsSeen: expected.sourceRejections.length
+  };
+}
+
+function collectEvidenceForSnapshot(input: {
+  readonly projectId: string;
+  readonly worktreeStateId: string;
+  readonly snapshot: RepoSnapshot;
+  readonly now: string;
+}) {
+  return collectRepoSnapshotEvidence({
+    projectId: input.projectId,
+    repoId: input.snapshot.repoId,
+    snapshotId: input.snapshot.snapshotId,
+    worktreeStateId: input.worktreeStateId,
+    branch: input.snapshot.branch,
+    commit: input.snapshot.commit,
+    worktreeHash: input.snapshot.worktreeHash,
+    dirtyPaths: input.snapshot.dirtyPaths,
+    dirtyPathScopes: input.snapshot.dirtyPathScopes,
+    files: input.snapshot.files,
+    rejectedFiles: input.snapshot.rejectedFiles,
+    capturedAt: input.now
+  });
+}
+
+function existingIndexIsPresent(
+  repositories: IndexingStorageRepositories,
+  snapshot: RepoSnapshot
+): boolean {
+  if (snapshot.files.length === 0) return true;
+  const expectsSymbolIndex = snapshot.files.some((file) => sourceKindHasSymbolIndex(file.sourceKind));
+  const expectsLexicalIndex = snapshot.files.length > 0;
+  const symbolIndexPresent = repositories.symbolNodes.countBySnapshot(snapshot.snapshotId) > 0;
+  const lexicalIndexPresent = repositories.ftsEntries.countBySnapshot(snapshot.snapshotId) > 0;
+  return (
+    (!expectsSymbolIndex || symbolIndexPresent) &&
+    (!expectsLexicalIndex || lexicalIndexPresent)
+  );
+}
+
+function sourceKindHasSymbolIndex(sourceKind: string): boolean {
+  return (
+    sourceKind === "source" ||
+    sourceKind === "test" ||
+    sourceKind === "config" ||
+    sourceKind === "package" ||
+    sourceKind === "rule"
+  );
+}
+
+function existingIndexResult(
+  repositories: IndexingStorageRepositories,
+  snapshot: RepoSnapshot
+): PersistGitRepoSnapshotResult["index"] {
+  const nodesSeen = repositories.symbolNodes.countBySnapshot(snapshot.snapshotId);
+  const edgesSeen = repositories.symbolEdges.countBySnapshot(snapshot.snapshotId);
+  const ftsEntriesSeen = repositories.ftsEntries.countBySnapshot(snapshot.snapshotId);
+  return {
+    nodesInserted: 0,
+    nodesSeen,
+    edgesInserted: 0,
+    edgesSeen,
+    ftsEntriesInserted: 0,
+    ftsEntriesSeen,
+    skippedFiles: 0,
+    ftsSkippedSources: 0
+  };
 }
 
 function ensureProject(repositories: StorageRepositories, record: ProjectRecord): boolean {

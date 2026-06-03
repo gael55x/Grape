@@ -124,7 +124,10 @@ test("persist git repo snapshot stores project, repo, snapshot, and worktree sta
       assert.equal(database.prepare("SELECT count(*) AS count FROM repo_snapshots").get().count, 1);
       assert.equal(evidenceRepositories.sources.listBySnapshot(first.snapshotId).length, first.snapshot.files.length);
       assert.equal(second.evidence.sourcesInserted, 0);
+      assert.equal(second.evidence.sourcesSeen, first.evidence.sourcesSeen);
       assert.equal(second.index.nodesInserted, 0);
+      assert.equal(second.index.nodesSeen, first.index.nodesSeen);
+      assert.equal(second.index.ftsEntriesSeen, first.index.ftsEntriesSeen);
     });
   });
 });
