@@ -21,7 +21,7 @@ Agents must update examples when serialized output contracts change.
 | File | Status | Scenario | Must show |
 |---|---|---|---|
 | `context-artifact-basic.json` | present | clean TypeScript app artifact | `ContextArtifact`, sections, dependency manifest, artifact hash |
-| `mcp-get-context-basic.json` | present | first `grape_get_context` response | structured `contextPackItems`, `diffSummary`, `artifactFiles` |
+| `mcp-get-context-basic.json` | present | first `grape_get_context` response | `agent_pack`, structured `contextPackItems`, `artifactRef`, `agentGraph`, `diffSummary`, `artifactFiles` |
 | `context-diff-unchanged.json` | present | second turn no-change request | `OMIT_UNCHANGED`, `PINNED`, `RESTORE_AVAILABLE` |
 | `context-diff-invalidated.json` | present | dependency manifest changes after send | `INVALIDATE_PREVIOUS` with `invalidatesSentItemId` |
 | `unsafe-compile-secret.json` | present | secret scan blocks artifact | unsafe exit metadata, no raw secret |

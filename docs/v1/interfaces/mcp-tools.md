@@ -6,7 +6,7 @@ Define MCP tool contracts and safety boundaries.
 
 ## Reviewer Note: Scaffold Vs Durable Truth
 
-`grape_get_context` returns V1-shaped `contextArtifact` and `contextPackItems`, but the compiled sections are still projected from the repository-derived scaffold in most cases. Compression orientation, lexical retrieval, and narrow `repository_source_excerpt_exists` claims do not replace proof-backed durable truth for the full repository. See `docs/v1/contracts/context-artifact.md`.
+`grape_get_context` returns V1-shaped `contextPackItems` plus compact `agent_pack` transport by default. The stored artifact and optional `outputMode: "full"` response use the V1 `contextArtifact` projection, but compiled sections are still projected from the repository-derived scaffold in most cases. Compression orientation, lexical retrieval, and narrow `repository_source_excerpt_exists` claims do not replace proof-backed durable truth for the full repository. See `docs/v1/contracts/context-artifact.md`.
 
 ## Source Of Truth
 
@@ -103,15 +103,19 @@ The current implementation includes the first stdio MCP server:
 - `grape_record_user_decision`
 - `grape_request_user_confirmation`
 
-`grape_get_context` calls the same local-project compile service used by `grape compile --task <text>`. It auto-bootstraps local `.grape/` state when needed, captures the current repo snapshot, persists source/index inputs, resolves task source hints from lexical task terms plus `files`, `symbols`, and `tests` seed refs, persists deterministic `symbol_outline` and `rule_digest` compression cache records before compilation, rebuilds and renders a deterministic prior-turn `context_pack_summary` only after filtering prior sent rows through current artifact staleness, compiles a repository-derived scaffold artifact with pinned active project rules, non-proof compression orientation, and bounded exact-source evidence prioritized toward selected allowed sources. When retrieval selects source refs, exact-source proof rows and rendered current-valid claim sections stay scoped to those refs plus current project rules and current-session observed-run results instead of filling the artifact with unrelated active claims from the same commit; if retrieval selects no refs, the compiler may fall back to bounded generic exact-source evidence. Path-like `tests` seed refs select matching allowed test source files and are shown as test seed refs in the task-retrieval section; non-path test names remain retrieval terms. When the AST relationship index records a test file importing or calling a selected source file, that test file is included as a related test ref. Exact-source proof windows prefer task-selected symbol anchors and can include up to two non-overlapping windows per selected source; query-term windows are used only when no symbol anchors exist for that source. The tool projects the artifact to the public V1 `ContextArtifact` shape, persists section-scoped session diff rows, persists the next deterministic `context_pack_summary` from the current sent ledger, writes JSON/Markdown artifacts under `.grape/artifacts/`, and returns structured context-pack items plus rendered Markdown.
+`grape_get_context` calls the same local-project compile service used by `grape compile --task <text>`. It auto-bootstraps local `.grape/` state when needed, captures the current repo snapshot, persists source/index inputs, resolves task source hints from lexical task terms plus `files`, `symbols`, and `tests` seed refs, persists deterministic `symbol_outline` and `rule_digest` compression cache records before compilation, rebuilds and renders a deterministic prior-turn `context_pack_summary` only after filtering prior sent rows through current artifact staleness, compiles a repository-derived scaffold artifact with pinned active project rules, non-proof compression orientation, and bounded exact-source evidence prioritized toward selected allowed sources. When retrieval selects source refs, exact-source proof rows and rendered current-valid claim sections stay scoped to those refs plus current project rules and current-session observed-run results instead of filling the artifact with unrelated active claims from the same commit; if retrieval selects no refs, the compiler may fall back to bounded generic exact-source evidence. Path-like `tests` seed refs select matching allowed test source files and are shown as test seed refs in the task-retrieval section; non-path test names remain retrieval terms. When the AST relationship index records a test file importing or calling a selected source file, that test file is included as a related test ref. Exact-source proof windows prefer task-selected symbol anchors and can include up to two non-overlapping windows per selected source; query-term windows are used only when no symbol anchors exist for that source. The tool projects the artifact to the public V1 `ContextArtifact` shape, persists section-scoped session diff rows, persists the next deterministic `context_pack_summary` from the current sent ledger, writes JSON/Markdown artifacts under `.grape/artifacts/`, and returns a compact agent-facing pack by default.
 
-MCP output keeps the returned `contextArtifact` canonical so its hash and dependency manifest still match the JSON artifact written under `artifactFiles.json`. To reduce duplicated agent-facing transport tokens, `contextPackItems[].inputRefs[].scope` is compacted to local routing keys such as branch, commit, source scope, path, symbol, route, and test; the full dependency scope remains in `contextArtifact.inputRefs` and the artifact file. `contextPackMarkdown` is a compact navigation summary: exact pack payloads remain in `contextPackItems[].content`, exact section bodies remain in `contextArtifact.outputSections[].text`, and full Markdown remains available at `artifactFiles.markdown`. `INVALIDATE_PREVIOUS` rows may be grouped in this Markdown summary, but every structured pack item still carries its own `invalidatesSentItemId`.
+The default MCP `outputMode` is `agent_pack`. It returns compact `contextPackItems`, an `artifactRef` pointing at the stored full artifact, a compact `contextPackMarkdown` summary, and an `agentGraph` adjacency cut over the returned pack items. This graph cut is a transport aid: `contextPackItems` are the exact payload nodes, `agentGraph.edges` express section/input/restore/invalidation relationships, and full dependency metadata stays in the stored artifact. It is not a new durable graph-memory product.
+
+To reduce duplicated agent-facing transport tokens, `contextPackItems[].inputRefs[].scope` is compacted to local routing keys such as branch, commit, source scope, path, symbol, route, and test. The full dependency scope remains in the artifact JSON written under `artifactFiles.json`. `contextPackMarkdown` is only a compact navigation summary; exact pack payloads remain in `contextPackItems[].content`, exact section bodies remain in the artifact file, and full artifact Markdown remains available at `artifactFiles.markdown`. `INVALIDATE_PREVIOUS` rows may be grouped in this Markdown summary, but every structured pack item still carries its own `invalidatesSentItemId`.
+
+When `outputMode: "full"` is requested, MCP also embeds the full `contextArtifact` projection in the response. Use this for inspection or compatibility, not as the default agent transport path. MCP tool `content[0].text` is a short result summary; large structured payloads are not duplicated as pretty JSON text.
 
 When the same MCP session identity is reused after a Git branch switch for the same task, the compile service updates the session's branch/head metadata under the session lock, records a `branch_changed` session invalidation event, and returns `INVALIDATE_PREVIOUS` items for stale branch-scoped context instead of `OMIT_UNCHANGED` items from the previous branch.
 
 When `resetSession: true` is supplied for an existing MCP session, the compile service records a `session_reset` invalidation event, returns `INVALIDATE_PREVIOUS` items for active prior sent context, and forces full resend of current scaffold artifact sections instead of omitting unchanged sections.
 
-Current limitation: the returned `contextArtifact` and public artifact JSON use the V1 `ContextArtifact` envelope, but their sections are still projected from the repository-derived scaffold rather than final durable current-valid claim retrieval. The current implementation requires `sessionId` or `agentSessionId` so session-scoped diffing cannot collapse across independent agents. Seed `files`, `symbols`, and `tests` participate in risk-overlay detection and source retrieval, but retrieval is still a conservative source-selection foundation over allowed snapshot records. Path-like test seeds and import-related test refs request exact test source context; they do not prove the tests passed or that behavior is correct. `symbol_outline`, `rule_digest`, and `context_pack_summary` compression are deterministic cache/orientation only; stale compression orientation can emit `INVALIDATE_PREVIOUS`, but compression still cannot prove claims or replace high-risk exact spans. `tokenBudget` prunes only optional non-safety context after required task summary, pinned, exact/safety-critical, omission/restore, and invalidation context fits; pruned bodies are removed from public `contextPackItems` and `contextArtifact.outputSections` and recorded in `contextArtifact.omittedDueToBudget` plus `budget.omittedDueToBudget`. If required context exceeds the budget, `compileMode` is `cannot_compile_safely`. Non-local `environmentScope`, `agentName`, `agentSessionId`, and `resetSession` are accepted for contract compatibility; unsupported environment behavior produces explicit warnings and `compileMode: "partial_with_risk"` unless a stronger unsafe condition applies. Detected risk overlays return `compileMode: "cannot_compile_safely"` with `risk_overlay_missing_exact_context` unless task retrieval or explicit seed refs select proof-backed exact source/config/rule evidence. Artifact file refs returned over MCP are repo-relative paths, not absolute local paths.
+Current limitation: the stored `contextArtifact`, optional full MCP `contextArtifact`, and public artifact JSON use the V1 `ContextArtifact` envelope, but their sections are still projected from the repository-derived scaffold rather than final durable current-valid claim retrieval. The current implementation requires `sessionId` or `agentSessionId` so session-scoped diffing cannot collapse across independent agents. Seed `files`, `symbols`, and `tests` participate in risk-overlay detection and source retrieval, but retrieval is still a conservative source-selection foundation over allowed snapshot records. Path-like test seeds and import-related test refs request exact test source context; they do not prove the tests passed or that behavior is correct. `symbol_outline`, `rule_digest`, and `context_pack_summary` compression are deterministic cache/orientation only; stale compression orientation can emit `INVALIDATE_PREVIOUS`, but compression still cannot prove claims or replace high-risk exact spans. `tokenBudget` prunes only optional non-safety context after required task summary, pinned, exact/safety-critical, omission/restore, and invalidation context fits; pruned bodies are removed from public `contextPackItems` and stored `contextArtifact.outputSections` and recorded in `contextArtifact.omittedDueToBudget` plus `budget.omittedDueToBudget`. If required context exceeds the budget, `compileMode` is `cannot_compile_safely`. Non-local `environmentScope`, `agentName`, `agentSessionId`, and `resetSession` are accepted for contract compatibility; unsupported environment behavior produces explicit warnings and `compileMode: "partial_with_risk"` unless a stronger unsafe condition applies. Detected risk overlays return `compileMode: "cannot_compile_safely"` with `risk_overlay_missing_exact_context` unless task retrieval or explicit seed refs select proof-backed exact source/config/rule evidence. Artifact file refs returned over MCP are repo-relative paths, not absolute local paths.
 
 Unsafe or risky context outputs include `recoveryGuidance` so MCP consumers can decide whether to request narrower file/symbol/test seed refs, increase a token budget, rerun after worktree cleanup, or inspect local state without guessing from internal errors.
 
@@ -158,6 +162,7 @@ interface GrapeGetContextInput {
   agentName?: string;
   agentSessionId?: string;
   resetSession?: boolean;
+  outputMode?: "agent_pack" | "full";
 }
 
 interface GrapeGetContextOutput {
@@ -171,7 +176,46 @@ interface GrapeGetContextOutput {
   taskType: TaskType;
   riskOverlays: RiskOverlay[];
   compileMode: CompileMode;
-  contextArtifact: ContextArtifact;
+  outputMode: "agent_pack" | "full";
+  artifactRef: {
+    artifactId: string;
+    artifactHash: string;
+    dependencyManifestHash: string;
+    artifactFiles: {
+      json: string;
+      markdown: string;
+    };
+    fullArtifactTool: {
+      name: "grape_get_artifact";
+      arguments: {
+        artifactId: string;
+      };
+    };
+  };
+  agentGraph: {
+    graphFormat: "grape.agent-context-graph.v1";
+    artifactId: string;
+    artifactHash: string;
+    dependencyManifestHash: string;
+    nodeCounts: {
+      packItems: number;
+      sections: number;
+      inputRefs: number;
+      sentItems: number;
+      restoreHandles: number;
+    };
+    nodes: Array<
+      | { id: string; kind: "section"; sectionId: string }
+      | { id: string; kind: "sent_item"; sentItemId: string }
+      | { id: string; kind: "restore_handle"; restoreId: string }
+    >;
+    edges: Array<{
+      from: string;
+      to: string;
+      kind: "renders_section" | "depends_on" | "invalidates" | "restores";
+    }>;
+  };
+  contextArtifact?: ContextArtifact; // present only when outputMode === "full"
   contextPackItems: ContextPackItem[];
   contextPackMarkdown: string;
   diffSummary: {
@@ -393,7 +437,7 @@ Rules:
 - `cannot_compile_safely` must not return unsafe context as if it were safe.
 - `partial_with_risk` must include explicit warnings and missing-context reasons.
 - Read tools must never silently read ignored/private files.
-- The current implementation returns V1-shaped `ContextPackItem[]` while the compiled artifact schema itself remains the documented scaffold shape.
+- The current implementation returns V1-shaped `ContextPackItem[]` and a stored V1 `ContextArtifact` projection, while the compiled section contents still come from the documented repository-derived scaffold. MCP embeds that artifact only when `outputMode: "full"` is requested.
 
 ## Restricted Write Contracts
 

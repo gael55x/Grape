@@ -30,13 +30,15 @@ Before editing diff behavior, agents must verify:
 
 ## Wire contract (V1)
 
-Public CLI and MCP responses that include a context pack use this envelope:
+Public stored artifact JSON and CLI compile responses that include a context pack use this envelope:
 
 - `artifactFormat`: `grape.context-pack.v1`
 - `artifactFormatVersion`: `1` (integer; bump only with a documented migration)
 - `contextPackItemShape`: `ContextPackItem`
 - `contextPackItems`: array of pack items (see below)
 - `contextArtifact`: nested V1 artifact projection (`context-artifact.md`)
+
+MCP `grape_get_context` defaults to `outputMode: "agent_pack"` and returns the same canonical `contextPackItems` plus `artifactRef`, compact `contextPackMarkdown`, and `agentGraph`. The full `contextArtifact` is not embedded in this default response because the stored artifact file and `grape_get_artifact` can inspect it on demand. MCP callers may request `outputMode: "full"` when they need the embedded artifact projection.
 
 Pack items must use the canonical `state` values below. `INVALIDATE_PREVIOUS` items must include `invalidatesSentItemId`. Restorable omissions must surface as `RESTORE_AVAILABLE` with `restoreId` when policy allows restore.
 

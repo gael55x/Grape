@@ -135,6 +135,7 @@ flowchart TD
 - Storage must not contain business logic. It persists validated objects and returns typed rows.
 - Production code must not import from `tests/`, benchmark harnesses, or fixture helpers.
 - Shared utilities must stay narrow. If a utility needs domain vocabulary, it belongs in that domain module.
+- Shared agent transport contracts may define the stable serialized shapes consumed by both MCP and benchmark code, such as compact `agent_pack` graph cuts and agent Markdown summaries. They must not own repository IO, trust decisions, retrieval policy, or MCP adapter behavior.
 
 `npm run architecture:check` enforces the basic import boundaries from this section. It is intentionally conservative and only checks layer direction. Domain-specific behavior still needs normal review and tests.
 
@@ -190,6 +191,8 @@ Observed-run result proof/claim promotion is an application service boundary in 
 The Git snapshot path is split under `src/core/git/` by responsibility: `repo-snapshot.ts` owns Git command orchestration, branch/worktree identity, dirty-path filtering, and snapshot hash construction; `file-manifest.ts` owns file read gates, source-kind classification, source file hashes, and privacy-safe file rejection metadata. Future scanner safety checks belong in `file-manifest.ts` unless they require Git command orchestration.
 
 The compiler path is split under `src/core/compiler/` by artifact ownership rather than by generic helper type. `artifact/` owns public/scaffold artifact shape guards and public artifact projection builders, `pack/` owns context-pack item mapping, budget evaluation, and optional budget pruning, and `repository/` owns repository-derived artifact compilation. Inside `repository/`, `manifest/` owns dependency manifest construction, `proofs/` owns compiler proof-ref helpers, `validation/` owns artifact and manifest integrity checks, `selection/` owns bounded source/symbol selection, `sections/` owns section assembly plus section-local dependency helpers, `sections/builders/` owns individual section builders, `policy/` owns compiler task/risk policy, `rendering/` owns JSON/render input contracts, and `markdown/` owns agent-facing Markdown rendering for compiled repository context packs. External layers should import through `src/core/compiler/index.ts` unless a same-layer implementation test needs a focused internal function.
+
+The shared agent transport path owns only reusable serialized transport helpers: compact pack projection, the default MCP `agent_pack` graph-cut shape, and compact agent Markdown rendering used by MCP and benchmark output estimation. The graph cut is adjacency over already-compiled context pack items; it is not a durable graph database and must not replace proof-backed exact spans, dependency manifests, or current-valid filtering.
 
 The benchmark path is split under `src/app/benchmark/` so scripted fixture setup and token-reduction result shaping stay outside CLI rendering and outside core compiler policy. Benchmarks must run named fixture workflows and must fail on unsafe omissions or stale sends instead of treating token reduction as sufficient.
 

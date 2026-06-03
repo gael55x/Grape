@@ -21,15 +21,48 @@
   "taskType": "analysis",
   "riskOverlays": [],
   "compileMode": "partial_with_risk",
-  "contextArtifact": {
-    "id": "artifact:example",
-    "artifactFormatVersion": 1,
-    "taskType": "analysis",
-    "compileMode": "partial_with_risk",
-    "branch": "main",
-    "headCommit": "cccccccccccccccccccccccccccccccccccccccc",
-    "dirtyWorktree": false,
-    "outputSections": []
+  "outputMode": "agent_pack",
+  "artifactRef": {
+    "artifactId": "artifact:example",
+    "artifactHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "dependencyManifestHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "artifactFiles": {
+      "json": ".grape/artifacts/ctx_example.json",
+      "markdown": ".grape/artifacts/ctx_example.md"
+    },
+    "fullArtifactTool": {
+      "name": "grape_get_artifact",
+      "arguments": {
+        "artifactId": "artifact:example"
+      }
+    }
+  },
+  "agentGraph": {
+    "graphFormat": "grape.agent-context-graph.v1",
+    "artifactId": "artifact:example",
+    "artifactHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "dependencyManifestHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "nodeCounts": {
+      "packItems": 1,
+      "sections": 1,
+      "inputRefs": 0,
+      "sentItems": 0,
+      "restoreHandles": 0
+    },
+    "nodes": [
+      {
+        "id": "section:repo-state",
+        "kind": "section",
+        "sectionId": "repo-state"
+      }
+    ],
+    "edges": [
+      {
+        "from": "item:example-new",
+        "to": "section:repo-state",
+        "kind": "renders_section"
+      }
+    ]
   },
   "contextPackItems": [
     {
@@ -48,7 +81,7 @@
       "warnings": []
     }
   ],
-  "contextPackMarkdown": "# Grape Context Pack\n\n## Artifact Summary\n",
+  "contextPackMarkdown": "# Grape Context Pack\n\n## Artifact Summary\n\nArtifact: artifact:example\n\n## Context Pack Items\n\nExact item payloads are in contextPackItems; relationships are in agentGraph.\n",
   "diffSummary": {
     "newItems": 1,
     "changedItems": 0,

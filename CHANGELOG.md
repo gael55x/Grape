@@ -20,6 +20,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Refreshed beta-readiness docs to reflect the published `0.1.0-alpha.3` npm package, npm `latest`/`alpha` dist-tags, GitHub tag/release state, global install smoke, and external alpha.3 published-package smoke.
 - Improved lightweight TypeScript/JavaScript retrieval by treating const-assigned arrow/function declarations as function symbols and documenting the beta retrieval boundary.
 - Added a beta trial checklist for real MCP client trials, pass/fail criteria, recovery scenarios, and explicit durable-workflow beta exclusions.
+- Reduced default MCP `grape_get_context` payload duplication for beta trials. The tool now returns compact `agent_pack` output by default, keeps full artifacts behind `outputMode: "full"` / `grape_get_artifact`, summarizes MCP text instead of duplicating structured JSON, and reports serialized agent-output token estimates in benchmarks.
 
 ## 0.1.0-alpha.3 - 2026-05-31
 

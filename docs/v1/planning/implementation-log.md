@@ -728,3 +728,10 @@ Keep entries simple:
 - Summary: added conservative parsed-project-rule conflict creation and manual CLI resolution. Local compile now creates deterministic `needs_review` claim edges when verified `project_rule` claims contain opposing rule language over the same normalized topic. `grape conflicts` lists open conflict edges, while `grape conflicts --resolve <edge> --as coexists_with|variant_of` records a non-conflict resolution edge so the conflict no longer appears as open. MCP conflict access remains read-only.
 - Checks run: `npm run typecheck`; `npm run build:test`; focused `tests/behavior/claim-conflicts.test.mjs tests/behavior/cli-local-project.test.mjs tests/behavior/mcp-stdio.test.mjs`; `npm run docs:check`; `npm run architecture:check`; full `npm run check`.
 - Risks/follow-ups: this is not automatic contradiction judgment or rule precedence. It only creates review edges for obvious deterministic text conflicts and records manual local resolution; broader claim conflicts, automatic resolution, nested rule scope, and behavior/root-cause claims remain pending.
+
+### 2026-06-03 - Beta Token Transport Hardening
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: compacted default MCP `grape_get_context` transport for beta token-efficiency proof. The default output is now `agent_pack` with compact pack scopes, artifact refs, compact Markdown, short MCP text summaries, and an adjacency `agentGraph` over returned context-pack items. Full embedded artifacts remain available through `outputMode: "full"` or `grape_get_artifact`. Benchmarks now estimate serialized default agent-output tokens and fail the stable fixture when first-turn agent-output overhead exceeds 400 percent.
+- Checks run: `npm run build:test`; focused MCP/context-artifact/benchmark behavior tests; `npm run benchmark:run`.
+- Risks/follow-ups: serialized output overhead is now measured and gated but still materially higher than logical body tokens. Further savings should target restore/invalidation row compacting and first-turn metadata density without weakening restore or invalidation safety.
