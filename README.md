@@ -26,8 +26,12 @@
 </p>
 
 <p align="center">
-  <a href="https://star-history.com/#gael55x/Grape&amp;Date">
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=gael55x/Grape&amp;type=Date" width="600" />
+  <a href="https://star-history.com/#gael55x/Grape&Date">
+    <img
+      alt="Star History Chart"
+      src="https://api.star-history.com/svg?repos=gael55x/Grape&type=Date"
+      width="600"
+    />
   </a>
 </p>
 
