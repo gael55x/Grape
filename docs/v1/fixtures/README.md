@@ -42,6 +42,7 @@ Agents must not add benchmarks against undocumented fixtures.
 | `no-tests-repo` | missing verification surfaced honestly | planned |
 | `dynamic-imports-repo` | partial graph confidence | planned |
 | `monorepo-lite-repo` | package/path boundaries | planned |
+| `polyglot-fallback-repo` | Kotlin/Java/Python/etc. safe exact/path/lexical fallback and provider capability warnings | planned |
 | `auth-security-fixture` | high-risk exact context | planned (risk-overlay behavior is covered in behavior tests) |
 | `compression-invalidation-fixture` | compression invalidation | planned |
 | `session-reset-fixture` | full resend and restore | implemented as `session-reset-typescript-app`; restore remains covered in behavior tests and restore-path goldens |

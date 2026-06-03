@@ -95,11 +95,11 @@ No product code should start before the Documentation Foundation is complete. In
 
 **V1 Alpha: Context Transport Protocol + publishable CLI/MCP.**
 
-Foundations through the first MCP `grape_get_context` path, session diffing, and fixture benchmark shell are in place. Next work prioritizes **protocol hardening**, **compiler quality for turn-1 packs**, and **multi-scenario benchmarks**—not a full memory-platform graph/search stack (see ADR-0010). Publish path and install smoke are done; see root [`ROADMAP.md`](../../ROADMAP.md).
+Foundations through the first MCP `grape_get_context` path, session diffing, and fixture benchmark shell are in place. Next work prioritizes **protocol hardening**, **compiler quality for turn-1 packs**, and **multi-scenario benchmarks**—not a full memory-platform graph/search stack (see ADR-0010). Publish path and install smoke are done; see root [`ROADMAP.md`](../../../ROADMAP.md).
 
 ## Priority workstreams
 
-Aligned with the root [`ROADMAP.md`](../../ROADMAP.md). The outward `ContextPackItem` contract stays stable across these streams.
+Aligned with the root [`ROADMAP.md`](../../../ROADMAP.md). The outward `ContextPackItem` contract stays stable across these streams.
 
 | Priority | Focus | Primary code areas |
 |---|---|---|

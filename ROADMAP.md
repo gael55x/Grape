@@ -4,7 +4,7 @@ Grape is a **local-first context transport layer** for coding agents: it compile
 
 It is not a chatbot, a cloud memory platform, or a full code-intelligence graph. Supporting compile features such as snapshots, rules, excerpts, proofs, lightweight indexing, and compression exist so the transport protocol is useful on real repos.
 
-Canonical protocol: [`docs/v1/contracts/context-diff.md`](docs/v1/contracts/context-diff.md). Agent session contract: [`docs/v1/interfaces/agent-sessions.md`](docs/v1/interfaces/agent-sessions.md). Product decision: [`docs/v1/decisions/adr-0010-context-transport-protocol.md`](docs/v1/decisions/adr-0010-context-transport-protocol.md). Implementation detail and goal order: [`docs/v1/planning/implementation-roadmap.md`](docs/v1/planning/implementation-roadmap.md).
+Canonical protocol: [`docs/v1/contracts/context-diff.md`](docs/v1/contracts/context-diff.md). Agent session contract: [`docs/v1/interfaces/agent-sessions.md`](docs/v1/interfaces/agent-sessions.md). Language/provider boundary: [`docs/v1/core/language-indexing.md`](docs/v1/core/language-indexing.md). Product decision: [`docs/v1/decisions/adr-0010-context-transport-protocol.md`](docs/v1/decisions/adr-0010-context-transport-protocol.md). Implementation detail and goal order: [`docs/v1/planning/implementation-roadmap.md`](docs/v1/planning/implementation-roadmap.md).
 
 ## North Star
 
@@ -41,6 +41,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - Package dry-run and install smoke are part of the local gate.
 - `npm run beta:check` runs the full local beta-readiness gate.
 - Local `grape run` / `grape test` can promote narrow `grape_observed_run_result` proofs/claims from trusted observed run metadata.
+- The language-provider boundary is documented: non-TS/JS files such as Kotlin, Java, Python, Go, and Rust must get safe exact/path/lexical fallback, while stronger graph extraction requires providers and fixtures.
 
 ## Now
 
@@ -58,6 +59,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - Stronger trust/proof depth beyond the narrow observed-run result claim.
 - Broader durable claim types.
 - Broader fixtures and labeled benchmark expectations.
+- Provider capability diagnostics plus polyglot and monorepo fixtures.
 - Better dirty-worktree, branch, and session handling for normal agent workflows.
 - Parsed durable project rules and richer conflict creation/resolution.
 

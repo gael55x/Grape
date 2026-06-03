@@ -10,6 +10,8 @@ Run at least these repos before beta:
 
 - clean TypeScript app
 - larger real JavaScript/TypeScript repo
+- polyglot fallback repo with at least one Python, Java, or Kotlin source file
+- monorepo or nested-package repo when available
 - dirty worktree repo
 - repo with ignored secret-looking files
 - macOS local install
@@ -55,6 +57,8 @@ Run these in each serious trial:
 - Switch branches and verify prior branch context is invalidated.
 - Call `resetSession: true` and verify prior sent context is invalidated and current context is resent.
 - Try a stale restore token after a file edit and verify no stale body is returned.
+- In a polyglot repo, verify unsupported or lower-capability languages return safe exact/path/lexical context plus warnings instead of false AST graph confidence.
+- In a monorepo, verify task seed files stay scoped to the relevant package/workspace when boundaries are detected, or that Grape reports partial context when they are not.
 - Run `grape run --session <id> -- <cmd...>` or `grape test --session <id> -- <cmd...>` after a current context session exists and verify trusted redacted source evidence plus a narrow observed-run result proof/claim are recorded.
 
 ## Pass Criteria
@@ -90,6 +94,8 @@ The trial notes must explicitly confirm these are not treated as beta promises:
 - generated/candidate rule promotion and nested rule scope resolution
 - automatic conflict resolution beyond manual local CLI resolution edges
 - embeddings, semantic ranking, complete call graphs, or broad AST-backed language support
+- broad Kotlin/Java/Python/etc. graph extraction beyond safe fallback unless a provider and fixture prove it
+- complete monorepo impact cones or multi-repo graphs
 - runtime behavior correctness from source excerpts alone
 
 ## Feedback To Capture

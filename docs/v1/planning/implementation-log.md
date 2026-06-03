@@ -747,5 +747,12 @@ Keep entries simple:
 
 - Author/agent: Gaille Amolong / Codex
 - Summary: documented the language-provider capability model for polyglot and monorepo repos. Grape's transport remains language-agnostic, while language-aware graph extraction is provider-scoped orientation only. Unsupported languages and unknown package/workspace boundaries must fall back to safe exact/path/lexical context with explicit blind spots.
-- Checks run: pending in this change.
+- Checks run: `npm run check` (pass, 177/177 behavior tests).
 - Risks/follow-ups: provider dispatch, package/workspace detection, polyglot fixtures, monorepo fixtures, and package-scoped invalidation tests remain implementation work before broad polyglot/monorepo beta claims.
+
+### 2026-06-03 - Documentation Consistency Audit
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: audited root and V1 docs for stale graph/language/beta wording, then aligned README, roadmap, changelog, CLI/MCP contracts, fixtures, examples, beta trial checklist, and SPEC around graph-shaped context, safe Kotlin/Java/Python/etc. fallback, and provider/fixture requirements before stronger polyglot or monorepo claims.
+- Checks run: `npm run check` (pass, 177/177 behavior tests) and a markdown relative-link scan (pass, 55 markdown files).
+- Risks/follow-ups: this is documentation alignment only. Provider dispatch, package/workspace detection, and polyglot/monorepo fixtures still need implementation and behavior coverage.

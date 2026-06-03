@@ -26,6 +26,7 @@ Agents must update examples when serialized output contracts change.
 | `context-diff-invalidated.json` | present | dependency manifest changes after send | `INVALIDATE_PREVIOUS` with `invalidatesSentItemId` |
 | `unsafe-compile-secret.json` | present | secret scan blocks artifact | unsafe exit metadata, no raw secret |
 | `partial-with-risk-dynamic-imports.json` | not yet | partial graph fixture | blind spots and missing-context warnings |
+| `polyglot-fallback-context.json` | not yet | Python/Java/Kotlin fallback fixture | safe exact/path/lexical context, provider capability warnings, no false graph claims |
 | `cli-status.txt` | not yet | `grape status` human output | repo state, session state, stale counts |
 | `cli-status.json` | not yet | `grape status --json` output | machine schema matching CLI docs |
 

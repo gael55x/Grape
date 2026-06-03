@@ -13,6 +13,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added `grape run` and `grape test` for local Grape-observed command/test execution. The commands record trusted redacted `command_run` / `test_run` evidence with observed run IDs, command/output hashes, exit status, timestamps, and session scope without persisting raw command output.
 - Added narrow `grape_observed_run_result` proof/claim promotion for local Grape-observed command/test runs. It proves only the observed run result, not product correctness or root cause.
 - Added conservative project-rule conflict creation and manual CLI resolution. Parsed `project_rule` claims can now create `needs_review` conflict edges, `grape conflicts` shows open conflicts, and `grape conflicts --resolve <edge> --as coexists_with|variant_of` records a local resolution edge.
+- Added the language-provider documentation boundary: Grape context is graph-shaped, TypeScript/JavaScript graph extraction is strongest today, and Kotlin/Java/Python/etc. must use safe exact/path/lexical fallback until providers and fixtures prove stronger support.
 
 ### Changed
 

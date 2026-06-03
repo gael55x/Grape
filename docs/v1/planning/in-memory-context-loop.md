@@ -52,7 +52,7 @@ The fixture must include:
 - Compression cache.
 - Durable SQLite storage.
 - SQLite optimization.
-- Tree-sitter or full symbol graph.
+- Language-provider parser dispatch or full symbol graph.
 - Embeddings or model summaries.
 - Multi-repo support.
 - Dirty worktree support beyond explicit "not handled in alpha" warning.

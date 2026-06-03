@@ -3424,6 +3424,8 @@ After first turn, context token reduction >= 70% for stable bug-fix/refactor ses
 - branch change invalidates branch-scoped context
 - two agent sessions do not collide
 - parser failure fallback works
+- unsupported-language fallback returns safe file/path/lexical context and warnings
+- monorepo/package boundary uncertainty returns partial context instead of complete graph claims
 - ignored files stay ignored
 - high-risk task blocks summary-only compile
 
@@ -3433,12 +3435,13 @@ Fixtures:
 
 1. clean TypeScript Next.js project
 2. Python FastAPI project
-3. dirty worktree fixture
-4. legacy fixture with duplicate logic and weak tests
-5. repo with ignored secret files
-6. monorepo fixture
-7. branch switch fixture
-8. concurrent MCP sessions fixture
+3. Java/Kotlin fallback project
+4. dirty worktree fixture
+5. legacy fixture with duplicate logic and weak tests
+6. repo with ignored secret files
+7. monorepo fixture
+8. branch switch fixture
+9. concurrent MCP sessions fixture
 
 E2E assertions:
 
@@ -3566,8 +3569,9 @@ Build:
 
 Build:
 
-- parser adapter
-- basic TS/JS/Python extraction
+- provider dispatcher and parser adapters
+- deterministic TS/JS graph extraction
+- safe exact/path/lexical fallback for Python, Java, Kotlin, Go, Rust, and other allowed text files
 - symbol nodes
 - symbol edges
 - lexical source index tables
