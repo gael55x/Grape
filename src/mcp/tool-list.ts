@@ -34,6 +34,12 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
             resetSession: {
               type: "boolean",
               description: "Force full resend for this session because the agent lost prior context."
+            },
+            outputMode: {
+              type: "string",
+              enum: ["agent_pack", "full"],
+              description:
+                "agent_pack returns the compact beta transport graph cut; full also embeds the full ContextArtifact."
             }
           }
         }

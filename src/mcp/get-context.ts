@@ -2,10 +2,23 @@ import path from "node:path";
 
 import { compileLocalContext } from "../app/local-project/index.js";
 import type { CompileLocalContextResult } from "../app/local-project/index.js";
-import type { ContextPackItemShape, DiffState, RiskOverlay, TaskType } from "../shared/index.js";
-import { taskTypes } from "../shared/index.js";
-import { renderAgentContextPackMarkdown } from "./context-pack-agent-markdown.js";
-import { compactAgentContextPackItems } from "./context-pack-agent-output.js";
+import type {
+  AgentContextArtifactRef,
+  AgentContextGraphCut,
+  ContextPackItemShape,
+  DiffState,
+  GrapeGetContextOutputMode,
+  RiskOverlay,
+  TaskType
+} from "../shared/index.js";
+import {
+  buildAgentContextArtifactRef,
+  buildAgentContextGraphCut,
+  compactAgentContextPackItems,
+  grapeGetContextOutputModes,
+  renderAgentContextPackMarkdown,
+  taskTypes
+} from "../shared/index.js";
 import { resolveMcpSessionId } from "./session.js";
 
 export interface GrapeGetContextToolInput {
@@ -20,6 +33,7 @@ export interface GrapeGetContextToolInput {
   readonly agentName?: string;
   readonly agentSessionId?: string;
   readonly resetSession?: boolean;
+  readonly outputMode?: GrapeGetContextOutputMode;
 }
 
 export interface GrapeGetContextToolOutput {
@@ -33,7 +47,10 @@ export interface GrapeGetContextToolOutput {
   readonly taskType: TaskType;
   readonly riskOverlays: readonly RiskOverlay[];
   readonly compileMode: "safe_minimum" | "partial_with_risk" | "broad_context_required" | "cannot_compile_safely";
-  readonly contextArtifact: CompileLocalContextResult["contextArtifact"];
+  readonly outputMode: GrapeGetContextOutputMode;
+  readonly artifactRef: AgentContextArtifactRef;
+  readonly agentGraph: AgentContextGraphCut;
+  readonly contextArtifact?: CompileLocalContextResult["contextArtifact"];
   readonly contextPackItems: readonly ContextPackItemShape[];
   readonly contextPackMarkdown: string;
   readonly diffSummary: {
@@ -76,7 +93,17 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
   const warnings = [...warningSet];
   const contextPackItems = compactAgentContextPackItems(result.contextPackItems);
   const diffSummary = summarizeDiff(contextPackItems);
-  return {
+  const artifactFiles = {
+    json: relativeArtifactPath(result.rootPath, result.artifactJsonPath),
+    markdown: relativeArtifactPath(result.rootPath, result.artifactMarkdownPath)
+  };
+  const artifactRef = buildAgentContextArtifactRef({
+    artifactId: result.artifactId,
+    artifactHash: result.artifactHash,
+    dependencyManifestHash: result.dependencyManifestHash,
+    artifactFiles
+  });
+  const output: GrapeGetContextToolOutput = {
     artifactId: result.artifactId,
     artifactHash: result.artifactHash,
     dependencyManifestHash: result.dependencyManifestHash,
@@ -87,7 +114,14 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     taskType: taskTypeFromResult(parsed.taskType),
     riskOverlays: result.riskOverlays,
     compileMode: compileModeFor(result, warnings),
-    contextArtifact: result.contextArtifact,
+    outputMode: parsed.outputMode ?? "agent_pack",
+    artifactRef,
+    agentGraph: buildAgentContextGraphCut({
+      artifactId: result.artifactId,
+      artifactHash: result.artifactHash,
+      dependencyManifestHash: result.dependencyManifestHash,
+      contextPackItems
+    }),
     contextPackItems,
     contextPackMarkdown: renderAgentContextPackMarkdown({
       artifactId: result.artifactId,
@@ -105,11 +139,14 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     budget: result.budget,
     sessionResetId: result.sessionResetId,
     restoreAvailable: result.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE" || item.restoreId),
-    artifactFiles: {
-      json: relativeArtifactPath(result.rootPath, result.artifactJsonPath),
-      markdown: relativeArtifactPath(result.rootPath, result.artifactMarkdownPath)
-    }
+    artifactFiles
   };
+
+  if (parsed.outputMode === "full") {
+    return { ...output, contextArtifact: result.contextArtifact };
+  }
+
+  return output;
 }
 
 function parseInput(input: unknown): GrapeGetContextToolInput {
@@ -125,7 +162,8 @@ function parseInput(input: unknown): GrapeGetContextToolInput {
     "sessionId",
     "agentName",
     "agentSessionId",
-    "resetSession"
+    "resetSession",
+    "outputMode"
   ]);
   const query = requiredString(input.query, "query");
   return {
@@ -139,7 +177,8 @@ function parseInput(input: unknown): GrapeGetContextToolInput {
     sessionId: optionalString(input.sessionId, "sessionId"),
     agentName: optionalString(input.agentName, "agentName"),
     agentSessionId: optionalString(input.agentSessionId, "agentSessionId"),
-    resetSession: optionalBoolean(input.resetSession, "resetSession")
+    resetSession: optionalBoolean(input.resetSession, "resetSession"),
+    outputMode: optionalOutputMode(input.outputMode)
   };
 }
 
@@ -184,6 +223,14 @@ function optionalTaskType(value: unknown): Exclude<TaskType, "bootstrap"> | unde
     throw new Error("taskType must be a supported non-bootstrap task type");
   }
   return value as Exclude<TaskType, "bootstrap">;
+}
+
+function optionalOutputMode(value: unknown): GrapeGetContextOutputMode | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || !grapeGetContextOutputModes.includes(value as GrapeGetContextOutputMode)) {
+    throw new Error("outputMode must be agent_pack or full");
+  }
+  return value as GrapeGetContextOutputMode;
 }
 
 function optionalEnvironmentScope(

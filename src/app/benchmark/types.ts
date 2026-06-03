@@ -51,6 +51,9 @@ export interface BenchmarkTurnMetric {
   readonly naiveTokens: number;
   readonly grapeTokens: number;
   readonly serializedPackTokens: number;
+  readonly serializedAgentOutputTokens: number;
+  readonly serializedAgentStructuredTokens: number;
+  readonly serializedAgentTextTokens: number;
   readonly omittedUnchangedTokens: number;
   readonly compressionSavedTokens: number;
   readonly pinnedOverheadTokens: number;
@@ -59,6 +62,7 @@ export interface BenchmarkTurnMetric {
   readonly staleItemsSent: number;
   readonly reductionPercent: number;
   readonly overheadPercent: number;
+  readonly agentOutputOverheadPercent: number;
   readonly stateTokenBreakdown: readonly BenchmarkStateTokenBreakdown[];
   readonly sectionTokenBreakdown: readonly BenchmarkSectionTokenBreakdown[];
 }
@@ -72,6 +76,7 @@ export interface TokenReductionBenchmarkResult {
   readonly thresholds: {
     readonly minSecondTurnReductionPercent: number;
     readonly maxFirstTurnOverheadPercent: number;
+    readonly maxFirstTurnAgentOutputOverheadPercent: number;
     readonly requireZeroUnsafeOmissions: true;
     readonly requireZeroStaleItemsSent: true;
     readonly requireSecondTurnOmission: true;
@@ -87,6 +92,8 @@ export interface TokenReductionBenchmarkResult {
     readonly secondTurnNaiveTokens: number;
     readonly secondTurnReductionPercent: number;
     readonly serializedPackTokens: number;
+    readonly serializedAgentOutputTokens: number;
+    readonly firstTurnAgentOutputOverheadPercent: number;
     readonly omittedUnchangedTokens: number;
     readonly pinnedOverheadTokens: number;
     readonly invalidationOverheadTokens: number;

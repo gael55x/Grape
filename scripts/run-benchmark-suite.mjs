@@ -50,6 +50,11 @@ for (const fixture of fixtures) {
     serializedPackTokens:
       output.totals?.serializedPackTokens ??
       output.turns?.reduce((total, turn) => total + (turn.serializedPackTokens ?? 0), 0),
+    serializedAgentOutputTokens:
+      output.totals?.serializedAgentOutputTokens ??
+      output.turns?.reduce((total, turn) => total + (turn.serializedAgentOutputTokens ?? 0), 0),
+    firstTurnAgentOutputOverheadPercent:
+      output.totals?.firstTurnAgentOutputOverheadPercent ?? output.turns?.[0]?.agentOutputOverheadPercent,
     omitUnchanged: second?.stateCounts?.OMIT_UNCHANGED ?? 0,
     invalidatePrevious: second?.stateCounts?.INVALIDATE_PREVIOUS ?? 0,
     unsafeOmissions: second?.unsafeOmissions ?? 0,
@@ -68,7 +73,7 @@ for (const row of rows) {
     [
       `- ${row.fixture} (${row.benchmark}): ${row.status}`,
       `  turn1=${row.turn1Tokens} overhead=${row.turn1OverheadPercent ?? "n/a"}% turn2=${row.turn2Tokens} reduction=${row.turn2ReductionPercent ?? "n/a"}%`,
-      `  serializedPackTokens=${row.serializedPackTokens ?? "n/a"}`,
+      `  serializedPackTokens=${row.serializedPackTokens ?? "n/a"} serializedAgentOutputTokens=${row.serializedAgentOutputTokens ?? "n/a"} agentOutputOverhead=${row.firstTurnAgentOutputOverheadPercent ?? "n/a"}%`,
       `  OMIT_UNCHANGED=${row.omitUnchanged} INVALIDATE_PREVIOUS=${row.invalidatePrevious} unsafe=${row.unsafeOmissions}`,
       row.failures?.length ? `  failures=${row.failures.join(", ")}` : undefined
     ]

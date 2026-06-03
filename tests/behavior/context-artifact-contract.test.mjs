@@ -39,7 +39,7 @@ test("public CLI context artifact JSON satisfies the V1 contract envelope", () =
 
     assertContextArtifactShape(artifactJson.contextArtifact);
     assertContextPackItems(artifactJson.contextPackItems, artifactJson.contextArtifact);
-    assertMarkdownReferencesPackItems(
+    assertFullArtifactMarkdownReferencesPackItems(
       readFileSync(output.artifactMarkdownPath, "utf8"),
       artifactJson.contextPackItems
     );
@@ -63,7 +63,8 @@ test("MCP context pack Markdown renders the structured context pack items", () =
           name: "grape_get_context",
           arguments: {
             query: "Explain how the app entry point is exported",
-            sessionId: "contract-mcp"
+            sessionId: "contract-mcp",
+            outputMode: "full"
           }
         }
       }
@@ -72,9 +73,10 @@ test("MCP context pack Markdown renders the structured context pack items", () =
     const result = responses[1].result;
 
     assert.equal(result.isError, false);
+    assert.equal(result.structuredContent.outputMode, "full");
     assertContextArtifactShape(result.structuredContent.contextArtifact);
     assertContextPackItems(result.structuredContent.contextPackItems, result.structuredContent.contextArtifact);
-    assertMarkdownReferencesPackItems(
+    assertCompactAgentMarkdownReferencesPackItems(
       result.structuredContent.contextPackMarkdown,
       result.structuredContent.contextPackItems
     );
@@ -198,14 +200,17 @@ function assertContextPackItems(items, artifact) {
   }
 }
 
-function assertMarkdownReferencesPackItems(markdown, items) {
+function assertFullArtifactMarkdownReferencesPackItems(markdown, items) {
   assert.match(markdown, new RegExp(`Total context pack items: ${items.length}`));
-  for (const item of items) {
-    assert.match(markdown, new RegExp(`Item: ${escapeRegExp(item.id)}`));
-    assert.match(markdown, new RegExp(`Kind: ${escapeRegExp(item.itemKind)}`));
-    assert.match(markdown, new RegExp(`Item ref: ${escapeRegExp(item.itemRef)}`));
-    assert.match(markdown, new RegExp(`Content hash: ${escapeRegExp(item.contentHash)}`));
-  }
+  assert.match(markdown, /Input refs:/);
+  assert.match(markdown, /## Dependency Manifest/);
+}
+
+function assertCompactAgentMarkdownReferencesPackItems(markdown, items) {
+  assert.match(markdown, new RegExp(`Total context pack items: ${items.length}`));
+  assert.match(markdown, /Exact item payloads are in contextPackItems/);
+  assert.match(markdown, /relationships are in agentGraph/);
+  assert.match(markdown, /Text: see artifactRef\.artifactFiles\.json or request outputMode=full/);
 }
 
 const dependencyKey = (input) => `${input.kind}:${input.ref}:${input.hash}`;
@@ -293,5 +298,3 @@ function execGit(repoPath, args) {
     stdio: ["ignore", "pipe", "pipe"]
   }).trim();
 }
-
-const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

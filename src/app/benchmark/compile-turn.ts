@@ -6,6 +6,7 @@ import {
   buildBenchmarkTokenBreakdown,
   firstTurnOverheadPercent
 } from "./token-breakdown.js";
+import { buildBenchmarkAgentOutputTokenMetric } from "./agent-output-tokens.js";
 import type { BenchmarkTurnMetric } from "./types.js";
 
 export function runBenchmarkCompileTurn(input: {
@@ -47,6 +48,7 @@ function turnMetric(
 ): BenchmarkTurnMetric {
   const stateCounts = countPackStates(result);
   const tokenBreakdown = buildBenchmarkTokenBreakdown(result.contextPackItems);
+  const agentOutput = buildBenchmarkAgentOutputTokenMetric(result);
   return {
     turn,
     artifactId: result.artifactId,
@@ -62,6 +64,9 @@ function turnMetric(
     naiveTokens: result.tokenMetric.naiveTokens,
     grapeTokens: result.tokenMetric.grapeTokens,
     serializedPackTokens: tokenBreakdown.serializedPackTokens,
+    serializedAgentOutputTokens: agentOutput.serializedAgentOutputTokens,
+    serializedAgentStructuredTokens: agentOutput.serializedAgentStructuredTokens,
+    serializedAgentTextTokens: agentOutput.serializedAgentTextTokens,
     omittedUnchangedTokens: result.tokenMetric.omittedUnchangedTokens,
     compressionSavedTokens: result.tokenMetric.compressionSavedTokens,
     pinnedOverheadTokens: result.tokenMetric.pinnedOverheadTokens,
@@ -70,6 +75,7 @@ function turnMetric(
     staleItemsSent: result.tokenMetric.staleItemsSent,
     reductionPercent: result.tokenMetric.reductionPercent,
     overheadPercent: firstTurnOverheadPercent(result.tokenMetric.naiveTokens, result.tokenMetric.grapeTokens),
+    agentOutputOverheadPercent: agentOutput.agentOutputOverheadPercent,
     stateTokenBreakdown: tokenBreakdown.byState,
     sectionTokenBreakdown: tokenBreakdown.bySection
   };

@@ -1,5 +1,6 @@
-import type { ContextArtifactShape, ContextPackItemShape } from "../shared/index.js";
-import { diffStates } from "../shared/index.js";
+import type { ContextArtifactShape } from "./context-artifact-contract.js";
+import type { ContextPackItemShape as PackItemShape } from "./contracts.js";
+import { diffStates } from "./contracts.js";
 
 export interface AgentContextDiffSummary {
   readonly newItems: number;
@@ -22,7 +23,7 @@ interface AgentContextBudgetSummary {
 export interface AgentContextMarkdownInput {
   readonly artifactId: string;
   readonly contextArtifact: ContextArtifactShape;
-  readonly contextPackItems: readonly ContextPackItemShape[];
+  readonly contextPackItems: readonly PackItemShape[];
   readonly diffSummary: AgentContextDiffSummary;
   readonly warnings: readonly string[];
   readonly unsafeReasons: readonly string[];
@@ -48,22 +49,15 @@ function renderArtifactSummary(input: AgentContextMarkdownInput): string[] {
   return section("Artifact Summary", [
     `Artifact: ${input.artifactId}`,
     "Artifact format: grape.context-pack.v1",
-    `Artifact format version: ${artifact.artifactFormatVersion}`,
     `Compile mode: ${artifact.compileMode}`,
     `Task type: ${artifact.taskType}`,
     `Risk overlays: ${formatInlineList(artifact.riskOverlays)}`,
-    `Project: ${artifact.projectId}`,
-    `Repo: ${artifact.repoId}`,
     `Session: ${artifact.sessionId}`,
-    `Task: ${artifact.taskId ?? "none"}`,
     `Branch: ${artifact.branch}`,
     `Head commit: ${artifact.headCommit}`,
     `Dirty worktree: ${formatBoolean(artifact.dirtyWorktree)}`,
-    `Environment: ${artifact.environmentScope}`,
-    `Confidence: ${artifact.confidence}`,
     `Graph confidence: ${artifact.graphConfidence}`,
-    `Content hash: ${artifact.contentHash}`,
-    `Created at: ${artifact.createdAt}`
+    `Section count: ${artifact.outputSections.length}`
   ]);
 }
 
@@ -79,21 +73,21 @@ function renderDiffSummary(input: AgentContextMarkdownInput): string[] {
   ]);
 }
 
-function renderContextPackItems(items: readonly ContextPackItemShape[]): string[] {
+function renderContextPackItems(items: readonly PackItemShape[]): string[] {
   const invalidationSummary = summarizeInvalidations(items);
-  const itemLines = items.flatMap((item) =>
-    item.state === "INVALIDATE_PREVIOUS" ? renderCompactInvalidationItem(item) : renderPackItem(item)
-  );
 
   return [
     "## Context Pack Items",
     "",
     ...(invalidationSummary.length > 0 ? invalidationSummary : []),
-    ...(items.length === 0 ? ["_No context pack items emitted._", ""] : itemLines)
+    items.length === 0
+      ? "_No context pack items emitted._"
+      : "Exact item payloads are in contextPackItems; relationships are in agentGraph.",
+    ""
   ];
 }
 
-function summarizeInvalidations(items: readonly ContextPackItemShape[]): string[] {
+function summarizeInvalidations(items: readonly PackItemShape[]): string[] {
   const invalidations = items.filter((item) => item.state === "INVALIDATE_PREVIOUS");
   if (invalidations.length === 0) return [];
 
@@ -116,72 +110,19 @@ function summarizeInvalidations(items: readonly ContextPackItemShape[]): string[
   ];
 }
 
-function renderPackItem(item: ContextPackItemShape): string[] {
-  return [
-    `### ${item.state}: ${item.title}`,
-    "",
-    ...renderItemMetadata(item),
-    "Input refs:",
-    ...renderInputRefs(item.inputRefs),
-    "Content: see contextPackItems[].content for the exact payload.",
-    ""
-  ];
-}
-
-function renderCompactInvalidationItem(item: ContextPackItemShape): string[] {
-  return [
-    `### ${item.state}: ${item.title}`,
-    "",
-    ...renderItemMetadata(item),
-    "Input refs:",
-    ...renderInputRefs(item.inputRefs),
-    "Content omitted from Markdown; this row invalidates previously sent context.",
-    ""
-  ];
-}
-
-function renderItemMetadata(item: ContextPackItemShape): string[] {
-  return [
-    `Item: ${item.id}`,
-    `Kind: ${item.itemKind}`,
-    `Item ref: ${item.itemRef}`,
-    `Section: ${item.sectionId ?? "none"}`,
-    `Content hash: ${item.contentHash}`,
-    `Token count: ${item.tokenCount}`,
-    `Pinned: ${formatBoolean(item.pinned)}`,
-    `Safety critical: ${formatBoolean(item.safetyCritical)}`,
-    item.restoreId ? `Restore ID: ${item.restoreId}` : undefined,
-    item.invalidatesSentItemId ? `Invalidates sent item: ${item.invalidatesSentItemId}` : undefined,
-    `Warnings: ${formatInlineList(item.warnings)}`
-  ].filter((line): line is string => line !== undefined);
-}
-
 function renderArtifactSections(sections: ContextArtifactShape["outputSections"]): string[] {
+  const sectionIds = sections.map((sectionShape) => sectionShape.id).join(", ");
+  const safetyCriticalCount = sections.filter((sectionShape) => sectionShape.safetyCritical).length;
+  const restoreableCount = sections.filter((sectionShape) => sectionShape.restoreable).length;
+
   return [
     "## Artifact Sections",
     "",
-    ...(sections.length === 0
-      ? ["- none", ""]
-      : sections.flatMap((sectionShape) =>
-          [
-            `### ${sectionShape.id}: ${sectionShape.title}`,
-            "",
-            `Type: ${sectionShape.type}`,
-            `Content hash: ${sectionShape.contentHash}`,
-            `Token count: ${sectionShape.tokenCount}`,
-            `Pinned: ${formatBoolean(sectionShape.pinned)}`,
-            `Safety critical: ${formatBoolean(sectionShape.safetyCritical)}`,
-            `Requires exact code: ${formatBoolean(sectionShape.requiresExactCode)}`,
-            `Can compress: ${formatBoolean(sectionShape.canCompress)}`,
-            `Restoreable: ${formatBoolean(sectionShape.restoreable)}`,
-            sectionShape.restoreHint ? `Restore hint: ${sectionShape.restoreHint}` : undefined,
-            `Risk overlays: ${formatInlineList(sectionShape.riskOverlays)}`,
-            "Item refs:",
-            ...sectionShape.itemRefs.map((ref) => `- ${ref.kind}: ${ref.ref} @ ${ref.hash}`),
-            "Text: see contextArtifact.outputSections[].text for the exact section body.",
-            ""
-          ].filter((line): line is string => line !== undefined)
-        ))
+    `Sections: ${sectionIds || "none"}`,
+    `Safety critical sections: ${safetyCriticalCount}`,
+    `Restoreable sections: ${restoreableCount}`,
+    "Text: see artifactRef.artifactFiles.json or request outputMode=full for exact section bodies.",
+    ""
   ];
 }
 
@@ -213,11 +154,6 @@ function renderWarningsAndSafety(input: AgentContextMarkdownInput): string[] {
   ]);
 }
 
-function renderInputRefs(refs: readonly ContextPackItemShape["inputRefs"][number][]): string[] {
-  if (refs.length === 0) return ["- none"];
-  return refs.map((ref) => `- ${ref.id}: ${ref.kind} ${ref.ref} @ ${ref.hash}; scope=${formatScope(ref.scope)}`);
-}
-
 function section(title: string, lines: readonly string[]): string[] {
   return [`## ${title}`, "", ...lines, ""];
 }
@@ -228,10 +164,4 @@ function formatInlineList(values: readonly string[]): string {
 
 function formatBoolean(value: boolean): string {
   return value ? "yes" : "no";
-}
-
-function formatScope(scope: Record<string, unknown>): string {
-  const keys = Object.keys(scope).sort();
-  if (keys.length === 0) return "{}";
-  return `{${keys.map((key) => `${key}=${String(scope[key])}`).join(", ")}}`;
 }

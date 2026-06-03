@@ -133,6 +133,7 @@ test("mcp stdio lists implemented Grape tools", () => {
     assert.deepEqual(contextTool.inputSchema.anyOf, [{ required: ["sessionId"] }, { required: ["agentSessionId"] }]);
     assert.equal(contextTool.inputSchema.properties.tokenBudget.type, "integer");
     assert.equal(contextTool.inputSchema.properties.tokenBudget.minimum, 1);
+    assert.deepEqual(contextTool.inputSchema.properties.outputMode.enum, ["agent_pack", "full"]);
     const commandTool = responses[1].result.tools.find((tool) => tool.name === "grape_record_command_result");
     assert.equal(commandTool.inputSchema.additionalProperties, false);
     assert.match(commandTool.inputSchema.properties.command.description, /not persisted/);
@@ -814,10 +815,19 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     const toolResult = responses[1].result;
     assert.equal(toolResult.isError, false);
     assert.equal(toolResult.content[0].type, "text");
+    assert.match(toolResult.content[0].text, /^grape_get_context: mode=agent_pack /);
     assert.equal(toolResult.structuredContent.sessionId, "mcp-session");
     assert.equal(toolResult.structuredContent.branch, "main");
-    assert.equal(toolResult.structuredContent.contextArtifact.id, toolResult.structuredContent.artifactId);
-    assert.equal(toolResult.structuredContent.contextArtifact.artifactFormatVersion, 1);
+    assert.equal(toolResult.structuredContent.outputMode, "agent_pack");
+    assert.equal(Object.hasOwn(toolResult.structuredContent, "contextArtifact"), false);
+    assert.equal(toolResult.structuredContent.artifactRef.artifactId, toolResult.structuredContent.artifactId);
+    assert.equal(toolResult.structuredContent.artifactRef.fullArtifactTool.name, "grape_get_artifact");
+    assert.equal(toolResult.structuredContent.agentGraph.graphFormat, "grape.agent-context-graph.v1");
+    assert.equal(toolResult.structuredContent.agentGraph.nodeCounts.packItems > 0, true);
+    assert.equal(
+      toolResult.structuredContent.agentGraph.edges.some((edge) => edge.kind === "depends_on"),
+      true
+    );
     assert.equal(toolResult.structuredContent.contextPackItems.some((item) => item.state === "NEW"), true);
     const packItem = toolResult.structuredContent.contextPackItems[0];
     assert.equal(typeof packItem.id, "string");
@@ -825,15 +835,15 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     assert.equal(Array.isArray(packItem.inputRefs), true);
     assert.equal(packItem.inputRefs.some((ref) => Object.hasOwn(ref.scope, "repoId")), false);
     assert.equal(packItem.inputRefs.some((ref) => Object.hasOwn(ref.scope, "taskId")), false);
-    assert.equal(toolResult.structuredContent.contextArtifact.inputRefs.some((ref) => ref.scope.repoId), true);
     assert.equal("body" in packItem, false);
     assert.match(toolResult.structuredContent.contextPackMarkdown, /# Grape Context Pack/);
     assert.match(toolResult.structuredContent.contextPackMarkdown, /## Artifact Summary/);
     assert.match(toolResult.structuredContent.contextPackMarkdown, /Artifact format: grape\.context-pack\.v1/);
     assert.match(toolResult.structuredContent.contextPackMarkdown, /## Diff Summary/);
     assert.match(toolResult.structuredContent.contextPackMarkdown, /## Artifact Sections/);
-    assert.match(toolResult.structuredContent.contextPackMarkdown, /Input refs:/);
+    assert.match(toolResult.structuredContent.contextPackMarkdown, /Exact item payloads are in contextPackItems/);
     assert.match(toolResult.structuredContent.artifactFiles.json, /^\.grape\//);
+    assert.equal(toolResult.structuredContent.artifactRef.artifactFiles.json, toolResult.structuredContent.artifactFiles.json);
     const artifactJson = JSON.parse(
       readFileSync(path.join(repoPath, toolResult.structuredContent.artifactFiles.json), "utf8")
     );

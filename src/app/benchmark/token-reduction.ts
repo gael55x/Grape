@@ -4,6 +4,7 @@ import type { TokenReductionBenchmarkInput, TokenReductionBenchmarkResult } from
 
 const minSecondTurnReductionPercent = 30;
 const maxFirstTurnOverheadPercent = 10;
+const maxFirstTurnAgentOutputOverheadPercent = 400;
 
 export function runTokenReductionBenchmark(
   input: TokenReductionBenchmarkInput
@@ -47,6 +48,7 @@ export function runTokenReductionBenchmark(
       thresholds: {
         minSecondTurnReductionPercent,
         maxFirstTurnOverheadPercent,
+        maxFirstTurnAgentOutputOverheadPercent,
         requireZeroUnsafeOmissions: true,
         requireZeroStaleItemsSent: true,
         requireSecondTurnOmission: true,
@@ -64,6 +66,7 @@ export function runTokenReductionBenchmark(
 function tokenReductionFailures(
   firstTurn: {
     readonly overheadPercent: number;
+    readonly agentOutputOverheadPercent: number;
   },
   secondTurn: {
     readonly reductionPercent: number;
@@ -76,6 +79,9 @@ function tokenReductionFailures(
   const failures: string[] = [];
   if (firstTurn.overheadPercent > maxFirstTurnOverheadPercent) {
     failures.push("first_turn_overhead_above_threshold");
+  }
+  if (firstTurn.agentOutputOverheadPercent > maxFirstTurnAgentOutputOverheadPercent) {
+    failures.push("first_turn_agent_output_overhead_above_threshold");
   }
   if (secondTurn.reductionPercent < minSecondTurnReductionPercent) {
     failures.push("second_turn_reduction_below_threshold");
@@ -101,7 +107,9 @@ function totalsFor(turns: readonly {
   readonly naiveTokens: number;
   readonly reductionPercent: number;
   readonly overheadPercent: number;
+  readonly agentOutputOverheadPercent: number;
   readonly serializedPackTokens: number;
+  readonly serializedAgentOutputTokens: number;
   readonly omittedUnchangedTokens: number;
   readonly pinnedOverheadTokens: number;
   readonly invalidationOverheadTokens: number;
@@ -118,6 +126,8 @@ function totalsFor(turns: readonly {
     secondTurnNaiveTokens: second?.naiveTokens ?? 0,
     secondTurnReductionPercent: second?.reductionPercent ?? 0,
     serializedPackTokens: turns.reduce((total, turn) => total + turn.serializedPackTokens, 0),
+    serializedAgentOutputTokens: turns.reduce((total, turn) => total + turn.serializedAgentOutputTokens, 0),
+    firstTurnAgentOutputOverheadPercent: first?.agentOutputOverheadPercent ?? 0,
     omittedUnchangedTokens: turns.reduce((total, turn) => total + turn.omittedUnchangedTokens, 0),
     pinnedOverheadTokens: turns.reduce((total, turn) => total + turn.pinnedOverheadTokens, 0),
     invalidationOverheadTokens: turns.reduce((total, turn) => total + turn.invalidationOverheadTokens, 0),
