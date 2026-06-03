@@ -2,6 +2,10 @@ import { performance } from "node:perf_hooks";
 
 import { compileLocalContext } from "../local-project/context/compile.js";
 import type { CompileLocalContextResult } from "../local-project/types.js";
+import {
+  buildBenchmarkTokenBreakdown,
+  firstTurnOverheadPercent
+} from "./token-breakdown.js";
 import type { BenchmarkTurnMetric } from "./types.js";
 
 export function runBenchmarkCompileTurn(input: {
@@ -42,6 +46,7 @@ function turnMetric(
   durationMs: number
 ): BenchmarkTurnMetric {
   const stateCounts = countPackStates(result);
+  const tokenBreakdown = buildBenchmarkTokenBreakdown(result.contextPackItems);
   return {
     turn,
     artifactId: result.artifactId,
@@ -56,13 +61,17 @@ function turnMetric(
     stateCounts,
     naiveTokens: result.tokenMetric.naiveTokens,
     grapeTokens: result.tokenMetric.grapeTokens,
+    serializedPackTokens: tokenBreakdown.serializedPackTokens,
     omittedUnchangedTokens: result.tokenMetric.omittedUnchangedTokens,
     compressionSavedTokens: result.tokenMetric.compressionSavedTokens,
     pinnedOverheadTokens: result.tokenMetric.pinnedOverheadTokens,
     invalidationOverheadTokens: result.tokenMetric.invalidationOverheadTokens,
     unsafeOmissions: result.tokenMetric.unsafeOmissions,
     staleItemsSent: result.tokenMetric.staleItemsSent,
-    reductionPercent: result.tokenMetric.reductionPercent
+    reductionPercent: result.tokenMetric.reductionPercent,
+    overheadPercent: firstTurnOverheadPercent(result.tokenMetric.naiveTokens, result.tokenMetric.grapeTokens),
+    stateTokenBreakdown: tokenBreakdown.byState,
+    sectionTokenBreakdown: tokenBreakdown.bySection
   };
 }
 

@@ -97,29 +97,49 @@ Token reduction thresholds apply only to `clean-typescript-app`. Invalidation be
 
 Current benchmark thresholds:
 
+- first-turn overhead must be no more than 10 percent above naive resend
 - second-turn reduction must be at least 30 percent
 - unsafe omissions must be zero
 - stale items sent must be zero
 - second turn must include at least one `OMIT_UNCHANGED`
 - second turn must include at least one `RESTORE_AVAILABLE`
 
+Benchmark output also reports serialized context-pack token estimates and token breakdowns by diff state and section. These are transport diagnostics: body-token counts explain logical context savings, while serialized-pack counts show JSON overhead from metadata, restore hints, and dependency references.
+
 These numbers are deterministic approximate token estimates, not release performance claims. They are valid as harness checks because they run against named fixtures and fail on unsafe omission or stale send counters.
 
 ## Metric Schema
 
 ```ts
-interface TokenSavingsMetric {
+interface BenchmarkTurnMetric {
   fixture: string;
   taskId: string;
   turn: number;
   naiveTokens: number;
   grapeTokens: number;
+  serializedPackTokens: number;
   omittedUnchangedTokens: number;
   compressionSavedTokens: number;
   pinnedOverheadTokens: number;
   invalidationOverheadTokens: number;
   unsafeOmissions: number;
   staleItemsSent: number;
+  reductionPercent: number;
+  overheadPercent: number;
+  stateTokenBreakdown: Array<{
+    state: DiffState;
+    itemCount: number;
+    bodyTokens: number;
+    serializedTokens: number;
+  }>;
+  sectionTokenBreakdown: Array<{
+    sectionId: string;
+    state: DiffState;
+    itemKind: ContextPackItemKind;
+    itemRef: string;
+    bodyTokens: number;
+    serializedTokens: number;
+  }>;
 }
 ```
 

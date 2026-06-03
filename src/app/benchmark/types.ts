@@ -20,6 +20,22 @@ export interface SessionResetBenchmarkInput extends BenchmarkFixtureInput {}
 
 export type BenchmarkStatus = "pass" | "fail";
 
+export interface BenchmarkStateTokenBreakdown {
+  readonly state: string;
+  readonly itemCount: number;
+  readonly bodyTokens: number;
+  readonly serializedTokens: number;
+}
+
+export interface BenchmarkSectionTokenBreakdown {
+  readonly sectionId: string;
+  readonly state: string;
+  readonly itemKind: string;
+  readonly itemRef: string;
+  readonly bodyTokens: number;
+  readonly serializedTokens: number;
+}
+
 export interface BenchmarkTurnMetric {
   readonly turn: number;
   readonly artifactId: string;
@@ -34,6 +50,7 @@ export interface BenchmarkTurnMetric {
   readonly stateCounts: Record<string, number>;
   readonly naiveTokens: number;
   readonly grapeTokens: number;
+  readonly serializedPackTokens: number;
   readonly omittedUnchangedTokens: number;
   readonly compressionSavedTokens: number;
   readonly pinnedOverheadTokens: number;
@@ -41,6 +58,9 @@ export interface BenchmarkTurnMetric {
   readonly unsafeOmissions: number;
   readonly staleItemsSent: number;
   readonly reductionPercent: number;
+  readonly overheadPercent: number;
+  readonly stateTokenBreakdown: readonly BenchmarkStateTokenBreakdown[];
+  readonly sectionTokenBreakdown: readonly BenchmarkSectionTokenBreakdown[];
 }
 
 export interface TokenReductionBenchmarkResult {
@@ -51,6 +71,7 @@ export interface TokenReductionBenchmarkResult {
   readonly workspacePath?: string;
   readonly thresholds: {
     readonly minSecondTurnReductionPercent: number;
+    readonly maxFirstTurnOverheadPercent: number;
     readonly requireZeroUnsafeOmissions: true;
     readonly requireZeroStaleItemsSent: true;
     readonly requireSecondTurnOmission: true;
@@ -60,9 +81,12 @@ export interface TokenReductionBenchmarkResult {
   readonly totals: {
     readonly wallClockMs: number;
     readonly firstTurnTokens: number;
+    readonly firstTurnNaiveTokens: number;
+    readonly firstTurnOverheadPercent: number;
     readonly secondTurnTokens: number;
     readonly secondTurnNaiveTokens: number;
     readonly secondTurnReductionPercent: number;
+    readonly serializedPackTokens: number;
     readonly omittedUnchangedTokens: number;
     readonly pinnedOverheadTokens: number;
     readonly invalidationOverheadTokens: number;

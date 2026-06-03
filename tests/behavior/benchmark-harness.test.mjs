@@ -37,6 +37,14 @@ test("cli bench reports deterministic token reduction for a named fixture", () =
   assert.equal(output.turns.length, 2);
   assert.equal(output.turns[0].turn, 1);
   assert.equal(output.turns[1].turn, 2);
+  assert.equal(output.thresholds.maxFirstTurnOverheadPercent, 10);
+  assert.equal(output.turns[0].overheadPercent <= output.thresholds.maxFirstTurnOverheadPercent, true);
+  assert.equal(output.turns[0].serializedPackTokens > 0, true);
+  assert.equal(output.totals.serializedPackTokens > 0, true);
+  assert.equal(output.totals.firstTurnNaiveTokens > 0, true);
+  assert.equal(typeof output.totals.firstTurnOverheadPercent, "number");
+  assert.equal(output.turns[0].stateTokenBreakdown.some((entry) => entry.state === "NEW"), true);
+  assert.equal(output.turns[0].sectionTokenBreakdown.length > 0, true);
   assert.equal(output.turns[1].stateCounts.OMIT_UNCHANGED > 0, true);
   assert.equal(output.turns[1].restoreAvailableCount > 0, true);
   assert.equal(output.turns[1].unsafeOmissions, 0);

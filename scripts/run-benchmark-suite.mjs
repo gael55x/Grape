@@ -44,8 +44,12 @@ for (const fixture of fixtures) {
     benchmark: output.benchmark,
     status: output.status,
     turn1Tokens: output.turns?.[0]?.grapeTokens,
+    turn1OverheadPercent: output.turns?.[0]?.overheadPercent,
     turn2Tokens: second?.grapeTokens,
     turn2ReductionPercent: second?.reductionPercent ?? output.totals?.secondTurnReductionPercent,
+    serializedPackTokens:
+      output.totals?.serializedPackTokens ??
+      output.turns?.reduce((total, turn) => total + (turn.serializedPackTokens ?? 0), 0),
     omitUnchanged: second?.stateCounts?.OMIT_UNCHANGED ?? 0,
     invalidatePrevious: second?.stateCounts?.INVALIDATE_PREVIOUS ?? 0,
     unsafeOmissions: second?.unsafeOmissions ?? 0,
@@ -63,7 +67,8 @@ for (const row of rows) {
   console.log(
     [
       `- ${row.fixture} (${row.benchmark}): ${row.status}`,
-      `  turn1=${row.turn1Tokens} turn2=${row.turn2Tokens} reduction=${row.turn2ReductionPercent ?? "n/a"}%`,
+      `  turn1=${row.turn1Tokens} overhead=${row.turn1OverheadPercent ?? "n/a"}% turn2=${row.turn2Tokens} reduction=${row.turn2ReductionPercent ?? "n/a"}%`,
+      `  serializedPackTokens=${row.serializedPackTokens ?? "n/a"}`,
       `  OMIT_UNCHANGED=${row.omitUnchanged} INVALIDATE_PREVIOUS=${row.invalidatePrevious} unsafe=${row.unsafeOmissions}`,
       row.failures?.length ? `  failures=${row.failures.join(", ")}` : undefined
     ]

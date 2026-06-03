@@ -3,6 +3,7 @@ import { prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
 import type { TokenReductionBenchmarkInput, TokenReductionBenchmarkResult } from "./types.js";
 
 const minSecondTurnReductionPercent = 30;
+const maxFirstTurnOverheadPercent = 10;
 
 export function runTokenReductionBenchmark(
   input: TokenReductionBenchmarkInput
@@ -35,7 +36,7 @@ export function runTokenReductionBenchmark(
       migrationsDir: input.migrationsDir
     });
     const turns = [first, second];
-    const failures = tokenReductionFailures(second);
+    const failures = tokenReductionFailures(first, second);
 
     return {
       benchmark: "bench_token_reduction_after_first_turn",
@@ -45,6 +46,7 @@ export function runTokenReductionBenchmark(
       workspacePath: input.keepWorkspace ? prepared.workspacePath : undefined,
       thresholds: {
         minSecondTurnReductionPercent,
+        maxFirstTurnOverheadPercent,
         requireZeroUnsafeOmissions: true,
         requireZeroStaleItemsSent: true,
         requireSecondTurnOmission: true,
@@ -59,14 +61,22 @@ export function runTokenReductionBenchmark(
   }
 }
 
-function tokenReductionFailures(secondTurn: {
-  readonly reductionPercent: number;
-  readonly unsafeOmissions: number;
-  readonly staleItemsSent: number;
-  readonly stateCounts: Record<string, number>;
-  readonly restoreAvailableCount: number;
-}): string[] {
+function tokenReductionFailures(
+  firstTurn: {
+    readonly overheadPercent: number;
+  },
+  secondTurn: {
+    readonly reductionPercent: number;
+    readonly unsafeOmissions: number;
+    readonly staleItemsSent: number;
+    readonly stateCounts: Record<string, number>;
+    readonly restoreAvailableCount: number;
+  }
+): string[] {
   const failures: string[] = [];
+  if (firstTurn.overheadPercent > maxFirstTurnOverheadPercent) {
+    failures.push("first_turn_overhead_above_threshold");
+  }
   if (secondTurn.reductionPercent < minSecondTurnReductionPercent) {
     failures.push("second_turn_reduction_below_threshold");
   }
@@ -85,14 +95,29 @@ function tokenReductionFailures(secondTurn: {
   return failures;
 }
 
-function totalsFor(turns: readonly { readonly durationMs: number; readonly grapeTokens: number; readonly naiveTokens: number; readonly reductionPercent: number; readonly omittedUnchangedTokens: number; readonly pinnedOverheadTokens: number; readonly invalidationOverheadTokens: number; readonly invalidationItemCount: number; readonly restoreAvailableCount: number }[]): TokenReductionBenchmarkResult["totals"] {
+function totalsFor(turns: readonly {
+  readonly durationMs: number;
+  readonly grapeTokens: number;
+  readonly naiveTokens: number;
+  readonly reductionPercent: number;
+  readonly overheadPercent: number;
+  readonly serializedPackTokens: number;
+  readonly omittedUnchangedTokens: number;
+  readonly pinnedOverheadTokens: number;
+  readonly invalidationOverheadTokens: number;
+  readonly invalidationItemCount: number;
+  readonly restoreAvailableCount: number;
+}[]): TokenReductionBenchmarkResult["totals"] {
   const [first, second] = turns;
   return {
     wallClockMs: Math.round(turns.reduce((total, turn) => total + turn.durationMs, 0) * 100) / 100,
     firstTurnTokens: first?.grapeTokens ?? 0,
+    firstTurnNaiveTokens: first?.naiveTokens ?? 0,
+    firstTurnOverheadPercent: first?.overheadPercent ?? 0,
     secondTurnTokens: second?.grapeTokens ?? 0,
     secondTurnNaiveTokens: second?.naiveTokens ?? 0,
     secondTurnReductionPercent: second?.reductionPercent ?? 0,
+    serializedPackTokens: turns.reduce((total, turn) => total + turn.serializedPackTokens, 0),
     omittedUnchangedTokens: turns.reduce((total, turn) => total + turn.omittedUnchangedTokens, 0),
     pinnedOverheadTokens: turns.reduce((total, turn) => total + turn.pinnedOverheadTokens, 0),
     invalidationOverheadTokens: turns.reduce((total, turn) => total + turn.invalidationOverheadTokens, 0),
