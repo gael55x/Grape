@@ -109,6 +109,17 @@ Migration `0004_compression_cache.sql` adds the first deterministic compression 
 
 The current implementation writes `symbol_outline` records from the deterministic symbol index, `rule_digest` records from verified active rule excerpt proofs, and `context_pack_summary` records from the session-scoped sent ledger after durable pack persistence. Compression repositories persist derived cache records only; they do not decide compiler policy, trust, proof validity, or whether a summary can replace context.
 
+Migration `0005_context_performance_indexes.sql` adds performance indexes only:
+
+- `context_pack_items(session_id, diff_state, invalidates_sent_item_id)` supports invalidation-ref queries without loading every pack row.
+- `context_pack_items(session_id, diff_state, created_at, pack_item_id)` supports sent-payload lookup for dependency staleness checks.
+- `context_sent_items(session_id, branch_name, commit_sha, item_kind, section_id, last_sent_at)` supports active/current sent-ledger queries for context-pack summaries.
+- `fts_entries(snapshot_id, source_ref, fts_entry_id)` supports bounded lexical lookup ordering.
+
+These indexes do not change persisted data shape or safety policy. App services still decide staleness, omission, restore, and invalidation behavior.
+
+Local snapshot persistence may reuse an already-captured `RepoSnapshot` from the caller instead of running Git/file hashing twice. When the same immutable snapshot row already exists, evidence and index materialization may be skipped only after storage proves the expected source/rejection rows and expected index families are present. Missing evidence or index rows force a rebuild instead of assuming the snapshot is complete.
+
 MCP restricted writes currently reuse existing V1 tables instead of adding premature write-specific migrations. Command/test observation writes use `sources` with `source_type = 'command_run'` or `source_type = 'test_run'`, `trust_class = 'temporary'`, and `redaction_status = 'redacted'`. The local CLI observed runner also reuses `sources` for Grape-observed command/test rows, but writes them with `trust_class = 'trusted'`, `redaction_status = 'redacted'`, `observedBy = 'grape'`, `observedByGrape = true`, and a Grape-created `observedRunId` in metadata. In the same application-owned transaction it can also write a direct `proofs` row with `proof_type = 'grape_observed_run_result'`, a `claim_candidates` row, a verified `claims` row with `claim_type = 'grape_observed_run_result'`, and a proof-to-claim link. For this proof type, `excerpt_hash` stores the deterministic observed-run result hash because the existing proof table has not yet split excerpt hashes from other proof support hashes. Candidate writes create a temporary `assistant_response` source when needed and link it to `claim_candidates` with `rejection_reason = 'mcp_candidate_requires_proof'`. User decisions use `sources` with `source_type = 'user_message'`, `trust_class = 'temporary'`, and `redaction_status = 'redacted'`. Raw command, stdout, stderr, prompt, response, and candidate evidence bodies are not stored in source metadata; only hashes and scoped metadata are persisted.
 
 ## Repository Boundary
@@ -154,6 +165,7 @@ MCP restricted writes currently reuse existing V1 tables instead of adding prema
 - Branch switches are recorded in `session_events` as `eventType: "session_invalidated"` with `reason: "branch_changed"` so branch-scoped sent context invalidation is auditable.
 - Repository construction must apply the SQLite connection policy so foreign keys are not optional caller discipline.
 - Durable context builds must persist artifact, dependency, pack, sent, and omitted rows in one transaction owned by `src/app/`.
+- Local artifact file materialization uses temp-file then rename writes so partial local files are not exposed when materialization fails. The writes currently remain coupled to the durable send transaction so Grape does not mark context as sent before local output has passed render/secret-scan/materialization.
 
 The default connection policy is encoded in `src/core/storage/sqlite-policy.ts` and covered by behavioral tests. Runtime migration application uses Node's built-in `node:sqlite` through `src/core/storage/sqlite-runtime.ts`, so V1 requires Node 22.5 or newer and avoids a native SQLite package dependency. Storage factories must apply the pragma statements before running migrations or repository writes. Packaged builds copy SQL migrations into `dist/core/storage/migrations/`; the local storage bootstrap resolves that directory from compiled code so global installs do not need TypeScript source files at runtime.
 
@@ -200,12 +212,14 @@ Local bootstrap-capable flows (`init`, `sync`, and `compile`) may repair an unus
 - `snapshot_evidence_persists_allowed_sources`
 - `snapshot_evidence_persists_private_rejections_without_raw_content`
 - `snapshot_evidence_persistence_is_idempotent`
+- `snapshot_evidence_and_index_reuse_requires_existing_rows`
 - `file_index_persists_module_nodes_and_import_edges`
 - `file_index_excludes_private_sources`
 - `file_index_skips_symlinks_without_reading_targets`
 - `file_index_skips_hash_mismatches`
 - `file_index_skips_binary_files`
 - `file_index_persistence_is_idempotent`
+- `file_index_rebuilds_missing_rows_for_existing_snapshot`
 - `path_normalization_handles_windows_separators`
 - `fts_entries_do_not_store_raw_secrets`
 - `validated_source_proof_rows_persist_idempotently`
@@ -214,3 +228,4 @@ Local bootstrap-capable flows (`init`, `sync`, and `compile`) may repair an unus
 - `source_claim_candidate_rejected_without_proof`
 - `compression_artifact_requires_input_hashes`
 - `compression_dependency_is_in_artifact_manifest`
+- `session_ledger_scoped_query_helpers_are_session_bound`

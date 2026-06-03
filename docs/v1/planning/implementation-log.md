@@ -735,3 +735,10 @@ Keep entries simple:
 - Summary: compacted default MCP `grape_get_context` transport for beta token-efficiency proof. The default output is now `agent_pack` with compact pack scopes, artifact refs, compact Markdown, short MCP text summaries, and an adjacency `agentGraph` over returned context-pack items. Full embedded artifacts remain available through `outputMode: "full"` or `grape_get_artifact`. Benchmarks now estimate serialized default agent-output tokens and fail the stable fixture when first-turn agent-output overhead exceeds 400 percent.
 - Checks run: `npm run build:test`; focused MCP/context-artifact/benchmark behavior tests; `npm run benchmark:run`.
 - Risks/follow-ups: serialized output overhead is now measured and gated but still materially higher than logical body tokens. Further savings should target restore/invalidation row compacting and first-turn metadata density without weakening restore or invalidation safety.
+
+### 2026-06-03 - Beta Pipeline Performance Hardening
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: hardened local compile performance without changing V1 transport semantics. Compile/init/write-session flows now pass the already-captured immutable repo snapshot into persistence, snapshot persistence skips repeat evidence/index materialization only when expected rows already exist, storage exposes scoped sent-ledger and invalidation-ref queries, lexical search uses bounded SQL prefiltering before the existing normalized matcher fallback, and migration `0005_context_performance_indexes.sql` adds supporting lookup indexes. Artifact file writes now use temp-file then rename materialization to reduce partial-file risk while preserving durable send rollback semantics.
+- Checks run: `npm run build:test`; focused snapshot/index/storage/durable/compression behavior tests.
+- Risks/follow-ups: artifact writes intentionally still happen before the durable send transaction returns, because moving them fully after commit can mark context as sent before local output exists. A future two-phase materialization design should solve that without weakening session-ledger correctness.

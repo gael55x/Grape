@@ -21,6 +21,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added the beta trial checklist for real MCP client install/connect/recover trials, pass/fail criteria, feedback capture, and explicit exclusions for broader observed-run behavior claims, broader claim types, generated/candidate rule promotion, automatic conflict resolution, and semantic/broad-language retrieval.
 - Split local observation recording internals under `src/app/local-project/observation/` while preserving the public `observations.ts` export surface.
 - Reorganized `src/app/local-project/` into workflow-owned subdirectories for setup, context compilation, inspection, omission restore, restricted writes, observation, source excerpts, and public contract types.
+- Added a storage performance hardening pass for the beta context pipeline: caller-captured snapshots are reused, already-materialized snapshot evidence/index rows are skipped only when complete, context summary/durable diff paths use scoped ledger queries, lexical search uses bounded SQL prefiltering with normalized fallback, and migration `0005_context_performance_indexes.sql` adds supporting lookup indexes.
 - Initial V1 documentation architecture.
 - Committed canonical V1 implementation contract at `docs/v1/SPEC.md`.
 - Implementation planning now uses goal names: Documentation Foundation, In-Memory Context Loop, and Alpha Product Slice.

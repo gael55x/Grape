@@ -48,6 +48,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 - Graph expansion may select directly related source files through supported import and call edges.
 - Related tests may be selected when a test imports or calls a selected source file.
 - Lexical matches may add source refs from safe indexed text.
+- Lexical repository search should use storage-bounded prefiltering where possible, but the deterministic normalized matcher remains the final authority so punctuation/case normalization behavior does not change.
 - Current-valid `grape_observed_run_result` claims from the current compile session may be rendered with task-scoped claims. Compile sessions are task-bound, and current-valid checks still require matching branch, commit, worktree hash, source hash, and result hash.
 - Current-valid parsed `project_rule` claims may render with task-scoped claims, while exact rule text remains pinned in the active-project-rules section.
 - Selection is capped; truncation is reported as a warning.
