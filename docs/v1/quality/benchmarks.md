@@ -82,16 +82,16 @@ Full alpha e2e (dist build, pack install smoke, benchmark suite):
 npm run e2e:alpha
 ```
 
-### Recorded baselines (local reference, 2026-05-30)
+### Recorded baselines (local reference, 2026-06-03)
 
-Machine-local reference run on `main` after the three-fixture harness landed. CI may differ slightly; use `npm run benchmark:run` to refresh. The session-reset row is recorded as a threshold shape until the next baseline refresh lands with the four-fixture harness.
+Machine-local reference run on `main` with Node.js 22.18.0. CI may differ slightly; use `npm run benchmark:run` to refresh.
 
 | Fixture | Turn 1 tokens | Turn 2 tokens | Turn 2 reduction | `OMIT_UNCHANGED` | `INVALIDATE_PREVIOUS` | Unsafe |
 |---|---:|---:|---:|---:|---:|---|
-| `clean-typescript-app` | 2069 | 1441 | 44.49% | 7 | 1 | 0 |
-| `branch-switch-typescript-app` | 2069 | 2697 | 0% | 0 | 9 | 0 |
-| `stale-source-typescript-app` | 2069 | 2861 | 0% | 0 | 9 | 0 |
-| `session-reset-typescript-app` | 2091 | 3234 | 0% | 0 | 9 | 0 |
+| `clean-typescript-app` | 2414 | 1614 | 45.12% | 7 | 1 | 0 |
+| `branch-switch-typescript-app` | 2414 | 3042 | 0% | 0 | 9 | 0 |
+| `stale-source-typescript-app` | 2414 | 3206 | 0% | 0 | 9 | 0 |
+| `session-reset-typescript-app` | 2848 | 3991 | 0% | 0 | 9 | 0 |
 
 Token reduction thresholds apply only to `clean-typescript-app`. Invalidation benchmarks require `INVALIDATE_PREVIOUS > 0` on turn 2 with zero unsafe omissions. The session-reset benchmark also requires `NEW > 0` and `OMIT_UNCHANGED = 0` on the reset turn to prove the agent receives a safe full resend instead of a no-change omission.
 
