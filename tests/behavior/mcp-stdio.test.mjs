@@ -823,6 +823,9 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     assert.equal(typeof packItem.id, "string");
     assert.equal(typeof packItem.content, "string");
     assert.equal(Array.isArray(packItem.inputRefs), true);
+    assert.equal(packItem.inputRefs.some((ref) => Object.hasOwn(ref.scope, "repoId")), false);
+    assert.equal(packItem.inputRefs.some((ref) => Object.hasOwn(ref.scope, "taskId")), false);
+    assert.equal(toolResult.structuredContent.contextArtifact.inputRefs.some((ref) => ref.scope.repoId), true);
     assert.equal("body" in packItem, false);
     assert.match(toolResult.structuredContent.contextPackMarkdown, /# Grape Context Pack/);
     assert.match(toolResult.structuredContent.contextPackMarkdown, /## Artifact Summary/);
@@ -878,6 +881,8 @@ test("mcp grape_get_context invalidates prior sent context when a session switch
     assert.equal(second.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "NEW"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), false);
+    assert.match(second.contextPackMarkdown, /### INVALIDATE_PREVIOUS Summary/);
+    assert.match(second.contextPackMarkdown, /Full invalidatesSentItemId values remain in contextPackItems\./);
 
     const stale = runMcp(repoPath, [
       {

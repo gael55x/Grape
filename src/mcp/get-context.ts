@@ -1,10 +1,11 @@
 import path from "node:path";
-import { readFileSync } from "node:fs";
 
 import { compileLocalContext } from "../app/local-project/index.js";
 import type { CompileLocalContextResult } from "../app/local-project/index.js";
 import type { ContextPackItemShape, DiffState, RiskOverlay, TaskType } from "../shared/index.js";
 import { taskTypes } from "../shared/index.js";
+import { renderAgentContextPackMarkdown } from "./context-pack-agent-markdown.js";
+import { compactAgentContextPackItems } from "./context-pack-agent-output.js";
 import { resolveMcpSessionId } from "./session.js";
 
 export interface GrapeGetContextToolInput {
@@ -73,6 +74,8 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
 
   const warningSet = new Set([...result.warnings, ...unsupportedInputWarnings(parsed)]);
   const warnings = [...warningSet];
+  const contextPackItems = compactAgentContextPackItems(result.contextPackItems);
+  const diffSummary = summarizeDiff(contextPackItems);
   return {
     artifactId: result.artifactId,
     artifactHash: result.artifactHash,
@@ -85,9 +88,17 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     riskOverlays: result.riskOverlays,
     compileMode: compileModeFor(result, warnings),
     contextArtifact: result.contextArtifact,
-    contextPackItems: result.contextPackItems,
-    contextPackMarkdown: readFileSync(result.artifactMarkdownPath, "utf8"),
-    diffSummary: summarizeDiff(result.contextPackItems),
+    contextPackItems,
+    contextPackMarkdown: renderAgentContextPackMarkdown({
+      artifactId: result.artifactId,
+      contextArtifact: result.contextArtifact,
+      contextPackItems,
+      diffSummary,
+      warnings,
+      unsafeReasons: result.unsafeReasons,
+      budget: result.budget
+    }),
+    diffSummary,
     warnings,
     unsafeReasons: result.unsafeReasons,
     recoveryGuidance: result.recoveryGuidance,
