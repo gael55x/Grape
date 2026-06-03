@@ -90,6 +90,7 @@ flowchart LR
 | `src/core/storage/` | Repositories, migrations, SQLite connection policy. | `src/shared/`. | CLI/MCP, compiler policy, trust decisions. | `../core/storage.md` |
 | `src/core/git/` | Git state, branch, commit, dirty tree, ignore inputs. | `security`, shared types. | storage SQL. | `../core/storage.md`, `../core/security.md` |
 | `src/core/indexing/` | File/symbol/lexical indexing. | `git`, `security`, storage interfaces. | trust promotion. | `../core/storage.md` |
+| `src/core/indexing/languages/` | Language and framework index providers that emit normalized nodes, edges, capabilities, and diagnostics. | indexing types, path/security helpers, parser libraries. | retrieval policy, compiler policy, trust promotion, storage SQL. | `../core/language-indexing.md`, `../core/retrieval.md` |
 | `src/core/security/` | Redaction, ignored-file approval, artifact scans. | shared types. | adapter transport. | `../core/security.md` |
 | `src/shared/` | Shared types, schemas, errors, constants, path utilities. | none or platform libraries. | domain workflows. | all docs |
 | `tests/` | Test helpers and fixtures. | production public APIs. | production import of test helpers. | `../quality/testing.md` |
@@ -136,6 +137,7 @@ flowchart TD
 - Production code must not import from `tests/`, benchmark harnesses, or fixture helpers.
 - Shared utilities must stay narrow. If a utility needs domain vocabulary, it belongs in that domain module.
 - Shared agent transport contracts may define the stable serialized shapes consumed by both MCP and benchmark code, such as compact `agent_pack` graph cuts and agent Markdown summaries. They must not own repository IO, trust decisions, retrieval policy, or MCP adapter behavior.
+- Language and framework providers are extraction adapters inside indexing. They may produce normalized symbols, edges, capability metadata, and diagnostics, but retrieval and compiler policy decide what context is selected and rendered. Provider facts remain orientation and cannot become proof.
 
 `npm run architecture:check` enforces the basic import boundaries from this section. It is intentionally conservative and only checks layer direction. Domain-specific behavior still needs normal review and tests.
 
@@ -189,6 +191,8 @@ CLI command handlers and MCP tools must keep calling local-project app services 
 Observed-run result proof/claim promotion is an application service boundary in `src/app/persist-observed-run-claims.ts`: core proofs/claims own validation and gates, storage repositories persist already-validated rows, and the local runner owns the transaction that keeps source, proof, candidate, claim, and proof link atomic.
 
 The Git snapshot path is split under `src/core/git/` by responsibility: `repo-snapshot.ts` owns Git command orchestration, branch/worktree identity, dirty-path filtering, and snapshot hash construction; `file-manifest.ts` owns file read gates, source-kind classification, source file hashes, and privacy-safe file rejection metadata. Future scanner safety checks belong in `file-manifest.ts` unless they require Git command orchestration.
+
+The indexing path should split language-specific extraction under `src/core/indexing/languages/` before adding broad parser support. The top-level indexing orchestrator owns provider dispatch, safe fallback, and normalized output assembly; provider files own only one language or framework's extraction rules. Monorepo/package boundary detection should live in focused indexing modules, not in retrieval ranking or compiler section builders.
 
 The compiler path is split under `src/core/compiler/` by artifact ownership rather than by generic helper type. `artifact/` owns public/scaffold artifact shape guards and public artifact projection builders, `pack/` owns context-pack item mapping, budget evaluation, and optional budget pruning, and `repository/` owns repository-derived artifact compilation. Inside `repository/`, `manifest/` owns dependency manifest construction, `proofs/` owns compiler proof-ref helpers, `validation/` owns artifact and manifest integrity checks, `selection/` owns bounded source/symbol selection, `sections/` owns section assembly plus section-local dependency helpers, `sections/builders/` owns individual section builders, `policy/` owns compiler task/risk policy, `rendering/` owns JSON/render input contracts, and `markdown/` owns agent-facing Markdown rendering for compiled repository context packs. External layers should import through `src/core/compiler/index.ts` unless a same-layer implementation test needs a focused internal function.
 

@@ -95,6 +95,10 @@ Migration `0002_indexing_foundation.sql` implements the first indexing-specific 
 
 This is intentionally a foundation, not a complete code intelligence graph. The current extractor is deterministic and AST-backed for TypeScript/JavaScript modules, symbols, exports, imports, methods, and direct call expressions, with regex fallback only for unsupported inputs. It records confidence and discovery method so downstream compiler logic cannot mistake the index for proof or complete semantic coverage.
 
+Future broad language support must not add parser-specific assumptions directly to storage repositories or retrieval policy. Language and framework providers should emit the same normalized `symbol_nodes` / `symbol_edges` vocabulary plus provider capability metadata in record metadata until a dedicated capability table is justified. Unsupported languages must continue to persist safe module/file nodes and lexical rows where source text is allowed, and must surface provider gaps as compiler/retrieval warnings rather than as missing silent context.
+
+Monorepo support should keep package/workspace boundaries in dependency metadata before adding new schema. Package-local manifests, lockfiles, and workspace roots should be recorded as dependency refs for selected package context so package-scoped changes can invalidate narrowly. A schema migration for first-class package/workspace tables is allowed only when tests prove metadata-only scoping is insufficient.
+
 Migration `0003_fts_entries.sql` adds the first portable lexical index foundation:
 
 - `fts_entries` stores source-linked lexical entry metadata, hashes, and repo/snapshot refs.
@@ -220,6 +224,10 @@ Local bootstrap-capable flows (`init`, `sync`, and `compile`) may repair an unus
 - `file_index_skips_binary_files`
 - `file_index_persistence_is_idempotent`
 - `file_index_rebuilds_missing_rows_for_existing_snapshot`
+- `unsupported_language_gets_safe_lexical_fallback_with_warning`
+- `polyglot_repo_reports_provider_capability_gaps`
+- `monorepo_retrieval_preserves_package_boundaries`
+- `package_manifest_change_invalidates_package_scoped_context`
 - `path_normalization_handles_windows_separators`
 - `fts_entries_do_not_store_raw_secrets`
 - `validated_source_proof_rows_persist_idempotently`

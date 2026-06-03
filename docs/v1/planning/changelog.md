@@ -8,6 +8,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Added
 
+- Added the language-indexing contract and ADR-0011 for capability-based language providers, safe unsupported-language fallback, and monorepo/package boundary expectations without expanding V1 into a universal parser.
 - Added `npm run beta:check` as the extended local beta-readiness gate over `check`, benchmark, and alpha e2e smoke.
 - Added `npm run global:smoke` for post-publish verification of the registry-installed global package.
 - Hardened packaged install smoke to prove CLI omitted restore, task/session mismatch recovery, and reset recovery in the installed consumer-repo path.

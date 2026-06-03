@@ -13,6 +13,8 @@ Each entry should include:
 
 ## Unreleased
 
+- Clarified language-agnostic indexing: Grape transport must safely handle unsupported languages through exact/path/lexical fallback and explicit blind spots, while language-aware graph extraction is provider/capability-based and currently strongest for TypeScript/JavaScript.
+- Clarified monorepo retrieval expectations: package/workspace boundaries should be detected and preserved for source budgets and dependency refs where possible, with partial warnings when boundaries are unknown.
 - Clarified the local Grape-observed command/test runner contract: `grape run` and `grape test` execute from the repository root against an existing current context session, create observed run IDs, persist trusted redacted `command_run` / `test_run` source evidence with command/output hashes, reject secret-looking commands before execution, and promote only the narrow `grape_observed_run_result` proof/claim.
 - Clarified the current V1 retrieval contract: lightweight source selection uses explicit seeds, safe lexical rows, lightweight symbols/imports, and current-valid narrow source-excerpt claims; it reports truncation/no-match warnings and remains an impact candidate selector rather than full graph or semantic retrieval.
 - Added the Beta Retrieval V2 contract: deterministic TypeScript/JavaScript AST graph expansion may select source, test, import, export, and call-related context, while exact excerpts, rules, proofs, dependency manifests, and current-valid filtering remain authoritative.

@@ -108,7 +108,7 @@ Aligned with the root [`ROADMAP.md`](../../ROADMAP.md). The outward `ContextPack
 | Next — compile | excerpts, rules, retrieval, budgets | `src/core/compiler/`, `src/core/retrieval/`, `src/core/proofs/`, `src/core/claims/` |
 | Next — benchmarks | fixtures + `grape bench` thresholds | `src/app/benchmark/`, `tests/fixtures/` |
 | Soon — trust depth | more observed-run claim workflows, more claims, rules | `src/core/trust/`, `src/core/claims/`, `src/mcp/` |
-| Later — retrieval | durable compile, optional embeddings | `src/core/retrieval/`, `src/core/compiler/artifact/` |
+| Later — retrieval | durable compile, language-provider dispatch, monorepo/package boundaries, optional embeddings | `src/core/retrieval/`, `src/core/indexing/`, `src/core/compiler/artifact/` |
 
 ## Feature Decision Filter
 
@@ -125,6 +125,8 @@ Before adding V1 scope, confirm the work improves at least one of:
 | Exact excerpts + narrow proofs | yes | — | — |
 | Pinned rules + high-risk gate | yes | — | — |
 | Lightweight index + lexical | yes | — | — |
+| Language-agnostic provider capability layer | safe fallback + diagnostics | provider integrations after fixtures | universal parser |
+| Monorepo/package boundary retrieval | package-aware safety docs + fixtures | narrow package-scoped invalidation | complete multi-repo graph |
 | Inspector CLI/MCP | yes | — | — |
 | Deep repo graph (19 langs, Leiden) | lite only | graph MCP refs in artifacts | own graph product |
 | Embeddings / hybrid memory search | — | optional later | default cloud search |

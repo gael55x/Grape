@@ -742,3 +742,10 @@ Keep entries simple:
 - Summary: hardened local compile performance without changing V1 transport semantics. Compile/init/write-session flows now pass the already-captured immutable repo snapshot into persistence, snapshot persistence skips repeat evidence/index materialization only when expected rows already exist, storage exposes scoped sent-ledger and invalidation-ref queries, lexical search uses bounded SQL prefiltering before the existing normalized matcher fallback, and migration `0005_context_performance_indexes.sql` adds supporting lookup indexes. Artifact file writes now use temp-file then rename materialization to reduce partial-file risk while preserving durable send rollback semantics.
 - Checks run: `npm run build:test`; focused snapshot/index/storage/durable/compression behavior tests.
 - Risks/follow-ups: artifact writes intentionally still happen before the durable send transaction returns, because moving them fully after commit can mark context as sent before local output exists. A future two-phase materialization design should solve that without weakening session-ledger correctness.
+
+### 2026-06-03 - Language-Agnostic Retrieval Boundary
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: documented the language-provider capability model for polyglot and monorepo repos. Grape's transport remains language-agnostic, while language-aware graph extraction is provider-scoped orientation only. Unsupported languages and unknown package/workspace boundaries must fall back to safe exact/path/lexical context with explicit blind spots.
+- Checks run: pending in this change.
+- Risks/follow-ups: provider dispatch, package/workspace detection, polyglot fixtures, monorepo fixtures, and package-scoped invalidation tests remain implementation work before broad polyglot/monorepo beta claims.

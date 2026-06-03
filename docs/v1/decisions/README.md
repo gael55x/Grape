@@ -16,6 +16,7 @@ This folder contains Architecture Decision Records for V1.
 | `adr-0008-agent-artifact-annotations.md` | Accepted | Defer agent-authored artifact annotations from V1 rendered artifacts and keep MCP writes non-authoritative evidence only. |
 | `adr-0009-lexical-search-runtime-portability.md` | Accepted | Use portable table-backed lexical search instead of requiring SQLite FTS5 extension support. |
 | `adr-0010-context-transport-protocol.md` | Accepted | Anchor V1 on session-safe ContextPack transport; defer full memory-platform scope. |
+| `adr-0011-language-provider-capabilities.md` | Accepted | Keep broad language support capability-based with safe fallback and monorepo boundaries, without turning V1 into a universal parser. |
 
 ## Naming
 

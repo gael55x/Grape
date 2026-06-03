@@ -120,6 +120,10 @@ Storage and security:
 - `wal_mode_and_busy_timeout_configured`
 - `session_lock_survives_process_boundary`
 - `ignored_file_not_indexed_without_approval`
+- `unsupported_language_gets_safe_lexical_fallback_with_warning`
+- `polyglot_repo_reports_provider_capability_gaps`
+- `monorepo_retrieval_preserves_package_boundaries`
+- `package_manifest_change_invalidates_package_scoped_context`
 - `raw_env_value_not_in_artifact`
 - `redacted_display_hash_not_used_as_proof`
 - `path_normalization_handles_windows_separators`
@@ -139,6 +143,7 @@ Storage and security:
 - `compression-invalidation-fixture`
 - `session-reset-fixture`
 - `parallel-agents-fixture`
+- `polyglot-fallback-repo`
 
 ## Fixture Mapping
 
@@ -156,6 +161,7 @@ Storage and security:
 | `compression-invalidation-fixture` | input hash changes and `INVALIDATE_PREVIOUS` |
 | `session-reset-fixture` | full resend after reset/unknown session |
 | `parallel-agents-fixture` | session isolation and lock conflicts |
+| `polyglot-fallback-repo` | unsupported-language fallback, provider capability gaps, safe exact/path/lexical context, and no false graph claims |
 
 ## Review Rule
 

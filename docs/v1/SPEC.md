@@ -410,6 +410,8 @@ Grape V1.0 is not:
 - an autonomous patch applier
 - a general chatbot over a codebase
 
+Grape must still handle unsupported languages and unusual repository layouts safely. "Not a universal parser" means unsupported inputs fall back to file/path/lexical indexing, exact excerpts, dependency tracking, and explicit blind-spot warnings; it does not permit silent stale omissions or pretending graph coverage exists.
+
 ### 5.3 V1 priority order
 
 User-visible goal:
@@ -459,7 +461,9 @@ V1.0 should build the smallest useful infrastructure loop:
 - Project Rules ingestion
 - manual/user-confirmed decisions
 - repository-derived code-span claims
-- basic Tree-sitter symbol extraction
+- basic provider-backed symbol extraction
+- language/provider capability reporting with safe fallback behavior
+- package/workspace boundary detection for monorepo-safe source selection
 - current-valid retrieval
 - deterministic contradiction/supersession rules
 - task-specific compiler policies
@@ -516,15 +520,32 @@ Move these to V1.1+:
 
 ### 6.4 Supported V1 languages/files
 
-Primary:
+V1 separates **transport/indexable file support** from **language-aware graph extraction**.
+
+Transport/indexable fallback:
+
+- any allowed Git-visible text file whose bytes pass privacy, size, binary, hash, and secret-scan gates
+- unsupported language files receive file path/text indexing and exact-source excerpt support where safe
+- example fallback languages include Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, shell, and Terraform until a provider proves stronger graph capabilities
+- parser failures receive file-level lexical indexing with warnings
+
+Primary graph extraction:
 
 - TypeScript
 - TSX
 - JavaScript
-- Python
+- JSX
+
+Known indexable/config inputs:
+
 - Markdown
 - JSON
 - YAML
+- Python
+- Java
+- Kotlin
+- Go
+- Rust
 
 Best-effort:
 
@@ -543,6 +564,8 @@ Fallback:
 - parser failure → file-level lexical indexing
 - huge file → skip/truncate with warning
 - binary file → skip
+- nested package/workspace uncertainty → partial context warning
+- generated or framework-magic edge uncertainty → blind-spot warning
 
 ---
 
@@ -635,7 +658,7 @@ sequenceDiagram
 | Integration | MCP over stdio + CLI |
 | Default data location | `.grape/` |
 | Cloud sync | off / not V1 |
-| Parser | Tree-sitter adapter with fallback |
+| Parser | provider-backed language extraction with safe fallback |
 | Supported OS | macOS, Linux, WSL; Windows native best-effort |
 
 Basic install must not require local native compilation. If SQLite or parser packages need native code, V1 must ship prebuilt binaries for supported platforms or fall back to a pure JS/WASM/file-level mode with an explicit warning.
@@ -1099,7 +1122,7 @@ no secret/redaction violation exists
 V1.0 allowed durable extraction:
 
 - repository facts from code spans
-- symbol existence from Tree-sitter
+- symbol existence from provider-backed exact source extraction
 - imports/exports from parser
 - obvious AST edges when reliable
 - test result claims from Grape-observed test runs
@@ -1395,6 +1418,20 @@ type Proof = {
 
 V1 needs a basic symbol index, not a perfect code intelligence engine.
 
+The index is provider/capability based. A language or framework extractor may emit normalized symbol and dependency records only for capabilities it declares. Unsupported languages, parser failures, unresolved imports, and framework-specific magic must degrade to safe file/path/lexical indexing plus diagnostics.
+
+The normalized index should preserve:
+
+- language
+- provider/discovery method
+- confidence
+- source hash and source ref
+- package/workspace root when known
+- capability gaps and blind spots
+- unresolved refs when exact targets are unknown
+
+Retrieval and artifact compilation must consume this normalized shape instead of hard-coding parser-specific assumptions.
+
 ### 17.1 SymbolNode
 
 ```ts
@@ -1486,6 +1523,23 @@ V1 static graph blind spots must be surfaced:
 - cron jobs
 - external services
 - manual deployments
+- unsupported provider capability
+- unknown nested package/workspace boundary
+- generated code or generated client packages
+
+### 17.4 Monorepo boundary rule
+
+Monorepo retrieval is package/workspace-aware when boundaries are detectable.
+
+Use package-local dependency refs when possible:
+
+- nested `package.json`, lockfiles, and workspace config
+- `pyproject.toml` / `requirements.txt`
+- `go.mod`
+- `Cargo.toml`
+- test and source roots inside the package/workspace
+
+Never let a repo-wide source cap silently starve the package that owns an explicit seed file, symbol, or test ref. If package boundaries are unknown, return partial context with a warning instead of claiming complete impact coverage.
 
 ---
 
@@ -3167,7 +3221,7 @@ async function getContext(input: GrapeGetContextInput): Promise<GrapeGetContextO
 | Package lock changed | Invalidate dependency context |
 | SQLite DB locked | Retry with busy timeout, then fail clearly |
 | Schema migration fails | Stop and report migration error |
-| Tree-sitter parser fails | Fallback to file-level indexing |
+| Language provider parser fails | Fallback to file-level indexing with warning |
 | Unsupported language | Index file path/text only |
 | Huge file detected | Skip or truncate with warning |
 | Binary file detected | Skip |
