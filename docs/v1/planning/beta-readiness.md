@@ -95,6 +95,41 @@ GRAPE_BIN=<external-benchmark-workspace>/node_modules/.bin/grape node smoke-publ
 
 The external workspace now has `package.json` dependency `^0.1.0-alpha.3`, `package-lock.json` resolves `node_modules/grape-context` to `0.1.0-alpha.3`, and the published-package smoke passed 8/8 checks for alpha.3.
 
+Fresh beta-trial rerun on 2026-06-03:
+
+```bash
+cd <grape-repo>
+npm run check
+npm_config_cache=<temporary-npm-cache> npm pack --dry-run
+npm run benchmark:run
+npm run e2e:alpha
+npm run global:smoke
+
+cd <external-benchmark-workspace>
+node run-pass.mjs
+node smoke-published.mjs
+graphify update <external-benchmark-workspace>/repos/ts-checkout-app
+graphify query "Explain calculateDiscount behavior and discount tests" --graph <external-benchmark-workspace>/repos/ts-checkout-app/graphify-out/graph.json --budget 2000
+graphify tree --graph <external-benchmark-workspace>/repos/ts-checkout-app/graphify-out/graph.json --output <external-benchmark-workspace>/repos/ts-checkout-app/graphify-out/GRAPH_TREE.html --root <external-benchmark-workspace>/repos/ts-checkout-app --label ts-checkout-app
+```
+
+Observed:
+
+- `npm run check` passed with 174/174 behavior tests.
+- `npm pack --dry-run` passed with a temporary npm cache and confirmed `README.md`, `CHANGELOG.md`, `dist/`, package metadata, and storage migrations ship. The default local npm cache had an ownership issue under `<local-npm-cache>`, so the dry-run used `<temporary-npm-cache>`.
+- `npm run benchmark:run` passed all four fixtures. The stable no-change fixture saved 45.12 percent on turn 2; branch-switch, stale-source, and session-reset fixtures intentionally reported 0 percent reduction because they emitted `INVALIDATE_PREVIOUS` instead of unsafe omission.
+- `npm run e2e:alpha` initially failed inside restricted sandbox networking while resolving `registry.npmjs.org`; rerun with approved network access passed.
+- `npm run global:smoke` passed against global `grape-context@0.1.0-alpha.3`.
+- External `external benchmark workspace` `node run-pass.mjs` passed 13/13 scenarios. The same-task no-change turn saved 2,121 estimated tokens on turn 2 (`naiveTokens: 4410`, `grapeTokens: 2289`, `reductionPercent: 48.1`) while preserving 7 `OMIT_UNCHANGED` and 7 `RESTORE_AVAILABLE` rows.
+- External `node smoke-published.mjs` passed 8/8 checks against the published/global CLI, including MCP `initialize`, `tools/list`, two `grape_get_context` turns, and `grape_get_omitted_item` restore.
+- Graphify AST update produced a local graph for `ts-checkout-app` with 16 nodes, 17 edges, and 5 communities; `graphify query` found the expected discount/cart/test neighborhood. Graphify's built-in `benchmark` command did not run on this small graph because its sample questions found no matching nodes, so Graphify is recorded here as a structural orientation comparison, not as an equivalent context-transport benchmark.
+- The sample repo was dirty during the external trial because generated/local files were present, and Grape surfaced `dirty_worktree_context` rather than treating the context as branch-global.
+
+Verdict:
+
+- Ready as a **controlled beta candidate** for the V1 context-transport slice: install, local bootstrap, MCP stdio protocol, same-session omission, restore, branch/source/rules invalidation, reset recovery, package contents, and token accounting have current scripted proof.
+- Not yet a defensible broad beta claim until at least one actual Cursor/Claude-style MCP client trial is recorded against the published package, plus a clean consumer repo and dirty/branch/reset recovery pass through that real client configuration.
+
 ## Verification Commands
 
 Use these from this repository unless a command says otherwise:
