@@ -241,9 +241,10 @@ async function runMcp(parsed: ParsedArgs): Promise<number> {
 
   if (parsed.flags.has("--print-config")) {
     const { mcpConnectionGuide } = await import("../app/local-project/setup/mcp-guide.js");
+    const rootPath = repoPath(parsed);
     writeJson({
-      grapeMcp: mcpConnectionGuide(repoPath(parsed))
-    });
+      grapeMcp: mcpConnectionGuide(rootPath)
+    }, { rootPath });
     return exitCodes.ok;
   }
 

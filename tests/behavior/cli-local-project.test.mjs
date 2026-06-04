@@ -1428,8 +1428,8 @@ test("cli mcp --print-config emits the V1 stdio connection contract", () => {
       implemented: true,
       serverName: "grape",
       command: "grape",
-      args: ["mcp", "--stdio", "--repo", "<local-path>"],
-      cwd: "<local-path>",
+      args: ["mcp", "--stdio", "--repo", "<repo-root>"],
+      cwd: "<repo-root>",
       transport: "stdio",
       tools: [
         "grape_get_context",
