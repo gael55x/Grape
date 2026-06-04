@@ -60,6 +60,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 - Package-local manifests and lockfiles should be dependency refs for selected package context when the package/workspace root is known.
 - Current-valid `grape_observed_run_result` claims from the current compile session may be rendered with task-scoped claims. Compile sessions are task-bound, and current-valid checks still require matching branch, commit, worktree hash, source hash, and result hash.
 - Current-valid parsed `project_rule` claims may render with task-scoped claims, while exact rule text remains pinned in the active-project-rules section.
+- Current-valid filtering rejects claims blocked by active claim edges: unresolved `contradicts` edges block both claims, unresolved `violates` edges block the violating source claim, and `supersedes` edges block the superseded target claim until an applicable manual resolution edge says the claims may coexist or are variants.
 - Selection is capped; truncation is reported as a warning.
 - If query terms exist but no source matches, retrieval reports a warning instead of inventing context.
 - Generic repo-shape terms such as `src`, `packages`, `workspace`, and `tests` are ignored as standalone search terms because they cause unrelated context bleed.
@@ -68,7 +69,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 
 The beta promise is reliable context transport over the Beta Retrieval V2 contract. Beta may promise deterministic TypeScript/JavaScript graph expansion for common modules, symbols, imports, exports, calls, related tests, and session-scoped observed-run result recall. For other languages, beta may promise safe file/path/lexical fallback only unless a provider and fixture prove stronger support. Beta does not promise embeddings, semantic ranking, complete call graphs, broad language AST support, runtime behavior correctness, root-cause proof, automatic conflict resolution, or automatic behavior claims from tests. Observed-run result claims prove that Grape observed one command/test result only.
 
-The current TypeScript/JavaScript signal includes function declarations, class declarations, methods, interfaces, type aliases, constants, variables, const-assigned arrow/function declarations, static imports/exports, and direct call expressions. These graph facts guide source selection and excerpt anchoring, but exact excerpts remain source-existence proof only. Parsed project rules prove only that exact rule text exists in the scoped rule file; they do not infer generated policy or automatically resolve rule conflicts.
+The current TypeScript/JavaScript signal includes function declarations, class declarations, methods, interfaces, type aliases, constants, variables, const-assigned arrow/function declarations, static imports/exports, and direct call expressions. These graph facts guide source selection and excerpt anchoring, but exact excerpts remain source-existence proof only. Parsed project rules prove only that exact rule text exists in the scoped rule file; they do not infer generated policy or automatically resolve rule conflicts. Conservative `needs_review` edges remain review metadata; they do not deactivate claims by themselves.
 
 ## Polyglot And Monorepo Failure Modes
 

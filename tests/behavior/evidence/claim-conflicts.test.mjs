@@ -11,6 +11,7 @@ import {
   storageMigrationReferences
 } from "../../../.tmp/build/src/core/storage/index.js";
 import { detectProjectRuleConflicts } from "../../../.tmp/build/src/core/claims/index.js";
+import { resolveLocalCurrentValidClaims } from "../../../.tmp/build/src/app/local-project/inspection/claim-resolution.js";
 
 const now = "2026-05-26T00:00:00.000Z";
 const hashA = "a".repeat(64);
@@ -91,6 +92,40 @@ test("project rule conflict detector creates review edges for opposing overlappi
   assert.match(conflicts[0].edgeId, /^edge:[a-f0-9]{24}$/);
 });
 
+test("current-valid resolution rejects unresolved contradicted claims", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    edges: [
+      edge("edge-conflict", "claim-a", "claim-b", "contradicts", "2026-05-26T00:00:00.000Z")
+    ]
+  }));
+
+  assert.equal(resolved.activeClaims.length, 0);
+  assert.equal(resolved.rejectedCount, 2);
+});
+
+test("current-valid resolution allows contradicted claims after conflict resolution", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    edges: [
+      edge("edge-conflict", "claim-a", "claim-b", "contradicts", "2026-05-26T00:00:00.000Z"),
+      edge("edge-resolution", "claim-a", "claim-b", "coexists_with", "2026-05-26T00:00:01.000Z")
+    ]
+  }));
+
+  assert.deepEqual(resolved.activeClaims.map((claim) => claim.claimId).sort(), ["claim-a", "claim-b"]);
+  assert.equal(resolved.rejectedCount, 0);
+});
+
+test("current-valid resolution rejects superseded target claims only", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    edges: [
+      edge("edge-supersedes", "claim-a", "claim-b", "supersedes", "2026-05-26T00:00:00.000Z")
+    ]
+  }));
+
+  assert.deepEqual(resolved.activeClaims.map((claim) => claim.claimId), ["claim-a"]);
+  assert.equal(resolved.rejectedCount, 1);
+});
+
 function claim(claimId, claimText, scopeHash) {
   return {
     claimId,
@@ -102,5 +137,97 @@ function claim(claimId, claimText, scopeHash) {
     verificationStatus: "verified",
     createdAt: now,
     updatedAt: now
+  };
+}
+
+function currentValidInput({ edges }) {
+  const sourceA = source("src/a.ts", hashA);
+  const sourceB = source("src/b.ts", hashB);
+  const proofA = proof("proof-a", "claim-a", "source-a", hashA);
+  const proofB = proof("proof-b", "claim-b", "source-b", hashB);
+  const claims = [currentClaim("claim-a", "Claim A", sourceA, proofA), currentClaim("claim-b", "Claim B", sourceB, proofB)];
+  const proofsByClaim = new Map([
+    ["claim-a", [proofA]],
+    ["claim-b", [proofB]]
+  ]);
+  const sources = new Map([
+    ["source-a", sourceA],
+    ["source-b", sourceB]
+  ]);
+
+  return {
+    claims: {
+      list: () => claims
+    },
+    claimEdges: {
+      list: () => edges
+    },
+    proofs: {
+      listByClaim: (claimId) => proofsByClaim.get(claimId) ?? []
+    },
+    sources: {
+      get: (sourceId) => sources.get(sourceId)
+    },
+    snapshot: {
+      branch: "main",
+      commit: "commit-a",
+      worktreeHash: "worktree-a",
+      files: [
+        { path: sourceA.sourceRef, sha256: sourceA.sourceHash },
+        { path: sourceB.sourceRef, sha256: sourceB.sourceHash }
+      ]
+    }
+  };
+}
+
+function currentClaim(claimId, claimText, sourceRecord, proofRecord) {
+  return {
+    claimId,
+    subject: sourceRecord.sourceRef,
+    claimType: "repository_source_excerpt_exists",
+    claimText,
+    scopeJson: JSON.stringify({
+      branch: "main",
+      commit: "commit-a",
+      sourceRef: sourceRecord.sourceRef,
+      sourceHash: sourceRecord.sourceHash,
+      excerptHash: proofRecord.excerptHash,
+      sourceScope: "committed"
+    }),
+    scopeHash: sourceRecord.sourceHash,
+    verificationStatus: "verified",
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+function source(sourceRef, sourceHash) {
+  return {
+    sourceId: sourceRef === "src/a.ts" ? "source-a" : "source-b",
+    sourceRef,
+    sourceHash,
+    privacyStatus: "allowed",
+    redactionStatus: "not_needed"
+  };
+}
+
+function proof(proofId, claimId, sourceId, sourceHash) {
+  return {
+    proofId,
+    claimId,
+    sourceId,
+    proofType: "exact_source_excerpt",
+    sourceHash,
+    excerptHash: sourceHash
+  };
+}
+
+function edge(edgeId, sourceClaimId, targetClaimId, edgeType, createdAt) {
+  return {
+    edgeId,
+    sourceClaimId,
+    targetClaimId,
+    edgeType,
+    createdAt
   };
 }

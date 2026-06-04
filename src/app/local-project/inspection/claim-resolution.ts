@@ -2,6 +2,8 @@ import { createGitRepoSnapshot } from "../../../core/git/index.js";
 import { resolveInMemoryCurrentValidCandidates } from "../../../core/retrieval/index.js";
 import type { CurrentValidCandidate } from "../../../core/retrieval/index.js";
 import type {
+  ClaimEdgeRecord,
+  ClaimEdgeType,
   ClaimRecord,
   ClaimStorageRepositories,
   EvidenceStorageRepositories,
@@ -13,6 +15,7 @@ import type { LocalClaimSummary } from "../types.js";
 
 export interface ResolveLocalCurrentValidClaimsInput {
   readonly claims: ClaimStorageRepositories["claims"];
+  readonly claimEdges: ClaimStorageRepositories["claimEdges"];
   readonly proofs: ProofStorageRepositories["proofs"];
   readonly sources: EvidenceStorageRepositories["sources"];
   readonly snapshot: ReturnType<typeof createGitRepoSnapshot>;
@@ -31,6 +34,7 @@ export function resolveLocalCurrentValidClaims(
   input: ResolveLocalCurrentValidClaimsInput
 ): ResolveLocalCurrentValidClaimsResult {
   const claims = input.claims.list();
+  const activeContradictionClaimIds = claimIdsBlockedByActiveClaimEdges(input.claimEdges.list());
   const currentFiles = new Map(input.snapshot.files.map((file) => [file.path, file.sha256]));
   const resolved = resolveInMemoryCurrentValidCandidates(
     claims.map((claim) =>
@@ -39,7 +43,8 @@ export function resolveLocalCurrentValidClaims(
         proofs: input.proofs.listByClaim(claim.claimId),
         sourceForProof: (proof) => input.sources.get(proof.sourceId),
         currentFiles,
-        snapshot: input.snapshot
+        snapshot: input.snapshot,
+        activeContradictionClaimIds
       })
     )
   );
@@ -108,6 +113,7 @@ function toCurrentValidCandidate(input: {
   readonly sourceForProof: (proof: ProofRecord) => SourceRecord | undefined;
   readonly currentFiles: ReadonlyMap<string, string>;
   readonly snapshot: ReturnType<typeof createGitRepoSnapshot>;
+  readonly activeContradictionClaimIds: ReadonlySet<string>;
 }): CurrentValidCandidate {
   const scope = parseScope(input.claim.scopeJson);
   const sources = input.proofs.map(input.sourceForProof);
@@ -120,7 +126,7 @@ function toCurrentValidCandidate(input: {
     scopeResult: scopeMatchesCurrentSnapshot(scope, input.snapshot) ? "match" : "mismatch",
     sourceHashStatus: sourceHashesMatch(input.proofs, sources, input.currentFiles, scope),
     proofHashStatus: proofHashesMatch(input.proofs, scope),
-    contradictionStatus: "none",
+    contradictionStatus: input.activeContradictionClaimIds.has(input.claim.claimId) ? "active" : "none",
     privacyStatus: sources.every((source) => source?.privacyStatus === "allowed" && source.redactionStatus !== "blocked")
       ? "allowed"
       : "blocked",
@@ -218,4 +224,43 @@ function isObservedRunProof(proof: ProofRecord, source: SourceRecord): boolean {
     proof.proofType === "grape_observed_run_result" &&
     (source.sourceType === "command_run" || source.sourceType === "test_run")
   );
+}
+
+const conflictClosingEdgeTypes = new Set<ClaimEdgeType>(["coexists_with", "variant_of", "supersedes"]);
+const supersedesClosingEdgeTypes = new Set<ClaimEdgeType>(["coexists_with", "variant_of"]);
+
+export function claimIdsBlockedByActiveClaimEdges(edges: readonly ClaimEdgeRecord[]): ReadonlySet<string> {
+  const blocked = new Set<string>();
+
+  for (const edge of edges) {
+    if (edge.edgeType === "contradicts" && !hasLaterResolution(edge, edges, conflictClosingEdgeTypes)) {
+      blocked.add(edge.sourceClaimId);
+      blocked.add(edge.targetClaimId);
+    }
+    if (edge.edgeType === "violates" && !hasLaterResolution(edge, edges, conflictClosingEdgeTypes)) {
+      blocked.add(edge.sourceClaimId);
+    }
+    if (edge.edgeType === "supersedes" && !hasLaterResolution(edge, edges, supersedesClosingEdgeTypes)) {
+      blocked.add(edge.targetClaimId);
+    }
+  }
+
+  return blocked;
+}
+
+function hasLaterResolution(
+  edge: ClaimEdgeRecord,
+  edges: readonly ClaimEdgeRecord[],
+  resolutionTypes: ReadonlySet<ClaimEdgeType>
+): boolean {
+  return edges.some(
+    (candidate) =>
+      resolutionTypes.has(candidate.edgeType) &&
+      claimPairKey(candidate) === claimPairKey(edge) &&
+      candidate.createdAt > edge.createdAt
+  );
+}
+
+function claimPairKey(edge: Pick<ClaimEdgeRecord, "sourceClaimId" | "targetClaimId">): string {
+  return [edge.sourceClaimId, edge.targetClaimId].sort().join("\0");
 }

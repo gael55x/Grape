@@ -151,6 +151,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
       });
       const currentValidClaims = resolveLocalCurrentValidClaims({
         claims: claimRepositories.claims,
+        claimEdges: claimRepositories.claimEdges,
         proofs: proofRepositories.proofs,
         sources: evidenceRepositories.sources,
         snapshot: snapshotResult.snapshot,

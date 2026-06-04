@@ -27,8 +27,10 @@ export function listLocalClaims(input: ListLocalClaimsInput): ListLocalClaimsRes
     migrationsDir: input.migrationsDir,
     now: () => now,
     operation(database): ListLocalClaimsResult {
+      const claimRepositories = createClaimStorageRepositories(database);
       const resolved = resolveLocalCurrentValidClaims({
-        claims: createClaimStorageRepositories(database).claims,
+        claims: claimRepositories.claims,
+        claimEdges: claimRepositories.claimEdges,
         proofs: createProofStorageRepositories(database).proofs,
         sources: createEvidenceStorageRepositories(database).sources,
         snapshot
