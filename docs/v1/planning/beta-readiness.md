@@ -115,7 +115,7 @@ graphify tree --graph <external-benchmark-workspace>/repos/ts-checkout-app/graph
 
 Observed:
 
-- `npm run check` passed with 177/177 behavior tests in the latest follow-up gate.
+- `npm run check` passed in the latest follow-up gate, including the behavior suite, docs checks, fixture checks, package dry-run contents check, and TypeScript build checks.
 - `npm pack --dry-run` passed with a temporary npm cache and confirmed `README.md`, `CHANGELOG.md`, `dist/`, package metadata, and storage migrations ship. The default local npm cache had an ownership issue, so the dry-run used a temporary npm cache path.
 - `npm run benchmark:run` passed all four fixtures. The stable no-change fixture saved 45.12 percent on turn 2; branch-switch, stale-source, and session-reset fixtures intentionally reported 0 percent reduction because they emitted `INVALIDATE_PREVIOUS` instead of unsafe omission.
 - Follow-up token-efficiency hardening added a serialized default MCP agent-output estimate and a 400 percent first-turn overhead gate. The refreshed benchmark suite passed with compact `agent_pack` output; the stable fixture reported `serializedAgentOutputTokens: 30352` and first-turn agent-output overhead of 348.22 percent, while still preserving the 45.12 percent turn-2 logical token reduction.

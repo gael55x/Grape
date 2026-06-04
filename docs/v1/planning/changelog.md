@@ -11,11 +11,15 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Hardened the baseline secret scan to block structured secret-looking fields, common API token families, and credentialed database URLs while allowing plain environment-variable references.
 - Hardened local `.grape/` privacy handling so init excludes `.grape/` before the first snapshot, rejects runtime state paths from snapshots even if Git-visible, and fails closed on symlinked local state directories/files.
 - Split reusable MCP stdio smoke-session framing and request helpers into a script-owned module so install, global-install, and alpha e2e smoke checks share one behavior-preserving implementation.
+- Applied current-valid claim-edge filtering for explicit `contradicts`, `violates`, and `supersedes` edges, while leaving `needs_review` edges as conflict-inspection metadata only.
+- Hardened repo-scoped public output sanitization across CLI commands and benchmark fixture errors so active repo roots and local path aliases are redacted by default.
+- Made `grape_get_artifact` lazy by default: metadata is returned unless callers explicitly request `outputMode: "full"` for stored public artifact JSON.
+- Pointed GitHub Actions at `npm run beta:check` so the published beta gate exercises docs, tests, benchmark fixtures, and alpha e2e smoke.
 
 ### Added
 
 - Clarified current-vs-deferred CLI documentation: runnable SPEC/CLI examples now show implemented beta transport commands, while deferred decision, export/purge, and claim-linked proof commands are explicitly preserved as still-planned V1.0 surfaces.
-- Aligned current runtime docs and beta-readiness notes with the Node.js 22.13+ published package floor and latest 177/177 behavior-test gate.
+- Aligned current runtime docs and beta-readiness notes with the Node.js 22.13+ published package floor and current behavior-test gate.
 - Added the language-indexing contract and ADR-0011 for capability-based language providers, safe unsupported-language fallback, and monorepo/package boundary expectations without expanding V1 into a universal parser.
 - Aligned root docs, CLI/MCP interface docs, fixture docs, examples, beta trial checklist, and the canonical spec around graph-shaped context, safe Kotlin/Java/Python/etc. fallback, and monorepo/package-boundary beta expectations.
 - Added `npm run beta:check` as the extended local beta-readiness gate over `check`, benchmark, and alpha e2e smoke.

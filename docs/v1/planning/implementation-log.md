@@ -747,19 +747,26 @@ Keep entries simple:
 
 - Author/agent: Gaille Amolong / Codex
 - Summary: documented the language-provider capability model for polyglot and monorepo repos. Grape's transport remains language-agnostic, while language-aware graph extraction is provider-scoped orientation only. Unsupported languages and unknown package/workspace boundaries must fall back to safe exact/path/lexical context with explicit blind spots.
-- Checks run: `npm run check` (pass, 177/177 behavior tests).
+- Checks run: `npm run check` (pass, behavior suite included).
 - Risks/follow-ups: provider dispatch, package/workspace detection, polyglot fixtures, monorepo fixtures, and package-scoped invalidation tests remain implementation work before broad polyglot/monorepo beta claims.
 
 ### 2026-06-03 - Documentation Consistency Audit
 
 - Author/agent: Gaille Amolong / Codex
 - Summary: audited root and V1 docs for stale graph/language/beta wording, then aligned README, roadmap, changelog, CLI/MCP contracts, fixtures, examples, beta trial checklist, and SPEC around graph-shaped context, safe Kotlin/Java/Python/etc. fallback, and provider/fixture requirements before stronger polyglot or monorepo claims.
-- Checks run: `npm run check` (pass, 177/177 behavior tests) and a markdown relative-link scan (pass, 55 markdown files).
+- Checks run: `npm run check` (pass, behavior suite included) and a markdown relative-link scan (pass, 55 markdown files).
 - Risks/follow-ups: this is documentation alignment only. Provider dispatch, package/workspace detection, and polyglot/monorepo fixtures still need implementation and behavior coverage.
 
 ### 2026-06-04 - Documentation Simplification Audit
 
 - Author/agent: Gaille Amolong / Codex
 - Summary: audited docs and TypeScript reachability for unused or confusing surfaces. Simplified current CLI examples so runnable code blocks only show implemented beta transport commands, preserved deferred decision/export/purge/claim-linked proof commands as still-planned V1.0 surfaces, and aligned runtime/beta-readiness wording with the Node.js 22.13+ package floor and latest behavior-test count.
-- Checks run: `npm run check` (pass, 177/177 behavior tests), `npm run docs:check` after final wording updates, `npm run architecture:check`, strict TypeScript unused-symbol audit, markdown relative-link scan (pass, 55 markdown files), and a TypeScript reachability audit.
+- Checks run: `npm run check` (pass, behavior suite included), `npm run docs:check` after final wording updates, `npm run architecture:check`, strict TypeScript unused-symbol audit, markdown relative-link scan (pass, 55 markdown files), and a TypeScript reachability audit.
 - Risks/follow-ups: empty `src/core/scope/` and `src/core/sessions/` ownership placeholders remain intentional because architecture docs and import-boundary rules reserve those module boundaries for future scope/session implementations.
+
+### 2026-06-04 - Beta Release Contract Hardening
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: hardened the beta release contract around privacy, current-valid truth, and compact MCP transport. Repo-scoped CLI and benchmark output now sanitize against the active repo root and common local path aliases. Current-valid retrieval now excludes claims blocked by explicit active `contradicts`, `violates`, and `supersedes` edges while keeping `needs_review` as inspection metadata. `grape_get_artifact` defaults to metadata and returns stored public artifact JSON only through explicit `outputMode: "full"` / `artifactRef.fullArtifactTool`. GitHub Actions now runs the full `beta:check` gate.
+- Checks run: `npm run build:test`; `npm run docs:check`; focused CLI privacy, claim-conflict, and MCP stdio behavior tests; `npm run beta:check` (pass, 199/199 behavior tests plus benchmark suite and alpha e2e smoke).
+- Risks/follow-ups: this does not add broad durable memory, automatic conflict resolution, root-cause/correctness claims, semantic retrieval, or real Composer/Graphify/Grape benchmark results. Those remain explicit beta/1.0 validation work.
