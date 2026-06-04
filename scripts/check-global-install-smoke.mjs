@@ -1,8 +1,9 @@
-import { spawn, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import { runMcpContextRestoreSession } from "./mcp-smoke-session.mjs";
 import { envWithSqliteNodeOptions } from "./sqlite-node-env.mjs";
 
 const expectedPackage = "grape-context";
@@ -65,7 +66,15 @@ try {
   );
   assert(resetJson.contextPackItems.some((item) => item.state === "NEW"), "reset compile must resend current context");
 
-  const mcp = await runMcpStdioSession({ query: "global mcp smoke", sessionId: "global-smoke-mcp" });
+  const mcp = await runMcpContextRestoreSession({
+    command: "grape",
+    args: ["mcp", "--stdio", "--repo", repoPath],
+    cwd: repoPath,
+    env: envWithSqliteNodeOptions(smokeEnv()),
+    clientInfo: { name: "grape-global-smoke", version: expectedVersion },
+    query: "global mcp smoke",
+    sessionId: "global-smoke-mcp"
+  });
   assert(mcp.turn1.structuredContent.contextPackItems.some((item) => item.state === "NEW"), "MCP turn 1 must send NEW items");
   assert(
     mcp.turn2.structuredContent.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"),
@@ -115,135 +124,4 @@ function smokeEnv() {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
-}
-
-function encodeMcpFrame(message) {
-  const body = Buffer.from(JSON.stringify(message), "utf8");
-  return Buffer.concat([Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "utf8"), body]);
-}
-
-function drainMcpFrames(buffer) {
-  const messages = [];
-  let rest = Buffer.from(buffer);
-  while (rest.length > 0) {
-    const headerEnd = rest.indexOf("\r\n\r\n");
-    if (headerEnd < 0) break;
-    const header = rest.subarray(0, headerEnd).toString("utf8");
-    const match = /^Content-Length:\s*(\d+)$/im.exec(header);
-    if (!match) break;
-    const length = Number.parseInt(match[1], 10);
-    const bodyStart = headerEnd + 4;
-    const bodyEnd = bodyStart + length;
-    if (rest.length < bodyEnd) break;
-    messages.push(JSON.parse(rest.subarray(bodyStart, bodyEnd).toString("utf8")));
-    rest = rest.subarray(bodyEnd);
-  }
-  return { messages, rest };
-}
-
-async function runMcpStdioSession({ query, sessionId }) {
-  const child = spawn("grape", ["mcp", "--stdio", "--repo", repoPath], {
-    cwd: repoPath,
-    stdio: ["pipe", "pipe", "pipe"],
-    env: envWithSqliteNodeOptions(smokeEnv())
-  });
-
-  let nextId = 1;
-  let stdoutBuffer = Buffer.alloc(0);
-  let stderr = "";
-  const pending = new Map();
-
-  child.stdout.on("data", (chunk) => {
-    stdoutBuffer = Buffer.concat([stdoutBuffer, Buffer.from(chunk)]);
-    const parsed = drainMcpFrames(stdoutBuffer);
-    stdoutBuffer = parsed.rest;
-    for (const message of parsed.messages) {
-      const waiter = pending.get(message.id);
-      if (!waiter) continue;
-      pending.delete(message.id);
-      waiter.resolve(message);
-    }
-  });
-
-  child.stderr.on("data", (chunk) => {
-    stderr += Buffer.from(chunk).toString("utf8");
-  });
-
-  const closed = new Promise((resolve) => {
-    child.on("close", (code, signal) => resolve({ code, signal }));
-  });
-
-  try {
-    const initialize = await sendMcpRequest(child, pending, {
-      jsonrpc: "2.0",
-      id: nextId++,
-      method: "initialize",
-      params: {
-        protocolVersion: "2024-11-05",
-        capabilities: {},
-        clientInfo: { name: "grape-global-smoke", version: expectedVersion }
-      }
-    }, "initialize");
-    assert(!initialize.error, `MCP initialize failed: ${JSON.stringify(initialize.error)}`);
-    assert(initialize.result?.capabilities?.tools, "MCP initialize must advertise tool capabilities");
-
-    child.stdin.write(encodeMcpFrame({ jsonrpc: "2.0", method: "notifications/initialized" }));
-
-    const tools = await sendMcpRequest(child, pending, { jsonrpc: "2.0", id: nextId++, method: "tools/list" }, "tools/list");
-    assert(!tools.error, `MCP tools/list failed: ${JSON.stringify(tools.error)}`);
-    const toolNames = new Set(tools.result?.tools?.map((tool) => tool.name));
-    assert(toolNames.has("grape_get_context"), "MCP tools/list must include grape_get_context");
-    assert(toolNames.has("grape_get_omitted_item"), "MCP tools/list must include grape_get_omitted_item");
-
-    const turn1 = await callMcpTool(child, pending, nextId++, "grape_get_context", { query, sessionId });
-    const turn2 = await callMcpTool(child, pending, nextId++, "grape_get_context", { query, sessionId });
-    const restorable = turn2.structuredContent.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE");
-    assert(restorable?.restoreId, "MCP turn 2 must include a restoreId");
-    const restored = await callMcpTool(child, pending, nextId++, "grape_get_omitted_item", {
-      sessionId,
-      restoreToken: restorable.restoreId
-    });
-
-    child.stdin.end();
-    const exit = await closed;
-    assert(exit.code === 0, `MCP stdio failed: ${stderr.trim() || `signal ${exit.signal}`}`);
-    return { turn1, turn2, restored };
-  } catch (error) {
-    child.kill();
-    throw error;
-  }
-}
-
-async function callMcpTool(child, pending, id, name, args) {
-  const response = await sendMcpRequest(child, pending, {
-    jsonrpc: "2.0",
-    id,
-    method: "tools/call",
-    params: { name, arguments: args }
-  }, name);
-  assert(!response.error, `MCP ${name} returned JSON-RPC error: ${JSON.stringify(response.error)}`);
-  assert(response.result?.isError !== true, `MCP ${name} failed: ${response.result?.content?.[0]?.text ?? "unknown"}`);
-  assert(Array.isArray(response.result?.structuredContent?.contextPackItems) || name === "grape_get_omitted_item", `MCP ${name} response missing structured content`);
-  return response.result;
-}
-
-function sendMcpRequest(child, pending, request, label) {
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      pending.delete(request.id);
-      reject(new Error(`timed out waiting for MCP ${label}`));
-    }, 15000);
-    pending.set(request.id, {
-      resolve: (message) => {
-        clearTimeout(timeout);
-        resolve(message);
-      }
-    });
-    child.stdin.write(encodeMcpFrame(request), (error) => {
-      if (!error) return;
-      clearTimeout(timeout);
-      pending.delete(request.id);
-      reject(error);
-    });
-  });
 }

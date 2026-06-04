@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import { encodeMcpFrame, parseMcpFrames } from "./mcp-smoke-session.mjs";
 import { assertNodeSqliteAvailable, envWithSqliteNodeOptions } from "./sqlite-node-env.mjs";
 
 const root = process.cwd();
@@ -223,28 +224,4 @@ function runMcpInstalledSmoke(grapeBin, repoPath) {
   if (!second.structuredContent.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE")) {
     throw new Error("second mcp context call missing RESTORE_AVAILABLE");
   }
-}
-
-function encodeMcpFrame(message) {
-  const body = Buffer.from(JSON.stringify(message), "utf8");
-  return Buffer.concat([Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "utf8"), body]);
-}
-
-function parseMcpFrames(buffer) {
-  const messages = [];
-  let rest = Buffer.from(buffer);
-  while (rest.length > 0) {
-    const headerEnd = rest.indexOf("\r\n\r\n");
-    if (headerEnd < 0) break;
-    const header = rest.subarray(0, headerEnd).toString("utf8");
-    const match = /^Content-Length:\s*(\d+)$/im.exec(header);
-    if (!match) break;
-    const length = Number.parseInt(match[1], 10);
-    const bodyStart = headerEnd + 4;
-    const bodyEnd = bodyStart + length;
-    if (rest.length < bodyEnd) break;
-    messages.push(JSON.parse(rest.subarray(bodyStart, bodyEnd).toString("utf8")));
-    rest = rest.subarray(bodyEnd);
-  }
-  return messages;
 }

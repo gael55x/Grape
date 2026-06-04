@@ -6,6 +6,10 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ## Unreleased
 
+### Changed
+
+- Split reusable MCP stdio smoke-session framing and request helpers into a script-owned module so install, global-install, and alpha e2e smoke checks share one behavior-preserving implementation.
+
 ### Added
 
 - Clarified current-vs-deferred CLI documentation: runnable SPEC/CLI examples now show implemented beta transport commands, while deferred decision, export/purge, and claim-linked proof commands are explicitly preserved as still-planned V1.0 surfaces.
