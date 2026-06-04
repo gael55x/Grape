@@ -38,6 +38,26 @@ For V1 implementation, start with `docs/v1/SPEC.md`, then read only the folder t
 
 Do not add new V1 topic files directly under `docs/v1/` unless they are canonical anchors like `README.md` or `SPEC.md`.
 
+## Documentation Privacy Hygiene
+
+Committed documentation must not include personal local paths, usernames, home directories, private workspace names, local machine cache paths, API keys, tokens, or other machine-specific identifiers. Use neutral placeholders such as `<repo-root>`, `<external-workspace>`, `<temporary-cache>`, or repo-relative paths instead.
+
+Before finishing any documentation edit, scan the changed docs for accidental local identifiers. At minimum, check for home-directory paths, private workspace names, absolute temp/cache paths, and secret-looking values. If command history is worth documenting, rewrite it into reproducible, environment-neutral commands before committing it.
+
+Lesson learned: benchmark notes and trial logs can be useful evidence, but raw local command transcripts often contain personal paths. Preserve the evidence, not the machine-specific details.
+
+## Commit Message Hygiene
+
+All agent-created commits must use Conventional Commits format:
+
+```text
+<type>(optional-scope): <description>
+```
+
+Use the smallest accurate type, such as `docs`, `fix`, `feat`, `test`, `refactor`, `chore`, `build`, or `ci`. If the user asks to commit or push without giving a message, choose a concise Conventional Commit message that describes the actual staged change.
+
+Lesson learned: even documentation-only follow-up commits should follow the repository's commit convention. Do not use ad hoc prose commit messages.
+
 ## How To Choose The Right Module
 
 - CLI behavior belongs in `src/cli/`.
@@ -97,6 +117,8 @@ Use these procedures before editing code or docs for the listed behavior.
 - Never add a state transition without tests.
 - Never add a schema field without docs and migration.
 - Never introduce platform-specific path assumptions.
+- Never commit personal local paths, usernames, home directories, private workspace names, API keys, tokens, or machine-specific cache paths into public docs, examples, fixtures, logs, or benchmark reports.
+- Never create an agent-authored commit with a non-Conventional Commit message.
 - Never allow MCP write tools to promote durable truth directly.
 - Never silently read ignored or private files.
 - Never store raw secrets in proofs, artifacts, logs, fixtures, or docs.
@@ -114,4 +136,5 @@ Before finishing work, report:
 - docs updated
 - tests added or why not applicable
 - commands run
+- documentation privacy scan results when docs changed
 - known gaps or risks

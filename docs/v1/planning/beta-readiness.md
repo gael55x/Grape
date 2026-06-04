@@ -65,7 +65,7 @@ Observed:
 
 ## Benchmark Workspace Alignment
 
-Inspected workspace:
+Inspected external benchmark workspace:
 
 ```text
 <external-benchmark-workspace>
@@ -82,7 +82,7 @@ Command run after approval:
 ```bash
 cd <external-benchmark-workspace>
 npm install grape-context@0.1.0-alpha.2
-GRAPE_BIN=<external-benchmark-workspace>/node_modules/.bin/grape node smoke-published.mjs
+GRAPE_BIN="$PWD/node_modules/.bin/grape" node smoke-published.mjs
 ```
 
 Alpha.3 rerun after approval:
@@ -90,7 +90,7 @@ Alpha.3 rerun after approval:
 ```bash
 cd <external-benchmark-workspace>
 npm install grape-context@0.1.0-alpha.3 --ignore-scripts --audit=false --fund=false
-GRAPE_BIN=<external-benchmark-workspace>/node_modules/.bin/grape node smoke-published.mjs
+GRAPE_BIN="$PWD/node_modules/.bin/grape" node smoke-published.mjs
 ```
 
 The external workspace now has `package.json` dependency `^0.1.0-alpha.3`, `package-lock.json` resolves `node_modules/grape-context` to `0.1.0-alpha.3`, and the published-package smoke passed 8/8 checks for alpha.3.
@@ -116,13 +116,13 @@ graphify tree --graph <external-benchmark-workspace>/repos/ts-checkout-app/graph
 Observed:
 
 - `npm run check` passed with 177/177 behavior tests in the latest follow-up gate.
-- `npm pack --dry-run` passed with a temporary npm cache and confirmed `README.md`, `CHANGELOG.md`, `dist/`, package metadata, and storage migrations ship. The default local npm cache had an ownership issue under `<local-npm-cache>`, so the dry-run used `<temporary-npm-cache>`.
+- `npm pack --dry-run` passed with a temporary npm cache and confirmed `README.md`, `CHANGELOG.md`, `dist/`, package metadata, and storage migrations ship. The default local npm cache had an ownership issue, so the dry-run used a temporary npm cache path.
 - `npm run benchmark:run` passed all four fixtures. The stable no-change fixture saved 45.12 percent on turn 2; branch-switch, stale-source, and session-reset fixtures intentionally reported 0 percent reduction because they emitted `INVALIDATE_PREVIOUS` instead of unsafe omission.
 - Follow-up token-efficiency hardening added a serialized default MCP agent-output estimate and a 400 percent first-turn overhead gate. The refreshed benchmark suite passed with compact `agent_pack` output; the stable fixture reported `serializedAgentOutputTokens: 30352` and first-turn agent-output overhead of 348.22 percent, while still preserving the 45.12 percent turn-2 logical token reduction.
 - Follow-up pipeline performance hardening reused caller-captured snapshots, guarded repeat evidence/index skips by existing rows, added scoped ledger queries and lookup indexes, and bounded lexical SQL prefiltering with normalized fallback. Artifact output now uses temp-file then rename materialization, but full post-commit file materialization remains deferred until a two-phase design can preserve sent-ledger correctness.
 - `npm run e2e:alpha` initially failed inside restricted sandbox networking while resolving `registry.npmjs.org`; rerun with approved network access passed.
 - `npm run global:smoke` passed against global `grape-context@0.1.0-alpha.3`.
-- External `external benchmark workspace` `node run-pass.mjs` passed 13/13 scenarios. The same-task no-change turn saved 2,121 estimated tokens on turn 2 (`naiveTokens: 4410`, `grapeTokens: 2289`, `reductionPercent: 48.1`) while preserving 7 `OMIT_UNCHANGED` and 7 `RESTORE_AVAILABLE` rows.
+- External benchmark workspace `node run-pass.mjs` passed 13/13 scenarios. The same-task no-change turn saved 2,121 estimated tokens on turn 2 (`naiveTokens: 4410`, `grapeTokens: 2289`, `reductionPercent: 48.1`) while preserving 7 `OMIT_UNCHANGED` and 7 `RESTORE_AVAILABLE` rows.
 - External `node smoke-published.mjs` passed 8/8 checks against the published/global CLI, including MCP `initialize`, `tools/list`, two `grape_get_context` turns, and `grape_get_omitted_item` restore.
 - Graphify AST update produced a local graph for `ts-checkout-app` with 16 nodes, 17 edges, and 5 communities; `graphify query` found the expected discount/cart/test neighborhood. Graphify's built-in `benchmark` command did not run on this small graph because its sample questions found no matching nodes, so Graphify is recorded here as a structural orientation comparison, not as an equivalent context-transport benchmark.
 - The sample repo was dirty during the external trial because generated/local files were present, and Grape surfaced `dirty_worktree_context` rather than treating the context as branch-global.
