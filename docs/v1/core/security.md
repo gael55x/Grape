@@ -66,7 +66,7 @@ Restricted MCP write tools run the same baseline secret scan over caller-provide
 
 ## Public Output Sanitization
 
-All CLI and MCP public output is sanitized by default before it is written to stdout, stderr, or MCP `structuredContent` / summary text. The sanitizer replaces the active repository root with `<repo-root>`, redacts other local absolute path shapes, and redacts common token/API-key/private-key/password-looking values and sensitive object fields. This boundary applies to human output, JSON output, MCP tool results/errors, benchmark reports, artifact inspection responses, restore/reset/mismatch diagnostics, and runtime failures.
+All CLI and MCP public output is sanitized by default before it is written to stdout, stderr, or MCP `structuredContent` / summary text. Repo-scoped CLI commands sanitize against the active repository root from `--repo <path>` or the current working directory, replace that root with `<repo-root>`, handle common local path aliases for the same root, redact other local absolute path shapes, and redact common token/API-key/private-key/password-looking values and sensitive object fields. This boundary applies to human output, JSON output, MCP tool results/errors, benchmark reports, artifact inspection responses, restore/reset/mismatch diagnostics, and runtime failures.
 
 Sanitization is a final public-output boundary, not permission to store unsafe raw values internally. Storage, proof, artifact, source-excerpt, and benchmark paths must still avoid raw secrets and private local content at their own boundaries. Any future raw/debug mode must be opt-in, documented, and safe by default.
 

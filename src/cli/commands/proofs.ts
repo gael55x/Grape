@@ -1,5 +1,5 @@
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, write, writeError, writeJson } from "../render.js";
+import { errorMessage, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 import type { ListLocalProofsResult } from "../../app/local-project/index.js";
 
@@ -11,22 +11,24 @@ export async function runProofs(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     const { listLocalProofs } = await import("../../app/local-project/inspection/proofs.js");
     const result = listLocalProofs({
-      rootPath: repoPath(parsed),
+      rootPath,
       proofId: parsed.values.get("--proof"),
       sourceId: parsed.values.get("--source")
     });
 
     if (parsed.flags.has("--json")) {
-      writeJson(result);
+      writeJson(result, outputOptions);
       return exitCodes.ok;
     }
 
-    write(renderProofs(result));
+    write(renderProofs(result), outputOptions);
     return exitCodes.ok;
   } catch (error) {
-    writeError(`grape proofs failed: ${errorMessage(error)}`);
+    writeError(`grape proofs failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
     return proofsErrorExitCode(error);
   }
 }

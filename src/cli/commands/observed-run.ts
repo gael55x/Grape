@@ -1,5 +1,5 @@
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, write, writeError, writeJson } from "../render.js";
+import { errorMessage, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 
 export async function runObservedCommand(parsed: ParsedArgs, mode: "command" | "test"): Promise<number> {
@@ -24,9 +24,11 @@ export async function runObservedCommand(parsed: ParsedArgs, mode: "command" | "
   }
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     const { runLocalObservedCommand } = await import("../../app/local-project/observation/observed-runner.js");
     const result = runLocalObservedCommand({
-      rootPath: repoPath(parsed),
+      rootPath,
       sessionId,
       commandArgs: parsed.positionals,
       mode,
@@ -34,7 +36,7 @@ export async function runObservedCommand(parsed: ParsedArgs, mode: "command" | "
     });
 
     if (parsed.flags.has("--json")) {
-      writeJson(stripRootPath(result));
+      writeJson(stripRootPath(result), outputOptions);
       return result.exitCode;
     }
 
@@ -52,10 +54,10 @@ export async function runObservedCommand(parsed: ParsedArgs, mode: "command" | "
       `Stdout: ${result.stdoutBytes} bytes (${result.stdoutHash})`,
       `Stderr: ${result.stderrBytes} bytes (${result.stderrHash})`,
       `Warnings: ${result.warnings.length === 0 ? "none" : result.warnings.join(", ")}`
-    ].filter((line): line is string => line !== undefined).join("\n"));
+    ].filter((line): line is string => line !== undefined).join("\n"), outputOptions);
     return result.exitCode;
   } catch (error) {
-    writeError(`grape ${parsed.command} failed: ${errorMessage(error)}`);
+    writeError(`grape ${parsed.command} failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
     return observedRunErrorExitCode(error);
   }
 }

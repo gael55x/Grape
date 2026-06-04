@@ -1,7 +1,7 @@
 import type { ListLocalStaleItemsResult, LocalStaleItemSummary } from "../../app/local-project/index.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
 import { exitCodes } from "../exit-codes.js";
-import { errorMessage, write, writeError, writeJson } from "../render.js";
+import { errorMessage, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 
 export async function runStale(parsed: ParsedArgs): Promise<number> {
   const flag = unsupportedFlag(parsed, new Set(["--json", "--repo", "--session"]));
@@ -11,21 +11,23 @@ export async function runStale(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     const { listLocalStaleItems } = await import("../../app/local-project/inspection/stale.js");
     const result = listLocalStaleItems({
-      rootPath: repoPath(parsed),
+      rootPath,
       sessionId: parsed.values.get("--session")
     });
 
     if (parsed.flags.has("--json")) {
-      writeJson(result);
+      writeJson(result, outputOptions);
       return exitCodes.ok;
     }
 
-    write(renderStaleItems(result));
+    write(renderStaleItems(result), outputOptions);
     return exitCodes.ok;
   } catch (error) {
-    writeError(`grape stale failed: ${errorMessage(error)}`);
+    writeError(`grape stale failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
     return staleErrorExitCode(error);
   }
 }

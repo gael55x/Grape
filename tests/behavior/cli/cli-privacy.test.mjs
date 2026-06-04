@@ -44,8 +44,12 @@ function execGit(repoPath, args) {
 }
 
 function runCli(repoPath, args) {
+  return runCliFrom(repoPath, args);
+}
+
+function runCliFrom(cwd, args) {
   return spawnSync(process.execPath, [cliPath, ...args], {
-    cwd: repoPath,
+    cwd,
     encoding: "utf8"
   });
 }
@@ -80,7 +84,7 @@ test("public output sanitizer redacts repo paths, local paths, and secret-lookin
       headers: {
         authorization: "Bearer sk-test-1234567890abcdef"
       },
-      envLine: "CURSOR_API_KEY=cursor-secret-value"
+      envLine: "SERVICE_API_KEY=service-secret-value"
     },
     { rootPath: repoRoot }
   );
@@ -90,8 +94,14 @@ test("public output sanitizer redacts repo paths, local paths, and secret-lookin
   assert.equal(output.headers.authorization, "<redacted-secret>");
   assert.equal(serialized.includes(repoRoot), false);
   assert.equal(serialized.includes(outsidePath), false);
-  assert.equal(serialized.includes("cursor-secret-value"), false);
+  assert.equal(serialized.includes("service-secret-value"), false);
   assert.equal(serialized.includes("sk-test-1234567890abcdef"), false);
+
+  const aliased = sanitizePublicOutput(
+    { rootPath: "/private/var/folders/grape-private-workspace/repo" },
+    { rootPath: "/var/folders/grape-private-workspace/repo" }
+  );
+  assert.equal(aliased.rootPath, "<repo-root>");
 });
 
 test("cli status JSON redacts local repository paths by default", () => {
@@ -105,6 +115,53 @@ test("cli status JSON redacts local repository paths by default", () => {
     assert.equal(status.rootPath, "<repo-root>");
     assert.equal(status.configPath, "<repo-root>/.grape/config.json");
     assert.equal(status.databasePath, "<repo-root>/.grape/grape.db");
+  });
+});
+
+test("cli --repo JSON redacts the target repository path when launched elsewhere", () => {
+  withGitRepo((repoPath) => {
+    const outsideCwd = mkdtempSync(path.join(tmpdir(), "grape-cli-outside-cwd-"));
+    try {
+      const result = runCliFrom(outsideCwd, ["status", "--repo", repoPath, "--json"]);
+
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(result.stderr.includes(repoPath), false);
+      assert.equal(result.stdout.includes(repoPath), false);
+      const status = JSON.parse(result.stdout);
+      assert.equal(status.rootPath, "<repo-root>");
+      assert.equal(status.configPath, "<repo-root>/.grape/config.json");
+      assert.equal(status.databasePath, "<repo-root>/.grape/grape.db");
+    } finally {
+      rmSync(outsideCwd, { recursive: true, force: true });
+    }
+  });
+});
+
+test("cli bench does not leak explicit missing fixture paths", () => {
+  withGitRepo((repoPath) => {
+    const outsideCwd = mkdtempSync(path.join(tmpdir(), "grape-cli-bench-outside-"));
+    const missingFixturePath = path.join(outsideCwd, "private-fixture");
+    try {
+      const result = runCliFrom(outsideCwd, [
+        "bench",
+        "--repo",
+        repoPath,
+        "--fixture",
+        "private-fixture",
+        "--fixture-path",
+        missingFixturePath,
+        "--json"
+      ]);
+
+      assert.equal(result.status, 4);
+      assert.equal(result.stdout, "");
+      assert.equal(result.stderr.includes(repoPath), false);
+      assert.equal(result.stderr.includes(outsideCwd), false);
+      assert.equal(result.stderr.includes(missingFixturePath), false);
+      assert.match(result.stderr, /grape bench failed: benchmark fixture not found/);
+    } finally {
+      rmSync(outsideCwd, { recursive: true, force: true });
+    }
   });
 });
 

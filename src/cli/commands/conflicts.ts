@@ -5,7 +5,7 @@ import type {
 } from "../../app/local-project/index.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
 import { exitCodes } from "../exit-codes.js";
-import { errorMessage, write, writeError, writeJson } from "../render.js";
+import { errorMessage, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 
 export async function runConflicts(parsed: ParsedArgs): Promise<number> {
   const flag = unsupportedFlag(parsed, new Set(["--json", "--repo", "--resolve", "--as"]));
@@ -15,36 +15,38 @@ export async function runConflicts(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     if (parsed.values.has("--resolve")) {
       const { resolveLocalConflict } = await import("../../app/local-project/inspection/conflicts.js");
       const resolution = parseConflictResolution(parsed.values.get("--as"));
       const result = resolveLocalConflict({
-        rootPath: repoPath(parsed),
+        rootPath,
         edgeId: parsed.values.get("--resolve") ?? "",
         resolution
       });
 
       if (parsed.flags.has("--json")) {
-        writeJson(result);
+        writeJson(result, outputOptions);
         return exitCodes.ok;
       }
 
-      write(renderConflictResolution(result));
+      write(renderConflictResolution(result), outputOptions);
       return exitCodes.ok;
     }
 
     const { listLocalConflicts } = await import("../../app/local-project/inspection/conflicts.js");
-    const result = listLocalConflicts({ rootPath: repoPath(parsed) });
+    const result = listLocalConflicts({ rootPath });
 
     if (parsed.flags.has("--json")) {
-      writeJson(result);
+      writeJson(result, outputOptions);
       return exitCodes.ok;
     }
 
-    write(renderConflicts(result));
+    write(renderConflicts(result), outputOptions);
     return exitCodes.ok;
   } catch (error) {
-    writeError(`grape conflicts failed: ${errorMessage(error)}`);
+    writeError(`grape conflicts failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
     return conflictsErrorExitCode(error);
   }
 }

@@ -1,6 +1,6 @@
 import { recoveryGuidanceForErrorMessage } from "../../app/local-project/setup/recovery.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, renderProblems, write, writeError, writeJson } from "../render.js";
+import { errorMessage, renderProblems, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 
 export async function runCompile(parsed: ParsedArgs): Promise<number> {
@@ -44,9 +44,11 @@ export async function runCompileLike(
   }
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     const { compileLocalContext } = await import("../../app/local-project/context/compile.js");
     const result = compileLocalContext({
-      rootPath: repoPath(parsed),
+      rootPath,
       task,
       taskType: parsed.values.get("--task-type"),
       riskOverlays: parsed.values.get("--risk"),
@@ -56,7 +58,7 @@ export async function runCompileLike(
     });
 
     if (parsed.flags.has("--json")) {
-      writeJson(result);
+      writeJson(result, outputOptions);
       return result.unsafeReasons.length === 0 ? exitCodes.ok : exitCodes.unsafe;
     }
 
@@ -80,14 +82,15 @@ export async function runCompileLike(
       "Files:",
       `  JSON: ${result.artifactJsonPath}`,
       `  Markdown: ${result.artifactMarkdownPath}`
-    ].filter((line): line is string => line !== undefined).join("\n"));
+    ].filter((line): line is string => line !== undefined).join("\n"), outputOptions);
 
     return result.unsafeReasons.length === 0 ? exitCodes.ok : exitCodes.unsafe;
   } catch (error) {
     const message = errorMessage(error);
-    writeError(`grape ${output.commandLabel} failed: ${message}`);
+    const outputOptions = repoOutputOptions(repoPath(parsed));
+    writeError(`grape ${output.commandLabel} failed: ${message}`, outputOptions);
     const guidance = recoveryGuidanceForErrorMessage(message);
-    if (guidance.length > 0) writeError(renderProblems("Recovery", guidance).join("\n"));
+    if (guidance.length > 0) writeError(renderProblems("Recovery", guidance).join("\n"), outputOptions);
     return compileErrorExitCode(error);
   }
 }

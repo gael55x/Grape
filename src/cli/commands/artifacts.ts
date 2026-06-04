@@ -1,5 +1,5 @@
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, write, writeError, writeJson } from "../render.js";
+import { errorMessage, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 
 export async function runArtifacts(parsed: ParsedArgs): Promise<number> {
@@ -10,13 +10,15 @@ export async function runArtifacts(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     const artifactId = parsed.values.get("--artifact");
     const { getLocalArtifact, listLocalArtifacts } = await import("../../app/local-project/inspection/artifacts.js");
 
     if (artifactId) {
-      const result = getLocalArtifact({ rootPath: repoPath(parsed), artifactId });
+      const result = getLocalArtifact({ rootPath, artifactId });
       if (parsed.flags.has("--json")) {
-        writeJson(result);
+        writeJson(result, outputOptions);
         return exitCodes.ok;
       }
       write([
@@ -36,16 +38,16 @@ export async function runArtifacts(parsed: ParsedArgs): Promise<number> {
         "",
         `Dependencies: ${result.dependencies.length}`,
         ...result.dependencies.map((dependency) => `  ${dependency.kind}: ${dependency.ref} @ ${dependency.hash}`)
-      ].join("\n"));
+      ].join("\n"), outputOptions);
       return exitCodes.ok;
     }
 
     const result = listLocalArtifacts({
-      rootPath: repoPath(parsed),
+      rootPath,
       sessionId: parsed.values.get("--session")
     });
     if (parsed.flags.has("--json")) {
-      writeJson(result);
+      writeJson(result, outputOptions);
       return exitCodes.ok;
     }
 
@@ -56,10 +58,10 @@ export async function runArtifacts(parsed: ParsedArgs): Promise<number> {
         (artifact) =>
           `${artifact.artifactId}  ${artifact.sessionId}  ${artifact.taskType}  ${artifact.createdAt}`
       )
-    ].join("\n"));
+    ].join("\n"), outputOptions);
     return exitCodes.ok;
   } catch (error) {
-    writeError(`grape artifacts failed: ${errorMessage(error)}`);
+    writeError(`grape artifacts failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
     return artifactsErrorExitCode(error);
   }
 }

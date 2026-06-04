@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { exitCodes } from "../exit-codes.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, renderProblems, write, writeError, writeJson } from "../render.js";
+import { errorMessage, renderProblems, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 
 const defaultBenchmarkTask = "Explain calculateDiscount behavior and the tests that cover it.";
 
@@ -23,32 +23,34 @@ export async function runBench(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     const { runFixtureBenchmark } = await import("../../app/benchmark/index.js");
     const result = runFixtureBenchmark({
       fixtureName,
-      fixturePath: fixturePathFor(parsed, fixtureName),
+      fixturePath: fixturePathFor(parsed, fixtureName, rootPath),
       task: parsed.values.get("--task") ?? defaultBenchmarkTask,
       keepWorkspace: parsed.flags.has("--keep-workspace")
     });
 
     if (parsed.flags.has("--json")) {
-      writeJson(result);
+      writeJson(result, outputOptions);
       return result.status === "pass" ? exitCodes.ok : exitCodes.unsafe;
     }
 
-    write(renderBenchmarkReport(result));
+    write(renderBenchmarkReport(result), outputOptions);
 
     return result.status === "pass" ? exitCodes.ok : exitCodes.unsafe;
   } catch (error) {
-    writeError(`grape bench failed: ${errorMessage(error)}`);
+    writeError(`grape bench failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
     return exitCodes.storage;
   }
 }
 
-function fixturePathFor(parsed: ParsedArgs, fixtureName: string): string {
+function fixturePathFor(parsed: ParsedArgs, fixtureName: string, rootPath: string): string {
   const explicit = parsed.values.get("--fixture-path");
   if (explicit) return path.resolve(explicit);
-  return path.resolve(repoPath(parsed), "tests", "fixtures", fixtureName);
+  return path.resolve(rootPath, "tests", "fixtures", fixtureName);
 }
 
 function renderBenchmarkReport(result: {

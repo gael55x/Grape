@@ -17,7 +17,7 @@ export function prepareBenchmarkFixtureRepository(input: {
 }): PreparedBenchmarkFixture {
   const fixturePath = path.resolve(input.fixturePath);
   if (!existsSync(fixturePath)) {
-    throw new Error(`benchmark fixture not found: ${fixturePath}`);
+    throw new Error("benchmark fixture not found");
   }
 
   const workspacePath = mkdtempSync(path.join(tmpdir(), "grape-bench-"));

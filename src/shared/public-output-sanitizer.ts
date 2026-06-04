@@ -65,16 +65,24 @@ function replaceKnownRootPath(value: string, options: PublicOutputSanitizerOptio
   const rootPath = options.rootPath ?? process.cwd();
   const rootLabel = options.rootLabel ?? defaultRootLabel;
   const resolvedRoot = path.resolve(rootPath);
-  const candidates = uniqueStrings([
-    resolvedRoot,
-    resolvedRoot.split(path.sep).join("/"),
-    resolvedRoot.split(path.sep).join("\\")
-  ]).sort((left, right) => right.length - left.length);
+  const candidates = rootPathCandidates(resolvedRoot).sort((left, right) => right.length - left.length);
 
   return candidates.reduce((current, candidate) => {
     if (!candidate) return current;
     return current.split(candidate).join(rootLabel);
   }, value);
+}
+
+function rootPathCandidates(resolvedRoot: string): string[] {
+  const slashPath = resolvedRoot.split(path.sep).join("/");
+  const aliases = [resolvedRoot, slashPath];
+  if (slashPath.startsWith("/var/")) aliases.push(`/private${slashPath}`);
+  if (slashPath.startsWith("/private/var/")) aliases.push(slashPath.slice("/private".length));
+
+  return uniqueStrings([
+    ...aliases,
+    ...aliases.map((candidate) => candidate.split("/").join("\\"))
+  ]);
 }
 
 function isSensitiveValueKey(key: string): boolean {

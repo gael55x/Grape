@@ -1,5 +1,5 @@
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, write, writeError, writeJson } from "../render.js";
+import { errorMessage, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 
 export async function runSessions(parsed: ParsedArgs): Promise<number> {
@@ -10,10 +10,12 @@ export async function runSessions(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     const { listLocalSessions } = await import("../../app/local-project/inspection/sessions.js");
-    const result = listLocalSessions({ rootPath: repoPath(parsed) });
+    const result = listLocalSessions({ rootPath });
     if (parsed.flags.has("--json")) {
-      writeJson(result);
+      writeJson(result, outputOptions);
       return exitCodes.ok;
     }
 
@@ -36,10 +38,10 @@ export async function runSessions(parsed: ParsedArgs): Promise<number> {
           session.lastEventReason ? `  Last event: ${session.lastEventReason}` : undefined
         ].filter((line): line is string => Boolean(line)).join("\n")
       )
-    ].join("\n"));
+    ].join("\n"), outputOptions);
     return exitCodes.ok;
   } catch (error) {
-    writeError(`grape sessions failed: ${errorMessage(error)}`);
+    writeError(`grape sessions failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
     return sessionsErrorExitCode(error);
   }
 }

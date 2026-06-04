@@ -1,5 +1,5 @@
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, renderProblems, renderReasonCounts, write, writeError, writeJson } from "../render.js";
+import { errorMessage, renderProblems, renderReasonCounts, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 
 export async function runSync(parsed: ParsedArgs): Promise<number> {
@@ -10,11 +10,13 @@ export async function runSync(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     const { syncLocalProject } = await import("../../app/local-project/setup/sync.js");
-    const result = syncLocalProject({ rootPath: repoPath(parsed) });
+    const result = syncLocalProject({ rootPath });
 
     if (parsed.flags.has("--json")) {
-      writeJson(result);
+      writeJson(result, outputOptions);
       return exitCodes.ok;
     }
 
@@ -39,11 +41,11 @@ export async function runSync(parsed: ParsedArgs): Promise<number> {
       `  Rejected files: ${result.scan.rejectedFileCount}`,
       `  Rejection reasons: ${renderReasonCounts(result.scan.rejectionReasonCounts)}`,
       ...renderProblems("Recovery", result.recoveryGuidance)
-    ].filter((line): line is string => line !== undefined).join("\n"));
+    ].filter((line): line is string => line !== undefined).join("\n"), outputOptions);
 
     return exitCodes.ok;
   } catch (error) {
-    writeError(`grape sync failed: ${errorMessage(error)}`);
+    writeError(`grape sync failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
     return exitCodes.storage;
   }
 }

@@ -1,6 +1,6 @@
 import { recoveryGuidanceForErrorMessage } from "../../app/local-project/setup/recovery.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, renderProblems, write, writeError, writeJson } from "../render.js";
+import { errorMessage, renderProblems, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 
 export async function runOmitted(parsed: ParsedArgs): Promise<number> {
@@ -17,15 +17,17 @@ export async function runOmitted(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     const token = parsed.values.get("--token");
     if (token) {
-      return await runRestoreOmitted(parsed, sessionId, token);
+      return await runRestoreOmitted(parsed, sessionId, token, rootPath, outputOptions);
     }
 
     const { listOmittedContext } = await import("../../app/local-project/omission/omitted.js");
-    const result = listOmittedContext({ rootPath: repoPath(parsed), sessionId });
+    const result = listOmittedContext({ rootPath, sessionId });
     if (parsed.flags.has("--json")) {
-      writeJson(result);
+      writeJson(result, outputOptions);
       return exitCodes.ok;
     }
 
@@ -35,13 +37,14 @@ export async function runOmitted(parsed: ParsedArgs): Promise<number> {
       ...result.omittedItems.map(
         (item) => `${item.restoreId}  ${item.sectionId}  ${item.reasonOmitted}  ${item.tokenCount} tokens`
       )
-    ].join("\n"));
+    ].join("\n"), outputOptions);
     return exitCodes.ok;
   } catch (error) {
     const message = errorMessage(error);
-    writeError(`grape omitted failed: ${message}`);
+    const outputOptions = repoOutputOptions(repoPath(parsed));
+    writeError(`grape omitted failed: ${message}`, outputOptions);
     const guidance = recoveryGuidanceForErrorMessage(message);
-    if (guidance.length > 0) writeError(renderProblems("Recovery", guidance).join("\n"));
+    if (guidance.length > 0) writeError(renderProblems("Recovery", guidance).join("\n"), outputOptions);
     return omittedErrorExitCode(error);
   }
 }
@@ -49,16 +52,18 @@ export async function runOmitted(parsed: ParsedArgs): Promise<number> {
 async function runRestoreOmitted(
   parsed: ParsedArgs,
   sessionId: string,
-  token: string
+  token: string,
+  rootPath: string,
+  outputOptions: ReturnType<typeof repoOutputOptions>
 ): Promise<number> {
   const { restoreOmittedContext } = await import("../../app/local-project/omission/omitted.js");
   const result = restoreOmittedContext({
-    rootPath: repoPath(parsed),
+    rootPath,
     sessionId,
     restoreToken: token
   });
   if (parsed.flags.has("--json")) {
-    writeJson(result);
+    writeJson(result, outputOptions);
     return result.status === "restored" ? exitCodes.ok : exitCodes.stale;
   }
 
@@ -71,7 +76,7 @@ async function runRestoreOmitted(
       `Section: ${result.sectionId}`,
       `Reason: ${result.reason}`,
       ...renderProblems("Recovery", ["Rerun grape compile for fresh context, or inspect stale entries with grape stale."])
-    ].join("\n"));
+    ].join("\n"), outputOptions);
     return exitCodes.stale;
   }
 
@@ -84,7 +89,7 @@ async function runRestoreOmitted(
     `Content hash: ${result.contentHash}`,
     "",
     result.body
-  ].join("\n"));
+  ].join("\n"), outputOptions);
   return exitCodes.ok;
 }
 

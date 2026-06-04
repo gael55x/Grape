@@ -19,6 +19,7 @@ import {
   errorMessage,
   helpText,
   initHelpText,
+  repoOutputOptions,
   renderProblems,
   renderReasonCounts,
   statusLabel,
@@ -107,14 +108,16 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     const { initializeLocalProject } = await import("../app/local-project/setup/initialize.js");
     const result = initializeLocalProject({
-      rootPath: repoPath(parsed),
+      rootPath,
       connect: parsed.flags.has("--connect")
     });
 
     if (parsed.flags.has("--json")) {
-      writeJson(result);
+      writeJson(result, outputOptions);
       return exitCodes.ok;
     }
 
@@ -162,11 +165,11 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
       "  grape status",
       "  grape doctor",
       "  grape mcp --print-config"
-    ].filter((line): line is string => line !== undefined).join("\n"));
+    ].filter((line): line is string => line !== undefined).join("\n"), outputOptions);
 
     return exitCodes.ok;
   } catch (error) {
-    writeError(`grape init failed: ${errorMessage(error)}`);
+    writeError(`grape init failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
     return exitCodes.storage;
   }
 }
@@ -176,10 +179,12 @@ async function runStatus(parsed: ParsedArgs): Promise<number> {
   if (usageError) return usageError;
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     const { readLocalProjectStatus } = await import("../app/local-project/setup/status.js");
-    const status = readLocalProjectStatus(repoPath(parsed));
+    const status = readLocalProjectStatus(rootPath);
     if (parsed.flags.has("--json")) {
-      writeJson(status);
+      writeJson(status, outputOptions);
       return status.errors.length === 0 ? exitCodes.ok : exitCodes.stale;
     }
 
@@ -197,11 +202,11 @@ async function runStatus(parsed: ParsedArgs): Promise<number> {
       ...renderProblems("Warnings", status.warnings),
       ...renderProblems("Errors", status.errors),
       ...renderProblems("Recovery", status.recoveryGuidance)
-    ].join("\n"));
+    ].join("\n"), outputOptions);
 
     return status.errors.length === 0 ? exitCodes.ok : exitCodes.stale;
   } catch (error) {
-    writeError(`grape status failed: ${errorMessage(error)}`);
+    writeError(`grape status failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
     return exitCodes.stale;
   }
 }
@@ -211,10 +216,12 @@ async function runDoctor(parsed: ParsedArgs): Promise<number> {
   if (usageError) return usageError;
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     const { doctorLocalProject } = await import("../app/local-project/setup/doctor.js");
-    const doctor = doctorLocalProject(repoPath(parsed), { privacyOnly: parsed.flags.has("--privacy") });
+    const doctor = doctorLocalProject(rootPath, { privacyOnly: parsed.flags.has("--privacy") });
     if (parsed.flags.has("--json")) {
-      writeJson(doctor);
+      writeJson(doctor, outputOptions);
       return doctor.overallStatus === "fail" ? exitCodes.stale : exitCodes.ok;
     }
 
@@ -226,11 +233,11 @@ async function runDoctor(parsed: ParsedArgs): Promise<number> {
       "",
       ...doctor.checks.map((check) => `${statusLabel(check.status)} ${check.id}: ${check.message}`),
       ...renderProblems("Recovery", doctor.recoveryGuidance)
-    ].join("\n"));
+    ].join("\n"), outputOptions);
 
     return doctor.overallStatus === "fail" ? exitCodes.stale : exitCodes.ok;
   } catch (error) {
-    writeError(`grape doctor failed: ${errorMessage(error)}`);
+    writeError(`grape doctor failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
     return exitCodes.stale;
   }
 }
@@ -244,7 +251,7 @@ async function runMcp(parsed: ParsedArgs): Promise<number> {
     const rootPath = repoPath(parsed);
     writeJson({
       grapeMcp: mcpConnectionGuide(rootPath)
-    }, { rootPath });
+    }, repoOutputOptions(rootPath));
     return exitCodes.ok;
   }
 

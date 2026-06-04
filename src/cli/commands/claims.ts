@@ -1,5 +1,5 @@
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, write, writeError, writeJson } from "../render.js";
+import { errorMessage, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 import type { ListLocalClaimsResult } from "../../app/local-project/index.js";
 
@@ -11,21 +11,23 @@ export async function runClaims(parsed: ParsedArgs): Promise<number> {
   }
 
   try {
+    const rootPath = repoPath(parsed);
+    const outputOptions = repoOutputOptions(rootPath);
     const { listLocalClaims } = await import("../../app/local-project/inspection/claims.js");
     const result = listLocalClaims({
-      rootPath: repoPath(parsed),
+      rootPath,
       activeOnly: true
     });
 
     if (parsed.flags.has("--json")) {
-      writeJson(result);
+      writeJson(result, outputOptions);
       return exitCodes.ok;
     }
 
-    write(renderClaims(result));
+    write(renderClaims(result), outputOptions);
     return exitCodes.ok;
   } catch (error) {
-    writeError(`grape claims failed: ${errorMessage(error)}`);
+    writeError(`grape claims failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
     return claimsErrorExitCode(error);
   }
 }
