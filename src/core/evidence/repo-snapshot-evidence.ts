@@ -20,7 +20,7 @@ export interface RepoSnapshotEvidenceFile {
 
 export interface RepoSnapshotEvidenceRejection {
   readonly path: string;
-  readonly reason: "git_ignored" | "privacy_ignored" | "unreadable" | "too_large" | "binary";
+  readonly reason: "git_ignored" | "privacy_ignored" | "grape_runtime" | "unreadable" | "too_large" | "binary";
   readonly privacyStatus: Extract<PrivacyStatus, "allowed" | "ignored" | "private">;
   readonly metadata?: {
     readonly sha256?: string;

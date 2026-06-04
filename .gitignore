@@ -1,4 +1,5 @@
 do-not-commit-docs/
+/.grape/
 .tmp/
 node_modules/
 dist/

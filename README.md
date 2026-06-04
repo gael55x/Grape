@@ -73,6 +73,12 @@ grape_get_context
 
 For continued turns, keep the same task/query and session identity. The alpha.3 session contract is strict by design: different task wording with the same explicit session is a mismatch, and derived MCP sessions change when the query changes. See [Agent Sessions](docs/v1/interfaces/agent-sessions.md) for examples and recovery paths.
 
+## Security And AI Context Safety
+
+Grape is local-first and does not send repository content, proofs, artifacts, embeddings, telemetry, or summaries to a remote service by default. It respects Git and local privacy ignores, rejects local `.grape/` runtime state from snapshots, blocks common raw secret shapes before artifact output, and keeps generated local state out of Git through `.git/info/exclude`.
+
+Repository content is still untrusted input. Source files, docs, comments, rules, and fixtures can contain prompt-injection text or private implementation details that may be delivered to an AI agent as evidence. Review generated context before pasting or forwarding it to an LLM, and keep secrets in ignored files rather than relying on any scanner as the only control.
+
 ## Why Grape Exists
 
 AI coding agents repeatedly spend context window and tool calls rediscovering the same facts:

@@ -10,6 +10,7 @@ export function scanDiagnosticsForSnapshot(snapshot: RepoSnapshot | undefined): 
   const counts: Record<SnapshotFileRejectionReason, number> = {
     git_ignored: 0,
     privacy_ignored: 0,
+    grape_runtime: 0,
     unreadable: 0,
     too_large: 0,
     binary: 0
