@@ -25,17 +25,9 @@
   <img alt="Dependency-tracked" src="https://img.shields.io/badge/tracking-dependency%20hashes-111827" />
 </p>
 
-<p align="center">
-  <a href="https://star-history.com/#gael55x/Grape&Date">
-    <img
-      alt="Star History Chart"
-      src="https://api.star-history.com/svg?repos=gael55x/Grape&type=Date"
-      width="600"
-    />
-  </a>
-</p>
 
----
+
+
 
 Grape is the build system for AI coding-agent context.
 
@@ -316,6 +308,18 @@ Implementation standards are strict:
 ## Repository Status
 
 This repository is public-facing alpha software. APIs, schemas, command names, and setup guidance may change before 1.0, and the current package is not a broad beta or production memory platform.
+
+## Star History
+<p align="center">
+
+  <a href="https://www.star-history.com/?repos=gael55x%2FGrape&type=date&legend=top-left">
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=gael55x/Grape&type=date&theme=dark&legend=top-left" />
+     <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=gael55x/Grape&type=date&legend=top-left" />
+     <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=gael55x/Grape&type=date&legend=top-left" />
+   </picture>
+  </a>
+</p>
 
 ## License
 
