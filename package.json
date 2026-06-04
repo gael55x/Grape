@@ -27,7 +27,7 @@
     "prebuild": "node scripts/clean-dist.mjs",
     "build": "tsc -p tsconfig.dist.json",
     "postbuild": "node scripts/copy-storage-migrations.mjs",
-    "docs:check": "node scripts/check-docs-structure.mjs",
+    "docs:check": "node scripts/check-docs-structure.mjs && node scripts/check-examples.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
     "memory:check": "node scripts/check-in-memory-loop.mjs",
     "architecture:check": "node scripts/check-architecture-boundaries.mjs",

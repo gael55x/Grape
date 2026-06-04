@@ -17,7 +17,7 @@
     {
       "id": "item:pinned-rules",
       "state": "PINNED",
-      "itemKind": "pinned_rule",
+      "itemKind": "rule",
       "itemRef": "active-project-rules",
       "sectionId": "active-project-rules",
       "title": "Active Project Rules",
@@ -32,7 +32,7 @@
     {
       "id": "item:omitted-claim",
       "state": "OMIT_UNCHANGED",
-      "itemKind": "active_claim",
+      "itemKind": "claim",
       "itemRef": "current-valid-claims",
       "sectionId": "current-valid-claims",
       "title": "Current Valid Claims",
@@ -47,7 +47,7 @@
     {
       "id": "item:restore-hint",
       "state": "RESTORE_AVAILABLE",
-      "itemKind": "active_claim",
+      "itemKind": "claim",
       "itemRef": "current-valid-claims",
       "sectionId": "current-valid-claims",
       "title": "Restore omitted context",

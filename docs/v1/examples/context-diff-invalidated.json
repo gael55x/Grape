@@ -16,7 +16,7 @@
     {
       "id": "item:invalidate-prior",
       "state": "INVALIDATE_PREVIOUS",
-      "itemKind": "active_claim",
+      "itemKind": "claim",
       "itemRef": "current-valid-claims",
       "sectionId": "current-valid-claims",
       "title": "Current Valid Claims",
@@ -32,7 +32,7 @@
     {
       "id": "item:resend-pinned",
       "state": "PINNED",
-      "itemKind": "pinned_rule",
+      "itemKind": "rule",
       "itemRef": "active-project-rules",
       "sectionId": "active-project-rules",
       "title": "Active Project Rules",
@@ -47,7 +47,7 @@
     {
       "id": "item:resend-body",
       "state": "NEW",
-      "itemKind": "active_claim",
+      "itemKind": "claim",
       "itemRef": "current-valid-claims",
       "sectionId": "current-valid-claims",
       "title": "Current Valid Claims",

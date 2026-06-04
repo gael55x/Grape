@@ -29,7 +29,7 @@ import {
 import { isCliEntrypoint } from "./entrypoint.js";
 
 const emitWarning = process.emitWarning;
-// Node 22.5+ ships the SQLite runtime Grape uses, but still labels it experimental.
+// The published package requires Node 22.13+ so node:sqlite is available without flags.
 // Keep CLI output actionable by suppressing only that runtime warning.
 process.emitWarning = ((warning: string | Error, ...args: unknown[]) => {
   const message = typeof warning === "string" ? warning : warning.message;

@@ -65,6 +65,11 @@ for (const file of packedFiles) {
   assert(!file.startsWith("src/"), "npm package must not include TypeScript source files");
   assert(!file.startsWith("tests/"), "npm package must not include behavior tests");
   assert(!file.startsWith("node_modules/"), "npm package must not include node_modules");
+  assert(!file.startsWith(".grape/"), "npm package must not include local Grape runtime state");
+  assert(!file.startsWith("docs/"), "npm package must not include internal docs");
+  assert(!file.startsWith("do-not-commit/"), "npm package must not include private scratch directories");
+  assert(!/(^|\/)(?:screenshots?|logs?|debug|raw-results?|benchmark-results?)(\/|$)/i.test(file), `npm package includes unsafe artifact path ${file}`);
+  assert(!/(^|\/)\.env(?:\.|$)/i.test(file), `npm package includes env-like file ${file}`);
 }
 
 console.log(`package ok: ${packResult.filename}`);
