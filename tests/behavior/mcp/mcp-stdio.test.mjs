@@ -726,10 +726,34 @@ test("mcp grape_get_artifact returns artifact metadata without absolute root pat
 
     assert.equal(artifact.isError, false);
     assert.equal(artifact.structuredContent.artifactId, context.artifactId);
+    assert.equal(artifact.structuredContent.outputMode, "metadata");
     assert.equal(Object.hasOwn(artifact.structuredContent, "rootPath"), false);
+    assert.equal(Object.hasOwn(artifact.structuredContent, "artifactBody"), false);
     assert.equal(artifact.content[0].text.includes(repoPath), false);
     assert.equal(artifact.structuredContent.dependencies.length > 0, true);
     assert.match(artifact.structuredContent.artifactFiles.json, /^\.grape\//);
+
+    const fullArtifact = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: context.artifactRef.fullArtifactTool.name,
+          arguments: context.artifactRef.fullArtifactTool.arguments
+        }
+      }
+    ])[0].result;
+
+    assert.equal(fullArtifact.isError, false);
+    assert.equal(fullArtifact.structuredContent.outputMode, "full");
+    assert.equal(Object.hasOwn(fullArtifact.structuredContent, "rootPath"), false);
+    assert.equal(fullArtifact.content[0].text.includes(repoPath), false);
+    assert.equal(fullArtifact.structuredContent.artifactBody.contextArtifact.id, context.artifactId);
+    assert.equal(
+      fullArtifact.structuredContent.artifactBody.contextPackItems.some((item) => typeof item.content === "string"),
+      true
+    );
   });
 });
 
@@ -822,6 +846,7 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     assert.equal(Object.hasOwn(toolResult.structuredContent, "contextArtifact"), false);
     assert.equal(toolResult.structuredContent.artifactRef.artifactId, toolResult.structuredContent.artifactId);
     assert.equal(toolResult.structuredContent.artifactRef.fullArtifactTool.name, "grape_get_artifact");
+    assert.equal(toolResult.structuredContent.artifactRef.fullArtifactTool.arguments.outputMode, "full");
     assert.equal(toolResult.structuredContent.agentGraph.graphFormat, "grape.agent-context-graph.v1");
     assert.equal(toolResult.structuredContent.agentGraph.nodeCounts.packItems > 0, true);
     assert.equal(

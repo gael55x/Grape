@@ -84,7 +84,7 @@ function renderContextPackItems(
   const invalidationSummary = summarizeInvalidations(items);
   const contentMessage = contentMode === "full"
     ? "Exact item payloads are in contextPackItems[].content; relationships are in agentGraph."
-    : "Compact item previews are in contextPackItems[].contentPreview; full item payloads require artifactRef.fullArtifactTool or outputMode=full.";
+    : "Compact item previews are in contextPackItems[].contentPreview; full item payloads require artifactRef.fullArtifactTool, grape_get_artifact outputMode=full, or grape_get_context outputMode=full.";
 
   return [
     "## Context Pack Items",

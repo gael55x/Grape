@@ -44,8 +44,13 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
           }
         }
       },
-      readTool("grape_get_artifact", "Inspect stored scaffold context artifact metadata and dependency rows.", {
-        artifactId: { type: "string", minLength: 1 }
+      readTool("grape_get_artifact", "Inspect stored scaffold context artifact metadata and optionally fetch the stored public artifact JSON.", {
+        artifactId: { type: "string", minLength: 1 },
+        outputMode: {
+          type: "string",
+          enum: ["metadata", "full"],
+          description: "metadata returns refs/dependencies only; full also returns the stored public artifact JSON."
+        }
       }, ["artifactId"]),
       readTool("grape_get_claims", "Inspect current-valid durable claims without returning raw source bodies.", {
         activeOnly: { type: "boolean" }

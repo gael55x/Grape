@@ -16,6 +16,7 @@ export interface AgentContextArtifactRef {
     readonly name: "grape_get_artifact";
     readonly arguments: {
       readonly artifactId: string;
+      readonly outputMode: "full";
     };
   };
 }
@@ -89,7 +90,8 @@ export function buildAgentContextArtifactRef(
     fullArtifactTool: {
       name: "grape_get_artifact",
       arguments: {
-        artifactId: input.artifactId
+        artifactId: input.artifactId,
+        outputMode: "full"
       }
     }
   };

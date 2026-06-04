@@ -107,7 +107,7 @@ The current implementation includes the first stdio MCP server:
 
 The default MCP `outputMode` is `agent_pack`. It returns compact preview `contextPackItems`, an `artifactRef` pointing at the stored full artifact, a compact `contextPackMarkdown` summary, and an `agentGraph` adjacency cut over the returned pack items. This graph cut is a transport aid: `contextPackItems` are compact nodes, `agentGraph.edges` express section/input/restore/invalidation relationships, and full dependency metadata stays in the stored artifact. It is not a new durable graph-memory product.
 
-To reduce duplicated agent-facing transport tokens, default `agent_pack` omits full item bodies from `contextPackItems` and returns `contentPreview`, `contentOmitted: true`, `contentHash`, and `tokenCount` instead. `contextPackItems[].inputRefs[].scope` is compacted to local routing keys such as branch, commit, source scope, path, symbol, route, and test. The full item bodies and full dependency scope remain in the artifact JSON written under `artifactFiles.json`; callers can also use `artifactRef.fullArtifactTool` or request `outputMode: "full"` when exact bodies are needed inline. `contextPackMarkdown` is only a compact navigation summary. Full artifact Markdown remains available at `artifactFiles.markdown`. `INVALIDATE_PREVIOUS` rows may be grouped in this Markdown summary, but every structured pack item still carries its own `invalidatesSentItemId`.
+To reduce duplicated agent-facing transport tokens, default `agent_pack` omits full item bodies from `contextPackItems` and returns `contentPreview`, `contentOmitted: true`, `contentHash`, and `tokenCount` instead. `contextPackItems[].inputRefs[].scope` is compacted to local routing keys such as branch, commit, source scope, path, symbol, route, and test. The full item bodies and full dependency scope remain in the stored public artifact JSON written under `artifactFiles.json`; callers can use `artifactRef.fullArtifactTool` (`grape_get_artifact` with `outputMode: "full"`) or request `grape_get_context` with `outputMode: "full"` when exact bodies are needed inline. `contextPackMarkdown` is only a compact navigation summary. Full artifact Markdown remains available at `artifactFiles.markdown`. `INVALIDATE_PREVIOUS` rows may be grouped in this Markdown summary, but every structured pack item still carries its own `invalidatesSentItemId`.
 
 When `outputMode: "full"` is requested, MCP embeds the full `contextArtifact` projection and full `ContextPackItem.content` payloads in the response. Use this for inspection or compatibility, not as the default agent transport path. MCP tool `content[0].text` is a short result summary; large structured payloads are not duplicated as pretty JSON text.
 
@@ -119,7 +119,7 @@ Current limitation: the stored `contextArtifact`, optional full MCP `contextArti
 
 Unsafe or risky context outputs include `recoveryGuidance` so MCP consumers can decide whether to request narrower file/symbol/test seed refs, increase a token budget, rerun after worktree cleanup, or inspect local state without guessing from internal errors.
 
-`grape_get_artifact` returns stored artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative public artifact file refs for one `artifactId`. It does not return raw scaffold sidecar bodies. MCP output omits absolute local root paths.
+`grape_get_artifact` returns stored artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative public artifact file refs for one `artifactId`. Its default `outputMode` is `metadata`, which does not include context bodies. With `outputMode: "full"`, it also returns the stored public artifact JSON from `artifactFiles.json`, including full context-pack item bodies. It does not return raw scaffold sidecar bodies. MCP output omits absolute local root paths.
 
 `grape_get_claims` returns current-valid durable claim metadata, defaulting to `activeOnly: true`. Current V1 implementation exposes narrow `repository_source_excerpt_exists` claims from validated exact-source proof rows, parsed `project_rule` claims from verified rule-file lines, and narrow `grape_observed_run_result` claims from trusted local Grape-observed command/test runs. It returns claim IDs, subjects, claim text, scope metadata, proof refs, source refs, and current-valid rejection counts. It does not return raw proof excerpts, source file bodies, raw command bodies, raw command output, or absolute local root paths.
 
@@ -189,6 +189,7 @@ interface GrapeGetContextOutput {
       name: "grape_get_artifact";
       arguments: {
         artifactId: string;
+        outputMode: "full";
       };
     };
   };
@@ -293,9 +294,11 @@ type GrapeGetOmittedItemOutput =
 ```ts
 interface GrapeGetArtifactInput {
   artifactId: string;
+  outputMode?: "metadata" | "full";
 }
 
 interface GrapeGetArtifactOutput {
+  outputMode: "metadata" | "full";
   artifactId: string;
   sessionId: string;
   taskType: string;
@@ -318,6 +321,10 @@ interface GrapeGetArtifactOutput {
     hash: string;
     scope: Record<string, unknown>;
   }>;
+  artifactBody?: {
+    contextArtifact: ContextArtifact;
+    contextPackItems: ContextPackItem[];
+  };
 }
 ```
 
