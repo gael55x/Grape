@@ -26,4 +26,4 @@ jobs:
         run: npm ci
 
       - name: Run checks
-        run: npm run check
+        run: npm run beta:check
