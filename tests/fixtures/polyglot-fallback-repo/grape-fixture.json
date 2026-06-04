@@ -1,0 +1,78 @@
+{
+  "name": "polyglot-fallback-repo",
+  "purpose": "Behavior fixture proving safe lexical/path fallback for unsupported or partially supported languages.",
+  "repoShape": {
+    "branches": ["main"],
+    "worktree": "clean",
+    "packageType": "polyglot-fallback"
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "afbded4de5eb8a5bb75368ed347e9c7656400fd08954e94ad55a8505960c7bb1",
+      "purpose": "fixture overview"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "d2a31c418fbfe9642a73ea084c55fee76423a5766630e593bffc04afb5a90be1",
+      "purpose": "Python project manifest"
+    },
+    {
+      "path": "src/grape_polyglot/pricing.py",
+      "sha256": "85915192116449eb8c0e63cb93bf236e3c6c0bb29107ca5b37faa0d848acd8ae",
+      "purpose": "Python lexical fallback source"
+    },
+    {
+      "path": "src/grape_polyglot/pricing.test.py",
+      "sha256": "38077c1c660a2eb3a332ef92ff9770df26dfca296a7d4f16ea4ff4e40dd9d4cc",
+      "purpose": "Python lexical fallback test"
+    },
+    {
+      "path": "java/src/main/java/example/BillingPolicy.java",
+      "sha256": "356a6b73da3d146b27f5e22d3ec3cd66c6b8692dfeb281fae826cd9bd08cb85c",
+      "purpose": "Java lexical fallback source"
+    },
+    {
+      "path": "kotlin/src/main/kotlin/example/AccessPolicy.kt",
+      "sha256": "851ca0757f33fe96588fc44febf065230506cda93c9816bd7a2f234329d1992f",
+      "purpose": "Kotlin lexical fallback source"
+    },
+    {
+      "path": ".grape/rules.md",
+      "sha256": "38281527aff2d89f367a05a911c33da1337b5062d7c9a6b32fc7e98a38fddc7b",
+      "purpose": "pinned project rule"
+    }
+  ],
+  "expectedClaims": [
+    {
+      "id": "claim.polyglot.lexical_fallback",
+      "text": "Unsupported language files must be quoted as exact lexical evidence rather than treated as full semantic proof.",
+      "verificationStatus": "fixture_expectation",
+      "proofFiles": [
+        "src/grape_polyglot/pricing.py",
+        "java/src/main/java/example/BillingPolicy.java",
+        "kotlin/src/main/kotlin/example/AccessPolicy.kt"
+      ]
+    }
+  ],
+  "expectedScopeResults": {
+    "branch:main": "match",
+    "worktree:clean": "match",
+    "language_graph:python_java_kotlin": "partial"
+  },
+  "expectedArtifactSections": [
+    "task",
+    "pinned_rule",
+    "code_span",
+    "test_span",
+    "task_retrieval"
+  ],
+  "expectedFirstTurnDiffStates": ["NEW", "PINNED"],
+  "expectedSecondTurnDiffStates": ["OMIT_UNCHANGED", "PINNED", "RESTORE_AVAILABLE"],
+  "relatedTests": [
+    "polyglot fixture returns lexical fallback evidence for Python Java and Kotlin"
+  ],
+  "relatedBenchmarks": [
+    "composer_graphify_grape_polyglot_fallback_pending"
+  ]
+}

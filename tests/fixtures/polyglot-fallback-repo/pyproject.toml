@@ -1,0 +1,5 @@
+[project]
+name = "polyglot-fallback-fixture"
+version = "0.0.0"
+description = "Fixture for Grape lexical fallback coverage"
+requires-python = ">=3.11"

@@ -1,0 +1,87 @@
+{
+  "name": "monorepo-lite-repo",
+  "purpose": "Behavior fixture proving task-specific retrieval stays focused on a nested package when explicit package refs are present.",
+  "repoShape": {
+    "branches": ["main"],
+    "worktree": "clean",
+    "packageType": "npm-workspaces"
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "fdb941a82dcbcf6defee5a8c2e9ef61cfe5bd1820660c9177e4b9a42a0b6e37f",
+      "purpose": "fixture overview"
+    },
+    {
+      "path": "package.json",
+      "sha256": "30c1366b5fd1d25d83f53c94bf7661dd8a2031360255deb13076b3d58d56601c",
+      "purpose": "root workspace manifest"
+    },
+    {
+      "path": "packages/api/package.json",
+      "sha256": "60721e4bd8c6476d9dc1a277cc3fe83d221470974132a6f1823663ebd2f00a27",
+      "purpose": "api package manifest"
+    },
+    {
+      "path": "packages/api/src/apiBilling.ts",
+      "sha256": "d878ea9d91455bceb6bd5f4454709ac0c7bdaa6257d020e7004395702a1cf740",
+      "purpose": "api package source"
+    },
+    {
+      "path": "packages/api/src/apiBilling.test.ts",
+      "sha256": "758432a54cb937c2a271905c7af13d63f6f4c923ce5da772d9d7ad2dc2181f8d",
+      "purpose": "api package related test"
+    },
+    {
+      "path": "packages/web/package.json",
+      "sha256": "20ef3a3e7975617053bd1c29308c81af358b4e3e2aa73992ef364f9851215965",
+      "purpose": "web package manifest"
+    },
+    {
+      "path": "packages/web/src/cart.ts",
+      "sha256": "1902be3f0bfd4218689ec5ca66fda3e69d0752ee0850342318c91e9f08f86aed",
+      "purpose": "unrelated package source"
+    },
+    {
+      "path": "packages/web/src/cart.test.ts",
+      "sha256": "768f61391653ff594c0af89d0a428860b024197306e28832c7a306f0cac1a130",
+      "purpose": "unrelated package test"
+    },
+    {
+      "path": ".grape/rules.md",
+      "sha256": "fcc1cd74a31c4e0d985c28a45d7af933e70a3ca4be07126f33805820ccd4da90",
+      "purpose": "pinned project rule"
+    }
+  ],
+  "expectedClaims": [
+    {
+      "id": "claim.monorepo.api_local_context",
+      "text": "When the task names packages/api and apiBilling, Grape should send package-local API source and test context before unrelated package context.",
+      "verificationStatus": "fixture_expectation",
+      "proofFiles": [
+        "packages/api/src/apiBilling.ts",
+        "packages/api/src/apiBilling.test.ts"
+      ]
+    }
+  ],
+  "expectedScopeResults": {
+    "branch:main": "match",
+    "worktree:clean": "match",
+    "workspace:packages/api": "partial"
+  },
+  "expectedArtifactSections": [
+    "task",
+    "pinned_rule",
+    "code_span",
+    "test_span",
+    "task_retrieval"
+  ],
+  "expectedFirstTurnDiffStates": ["NEW", "PINNED"],
+  "expectedSecondTurnDiffStates": ["OMIT_UNCHANGED", "PINNED", "RESTORE_AVAILABLE"],
+  "relatedTests": [
+    "monorepo fixture keeps task retrieval focused on package-local source and tests"
+  ],
+  "relatedBenchmarks": [
+    "composer_graphify_grape_monorepo_pending"
+  ]
+}

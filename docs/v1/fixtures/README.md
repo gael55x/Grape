@@ -27,6 +27,8 @@ Agents must not add benchmarks against undocumented fixtures.
 - `branch-switch-typescript-app` — branch-switch invalidation benchmark (metadata under `tests/fixtures/`)
 - `stale-source-typescript-app` — dependency-stale invalidation benchmark (metadata under `tests/fixtures/`)
 - `session-reset-typescript-app` — explicit session-reset invalidation benchmark (metadata under `tests/fixtures/`)
+- `polyglot-fallback-repo` — behavior proof fixture for unsupported-language lexical/path fallback
+- `monorepo-lite-repo` — behavior proof fixture for explicit nested-package source/test scoping
 
 ## Fixture Matrix
 
@@ -41,8 +43,8 @@ Agents must not add benchmarks against undocumented fixtures.
 | `ignored-files-secrets-repo` | privacy and redaction rules | planned (partial coverage in unit/behavior tests) |
 | `no-tests-repo` | missing verification surfaced honestly | planned |
 | `dynamic-imports-repo` | partial graph confidence | planned |
-| `monorepo-lite-repo` | package/path boundaries | planned |
-| `polyglot-fallback-repo` | Kotlin/Java/Python/etc. safe exact/path/lexical fallback and provider capability warnings | planned |
+| `monorepo-lite-repo` | explicit `packages/api/...` path scoping and package-local related TS test selection | **implemented behavior fixture** — not a `grape bench` scenario yet |
+| `polyglot-fallback-repo` | Python/Java/Kotlin safe exact/path/lexical fallback with partial-context warnings | **implemented behavior fixture** — not a `grape bench` scenario yet |
 | `auth-security-fixture` | high-risk exact context | planned (risk-overlay behavior is covered in behavior tests) |
 | `compression-invalidation-fixture` | compression invalidation | planned |
 | `session-reset-fixture` | full resend and restore | implemented as `session-reset-typescript-app`; restore remains covered in behavior tests and restore-path goldens |
@@ -58,6 +60,8 @@ Agents must not add benchmarks against undocumented fixtures.
 | `session-reset-typescript-app` | `bench_diff_vs_naive_resend` | turn 2 with reset emits `INVALIDATE_PREVIOUS`, sends new current context, and emits no `OMIT_UNCHANGED`; zero unsafe omissions |
 
 `grape bench` picks the scenario from the fixture name. It does **not** yet run gold-label claim/proof checks or the full planned matrix below.
+
+`polyglot-fallback-repo` and `monorepo-lite-repo` are checked-in proof fixtures used by behavior tests. They are not benchmark baselines and should not be presented as Composer/Graphify/Grape benchmark results until scripted comparable scenarios are added.
 
 ## Fixture Metadata Template
 

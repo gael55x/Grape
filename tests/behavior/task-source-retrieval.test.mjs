@@ -123,6 +123,55 @@ test("task source retrieval includes related tests that import selected source f
   assert.deepEqual(result.lexicalSourceRefs, []);
 });
 
+test("task source retrieval scopes broad matches when the task names a package source path", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix apiBillingTotal in packages/api/src/apiBilling.ts for packages/api",
+    sources: [
+      source("source-api", "packages/api/src/apiBilling.ts"),
+      source("source-api-test", "packages/api/src/apiBilling.test.ts"),
+      source("source-web", "packages/web/src/cart.ts"),
+      source("source-web-test", "packages/web/src/cart.test.ts")
+    ],
+    symbols: [
+      symbol("source-api", "packages/api/src/apiBilling.ts", "apiBillingTotal"),
+      symbol("source-api-test", "packages/api/src/apiBilling.test.ts", "testApiBillingTotalIncludesProFee"),
+      symbol("source-web", "packages/web/src/cart.ts", "webCartSubtotal"),
+      symbol("source-web-test", "packages/web/src/cart.test.ts", "testWebCartSubtotal")
+    ],
+    relationships: [
+      {
+        sourceRef: "packages/api/src/apiBilling.test.ts",
+        targetSourceRef: "packages/api/src/apiBilling.ts",
+        relationship: "imports"
+      },
+      {
+        sourceRef: "packages/web/src/cart.test.ts",
+        targetSourceRef: "packages/web/src/cart.ts",
+        relationship: "imports"
+      }
+    ],
+    lexicalMatches: [
+      { sourceId: "source-api", sourceRef: "packages/api/src/apiBilling.ts", matchedTerm: "total" },
+      { sourceId: "source-api-test", sourceRef: "packages/api/src/apiBilling.test.ts", matchedTerm: "total" },
+      { sourceId: "source-web", sourceRef: "packages/web/src/cart.ts", matchedTerm: "total" },
+      { sourceId: "source-web-test", sourceRef: "packages/web/src/cart.test.ts", matchedTerm: "total" }
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "packages/api/src/apiBilling.ts",
+    "packages/api/src/apiBilling.test.ts"
+  ]);
+  assert.deepEqual(result.explicitSourceRefs, ["packages/api/src/apiBilling.ts"]);
+  assert.deepEqual(result.relatedTestSourceRefs, ["packages/api/src/apiBilling.test.ts"]);
+  assert.deepEqual(result.lexicalSourceRefs, [
+    "packages/api/src/apiBilling.ts",
+    "packages/api/src/apiBilling.test.ts"
+  ]);
+  assert.equal(result.selectedSourceRefs.includes("packages/web/src/cart.ts"), false);
+  assert.equal(result.selectedSourceRefs.includes("packages/web/src/cart.test.ts"), false);
+});
+
 test("task source retrieval warns when selected implementation sources have no related tests", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix calculateDiscount refund flow",

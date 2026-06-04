@@ -1,0 +1,10 @@
+{
+  "name": "monorepo-lite-fixture",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces"
+  }
+}

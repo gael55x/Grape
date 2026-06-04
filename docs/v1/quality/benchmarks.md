@@ -70,6 +70,8 @@ Fixture name selects the benchmark scenario:
 | `stale-source-typescript-app` | `bench_stale_source_invalidation` |
 | `session-reset-typescript-app` | `bench_diff_vs_naive_resend` |
 
+Checked-in behavior fixtures also exist for `polyglot-fallback-repo` and `monorepo-lite-repo`. They prove safe fallback and explicit package-path scoping in tests, but `grape bench` does not run them as token or latency benchmarks yet.
+
 Run all fixtures:
 
 ```bash
@@ -108,6 +110,8 @@ Current benchmark thresholds:
 Benchmark output also reports serialized context-pack token estimates, serialized default agent-output token estimates, and token breakdowns by diff state and section. These are transport diagnostics: body-token counts explain logical context savings, serialized-pack counts show JSON overhead from metadata, restore hints, and dependency references, and serialized-agent-output counts estimate the default MCP `agent_pack` frame including compact text summary, structured content, compact Markdown, and graph adjacency.
 
 These numbers are deterministic approximate token estimates, not release performance claims. They are valid as harness checks because they run against named fixtures and fail on unsafe omission or stale send counters.
+
+The current benchmark harness is therefore ready for internal sanity checks, not external claims against Composer or Graphify. Real beta benchmarking must add comparable scripted scenarios for normal Composer, Graphify, and Grape, then publish sanitized raw results and summaries separately.
 
 ## Metric Schema
 

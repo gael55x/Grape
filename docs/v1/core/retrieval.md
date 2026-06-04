@@ -48,6 +48,8 @@ Private, ignored, unreadable, oversized, binary, stale-hash, and secret-looking 
 Task source retrieval is an impact candidate selector, not relevance ranking over durable truth.
 
 - Explicit seed files are selected first when they exist in the current snapshot.
+- Source file paths mentioned directly in the task are treated as explicit source anchors when they match current snapshot files.
+- When an explicit task or seed path is inside a common workspace directory such as `packages/<name>/`, broad symbol and lexical expansion is scoped to that package before global caps are applied.
 - Path-like test seeds may select matching test files as exact source context.
 - Symbol matches may select source files and line anchors for exact excerpt windows.
 - Graph expansion may select directly related source files through supported import and call edges.
@@ -60,6 +62,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 - Current-valid parsed `project_rule` claims may render with task-scoped claims, while exact rule text remains pinned in the active-project-rules section.
 - Selection is capped; truncation is reported as a warning.
 - If query terms exist but no source matches, retrieval reports a warning instead of inventing context.
+- Generic repo-shape terms such as `src`, `packages`, `workspace`, and `tests` are ignored as standalone search terms because they cause unrelated context bleed.
 
 ## Beta Boundary
 
@@ -76,7 +79,7 @@ Current implementation can fail or become inefficient in these cases:
 - Python, Java, Kotlin, Go, Rust, YAML, C#, Ruby, PHP, and shell relationships are not extracted as language-aware graph edges today
 - JS/TS import resolution can miss aliases, package exports, generated code, framework routing, dynamic imports, and non-relative imports
 - global source caps can select too much from one package in a monorepo
-- docs list fixture categories that are not all checked in yet, so broad polyglot/monorepo claims remain unproven
+- checked-in polyglot and monorepo fixtures prove only safe fallback and explicit package-path scoping, not package-aware invalidation or full semantic graph coverage
 
 Retrieval should surface these cases as blind spots or `partial_with_risk` rather than silently acting as a complete graph.
 

@@ -91,13 +91,20 @@ const stopWords = new Set([
   "for",
   "from",
   "into",
+  "package",
+  "packages",
   "point",
   "points",
   "repo",
   "repository",
+  "src",
+  "test",
+  "tests",
   "the",
   "this",
   "update",
+  "workspace",
+  "workspaces",
   "with"
 ]);
 
@@ -129,6 +136,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   const selectedReasons = new Map<string, Set<SelectionReason>>();
   const sourceAnchors: TaskSourceRetrievalAnchor[] = [];
   const warnings: string[] = [];
+  const explicitPathRefs = new Set<string>();
 
   for (const seedFile of input.seedFiles ?? []) {
     const normalized = normalizeSeedFile(seedFile);
@@ -137,6 +145,12 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
       continue;
     }
     addReason(selectedReasons, normalized, "explicit_seed");
+    explicitPathRefs.add(normalized);
+  }
+
+  for (const taskSourceRef of taskMentionedSourceRefs(input.task, sourceByRef)) {
+    addReason(selectedReasons, taskSourceRef, "explicit_seed");
+    explicitPathRefs.add(taskSourceRef);
   }
 
   for (const seedTest of input.seedTests ?? []) {
@@ -149,10 +163,12 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     addReason(selectedReasons, normalized, "test_seed");
   }
 
+  const scopedCandidate = scopedCandidatePredicate(explicitPathRefs);
   const normalizedTerms = new Set(queryTerms);
   for (const symbol of input.symbols) {
     const sourceRef = sourceRefById.get(symbol.sourceId);
     if (!sourceRef) continue;
+    if (!scopedCandidate(sourceRef)) continue;
     if (matchesAnyTerm(symbol.name, normalizedTerms) || matchesAnyTerm(symbol.path, normalizedTerms)) {
       addReason(selectedReasons, sourceRef, "symbol_match");
       if (symbol.symbolKind !== "module" && symbol.startLine !== undefined && symbol.endLine !== undefined) {
@@ -174,6 +190,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   for (const match of input.lexicalMatches) {
     const sourceRef = sourceRefById.get(match.sourceId) ?? match.sourceRef;
     if (!sourceByRef.has(sourceRef)) continue;
+    if (!scopedCandidate(sourceRef)) continue;
     addReason(selectedReasons, sourceRef, "lexical_match");
     addGraphRelatedSources(selectedReasons, sourceByRef, relationships, new Set([sourceRef]));
     addRelatedTests(selectedReasons, sourceByRef, relationships, new Set([sourceRef]));
@@ -296,6 +313,14 @@ function normalizeSearchText(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
+function taskMentionedSourceRefs(
+  task: string,
+  sourceByRef: ReadonlyMap<string, TaskRetrievalSource>
+): readonly string[] {
+  const normalizedTask = task.replace(/\\/g, "/").toLowerCase();
+  return [...sourceByRef.keys()].filter((sourceRef) => normalizedTask.includes(sourceRef.toLowerCase()));
+}
+
 function normalizeSeedFile(value: string): string | undefined {
   const normalized = value.replace(/\\/g, "/").replace(/^\.\/+/, "");
   if (
@@ -310,6 +335,36 @@ function normalizeSeedFile(value: string): string | undefined {
     return undefined;
   }
   return normalized;
+}
+
+function scopedCandidatePredicate(explicitPathRefs: ReadonlySet<string>): (sourceRef: string) => boolean {
+  const scopePrefixes = [...explicitPathRefs]
+    .map(packageScopePrefix)
+    .filter((prefix): prefix is string => Boolean(prefix));
+  if (scopePrefixes.length === 0) return () => true;
+
+  return (sourceRef: string) => (
+    explicitPathRefs.has(sourceRef) ||
+    scopePrefixes.some((prefix) => sourceRef.startsWith(prefix))
+  );
+}
+
+function packageScopePrefix(sourceRef: string): string | undefined {
+  const normalized = sourceRef.replace(/\\/g, "/");
+  const parts = normalized.split("/");
+  if (parts.length < 3) return undefined;
+
+  const [workspaceDir, packageName] = parts;
+  if (
+    workspaceDir === "packages" ||
+    workspaceDir === "apps" ||
+    workspaceDir === "services" ||
+    workspaceDir === "libs"
+  ) {
+    return `${workspaceDir}/${packageName}/`;
+  }
+
+  return undefined;
 }
 
 function isPathLikeTestSeed(value: string): boolean {
