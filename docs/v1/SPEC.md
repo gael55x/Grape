@@ -2801,7 +2801,9 @@ type GrapeGetContextOutput = {
 };
 ```
 
-### 28.7 Required CLI commands
+### 28.7 CLI command status
+
+The current beta transport surface must document executable commands separately from deferred V1 command ideas. Do not place deferred commands in runnable example blocks.
 
 Everyday:
 
@@ -2809,6 +2811,7 @@ Everyday:
 grape help
 grape status
 grape doctor
+grape doctor --privacy
 ```
 
 Setup/MCP:
@@ -2824,8 +2827,8 @@ Manual fallback:
 
 ```bash
 grape sync
-grape compile
-grape diff-context
+grape compile --task <text>
+grape diff-context --task <text>
 ```
 
 Inspection/debugging:
@@ -2837,27 +2840,19 @@ grape claims --active
 grape proofs
 grape proofs --proof <proof_id>
 grape proofs --source <source_id>
-grape proofs <claim_id>
 grape stale
 grape conflicts
 grape omitted
-grape bench
+grape bench --fixture <name>
 ```
 
-Decision recording:
+Still part of V1.0, but not implemented in the current beta transport slice:
 
-```bash
-grape add-decision "Use thin route handlers for auth routes"
-grape decisions review
-```
-
-Privacy/data:
-
-```bash
-grape doctor --privacy
-grape export
-grape purge
-```
+- `grape add-decision "Use thin route handlers for auth routes"`: records a directly confirmed developer decision candidate for Trust Kernel promotion.
+- `grape decisions review`: reviews confirmed and candidate decisions with scope, proof, stale, and contradiction metadata.
+- `grape proofs <claim_id>`: inspect proof rows linked to a durable claim once broader claim-linked proof inspection is implemented.
+- `grape export`: exports local Grape data only after a privacy-preserving export contract exists.
+- `grape purge`: purges local Grape data only after a scoped purge contract and user-confirmation flow exist.
 
 Do not ship `grape ask` in V1. It makes Grape look like another coding assistant.
 

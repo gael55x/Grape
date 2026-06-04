@@ -36,8 +36,8 @@ Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client tri
 - [x] Session reset fixture benchmark exists and proves reset emits `INVALIDATE_PREVIOUS`, sends new current context, and avoids `OMIT_UNCHANGED` on the reset turn.
 - [x] Restore-path golden tests cover `RESTORE_AVAILABLE` restore ID shape, session binding, restored body shape, and MCP no-root-path output.
 - [x] Dedicated task/session mismatch exit classification is approved and implemented as exit code `6`.
-- [x] External benchmark workspace dependency metadata is aligned to alpha.2 after approval.
-- [x] Published-package smoke passed against the registry-installed alpha.2 package in the external benchmark workspace.
+- [x] External benchmark workspace dependency metadata is aligned to alpha.3 after approval.
+- [x] Published-package smoke passed against the registry-installed alpha.3 package in the external benchmark workspace.
 - [x] Alpha.3 package metadata is aligned and `npm run check`, `npm run benchmark:run`, and `npm run e2e:alpha` are green.
 - [x] `0.1.0-alpha.3` is published on npm and GitHub after release approval.
 - [x] Global `npm install -g grape-context@0.1.0-alpha.3` smoke has been rerun against the published package.
@@ -115,7 +115,7 @@ graphify tree --graph <external-benchmark-workspace>/repos/ts-checkout-app/graph
 
 Observed:
 
-- `npm run check` passed with 174/174 behavior tests.
+- `npm run check` passed with 177/177 behavior tests in the latest follow-up gate.
 - `npm pack --dry-run` passed with a temporary npm cache and confirmed `README.md`, `CHANGELOG.md`, `dist/`, package metadata, and storage migrations ship. The default local npm cache had an ownership issue under `<local-npm-cache>`, so the dry-run used `<temporary-npm-cache>`.
 - `npm run benchmark:run` passed all four fixtures. The stable no-change fixture saved 45.12 percent on turn 2; branch-switch, stale-source, and session-reset fixtures intentionally reported 0 percent reduction because they emitted `INVALIDATE_PREVIOUS` instead of unsafe omission.
 - Follow-up token-efficiency hardening added a serialized default MCP agent-output estimate and a 400 percent first-turn overhead gate. The refreshed benchmark suite passed with compact `agent_pack` output; the stable fixture reported `serializedAgentOutputTokens: 30352` and first-turn agent-output overhead of 348.22 percent, while still preserving the 45.12 percent turn-2 logical token reduction.

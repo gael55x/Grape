@@ -51,7 +51,9 @@ For continued-turn behavior, task/session identity, mismatch recovery, and alpha
 | Inspection | `grape sessions`, `grape artifacts`, `grape claims --active`, `grape proofs`, `grape proofs --proof <id>`, `grape proofs --source <sourceId>`, `grape stale`, `grape conflicts`, `grape omitted` |
 | Benchmarks | `grape bench --fixture <name>` |
 
-### Specified / deferred
+### Still Specified For V1.0 / Deferred From Current Beta Slice
+
+These commands are not removed from V1.0. They remain planned command surfaces, but they need their proof, privacy, or durable-data contracts before they can be implemented safely.
 
 | Command | Status |
 |---|---|
@@ -61,16 +63,22 @@ For continued-turn behavior, task/session identity, mismatch recovery, and alpha
 | `grape purge` | Specified; deferred until purge data contract exists. |
 | `grape proofs <claim_id>` | Specified claim-linked form; deferred. Use `grape proofs --proof <id>` today. |
 
-## Required Command Groups
+## Command Groups
 
-- everyday: `grape help`, `grape status`, `grape doctor`
-- setup/MCP: `grape init --connect`, `grape mcp`, `grape mcp --print-config`, `grape mcp --stdio`
-- fallback: `grape sync`, `grape compile`, `grape diff-context`
-- observed runs: `grape run`, `grape test`
-- inspection: `grape sessions`, `grape artifacts`, `grape claims --active`, `grape proofs`, `grape proofs <claim_id>`, `grape stale`, `grape conflicts`, `grape omitted`
+Implemented command groups:
+
+- everyday: `grape help`, `grape status`, `grape doctor`, `grape doctor --privacy`
+- setup/MCP: `grape init --connect`, `grape sync`, `grape mcp`, `grape mcp --print-config`, `grape mcp --stdio`
+- fallback compile: `grape compile --task <text>`, `grape diff-context --task <text>`
+- observed runs: `grape run --session <id> -- <cmd...>`, `grape test --session <id> -- <cmd...>`
+- inspection: `grape sessions`, `grape artifacts`, `grape claims --active`, `grape proofs`, `grape proofs --proof <id>`, `grape proofs --source <sourceId>`, `grape stale`, `grape conflicts`, `grape omitted`
+- benchmarks: `grape bench --fixture <name>`
+
+Still part of V1.0, but deferred from the current beta transport slice:
+
 - decisions: `grape add-decision`, `grape decisions review`
-- benchmarks: `grape bench`, `grape bench --fixture <name>`
-- privacy: `grape doctor --privacy`, `grape export`, `grape purge`
+- claim-linked proof inspection: `grape proofs <claim_id>`
+- privacy/data export: `grape export`, `grape purge`
 
 ## Implemented Setup Slice
 
@@ -184,8 +192,7 @@ The CLI must call application services. It must not:
 - `grape proofs --proof <id>` shows proof refs, source refs, support status, and hashes. It must not show raw secrets. Claim-linked `grape proofs <claim_id>` remains pending until broader claim-linked proof inspection exists.
 - `grape bench` runs scripted benchmarks only. It must not use ad hoc baselines.
 - `grape run` and `grape test` create trusted Grape-observed source evidence rows only after executing the command locally. They may promote only the narrow `grape_observed_run_result` proof/claim and must not persist raw command/output bodies or promote broader durable truth.
-- `grape add-decision` records a user decision candidate and requires direct confirmation before it can become durable evidence.
-- `grape decisions review` lists decisions, scope, prompt hashes, response hashes, and stale status.
+- Deferred decision commands such as `grape add-decision` and `grape decisions review` require direct-confirmation and durable-decision data contracts before implementation.
 
 ## Required Tests
 
@@ -193,6 +200,9 @@ The CLI must call application services. It must not:
 - `cli_doctor_privacy_redacts_secrets`
 - `cli_json_matches_schema`
 - `cli_proofs_does_not_show_raw_secret`
-- `cli_add_decision_requires_confirmation`
 - `cli_bench_requires_named_fixture`
 - `cli_observed_run_records_trusted_source_without_raw_output`
+
+Required when deferred V1.0 commands are implemented:
+
+- `cli_add_decision_requires_confirmation`

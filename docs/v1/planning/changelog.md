@@ -8,6 +8,8 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Added
 
+- Clarified current-vs-deferred CLI documentation: runnable SPEC/CLI examples now show implemented beta transport commands, while deferred decision, export/purge, and claim-linked proof commands are explicitly preserved as still-planned V1.0 surfaces.
+- Aligned current runtime docs and beta-readiness notes with the Node.js 22.13+ published package floor and latest 177/177 behavior-test gate.
 - Added the language-indexing contract and ADR-0011 for capability-based language providers, safe unsupported-language fallback, and monorepo/package boundary expectations without expanding V1 into a universal parser.
 - Aligned root docs, CLI/MCP interface docs, fixture docs, examples, beta trial checklist, and the canonical spec around graph-shaped context, safe Kotlin/Java/Python/etc. fallback, and monorepo/package-boundary beta expectations.
 - Added `npm run beta:check` as the extended local beta-readiness gate over `check`, benchmark, and alpha e2e smoke.

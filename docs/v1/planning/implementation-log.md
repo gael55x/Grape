@@ -756,3 +756,10 @@ Keep entries simple:
 - Summary: audited root and V1 docs for stale graph/language/beta wording, then aligned README, roadmap, changelog, CLI/MCP contracts, fixtures, examples, beta trial checklist, and SPEC around graph-shaped context, safe Kotlin/Java/Python/etc. fallback, and provider/fixture requirements before stronger polyglot or monorepo claims.
 - Checks run: `npm run check` (pass, 177/177 behavior tests) and a markdown relative-link scan (pass, 55 markdown files).
 - Risks/follow-ups: this is documentation alignment only. Provider dispatch, package/workspace detection, and polyglot/monorepo fixtures still need implementation and behavior coverage.
+
+### 2026-06-04 - Documentation Simplification Audit
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: audited docs and TypeScript reachability for unused or confusing surfaces. Simplified current CLI examples so runnable code blocks only show implemented beta transport commands, preserved deferred decision/export/purge/claim-linked proof commands as still-planned V1.0 surfaces, and aligned runtime/beta-readiness wording with the Node.js 22.13+ package floor and latest behavior-test count.
+- Checks run: `npm run check` (pass, 177/177 behavior tests), `npm run docs:check` after final wording updates, `npm run architecture:check`, strict TypeScript unused-symbol audit, markdown relative-link scan (pass, 55 markdown files), and a TypeScript reachability audit.
+- Risks/follow-ups: empty `src/core/scope/` and `src/core/sessions/` ownership placeholders remain intentional because architecture docs and import-boundary rules reserve those module boundaries for future scope/session implementations.
