@@ -31,6 +31,16 @@ test("artifact secret scan blocks structured secret fields and common token shap
   );
 });
 
+test("artifact secret scan blocks secret-looking values on long generated lines", () => {
+  const scan = scanArtifactTextForSecrets(`${"x".repeat(5000)} SECRET=value {"clientSecret":"example-secret-value"}`);
+
+  assert.equal(scan.ok, false);
+  assert.deepEqual(
+    scan.findings.map((finding) => finding.kind),
+    ["env_secret_assignment", "secret_named_assignment"]
+  );
+});
+
 test("artifact secret scan allows hashes and labels without raw values", () => {
   assert.doesNotThrow(() =>
     assertArtifactTextHasNoSecrets("Warnings: repository_artifact_uses_lightweight_index\nhash: abc123", "fixture")

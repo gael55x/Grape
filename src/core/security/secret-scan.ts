@@ -62,7 +62,6 @@ function patternMatches(entry: SecretPatternEntry, text: string): boolean {
 
 function hasEnvSecretAssignment(text: string): boolean {
   for (const line of text.split(/\r?\n/)) {
-    if (line.length > 4096) continue;
     const assignmentPattern = /\b(?:SECRET|TOKEN|PASSWORD|API_KEY|PRIVATE_KEY)\s*=\s*["']?([^"'\s]+)/gi;
     let match: RegExpExecArray | null;
     while ((match = assignmentPattern.exec(line)) !== null) {
@@ -74,7 +73,6 @@ function hasEnvSecretAssignment(text: string): boolean {
 
 function hasSecretNamedLiteralAssignment(text: string): boolean {
   for (const line of text.split(/\r?\n/)) {
-    if (line.length > 4096) continue;
     const assignmentPattern =
       /["']?([A-Za-z0-9_.-]{1,100})["']?\s*[:=]\s*("[^"\r\n]{8,}"|'[^'\r\n]{8,}'|[A-Za-z0-9_./+=:@-]{8,})/g;
     let match: RegExpExecArray | null;
