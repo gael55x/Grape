@@ -168,7 +168,7 @@ flowchart TD
 - Keep core modules independent. A core module should expose explicit functions and records, not hidden singleton state.
 - Prefer narrow files such as `durable-context-build.ts` and `durable-context-records.ts` over a single context-build godfile.
 - Prefer domain-specific helper names. `storage-row-mappers.ts` is acceptable; `utils.ts`, `helpers.ts`, and `misc.ts` are not.
-- Split tests by behavior once one test file mixes unrelated contracts. A larger test file is acceptable only when it covers one cohesive behavior surface.
+- Split tests by behavior once one test file mixes unrelated contracts. Behavior tests live in domain folders under `tests/behavior/`; add or extend the folder that owns the contract instead of returning to a flat test layout. A larger test file is acceptable only when it covers one cohesive behavior surface.
 - Public exports should flow through the owning folder's `index.ts`; do not deep-import private helper files from unrelated layers.
 
 ## Split Triggers

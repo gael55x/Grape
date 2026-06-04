@@ -27,7 +27,29 @@ Before editing code, agents must identify:
 
 No production behavior is complete without tests for the related state transition or invariant.
 
-The in-memory smoke harness guards file shape and obvious contract drift. Project Skeleton And Tooling adds stronger local gates: `npm run architecture:check` for import-boundary drift, `npm run storage:check` for migration-contract drift, `npm run typecheck` for TypeScript compilation, `npm run package:check` for global package dry-run contents, and `npm run test:behavior` for Node's built-in behavioral tests over compiled source. Behavior tests run with `--test-concurrency=1` because CLI/MCP integration tests create many temporary Git repositories and SQLite databases; deterministic storage behavior is more important than parallel test throughput. Contributors should install with `npm ci` so checks use the pinned toolchain from `package-lock.json`.
+The in-memory smoke harness guards file shape and obvious contract drift. Project Skeleton And Tooling adds stronger local gates: `npm run architecture:check` for import-boundary drift, `npm run storage:check` for migration-contract drift, `npm run typecheck` for TypeScript compilation, `npm run package:check` for global package dry-run contents, and `npm run test:behavior` for Node's built-in behavioral tests over compiled source. Behavior tests live in domain folders under `tests/behavior/` and are discovered recursively by `scripts/run-behavior-tests.mjs`. The runner keeps `--test-concurrency=1` because CLI/MCP integration tests create many temporary Git repositories and SQLite databases; deterministic storage behavior is more important than parallel test throughput. Contributors should install with `npm ci` so checks use the pinned toolchain from `package-lock.json`.
+
+## Behavior Test Layout
+
+`tests/behavior/` is split by behavior surface so release-blocking contracts are easy to find and extend:
+
+| Folder | Owns |
+|---|---|
+| `benchmark/` | scripted fixture benchmark behavior |
+| `cli/` | CLI rendering, exit-code, privacy, bootstrap, and fallback behavior |
+| `compiler/` | context artifact compilation, budgeting, repository artifact, and diff behavior |
+| `compression/` | compression cache and invalidation behavior |
+| `contracts/` | serialized artifact and context-pack protocol contracts |
+| `evidence/` | source evidence, proofs, claims, conflicts, and observed-run persistence |
+| `indexing/` | file index and cross-platform path behavior |
+| `mcp/` | MCP stdio contract and adapter behavior |
+| `privacy-security/` | public artifact redaction and secret-scan behavior |
+| `retrieval/` | task source retrieval, source excerpts, and polyglot/monorepo fallback behavior |
+| `snapshot/` | repository snapshot persistence and Git snapshot behavior |
+| `storage/` | storage runtime, repositories, policy, and migration behavior |
+| `helpers/` | test-only helpers imported by behavior tests |
+
+New behavior tests should go in the folder that owns the user-visible contract they protect. Add a new folder only when the behavior has a clear module owner and would otherwise mix unrelated contracts.
 
 ## Test Categories
 
