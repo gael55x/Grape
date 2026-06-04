@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 export const localProjectSchemaVersion = 1;
@@ -100,11 +100,18 @@ export function ensureLocalProjectLayout(rootPath: string): LocalProjectLayout {
 
   for (const relativeDir of localDirectories) {
     const absoluteDir = path.join(normalizedRoot, relativeDir);
-    if (!existsSync(absoluteDir)) {
+    if (existsSync(absoluteDir)) {
+      assertSafeLocalDirectory(normalizedRoot, absoluteDir, relativeDir);
+    } else {
       mkdirSync(absoluteDir, { recursive: true });
       createdDirs.push(relativeDir);
+      assertSafeLocalDirectory(normalizedRoot, absoluteDir, relativeDir);
     }
   }
+  assertSafeLocalStateFile(path.join(normalizedRoot, ".grape", "config.json"), ".grape/config.json");
+  assertSafeLocalStateFile(path.join(normalizedRoot, ".grape", "grape.db"), ".grape/grape.db");
+  assertSafeLocalStateFile(path.join(normalizedRoot, ".grape", "grape.db-wal"), ".grape/grape.db-wal");
+  assertSafeLocalStateFile(path.join(normalizedRoot, ".grape", "grape.db-shm"), ".grape/grape.db-shm");
 
   return {
     rootPath: normalizedRoot,
@@ -114,6 +121,37 @@ export function ensureLocalProjectLayout(rootPath: string): LocalProjectLayout {
     artifactDirPath: path.join(normalizedRoot, ".grape", "artifacts"),
     createdDirs
   };
+}
+
+function assertSafeLocalDirectory(rootPath: string, absoluteDir: string, relativeDir: string): void {
+  const stat = lstatSync(absoluteDir);
+  if (stat.isSymbolicLink()) {
+    throw new Error(`Grape local directory must not be a symlink: ${relativeDir}`);
+  }
+  if (!stat.isDirectory()) {
+    throw new Error(`Grape local path must be a directory: ${relativeDir}`);
+  }
+  const realRoot = realpathSync(rootPath);
+  const realDir = realpathSync(absoluteDir);
+  if (!isInsideOrSame(realRoot, realDir)) {
+    throw new Error(`Grape local directory escaped the repository root: ${relativeDir}`);
+  }
+}
+
+function assertSafeLocalStateFile(absolutePath: string, relativePath: string): void {
+  if (!existsSync(absolutePath)) return;
+  const stat = lstatSync(absolutePath);
+  if (stat.isSymbolicLink()) {
+    throw new Error(`Grape local state file must not be a symlink: ${relativePath}`);
+  }
+  if (!stat.isFile()) {
+    throw new Error(`Grape local state path must be a file: ${relativePath}`);
+  }
+}
+
+function isInsideOrSame(rootPath: string, absolutePath: string): boolean {
+  const relativePath = path.relative(rootPath, absolutePath);
+  return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath));
 }
 
 export function defaultLocalProjectConfig(input: {

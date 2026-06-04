@@ -25,6 +25,7 @@ export function initializeLocalProject(
 ): InitializeLocalProjectResult {
   const now = input.now ?? new Date().toISOString();
   const rootPath = path.resolve(input.rootPath);
+  const excludeStatus = ensureGrapeExcludedFromGit(rootPath, input.gitBinary);
   const snapshot = createGitRepoSnapshot({
     rootPath,
     createdAt: now,
@@ -33,7 +34,6 @@ export function initializeLocalProject(
   const projectId = defaultProjectId(snapshot.repoId);
   const layout = ensureLocalProjectLayout(snapshot.rootPath);
   const bootstrap = detectLocalBootstrap(snapshot.rootPath);
-  const excludeStatus = ensureGrapeExcludedFromGit(snapshot.rootPath, input.gitBinary);
   const config = defaultLocalProjectConfig({
     projectId,
     repoId: snapshot.repoId,

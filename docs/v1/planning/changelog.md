@@ -8,6 +8,8 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- Hardened the baseline secret scan to block structured secret-looking fields, common API token families, and credentialed database URLs while allowing plain environment-variable references.
+- Hardened local `.grape/` privacy handling so init excludes `.grape/` before the first snapshot, rejects runtime state paths from snapshots even if Git-visible, and fails closed on symlinked local state directories/files.
 - Split reusable MCP stdio smoke-session framing and request helpers into a script-owned module so install, global-install, and alpha e2e smoke checks share one behavior-preserving implementation.
 
 ### Added

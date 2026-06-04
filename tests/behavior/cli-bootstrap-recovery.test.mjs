@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -139,6 +139,35 @@ test("cli init repairs project-identity-incomplete partial config", () => {
     assert.equal(repaired.configStatus, "repaired");
     assert.equal(readFileSync(repaired.configBackupPath, "utf8"), "{}\n");
     assert.equal(JSON.parse(readFileSync(path.join(repoPath, ".grape", "config.json"), "utf8")).schemaVersion, 1);
+  });
+});
+
+test("cli init rejects symlinked local Grape state paths", () => {
+  withGitRepo((repoPath) => {
+    const externalState = mkdtempSync(path.join(tmpdir(), "grape-external-state-"));
+    try {
+      symlinkSync(externalState, path.join(repoPath, ".grape"));
+
+      const init = runCli(repoPath, ["init", "--connect"]);
+
+      assert.equal(init.status, 4);
+      assert.match(init.stderr, /Grape local directory must not be a symlink: \.grape/);
+    } finally {
+      rmSync(externalState, { recursive: true, force: true });
+    }
+  });
+});
+
+test("cli init excludes pre-existing untracked Grape runtime state before snapshotting", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, ".grape", "artifacts"), { recursive: true });
+    writeFileSync(path.join(repoPath, ".grape", "artifacts", "ctx.json"), '{"clientSecret":"example-secret-value"}\n');
+
+    const initialized = runCliJson(repoPath, ["init", "--connect"]);
+
+    assert.equal(initialized.excludeStatus, "updated");
+    assert.equal(initialized.scan.rejectedFileCount, 0);
+    assert.equal(execGit(repoPath, ["status", "--porcelain=v1"]), "");
   });
 });
 

@@ -12,6 +12,7 @@ import {
   selectedRuleSourceExcerpts,
   selectedSourceExcerpts
 } from "../../.tmp/build/src/core/compiler/index.js";
+import { maxSnapshotFileBytes } from "../../.tmp/build/src/core/git/index.js";
 
 test("local source excerpts require matching source bytes and safe repo paths", () => {
   const rootPath = mkdtempSync(path.join(tmpdir(), "grape-source-excerpts-"));
@@ -52,6 +53,32 @@ test("local source excerpts require matching source bytes and safe repo paths", 
       readLocalSourceExcerpts({
         rootPath,
         sources: [{ ...source, sourceId: "source-unsafe", sourceRef: "../secret.txt" }]
+      }),
+      []
+    );
+  } finally {
+    rmSync(rootPath, { recursive: true, force: true });
+  }
+});
+
+test("local source excerpts skip files that grow beyond the snapshot size limit", () => {
+  const rootPath = mkdtempSync(path.join(tmpdir(), "grape-source-excerpt-large-"));
+  try {
+    mkdirSync(path.join(rootPath, "src"));
+    const sourceRef = "src/large.ts";
+    const sourceText = "export const value = true;\n";
+    writeFileSync(path.join(rootPath, sourceRef), sourceText);
+    const source = {
+      ...sourceInput(sourceRef, "repository_file"),
+      sourceHash: sha256(Buffer.from(sourceText, "utf8"))
+    };
+    writeFileSync(path.join(rootPath, sourceRef), Buffer.alloc(maxSnapshotFileBytes + 1, "a"));
+
+    assert.deepEqual(
+      readLocalSourceExcerpts({
+        rootPath,
+        sources: [source],
+        preferredSourceRefs: [sourceRef]
       }),
       []
     );

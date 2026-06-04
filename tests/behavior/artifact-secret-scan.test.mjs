@@ -17,8 +17,28 @@ test("artifact secret scan blocks raw secret-looking assignments", () => {
   );
 });
 
+test("artifact secret scan blocks structured secret fields and common token shapes", () => {
+  const scan = scanArtifactTextForSecrets(`
+    {"clientSecret":"example-secret-value"}
+    const openai = "sk-proj-abcdefghijklmnopqrstuvwxyz";
+    postgres://user:password@example.test/db
+  `);
+
+  assert.equal(scan.ok, false);
+  assert.deepEqual(
+    scan.findings.map((finding) => finding.kind),
+    ["secret_named_assignment", "api_secret_token", "credentialed_database_url"]
+  );
+});
+
 test("artifact secret scan allows hashes and labels without raw values", () => {
   assert.doesNotThrow(() =>
     assertArtifactTextHasNoSecrets("Warnings: repository_artifact_uses_lightweight_index\nhash: abc123", "fixture")
+  );
+  assert.doesNotThrow(() =>
+    assertArtifactTextHasNoSecrets("const apiKey = process.env.OPENAI_API_KEY;\n", "fixture")
+  );
+  assert.doesNotThrow(() =>
+    assertArtifactTextHasNoSecrets("API_KEY=process.env.OPENAI_API_KEY\n", "fixture")
   );
 });

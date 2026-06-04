@@ -1,6 +1,8 @@
 import { lstatSync, readFileSync, readlinkSync } from "node:fs";
 import path from "node:path";
 
+import { maxSnapshotFileBytes } from "../../../core/git/index.js";
+
 export function readAllowedSourceBytes(rootPath: string, sourceRef: string): Buffer | undefined {
   const normalizedRef = normalizeRepoPath(sourceRef);
   if (!normalizedRef) return undefined;
@@ -10,6 +12,7 @@ export function readAllowedSourceBytes(rootPath: string, sourceRef: string): Buf
   try {
     const stat = lstatSync(absolutePath);
     if (!stat.isFile() && !stat.isSymbolicLink()) return undefined;
+    if (!stat.isSymbolicLink() && stat.size > maxSnapshotFileBytes) return undefined;
     return stat.isSymbolicLink()
       ? Buffer.from(`symlink:${readlinkSync(absolutePath)}`)
       : readFileSync(absolutePath);

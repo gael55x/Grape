@@ -14,6 +14,7 @@ export interface SnapshotFileHash {
 export type SnapshotFileRejectionReason =
   | "git_ignored"
   | "privacy_ignored"
+  | "grape_runtime"
   | "unreadable"
   | "too_large"
   | "binary";
@@ -52,6 +53,10 @@ export function readGitVisibleFileManifest(input: GitVisibleFileManifestInput): 
     }
     if (isIgnoredByPrivacyPolicy(repoPath, input.privacyPolicy)) {
       rejectedFiles.push({ path: repoPath, reason: "privacy_ignored", privacyStatus: "private" });
+      return [];
+    }
+    if (isGrapeRuntimePath(repoPath)) {
+      rejectedFiles.push({ path: repoPath, reason: "grape_runtime", privacyStatus: "private" });
       return [];
     }
 
@@ -116,4 +121,20 @@ function readSnapshotFileBytes(
 
 function sha256(bytes: Buffer): string {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+function isGrapeRuntimePath(repoPath: string): boolean {
+  const normalized = repoPath.replace(/\\/g, "/").toLowerCase();
+  if (!normalized.startsWith(".grape/")) return false;
+  if (normalized === ".grape/config.json") return true;
+  if (normalized.startsWith(".grape/config.invalid.")) return true;
+  if (normalized === ".grape/grape.db") return true;
+  if (normalized.startsWith(".grape/grape.db")) return true;
+  return [
+    ".grape/artifacts/",
+    ".grape/cache/",
+    ".grape/context/",
+    ".grape/logs/",
+    ".grape/tmp/"
+  ].some((prefix) => normalized.startsWith(prefix));
 }

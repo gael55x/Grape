@@ -52,9 +52,13 @@ The current file-indexing foundation reads only files already present in the all
 
 The current lexical search foundation reads only already-allowed source records, reuses the same path, size, symlink, binary, and source-hash guards as file indexing, and skips secret-looking text before inserting search rows. Search result records expose source refs and hashes, not indexed bodies.
 
-The current CLI compile path runs a basic artifact-level secret scan before writing JSON or Markdown artifacts. The scanner blocks obvious raw secret assignments, private-key blocks, and AWS access-key IDs. This is a baseline guard for scaffold artifacts, not a complete redaction engine or proof-span scanner.
+The current CLI compile path runs a basic artifact-level secret scan before writing JSON or Markdown artifacts. The scanner blocks obvious raw secret assignments, structured secret-looking JSON/YAML fields, private-key blocks, common API token families, credentialed database URLs, and AWS access-key IDs. Plain references to environment variables, such as `process.env.OPENAI_API_KEY`, are not treated as raw secret values by themselves. This is a baseline guard for scaffold artifacts, not a complete redaction engine or proof-span scanner.
 
 Exact source evidence excerpts are read only from source records that were already allowed by Git ignore and local privacy ignore filtering. The local reader rejects unsafe repo-relative paths, verifies the current bytes still match the stored source hash, skips binary-looking content, and bounds excerpt size before the artifact-level secret scan runs.
+
+Local Grape runtime state under `.grape/artifacts/`, `.grape/cache/`, `.grape/context/`, `.grape/logs/`, `.grape/tmp/`, `.grape/config.json`, and `.grape/grape.db*` is rejected as private runtime state even if a repository has accidentally made those paths Git-visible. The local `.grape/` layout and its owned subdirectories must be real directories inside the repository root, not symlinks to external locations.
+
+Repository files, docs, comments, rule files, and generated context excerpts are untrusted input when they are delivered to an AI agent. Grape separates metadata from repository content where possible, but it cannot make malicious source text safe to follow as instructions. Users and MCP clients should review generated context before pasting or forwarding it to an LLM, especially for private repositories, security-sensitive tasks, and context that includes human-authored rules or Markdown.
 
 Bootstrap detection reads only common root manifest/config files such as `package.json`, lockfiles, `tsconfig.json`, framework config files, and conventional entry point paths. It reports script names and derived commands such as `pnpm test`, not raw script bodies, and candidate rules remain non-durable hints until a user confirms them.
 

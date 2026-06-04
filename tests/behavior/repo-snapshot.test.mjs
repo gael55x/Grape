@@ -136,6 +136,47 @@ test("git repo snapshot rejects binary and oversized files before source ingesti
   });
 });
 
+test("git repo snapshot rejects Grape runtime state paths without reading them", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, ".grape", "artifacts"), { recursive: true });
+    mkdirSync(path.join(repoPath, ".grape", "cache"), { recursive: true });
+    writeFileSync(path.join(repoPath, ".grape", "config.json"), '{"private":"local"}\n');
+    writeFileSync(path.join(repoPath, ".grape", "grape.db"), "not a real db\n");
+    writeFileSync(path.join(repoPath, ".grape", "artifacts", "ctx.json"), '{"clientSecret":"example-secret-value"}\n');
+    writeFileSync(path.join(repoPath, ".grape", "cache", "cache.txt"), "cached local state\n");
+    execGit(repoPath, [
+      "add",
+      "-f",
+      ".grape/config.json",
+      ".grape/grape.db",
+      ".grape/artifacts/ctx.json",
+      ".grape/cache/cache.txt"
+    ]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add grape runtime state"
+    ]);
+
+    const snapshot = createGitRepoSnapshot({ rootPath: repoPath, repoId: "repo-1", createdAt: now });
+    const filePaths = new Set(snapshot.files.map((file) => file.path));
+    const rejected = new Map(snapshot.rejectedFiles.map((file) => [file.path, file]));
+
+    assert.equal(filePaths.has(".grape/rules.md"), true);
+    assert.equal(filePaths.has(".grape/config.json"), false);
+    assert.equal(filePaths.has(".grape/grape.db"), false);
+    assert.equal(filePaths.has(".grape/artifacts/ctx.json"), false);
+    assert.equal(filePaths.has(".grape/cache/cache.txt"), false);
+    assert.equal(rejected.get(".grape/config.json")?.reason, "grape_runtime");
+    assert.equal(rejected.get(".grape/artifacts/ctx.json")?.reason, "grape_runtime");
+    assert.equal(rejected.get(".grape/artifacts/ctx.json")?.metadata, undefined);
+  });
+});
+
 test("source kind classifier recognizes local agent rule files", () => {
   assert.equal(classifySourceKind("AGENTS.md"), "rule");
   assert.equal(classifySourceKind(".cursorrules"), "rule");
