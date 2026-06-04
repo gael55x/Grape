@@ -831,7 +831,9 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     assert.equal(toolResult.structuredContent.contextPackItems.some((item) => item.state === "NEW"), true);
     const packItem = toolResult.structuredContent.contextPackItems[0];
     assert.equal(typeof packItem.id, "string");
-    assert.equal(typeof packItem.content, "string");
+    assert.equal("content" in packItem, false);
+    assert.equal(typeof packItem.contentPreview, "string");
+    assert.equal(packItem.contentOmitted, true);
     assert.equal(Array.isArray(packItem.inputRefs), true);
     assert.equal(packItem.inputRefs.some((ref) => Object.hasOwn(ref.scope, "repoId")), false);
     assert.equal(packItem.inputRefs.some((ref) => Object.hasOwn(ref.scope, "taskId")), false);
@@ -841,7 +843,7 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     assert.match(toolResult.structuredContent.contextPackMarkdown, /Artifact format: grape\.context-pack\.v1/);
     assert.match(toolResult.structuredContent.contextPackMarkdown, /## Diff Summary/);
     assert.match(toolResult.structuredContent.contextPackMarkdown, /## Artifact Sections/);
-    assert.match(toolResult.structuredContent.contextPackMarkdown, /Exact item payloads are in contextPackItems/);
+    assert.match(toolResult.structuredContent.contextPackMarkdown, /Compact item previews are in contextPackItems\[\]\.contentPreview/);
     assert.match(toolResult.structuredContent.artifactFiles.json, /^\.grape\//);
     assert.equal(toolResult.structuredContent.artifactRef.artifactFiles.json, toolResult.structuredContent.artifactFiles.json);
     const artifactJson = JSON.parse(

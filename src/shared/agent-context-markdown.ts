@@ -1,4 +1,5 @@
 import type { ContextArtifactShape } from "./context-artifact-contract.js";
+import type { AgentContextPackItemShape } from "./agent-context-transport.js";
 import type { ContextPackItemShape as PackItemShape } from "./contracts.js";
 import { diffStates } from "./contracts.js";
 
@@ -23,12 +24,15 @@ interface AgentContextBudgetSummary {
 export interface AgentContextMarkdownInput {
   readonly artifactId: string;
   readonly contextArtifact: ContextArtifactShape;
-  readonly contextPackItems: readonly PackItemShape[];
+  readonly contextPackItems: readonly AgentContextMarkdownPackItem[];
+  readonly packItemContentMode: "preview" | "full";
   readonly diffSummary: AgentContextDiffSummary;
   readonly warnings: readonly string[];
   readonly unsafeReasons: readonly string[];
   readonly budget: AgentContextBudgetSummary;
 }
+
+type AgentContextMarkdownPackItem = Pick<PackItemShape | AgentContextPackItemShape, "state" | "itemKind" | "sectionId">;
 
 export function renderAgentContextPackMarkdown(input: AgentContextMarkdownInput): string {
   return [
@@ -36,7 +40,7 @@ export function renderAgentContextPackMarkdown(input: AgentContextMarkdownInput)
     "",
     ...renderArtifactSummary(input),
     ...renderDiffSummary(input),
-    ...renderContextPackItems(input.contextPackItems),
+    ...renderContextPackItems(input.contextPackItems, input.packItemContentMode),
     ...renderArtifactSections(input.contextArtifact.outputSections),
     ...renderTokenBudget(input.budget),
     ...renderWarningsAndSafety(input),
@@ -73,8 +77,14 @@ function renderDiffSummary(input: AgentContextMarkdownInput): string[] {
   ]);
 }
 
-function renderContextPackItems(items: readonly PackItemShape[]): string[] {
+function renderContextPackItems(
+  items: readonly AgentContextMarkdownPackItem[],
+  contentMode: AgentContextMarkdownInput["packItemContentMode"]
+): string[] {
   const invalidationSummary = summarizeInvalidations(items);
+  const contentMessage = contentMode === "full"
+    ? "Exact item payloads are in contextPackItems[].content; relationships are in agentGraph."
+    : "Compact item previews are in contextPackItems[].contentPreview; full item payloads require artifactRef.fullArtifactTool or outputMode=full.";
 
   return [
     "## Context Pack Items",
@@ -82,12 +92,12 @@ function renderContextPackItems(items: readonly PackItemShape[]): string[] {
     ...(invalidationSummary.length > 0 ? invalidationSummary : []),
     items.length === 0
       ? "_No context pack items emitted._"
-      : "Exact item payloads are in contextPackItems; relationships are in agentGraph.",
+      : contentMessage,
     ""
   ];
 }
 
-function summarizeInvalidations(items: readonly PackItemShape[]): string[] {
+function summarizeInvalidations(items: readonly AgentContextMarkdownPackItem[]): string[] {
   const invalidations = items.filter((item) => item.state === "INVALIDATE_PREVIOUS");
   if (invalidations.length === 0) return [];
 

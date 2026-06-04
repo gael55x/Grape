@@ -54,6 +54,7 @@ export function buildBenchmarkAgentOutputTokenMetric(
       artifactId: result.artifactId,
       contextArtifact: result.contextArtifact,
       contextPackItems,
+      packItemContentMode: "preview",
       diffSummary,
       warnings: result.warnings,
       unsafeReasons: result.unsafeReasons,
@@ -98,7 +99,7 @@ export function buildBenchmarkAgentOutputTokenMetric(
   };
 }
 
-function summarizeDiff(items: readonly ContextPackItemShape[]): {
+function summarizeDiff(items: readonly Pick<ContextPackItemShape, "state">[]): {
   readonly newItems: number;
   readonly changedItems: number;
   readonly pinnedItems: number;
@@ -116,7 +117,7 @@ function summarizeDiff(items: readonly ContextPackItemShape[]): {
   };
 }
 
-function countState(items: readonly ContextPackItemShape[], state: DiffState): number {
+function countState(items: readonly Pick<ContextPackItemShape, "state">[], state: DiffState): number {
   return items.filter((item) => item.state === state).length;
 }
 

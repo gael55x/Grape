@@ -125,7 +125,7 @@ interface InMemoryContextArtifactShape {
 }
 ```
 
-Current CLI, artifact JSON, and MCP output map internal scaffold diff rows to the V1 `ContextPackItem` output shape before returning them to agents. The emitted item fields are `id`, `state`, `itemKind`, `itemRef`, optional `sectionId`, `title`, `content`, `contentHash`, `tokenCount`, `pinned`, `safetyCritical`, optional `invalidatesSentItemId`, optional `restoreId`, `inputRefs`, and `warnings`.
+Current CLI, artifact JSON, and MCP `outputMode: "full"` output map internal scaffold diff rows to the V1 `ContextPackItem` output shape before returning them to agents. The emitted item fields are `id`, `state`, `itemKind`, `itemRef`, optional `sectionId`, `title`, `content`, `contentHash`, `tokenCount`, `pinned`, `safetyCritical`, optional `invalidatesSentItemId`, optional `restoreId`, `inputRefs`, and `warnings`. Default MCP `outputMode: "agent_pack"` returns compact preview items instead: it omits `content`, includes `contentPreview` and `contentOmitted: true`, and keeps `contentHash`/`tokenCount` pointing at the full stored body.
 
 Public `.grape/artifacts/ctx_<id>.json` files now include:
 
@@ -207,7 +207,7 @@ This is still a projection from the repository-derived scaffold rather than the 
 
 - JSON is the canonical machine contract.
 - Markdown is a rendering of the structured artifact or context pack. It must expose enough metadata for a coding agent to inspect why context was sent, which dependencies support it, what was omitted or restorable, and what safety warnings remain.
-- MCP must return structured `contextPackItems` plus rendered Markdown.
+- MCP `agent_pack` must return structured compact preview `contextPackItems` plus rendered Markdown; `outputMode: "full"` may return full `ContextPackItem.content`.
 - CLI snapshot tests must validate rendered Markdown, but golden contract tests must validate JSON.
 
 ## Required Golden Tests

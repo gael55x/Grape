@@ -84,16 +84,16 @@ Full alpha e2e (dist build, pack install smoke, benchmark suite):
 npm run e2e:alpha
 ```
 
-### Recorded baselines (local reference, 2026-06-03)
+### Recorded baselines (local reference, 2026-06-04)
 
 Machine-local reference run on `main` with Node.js 22.18.0. CI may differ slightly; use `npm run benchmark:run` to refresh.
 
 | Fixture | Turn 1 tokens | Turn 2 tokens | Turn 2 reduction | Serialized agent output | Agent output overhead | `OMIT_UNCHANGED` | `INVALIDATE_PREVIOUS` | Unsafe |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `clean-typescript-app` | 2414 | 1614 | 45.12% | 30352 | 348.22% | 7 | 1 | 0 |
-| `branch-switch-typescript-app` | 2414 | 3042 | 0% | 34223 | 355.03% | 0 | 9 | 0 |
-| `stale-source-typescript-app` | 2414 | 3206 | 0% | 34574 | 353.3% | 0 | 9 | 0 |
-| `session-reset-typescript-app` | 2848 | 3991 | 0% | 38170 | 329.67% | 0 | 9 | 0 |
+| `clean-typescript-app` | 2477 | 1614 | 46.29% | 27746 | 263.77% | 7 | 1 | 0 |
+| `branch-switch-typescript-app` | 2477 | 3106 | 0% | 30625 | 270.41% | 0 | 9 | 0 |
+| `stale-source-typescript-app` | 2477 | 3270 | 0% | 30808 | 268.77% | 0 | 9 | 0 |
+| `session-reset-typescript-app` | 2919 | 4062 | 0% | 33242 | 243.05% | 0 | 9 | 0 |
 
 Token reduction thresholds apply only to `clean-typescript-app`. Invalidation benchmarks require `INVALIDATE_PREVIOUS > 0` on turn 2 with zero unsafe omissions. The session-reset benchmark also requires `NEW > 0` and `OMIT_UNCHANGED = 0` on the reset turn to prove the agent receives a safe full resend instead of a no-change omission.
 
@@ -107,7 +107,7 @@ Current benchmark thresholds:
 - second turn must include at least one `OMIT_UNCHANGED`
 - second turn must include at least one `RESTORE_AVAILABLE`
 
-Benchmark output also reports serialized context-pack token estimates, serialized default agent-output token estimates, and token breakdowns by diff state and section. These are transport diagnostics: body-token counts explain logical context savings, serialized-pack counts show JSON overhead from metadata, restore hints, and dependency references, and serialized-agent-output counts estimate the default MCP `agent_pack` frame including compact text summary, structured content, compact Markdown, and graph adjacency.
+Benchmark output also reports serialized context-pack token estimates, serialized default agent-output token estimates, and token breakdowns by diff state and section. These are transport diagnostics: body-token counts explain logical context savings, serialized-pack counts show JSON overhead from metadata, restore hints, and dependency references, and serialized-agent-output counts estimate the default MCP `agent_pack` frame including compact text summary, compact preview structured content, compact Markdown, and graph adjacency.
 
 These numbers are deterministic approximate token estimates, not release performance claims. They are valid as harness checks because they run against named fixtures and fail on unsafe omission or stale send counters.
 

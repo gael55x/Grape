@@ -5,6 +5,7 @@ import type { CompileLocalContextResult } from "../app/local-project/index.js";
 import type {
   AgentContextArtifactRef,
   AgentContextGraphCut,
+  AgentContextPackItemShape,
   ContextPackItemShape,
   DiffState,
   GrapeGetContextOutputMode,
@@ -51,7 +52,7 @@ export interface GrapeGetContextToolOutput {
   readonly artifactRef: AgentContextArtifactRef;
   readonly agentGraph: AgentContextGraphCut;
   readonly contextArtifact?: CompileLocalContextResult["contextArtifact"];
-  readonly contextPackItems: readonly ContextPackItemShape[];
+  readonly contextPackItems: readonly (AgentContextPackItemShape | ContextPackItemShape)[];
   readonly contextPackMarkdown: string;
   readonly diffSummary: {
     readonly newItems: number;
@@ -91,7 +92,9 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
 
   const warningSet = new Set([...result.warnings, ...unsupportedInputWarnings(parsed)]);
   const warnings = [...warningSet];
-  const contextPackItems = compactAgentContextPackItems(result.contextPackItems);
+  const outputMode = parsed.outputMode ?? "agent_pack";
+  const compactContextPackItems = compactAgentContextPackItems(result.contextPackItems);
+  const contextPackItems = outputMode === "full" ? result.contextPackItems : compactContextPackItems;
   const diffSummary = summarizeDiff(contextPackItems);
   const artifactFiles = {
     json: relativeArtifactPath(result.rootPath, result.artifactJsonPath),
@@ -114,7 +117,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     taskType: taskTypeFromResult(parsed.taskType),
     riskOverlays: result.riskOverlays,
     compileMode: compileModeFor(result, warnings),
-    outputMode: parsed.outputMode ?? "agent_pack",
+    outputMode,
     artifactRef,
     agentGraph: buildAgentContextGraphCut({
       artifactId: result.artifactId,
@@ -127,6 +130,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
       artifactId: result.artifactId,
       contextArtifact: result.contextArtifact,
       contextPackItems,
+      packItemContentMode: outputMode === "full" ? "full" : "preview",
       diffSummary,
       warnings,
       unsafeReasons: result.unsafeReasons,
@@ -142,7 +146,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     artifactFiles
   };
 
-  if (parsed.outputMode === "full") {
+  if (outputMode === "full") {
     return { ...output, contextArtifact: result.contextArtifact };
   }
 
@@ -257,7 +261,9 @@ function compileModeFor(
   return "safe_minimum";
 }
 
-function summarizeDiff(items: readonly ContextPackItemShape[]): GrapeGetContextToolOutput["diffSummary"] {
+function summarizeDiff(
+  items: readonly Pick<ContextPackItemShape | AgentContextPackItemShape, "state">[]
+): GrapeGetContextToolOutput["diffSummary"] {
   return {
     newItems: countState(items, "NEW"),
     changedItems: countState(items, "CHANGED"),
@@ -268,7 +274,10 @@ function summarizeDiff(items: readonly ContextPackItemShape[]): GrapeGetContextT
   };
 }
 
-function countState(items: readonly ContextPackItemShape[], state: DiffState): number {
+function countState(
+  items: readonly Pick<ContextPackItemShape | AgentContextPackItemShape, "state">[],
+  state: DiffState
+): number {
   return items.filter((item) => item.state === state).length;
 }
 

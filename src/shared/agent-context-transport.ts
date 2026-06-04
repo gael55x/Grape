@@ -43,6 +43,11 @@ export interface AgentContextGraphEdge {
   readonly kind: "renders_section" | "depends_on" | "invalidates" | "restores";
 }
 
+export interface AgentContextPackItemShape extends Omit<ContextPackItemShape, "content"> {
+  readonly contentPreview: string;
+  readonly contentOmitted: true;
+}
+
 export interface AgentContextGraphCut {
   readonly graphFormat: "grape.agent-context-graph.v1";
   readonly artifactId: string;
@@ -71,6 +76,8 @@ const compactScopeKeys = [
   "test"
 ] as const;
 
+const maxContentPreviewChars = 280;
+
 export function buildAgentContextArtifactRef(
   input: Omit<AgentContextArtifactRef, "fullArtifactTool">
 ): AgentContextArtifactRef {
@@ -90,9 +97,11 @@ export function buildAgentContextArtifactRef(
 
 export function compactAgentContextPackItems(
   items: readonly ContextPackItemShape[]
-): readonly ContextPackItemShape[] {
-  return items.map((item) => ({
+): readonly AgentContextPackItemShape[] {
+  return items.map(({ content, ...item }) => ({
     ...item,
+    contentPreview: compactContentPreview(content),
+    contentOmitted: true,
     inputRefs: item.inputRefs.map((ref) => ({
       ...ref,
       scope: compactPackScope(ref.scope)
@@ -104,7 +113,7 @@ export function buildAgentContextGraphCut(input: {
   readonly artifactId: string;
   readonly artifactHash: string;
   readonly dependencyManifestHash: string;
-  readonly contextPackItems: readonly ContextPackItemShape[];
+  readonly contextPackItems: readonly AgentContextGraphPackItem[];
 }): AgentContextGraphCut {
   const nodes = new Map<string, AgentContextGraphNode>();
   const edges = new Map<string, AgentContextGraphEdge>();
@@ -157,6 +166,17 @@ export function buildAgentContextGraphCut(input: {
     nodes: graphNodes,
     edges: [...edges.values()].sort(compareGraphEdges)
   };
+}
+
+type AgentContextGraphPackItem = Pick<
+  ContextPackItemShape,
+  "id" | "sectionId" | "inputRefs" | "invalidatesSentItemId" | "restoreId"
+>;
+
+function compactContentPreview(content: string): string {
+  const normalized = content.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxContentPreviewChars) return normalized;
+  return `${normalized.slice(0, maxContentPreviewChars - 3)}...`;
 }
 
 function compactPackScope(scope: Record<string, unknown>): Record<string, unknown> {
