@@ -30,7 +30,7 @@ test("protocol golden: second no-change turn omits safely with restore metadata"
       "--session",
       sessionId
     ]);
-    const artifactJson = JSON.parse(readFileSync(second.artifactJsonPath, "utf8"));
+    const artifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, second.artifactJsonPath), "utf8"));
 
     assert.equal(artifactJson.artifactFormat, "grape.context-pack.v1");
     assert.equal(artifactJson.artifactFormatVersion, 1);
@@ -61,7 +61,7 @@ test("protocol golden: RESTORE_AVAILABLE restores only for the matching session"
       "--session",
       sessionId
     ]);
-    const artifactJson = JSON.parse(readFileSync(second.artifactJsonPath, "utf8"));
+    const artifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, second.artifactJsonPath), "utf8"));
 
     assertProtocolPackItems(second.contextPackItems, artifactJson.contextArtifact.inputRefs);
     const restorable = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE");
@@ -138,7 +138,7 @@ test("protocol golden: branch switch emits INVALIDATE_PREVIOUS for prior sent co
       "--session",
       sessionId
     ]);
-    const artifactJson = JSON.parse(readFileSync(second.artifactJsonPath, "utf8"));
+    const artifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, second.artifactJsonPath), "utf8"));
 
     assertProtocolPackItems(second.contextPackItems, artifactJson.contextArtifact.inputRefs);
     assertInvalidationProtocol(second.contextPackItems);
@@ -171,7 +171,7 @@ test("protocol golden: edited source invalidates prior sent context", () => {
       "--session",
       sessionId
     ]);
-    const artifactJson = JSON.parse(readFileSync(second.artifactJsonPath, "utf8"));
+    const artifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, second.artifactJsonPath), "utf8"));
 
     assertProtocolPackItems(second.contextPackItems, artifactJson.contextArtifact.inputRefs);
     assertInvalidationProtocol(second.contextPackItems);
@@ -208,6 +208,11 @@ function runCliJson(repoPath, args) {
   const result = runCli(repoPath, [...args, "--json"]);
   assert.equal(result.status, 0, result.stderr);
   return JSON.parse(result.stdout);
+}
+
+function localPublicPath(repoPath, value) {
+  assert.equal(typeof value, "string");
+  return value.replace(/^<repo-root>/, repoPath);
 }
 
 function runCli(repoPath, args) {

@@ -56,13 +56,19 @@ The current CLI compile path runs a basic artifact-level secret scan before writ
 
 Exact source evidence excerpts are read only from source records that were already allowed by Git ignore and local privacy ignore filtering. The local reader rejects unsafe repo-relative paths, verifies the current bytes still match the stored source hash, skips binary-looking content, and bounds excerpt size before the artifact-level secret scan runs.
 
-Local Grape runtime state under `.grape/artifacts/`, `.grape/cache/`, `.grape/context/`, `.grape/logs/`, `.grape/tmp/`, `.grape/config.json`, and `.grape/grape.db*` is rejected as private runtime state even if a repository has accidentally made those paths Git-visible. The local `.grape/` layout and its owned subdirectories must be real directories inside the repository root, not symlinks to external locations.
+Local Grape runtime state under `.grape/artifacts/`, `.grape/cache/`, `.grape/context/`, `.grape/logs/`, `.grape/tmp/`, `.grape/config.json`, and `.grape/grape.db*` is rejected as private runtime state even if a repository has accidentally made those paths Git-visible. The local `.grape/` layout and its owned subdirectories must be real directories inside the repository root, not symlinks to external locations. Read-only status/doctor paths must also validate existing local state before reading config or database files; a symlinked `.grape/`, config, or database path is reported as unsafe local state instead of being followed.
 
-Repository files, docs, comments, rule files, and generated context excerpts are untrusted input when they are delivered to an AI agent. Grape separates metadata from repository content where possible, but it cannot make malicious source text safe to follow as instructions. Users and MCP clients should review generated context before pasting or forwarding it to an LLM, especially for private repositories, security-sensitive tasks, and context that includes human-authored rules or Markdown.
+Repository files, docs, comments, rule files, and generated context excerpts are untrusted input when they are delivered to an AI agent. Grape separates metadata from repository content where possible, but it cannot make malicious source text safe to follow as instructions. Exact source excerpts and rule excerpts are rendered in dynamically sized Markdown fences labeled as untrusted repository evidence, so repository-authored triple-backtick text cannot break out of the evidence block and become agent instructions. Users and MCP clients should review generated context before pasting or forwarding it to an LLM, especially for private repositories, security-sensitive tasks, and context that includes human-authored rules or Markdown.
 
 Bootstrap detection reads only common root manifest/config files such as `package.json`, lockfiles, `tsconfig.json`, framework config files, and conventional entry point paths. It reports script names and derived commands such as `pnpm test`, not raw script bodies, and candidate rules remain non-durable hints until a user confirms them.
 
 Restricted MCP write tools run the same baseline secret scan over caller-provided command/candidate/decision/confirmation text before persistence. Source metadata stores hashes and scope only; raw command output, prompt, response, and candidate evidence bodies are not returned over MCP.
+
+## Public Output Sanitization
+
+All CLI and MCP public output is sanitized by default before it is written to stdout, stderr, or MCP `structuredContent` / summary text. The sanitizer replaces the active repository root with `<repo-root>`, redacts other local absolute path shapes, and redacts common token/API-key/private-key/password-looking values and sensitive object fields. This boundary applies to human output, JSON output, MCP tool results/errors, benchmark reports, artifact inspection responses, restore/reset/mismatch diagnostics, and runtime failures.
+
+Sanitization is a final public-output boundary, not permission to store unsafe raw values internally. Storage, proof, artifact, source-excerpt, and benchmark paths must still avoid raw secrets and private local content at their own boundaries. Any future raw/debug mode must be opt-in, documented, and safe by default.
 
 ## Redaction And Hash Rules
 
@@ -96,3 +102,6 @@ V1 must not send repository content, proofs, artifacts, embeddings, telemetry, o
 - `proof_with_unredactable_secret_is_blocked`
 - `artifact_secret_scan_failure_is_unsafe_compile`
 - `logs_do_not_include_raw_secret`
+- `public_output_sanitizes_local_paths_and_secret_like_values`
+- `status_refuses_symlinked_local_state`
+- `repository_text_is_rendered_as_untrusted_evidence`

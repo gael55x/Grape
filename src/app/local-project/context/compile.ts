@@ -167,6 +167,13 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sourceRefs: claim.sourceRefs,
         proofRefs: claim.proofRefs
       }));
+      const artifactTaskRetrieval = {
+        ...proofs.taskRetrieval,
+        warnings: [
+          ...proofs.taskRetrieval.warnings,
+          ...currentValidClaims.warnings.map((warning) => `current_valid_${warning}`)
+        ]
+      };
       const artifact = compileLocalRepositoryArtifact({
         repositories,
         compressionRepositories,
@@ -183,7 +190,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         symbolNodes,
         symbolEdges,
         activeClaims,
-        taskRetrieval: proofs.taskRetrieval,
+        taskRetrieval: artifactTaskRetrieval,
         now
       });
 

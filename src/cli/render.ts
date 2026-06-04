@@ -1,4 +1,9 @@
 import type { DiagnosticStatus } from "../app/local-project/types.js";
+import {
+  sanitizePublicOutput,
+  sanitizePublicText,
+  type PublicOutputSanitizerOptions
+} from "../shared/index.js";
 
 export function renderProblems(label: string, values: readonly string[]): string[] {
   if (values.length === 0) return [];
@@ -82,16 +87,16 @@ export function initHelpText(): string {
   ].join("\n");
 }
 
-export function write(message: string): void {
-  process.stdout.write(`${message}\n`);
+export function write(message: string, options?: PublicOutputSanitizerOptions): void {
+  process.stdout.write(`${sanitizePublicText(message, options)}\n`);
 }
 
-export function writeJson(value: unknown): void {
-  write(JSON.stringify(value, null, 2));
+export function writeJson(value: unknown, options?: PublicOutputSanitizerOptions): void {
+  write(JSON.stringify(sanitizePublicOutput(value, options), null, 2), options);
 }
 
-export function writeError(message: string): void {
-  process.stderr.write(`${message}\n`);
+export function writeError(message: string, options?: PublicOutputSanitizerOptions): void {
+  process.stderr.write(`${sanitizePublicText(message, options)}\n`);
 }
 
 export function errorMessage(error: unknown): string {

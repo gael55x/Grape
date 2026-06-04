@@ -56,6 +56,16 @@ test("local source excerpts require matching source bytes and safe repo paths", 
       }),
       []
     );
+    assert.deepEqual(
+      readLocalSourceExcerpts({
+        rootPath,
+        sources: [
+          { ...source, sourceId: "source-absolute", sourceRef: "/src/app.ts" },
+          { ...source, sourceId: "source-drive", sourceRef: "C:\\src\\app.ts" }
+        ]
+      }),
+      []
+    );
   } finally {
     rmSync(rootPath, { recursive: true, force: true });
   }

@@ -51,6 +51,11 @@ function runCliJson(repoPath, args) {
   return JSON.parse(result.stdout);
 }
 
+function localPublicPath(repoPath, value) {
+  assert.equal(typeof value, "string");
+  return value.replace(/^<repo-root>/, repoPath);
+}
+
 test("cli sync refreshes local snapshot evidence and index state", () => {
   withGitRepo((repoPath) => {
     const sync = runCliJson(repoPath, ["sync"]);
@@ -93,7 +98,7 @@ test("cli diff-context compiles a session-scoped context diff", () => {
     assert.equal(second.sessionId, "fallback-session");
     assert.equal(second.omittedItemCount > 0, true);
     assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), true);
-    assert.equal(existsSync(first.artifactJsonPath), true);
-    assert.equal(existsSync(first.artifactMarkdownPath), true);
+    assert.equal(existsSync(localPublicPath(repoPath, first.artifactJsonPath)), true);
+    assert.equal(existsSync(localPublicPath(repoPath, first.artifactMarkdownPath)), true);
   });
 });

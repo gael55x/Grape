@@ -511,6 +511,27 @@ test("repository artifact compiler marks risky or dirty context explicitly", () 
 
 test("repository risk policy accepts task-selected exact source spans", () => {
   withGitRepo((repoPath) => {
+    writeFileSync(
+      path.join(repoPath, "src", "auth.ts"),
+      [
+        "export function requireSession(sessionId: string | undefined) {",
+        "  if (!sessionId) return { status: 401 };",
+        "  return { status: 200 };",
+        "}",
+        ""
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "src/auth.ts"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add auth fixture"
+    ]);
+
     withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
       const snapshotResult = persistGitRepoSnapshot({
         database,
@@ -526,12 +547,12 @@ test("repository risk policy accepts task-selected exact source spans", () => {
       const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
         riskOverlays: ["auth"],
         taskRetrieval: {
-          selectedSourceRefs: ["src/app.ts"],
+          selectedSourceRefs: ["src/auth.ts"],
           explicitSourceRefs: [],
           testSourceRefs: [],
           relatedTestSourceRefs: [],
           graphSourceRefs: [],
-          symbolSourceRefs: ["src/app.ts"],
+          symbolSourceRefs: ["src/auth.ts"],
           lexicalSourceRefs: [],
           queryTerms: ["auth"],
           warnings: []
@@ -541,9 +562,44 @@ test("repository risk policy accepts task-selected exact source spans", () => {
 
       assert.equal(artifact.warnings.includes("risk_overlay_requires_exact_context"), true);
       assert.deepEqual(artifact.unsafeReasons, []);
-      assert.deepEqual(exactEvidence?.sourceRefs, ["src/app.ts"]);
+      assert.deepEqual(exactEvidence?.sourceRefs, ["src/auth.ts"]);
       assert.equal(exactEvidence?.exactRequired, true);
       assert.equal(exactEvidence?.proofRefs.length, 1);
+    });
+  });
+});
+
+test("repository risk policy rejects irrelevant exact source spans for high-risk overlays", () => {
+  withGitRepo((repoPath) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
+        riskOverlays: ["auth"],
+        taskRetrieval: {
+          selectedSourceRefs: ["src/lib.ts"],
+          explicitSourceRefs: [],
+          testSourceRefs: [],
+          relatedTestSourceRefs: [],
+          graphSourceRefs: [],
+          symbolSourceRefs: ["src/lib.ts"],
+          lexicalSourceRefs: [],
+          queryTerms: ["calculator"],
+          warnings: []
+        }
+      });
+
+      assert.equal(artifact.warnings.includes("risk_overlay_requires_exact_context"), true);
+      assert.deepEqual(artifact.unsafeReasons, ["risk_overlay_missing_exact_context"]);
     });
   });
 });

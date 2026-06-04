@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -1185,7 +1185,12 @@ test("mcp stdio can launch outside the repository when --repo is provided", () =
       );
 
       assert.equal(responses[0].result.isError, false);
-      assert.equal(responses[0].result.structuredContent.rootPath, realpathSync(repoPath));
+      assert.equal(Object.hasOwn(responses[0].result.structuredContent, "rootPath"), false);
+      assert.equal(Object.hasOwn(responses[0].result.structuredContent, "grapeDirPath"), false);
+      assert.equal(Object.hasOwn(responses[0].result.structuredContent, "configPath"), false);
+      assert.equal(Object.hasOwn(responses[0].result.structuredContent, "databasePath"), false);
+      assert.equal(JSON.stringify(responses[0]).includes(repoPath), false);
+      assert.equal(JSON.stringify(responses[0]).includes(cwd), false);
       assert.ok(
         responses[0].result.structuredContent.recoveryGuidance.includes(
           "Run grape init --connect from the repository root to bootstrap or repair local state."

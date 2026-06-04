@@ -78,6 +78,20 @@ test("task source retrieval treats path-like test seeds as exact source inputs",
   assert.equal(result.warnings.some((warning) => warning.includes("calculateDiscount regression")), false);
 });
 
+test("task source retrieval rejects absolute and drive-qualified seed paths", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix calculateDiscount refund flow",
+    sources: [source("source-billing", "src/billing.ts")],
+    symbols: [],
+    lexicalMatches: [],
+    seedFiles: ["/src/billing.ts", "C:\\src\\billing.ts"]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, []);
+  assert.deepEqual(result.explicitSourceRefs, []);
+  assert.ok(result.warnings.includes("task_seed_file_not_found:invalid"));
+});
+
 test("task source retrieval includes related tests that import selected source files", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix calculateDiscount refund flow",
@@ -107,6 +121,20 @@ test("task source retrieval includes related tests that import selected source f
   assert.deepEqual(result.graphSourceRefs, []);
   assert.deepEqual(result.symbolSourceRefs, ["src/billing.ts"]);
   assert.deepEqual(result.lexicalSourceRefs, []);
+});
+
+test("task source retrieval warns when selected implementation sources have no related tests", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix calculateDiscount refund flow",
+    sources: [source("source-billing", "src/billing.ts")],
+    symbols: [symbol("source-billing", "src/billing.ts", "calculateDiscount")],
+    relationships: [],
+    lexicalMatches: []
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, ["src/billing.ts"]);
+  assert.deepEqual(result.relatedTestSourceRefs, []);
+  assert.ok(result.warnings.includes("task_retrieval_no_related_tests_found"));
 });
 
 test("task source retrieval expands selected sources through graph relationships", () => {

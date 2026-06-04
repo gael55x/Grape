@@ -27,12 +27,16 @@ function isInsideRoot(rootPath: string, absolutePath: string): boolean {
 }
 
 function normalizeRepoPath(inputPath: string): string | undefined {
-  const normalized = inputPath.replace(/\\/g, "/").replace(/^\/+/, "");
+  if (path.isAbsolute(inputPath) || path.win32.isAbsolute(inputPath)) return undefined;
+  const normalized = inputPath.replace(/\\/g, "/");
   if (
     normalized === "" ||
     normalized === "." ||
+    normalized.startsWith("/") ||
     normalized.startsWith("../") ||
-    normalized.includes("/../")
+    normalized.includes("/../") ||
+    /^[A-Za-z]:\//.test(normalized) ||
+    /[\0\r\n\t]/.test(normalized)
   ) {
     return undefined;
   }

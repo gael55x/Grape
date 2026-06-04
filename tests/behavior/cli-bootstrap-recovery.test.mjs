@@ -50,6 +50,11 @@ function runCliJson(repoPath, args) {
   return JSON.parse(result.stdout);
 }
 
+function localPublicPath(repoPath, value) {
+  assert.equal(typeof value, "string");
+  return value.replace(/^<repo-root>/, repoPath);
+}
+
 test("cli status, doctor, and init recover repairable malformed local config safely", () => {
   withGitRepo((repoPath) => {
     const initial = runCliJson(repoPath, ["init", "--connect"]);
@@ -80,8 +85,9 @@ test("cli status, doctor, and init recover repairable malformed local config saf
 
     const repaired = runCliJson(repoPath, ["init", "--connect"]);
     assert.equal(repaired.configStatus, "repaired");
-    assert.equal(existsSync(repaired.configBackupPath), true);
-    assert.equal(readFileSync(repaired.configBackupPath, "utf8"), "{not valid json");
+    const configBackupPath = localPublicPath(repoPath, repaired.configBackupPath);
+    assert.equal(existsSync(configBackupPath), true);
+    assert.equal(readFileSync(configBackupPath, "utf8"), "{not valid json");
     assert.equal(JSON.parse(readFileSync(configPath, "utf8")).project.repoId, initial.repoId);
 
     const repairedDoctor = runCliJson(repoPath, ["doctor"]);
@@ -137,7 +143,7 @@ test("cli init repairs project-identity-incomplete partial config", () => {
     const repaired = runCliJson(repoPath, ["init", "--connect"]);
 
     assert.equal(repaired.configStatus, "repaired");
-    assert.equal(readFileSync(repaired.configBackupPath, "utf8"), "{}\n");
+    assert.equal(readFileSync(localPublicPath(repoPath, repaired.configBackupPath), "utf8"), "{}\n");
     assert.equal(JSON.parse(readFileSync(path.join(repoPath, ".grape", "config.json"), "utf8")).schemaVersion, 1);
   });
 });
@@ -197,7 +203,7 @@ test("cli status, doctor, and init recover unusable local database safely", () =
 
     const repaired = runCliJson(repoPath, ["init", "--connect"]);
     assert.ok(repaired.databaseBackupPath.includes("grape.db.invalid."));
-    assert.equal(readFileSync(repaired.databaseBackupPath, "utf8"), "not sqlite");
+    assert.equal(readFileSync(localPublicPath(repoPath, repaired.databaseBackupPath), "utf8"), "not sqlite");
 
     const repairedDoctor = runCliJson(repoPath, ["doctor"]);
     assert.equal(repairedDoctor.overallStatus, "pass");
@@ -229,8 +235,8 @@ test("cli compile auto-repairs unusable local database and reports the backup", 
         "The unusable local database was backed up and recreated; previous session ledgers may require a full resend."
       )
     );
-    assert.equal(readFileSync(output.databaseBackupPath, "utf8"), "not sqlite");
-    assert.equal(existsSync(output.artifactJsonPath), true);
+    assert.equal(readFileSync(localPublicPath(repoPath, output.databaseBackupPath), "utf8"), "not sqlite");
+    assert.equal(existsSync(localPublicPath(repoPath, output.artifactJsonPath)), true);
 
     const doctor = runCliJson(repoPath, ["doctor"]);
     assert.equal(doctor.overallStatus, "pass");

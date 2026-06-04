@@ -25,7 +25,7 @@ test("public CLI context artifact JSON satisfies the V1 contract envelope", () =
       "--session",
       "contract-cli"
     ]);
-    const artifactJson = JSON.parse(readFileSync(output.artifactJsonPath, "utf8"));
+    const artifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, output.artifactJsonPath), "utf8"));
 
     assert.equal(artifactJson.artifactFormat, "grape.context-pack.v1");
     assert.equal(artifactJson.artifactFormatVersion, 1);
@@ -40,7 +40,7 @@ test("public CLI context artifact JSON satisfies the V1 contract envelope", () =
     assertContextArtifactShape(artifactJson.contextArtifact);
     assertContextPackItems(artifactJson.contextPackItems, artifactJson.contextArtifact);
     assertFullArtifactMarkdownReferencesPackItems(
-      readFileSync(output.artifactMarkdownPath, "utf8"),
+      readFileSync(localPublicPath(repoPath, output.artifactMarkdownPath), "utf8"),
       artifactJson.contextPackItems
     );
   });
@@ -254,6 +254,11 @@ function runCliJson(repoPath, args) {
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stderr, "");
   return JSON.parse(result.stdout);
+}
+
+function localPublicPath(repoPath, value) {
+  assert.equal(typeof value, "string");
+  return value.replace(/^<repo-root>/, repoPath);
 }
 
 function runMcp(repoPath, messages) {

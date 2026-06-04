@@ -7,6 +7,7 @@ import { sourceProofDependencyId, sourceProofRefs } from "../../proofs/source-pr
 import { repositoryContextSection as section } from "../factory.js";
 import { sectionDependencyRefs, sourceDependencyRefForSourceRef } from "../dependencies.js";
 import type { CompileRepositoryContextArtifactInput } from "../../types.js";
+import { fencedUntrustedEvidence } from "../untrusted-evidence.js";
 
 export function activeProjectRulesSection(
   input: CompileRepositoryContextArtifactInput,
@@ -45,9 +46,7 @@ function activeProjectRulesBody(
         `Proof: ${excerpt.proofId}`,
         `Source hash: ${excerpt.sourceHash}`,
         `Excerpt hash: ${excerpt.excerptHash}`,
-        "```",
-        excerpt.excerpt,
-        "```"
+        fencedUntrustedEvidence("Rule excerpt", excerpt.excerpt)
       ].join("\n")
     )
     .join("\n\n");

@@ -14,6 +14,7 @@ import { runGrapeGetRulesTool } from "./rules.js";
 import { runGrapeGetStaleItemsTool } from "./stale.js";
 import { runGrapeGetStatusTool } from "./status.js";
 import { summarizeToolResult } from "./tool-result-summary.js";
+import { sanitizePublicOutput, sanitizePublicText } from "../shared/index.js";
 
 export { listMcpTools } from "./tool-list.js";
 
@@ -44,57 +45,58 @@ export function callMcpTool(params: ToolCallParams, rootPath: string): McpToolRe
     switch (params.name) {
       case "grape_get_context": {
         const output = runGrapeGetContextTool(params.arguments ?? {}, rootPath);
-        return toolResult(params.name, output, output.unsafeReasons.length > 0);
+        return toolResult(params.name, output, output.unsafeReasons.length > 0, rootPath);
       }
       case "grape_get_artifact":
-        return toolResult(params.name, runGrapeGetArtifactTool(params.arguments ?? {}, rootPath), false);
+        return toolResult(params.name, runGrapeGetArtifactTool(params.arguments ?? {}, rootPath), false, rootPath);
       case "grape_get_claims":
-        return toolResult(params.name, runGrapeGetClaimsTool(params.arguments ?? {}, rootPath), false);
+        return toolResult(params.name, runGrapeGetClaimsTool(params.arguments ?? {}, rootPath), false, rootPath);
       case "grape_get_proofs":
-        return toolResult(params.name, runGrapeGetProofsTool(params.arguments ?? {}, rootPath), false);
+        return toolResult(params.name, runGrapeGetProofsTool(params.arguments ?? {}, rootPath), false, rootPath);
       case "grape_get_rules":
-        return toolResult(params.name, runGrapeGetRulesTool(params.arguments ?? {}, rootPath), false);
+        return toolResult(params.name, runGrapeGetRulesTool(params.arguments ?? {}, rootPath), false, rootPath);
       case "grape_get_omitted_item": {
         const output = runGrapeGetOmittedItemTool(params.arguments ?? {}, rootPath);
-        return toolResult(params.name, output, output.status === "stale");
+        return toolResult(params.name, output, output.status === "stale", rootPath);
       }
       case "grape_get_stale_items":
-        return toolResult(params.name, runGrapeGetStaleItemsTool(params.arguments ?? {}, rootPath), false);
+        return toolResult(params.name, runGrapeGetStaleItemsTool(params.arguments ?? {}, rootPath), false, rootPath);
       case "grape_get_conflicts":
-        return toolResult(params.name, runGrapeGetConflictsTool(params.arguments ?? {}, rootPath), false);
+        return toolResult(params.name, runGrapeGetConflictsTool(params.arguments ?? {}, rootPath), false, rootPath);
       case "grape_get_status":
         assertEmptyArguments(params.arguments, "grape_get_status");
-        return toolResult(params.name, runGrapeGetStatusTool(rootPath), false);
+        return toolResult(params.name, runGrapeGetStatusTool(rootPath), false, rootPath);
       case "grape_record_candidate":
-        return toolResult(params.name, runGrapeRecordCandidateTool(params.arguments ?? {}, rootPath), false);
+        return toolResult(params.name, runGrapeRecordCandidateTool(params.arguments ?? {}, rootPath), false, rootPath);
       case "grape_record_command_result":
-        return toolResult(params.name, runGrapeRecordCommandResultTool(params.arguments ?? {}, rootPath), false);
+        return toolResult(params.name, runGrapeRecordCommandResultTool(params.arguments ?? {}, rootPath), false, rootPath);
       case "grape_record_test_result":
-        return toolResult(params.name, runGrapeRecordTestResultTool(params.arguments ?? {}, rootPath), false);
+        return toolResult(params.name, runGrapeRecordTestResultTool(params.arguments ?? {}, rootPath), false, rootPath);
       case "grape_record_user_decision":
-        return toolResult(params.name, runGrapeRecordUserDecisionTool(params.arguments ?? {}, rootPath), false);
+        return toolResult(params.name, runGrapeRecordUserDecisionTool(params.arguments ?? {}, rootPath), false, rootPath);
       case "grape_request_user_confirmation":
-        return toolResult(params.name, runGrapeRequestUserConfirmationTool(params.arguments ?? {}, rootPath), false);
+        return toolResult(params.name, runGrapeRequestUserConfirmationTool(params.arguments ?? {}, rootPath), false, rootPath);
       default:
-        return toolError(`Unknown Grape MCP tool: ${params.name}`);
+        return toolError(`Unknown Grape MCP tool: ${params.name}`, rootPath);
     }
   } catch (error) {
-    return toolError(error instanceof Error ? error.message : String(error));
+    return toolError(error instanceof Error ? error.message : String(error), rootPath);
   }
 }
 
-function toolResult(toolName: string, value: unknown, isError: boolean): McpToolResult {
+function toolResult(toolName: string, value: unknown, isError: boolean, rootPath: string): McpToolResult {
+  const safeValue = sanitizePublicOutput(value, { rootPath });
   return {
-    content: [{ type: "text", text: summarizeToolResult(toolName, value) }],
-    structuredContent: value,
+    content: [{ type: "text", text: sanitizePublicText(summarizeToolResult(toolName, safeValue), { rootPath }) }],
+    structuredContent: safeValue,
     isError
   };
 }
 
-function toolError(message: string): McpToolResult {
+function toolError(message: string, rootPath: string): McpToolResult {
   return {
-    content: [{ type: "text", text: message }],
-    structuredContent: { error: message },
+    content: [{ type: "text", text: sanitizePublicText(message, { rootPath }) }],
+    structuredContent: sanitizePublicOutput({ error: message }, { rootPath }),
     isError: true
   };
 }

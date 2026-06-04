@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, lstatSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
@@ -36,19 +36,22 @@ export function readLocalProjectStatus(rootPathInput: string): LocalProjectStatu
   }
 
   const layout = layoutForStatus(rootPath);
+  const layoutStatus = validateExistingStatusLayout(rootPath, layout, errors);
 
-  try {
-    config = readLocalProjectConfig(layout.configPath);
-  } catch (error) {
-    const detail = errorMessage(error);
-    errors.push(
-      isRepairableLocalProjectConfigError(error)
-        ? `Grape config is repairable but invalid: ${detail}`
-        : `Grape config is unsupported: ${detail}`
-    );
+  if (layoutStatus.configReadable) {
+    try {
+      config = readLocalProjectConfig(layout.configPath);
+    } catch (error) {
+      const detail = errorMessage(error);
+      errors.push(
+        isRepairableLocalProjectConfigError(error)
+          ? `Grape config is repairable but invalid: ${detail}`
+          : `Grape config is unsupported: ${detail}`
+      );
+    }
   }
 
-  if (existsSync(layout.databasePath)) {
+  if (layoutStatus.databaseReadable && existsSync(layout.databasePath)) {
     try {
       const database = new DatabaseSync(layout.databasePath);
       try {
@@ -82,13 +85,14 @@ export function readLocalProjectStatus(rootPathInput: string): LocalProjectStatu
     initialized:
       errors.length === 0 &&
       config !== undefined &&
+      layoutStatus.databaseReadable &&
       existsSync(layout.databasePath) &&
       pendingMigrations.length === 0,
     grapeDirPath: layout.grapeDirPath,
     configPath: layout.configPath,
     databasePath: layout.databasePath,
     config,
-    databaseExists: existsSync(layout.databasePath),
+    databaseExists: layoutStatus.databaseReadable && existsSync(layout.databasePath),
     appliedMigrations,
     pendingMigrations,
     branch: snapshot?.branch,
@@ -116,6 +120,76 @@ function layoutForStatus(rootPath: string): LocalProjectLayout {
     artifactDirPath: path.join(rootPath, ".grape", "artifacts"),
     createdDirs: []
   };
+}
+
+function validateExistingStatusLayout(
+  rootPath: string,
+  layout: LocalProjectLayout,
+  errors: string[]
+): { readonly configReadable: boolean; readonly databaseReadable: boolean } {
+  const grapeDirSafe = validateExistingLocalDirectory(rootPath, layout.grapeDirPath, ".grape", errors);
+  const configSafe =
+    grapeDirSafe && validateExistingLocalStateFile(layout.configPath, ".grape/config.json", errors);
+  const databaseSafe =
+    grapeDirSafe && validateExistingLocalStateFile(layout.databasePath, ".grape/grape.db", errors);
+  return {
+    configReadable: grapeDirSafe && configSafe,
+    databaseReadable: grapeDirSafe && databaseSafe
+  };
+}
+
+function validateExistingLocalDirectory(
+  rootPath: string,
+  absoluteDir: string,
+  relativeDir: string,
+  errors: string[]
+): boolean {
+  if (!existsSync(absoluteDir)) return true;
+  try {
+    const stat = lstatSync(absoluteDir);
+    if (stat.isSymbolicLink()) {
+      errors.push(`Grape local directory must not be a symlink: ${relativeDir}`);
+      return false;
+    }
+    if (!stat.isDirectory()) {
+      errors.push(`Grape local path must be a directory: ${relativeDir}`);
+      return false;
+    }
+    const realRoot = realpathSync(rootPath);
+    const realDir = realpathSync(absoluteDir);
+    if (!isInsideOrSame(realRoot, realDir)) {
+      errors.push(`Grape local directory escaped the repository root: ${relativeDir}`);
+      return false;
+    }
+    return true;
+  } catch {
+    errors.push(`Grape local directory could not be inspected safely: ${relativeDir}`);
+    return false;
+  }
+}
+
+function validateExistingLocalStateFile(absolutePath: string, relativePath: string, errors: string[]): boolean {
+  if (!existsSync(absolutePath)) return true;
+  try {
+    const stat = lstatSync(absolutePath);
+    if (stat.isSymbolicLink()) {
+      errors.push(`Grape local state file must not be a symlink: ${relativePath}`);
+      return false;
+    }
+    if (!stat.isFile()) {
+      errors.push(`Grape local state path must be a file: ${relativePath}`);
+      return false;
+    }
+    return true;
+  } catch {
+    errors.push(`Grape local state path could not be inspected safely: ${relativePath}`);
+    return false;
+  }
+}
+
+function isInsideOrSame(rootPath: string, absolutePath: string): boolean {
+  const relativePath = path.relative(rootPath, absolutePath);
+  return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath));
 }
 
 function errorMessage(error: unknown): string {

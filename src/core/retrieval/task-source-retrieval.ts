@@ -182,6 +182,13 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   const selectedSourceRefs = [...selectedReasons.keys()].slice(0, maxSelectedSources);
   if (selectedReasons.size > maxSelectedSources) warnings.push("task_retrieval_truncated");
   if (queryTerms.length > 0 && selectedSourceRefs.length === 0) warnings.push("task_retrieval_no_source_matches");
+  if (
+    selectedSourceRefs.some((sourceRef) => isImplementationSourceRef(sourceRef, sourceByRef)) &&
+    refsForReason(selectedReasons, selectedSourceRefs, "test_seed").length === 0 &&
+    refsForReason(selectedReasons, selectedSourceRefs, "related_test").length === 0
+  ) {
+    warnings.push("task_retrieval_no_related_tests_found");
+  }
 
   return {
     selectedSourceRefs,
@@ -290,12 +297,14 @@ function normalizeSearchText(value: string): string {
 }
 
 function normalizeSeedFile(value: string): string | undefined {
-  const normalized = value.replace(/\\/g, "/").replace(/^\.\/+/, "").replace(/^\/+/, "");
+  const normalized = value.replace(/\\/g, "/").replace(/^\.\/+/, "");
   if (
     normalized === "" ||
     normalized === "." ||
+    normalized.startsWith("/") ||
     normalized.startsWith("../") ||
     normalized.includes("/../") ||
+    /^[A-Za-z]:\//.test(normalized) ||
     /[\0\r\n\t]/.test(normalized)
   ) {
     return undefined;
@@ -319,4 +328,12 @@ function isTestSourceRef(value: string): boolean {
     normalized.includes("/__tests__/") ||
     /\.(test|spec|e2e)\.[a-z0-9]+$/.test(normalized)
   );
+}
+
+function isImplementationSourceRef(
+  sourceRef: string,
+  sourceByRef: ReadonlyMap<string, TaskRetrievalSource>
+): boolean {
+  const source = sourceByRef.get(sourceRef);
+  return source?.sourceType === "repository_file" && !isTestSourceRef(sourceRef);
 }
