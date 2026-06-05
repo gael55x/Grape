@@ -126,6 +126,17 @@ test("current-valid resolution rejects superseded target claims only", () => {
   assert.equal(resolved.rejectedCount, 1);
 });
 
+test("current-valid resolution rejects claim types disabled by durable policy", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    claimTypeA: "runtime_behavior",
+    edges: []
+  }));
+
+  assert.deepEqual(resolved.activeClaims.map((claim) => claim.claimId), ["claim-b"]);
+  assert.equal(resolved.rejectedCount, 1);
+  assert.match(resolved.warnings.join("\n"), /Durable claim policy blocked current-valid claim/);
+});
+
 function claim(claimId, claimText, scopeHash) {
   return {
     claimId,
@@ -140,12 +151,19 @@ function claim(claimId, claimText, scopeHash) {
   };
 }
 
-function currentValidInput({ edges }) {
+function currentValidInput({
+  edges,
+  claimTypeA = "repository_source_excerpt_exists",
+  claimTypeB = "repository_source_excerpt_exists"
+}) {
   const sourceA = source("src/a.ts", hashA);
   const sourceB = source("src/b.ts", hashB);
   const proofA = proof("proof-a", "claim-a", "source-a", hashA);
   const proofB = proof("proof-b", "claim-b", "source-b", hashB);
-  const claims = [currentClaim("claim-a", "Claim A", sourceA, proofA), currentClaim("claim-b", "Claim B", sourceB, proofB)];
+  const claims = [
+    currentClaim("claim-a", "Claim A", sourceA, proofA, claimTypeA),
+    currentClaim("claim-b", "Claim B", sourceB, proofB, claimTypeB)
+  ];
   const proofsByClaim = new Map([
     ["claim-a", [proofA]],
     ["claim-b", [proofB]]
@@ -180,11 +198,11 @@ function currentValidInput({ edges }) {
   };
 }
 
-function currentClaim(claimId, claimText, sourceRecord, proofRecord) {
+function currentClaim(claimId, claimText, sourceRecord, proofRecord, claimType) {
   return {
     claimId,
     subject: sourceRecord.sourceRef,
-    claimType: "repository_source_excerpt_exists",
+    claimType,
     claimText,
     scopeJson: JSON.stringify({
       branch: "main",
@@ -205,7 +223,9 @@ function source(sourceRef, sourceHash) {
   return {
     sourceId: sourceRef === "src/a.ts" ? "source-a" : "source-b",
     sourceRef,
+    sourceType: "repository_file",
     sourceHash,
+    trustClass: "trusted",
     privacyStatus: "allowed",
     redactionStatus: "not_needed"
   };
@@ -218,7 +238,8 @@ function proof(proofId, claimId, sourceId, sourceHash) {
     sourceId,
     proofType: "exact_source_excerpt",
     sourceHash,
-    excerptHash: sourceHash
+    excerptHash: sourceHash,
+    supportStatus: "direct"
   };
 }
 

@@ -1,4 +1,8 @@
 import { createGitRepoSnapshot } from "../../../core/git/index.js";
+import {
+  durableClaimPolicyDefaultsForClaimType,
+  evaluateDurableClaimPolicy
+} from "../../../core/claims/index.js";
 import { resolveInMemoryCurrentValidCandidates } from "../../../core/retrieval/index.js";
 import type { CurrentValidCandidate } from "../../../core/retrieval/index.js";
 import type {
@@ -130,8 +134,42 @@ function toCurrentValidCandidate(input: {
     privacyStatus: sources.every((source) => source?.privacyStatus === "allowed" && source.redactionStatus !== "blocked")
       ? "allowed"
       : "blocked",
-    dirtyScopeStatus: dirtyScopeStatus(scope, input.snapshot)
+    dirtyScopeStatus: dirtyScopeStatus(scope, input.snapshot),
+    claimPolicyStatus: claimPolicyStatus({
+      claim: input.claim,
+      proofs: input.proofs,
+      sources
+    })
   };
+}
+
+function claimPolicyStatus(input: {
+  readonly claim: ClaimRecord;
+  readonly proofs: readonly ProofRecord[];
+  readonly sources: readonly (SourceRecord | undefined)[];
+}): CurrentValidCandidate["claimPolicyStatus"] {
+  const defaults = durableClaimPolicyDefaultsForClaimType(input.claim.claimType);
+  if (!defaults) return "blocked";
+  if (input.proofs.length === 0) return "allowed";
+
+  return input.proofs.every((proof, index) => {
+    const source = input.sources[index];
+    if (!source) return false;
+    return evaluateDurableClaimPolicy({
+      claimType: input.claim.claimType,
+      claimMeaning: defaults.claimMeaning,
+      proofType: proof.proofType,
+      sourceType: source.sourceType,
+      supportStatus: proof.supportStatus,
+      sourceTrustClass: source.trustClass,
+      sourcePrivacyStatus: source.privacyStatus,
+      sourceRedactionStatus: source.redactionStatus,
+      observer: defaults.observer,
+      proofSignalKind: defaults.proofSignalKind
+    }).accepted;
+  })
+    ? "allowed"
+    : "blocked";
 }
 
 function toClaimSummary(claim: ClaimRecord, proofs: readonly ProofRecord[]): LocalClaimSummary {

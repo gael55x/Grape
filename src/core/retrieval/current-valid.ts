@@ -4,6 +4,7 @@ export type HashGateStatus = "match" | "mismatch" | "unknown";
 export type ContradictionStatus = "none" | "active";
 export type PrivacyGateStatus = "allowed" | "blocked";
 export type DirtyScopeStatus = "not_dirty" | "match" | "mismatch" | "unknown";
+export type ClaimPolicyStatus = "allowed" | "blocked";
 
 export interface CurrentValidCandidate {
   id: string;
@@ -17,6 +18,8 @@ export interface CurrentValidCandidate {
   contradictionStatus: ContradictionStatus;
   privacyStatus: PrivacyGateStatus;
   dirtyScopeStatus: DirtyScopeStatus;
+  claimPolicyStatus: ClaimPolicyStatus;
+  claimPolicyReason?: string;
 }
 
 export type CurrentValidRejectionReason =
@@ -29,6 +32,7 @@ export type CurrentValidRejectionReason =
   | "privacy_blocked"
   | "dirty_scope_mismatch"
   | "dirty_scope_unknown"
+  | "claim_policy_blocked"
   | "scope_mismatch"
   | "scope_partial"
   | "scope_unknown"
@@ -97,6 +101,12 @@ export function resolveInMemoryCurrentValidCandidates(
     if (candidate.dirtyScopeStatus === "unknown") {
       rejected.push({ candidate, reason: "dirty_scope_unknown" });
       warnings.push(`Dirty worktree scope is unknown, not current-valid: ${candidate.id}`);
+      continue;
+    }
+
+    if (candidate.claimPolicyStatus === "blocked") {
+      rejected.push({ candidate, reason: "claim_policy_blocked" });
+      warnings.push(`Durable claim policy blocked current-valid claim: ${candidate.id}`);
       continue;
     }
 

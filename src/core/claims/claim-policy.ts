@@ -38,6 +38,12 @@ export type DurableClaimPolicyEvaluationResult =
   | { readonly accepted: true; readonly policyId: string }
   | { readonly accepted: false; readonly reason: string };
 
+export interface DurableClaimPolicyDefaults {
+  readonly claimMeaning: DurableClaimMeaning;
+  readonly observer: string;
+  readonly proofSignalKind: DurableClaimProofSignalKind;
+}
+
 interface DurableClaimPolicy {
   readonly claimType: string;
   readonly proofTypes: readonly string[];
@@ -130,4 +136,16 @@ export function evaluateDurableClaimPolicy(
     return { accepted: false, reason: "observer_not_allowed" };
   }
   return { accepted: true, policyId: policy.claimType };
+}
+
+export function durableClaimPolicyDefaultsForClaimType(
+  claimType: string
+): DurableClaimPolicyDefaults | undefined {
+  const policy = durableClaimPolicies.find((candidate) => candidate.claimType === claimType);
+  if (!policy) return undefined;
+  const claimMeaning = policy.claimMeanings[0];
+  const observer = policy.observers[0];
+  const proofSignalKind = policy.proofSignalKinds[0];
+  if (!claimMeaning || !observer || !proofSignalKind) return undefined;
+  return { claimMeaning, observer, proofSignalKind };
 }

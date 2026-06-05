@@ -176,6 +176,7 @@ function checkCurrentValid() {
   for (const required of [
     "import type { ScopeMatchResult, VerificationStatus } from \"../../shared/index.js\";",
     "proofRefs: string[]",
+    "claimPolicyStatus: ClaimPolicyStatus;",
     "resolveInMemoryCurrentValidCandidates",
     'candidate.verificationStatus !== "verified"',
     "candidate.proofRefs.length === 0",
@@ -186,6 +187,7 @@ function checkCurrentValid() {
     'candidate.privacyStatus === "blocked"',
     'candidate.dirtyScopeStatus === "mismatch"',
     'candidate.dirtyScopeStatus === "unknown"',
+    'candidate.claimPolicyStatus === "blocked"',
     'candidate.scopeResult === "match"',
     'candidate.scopeResult === "mismatch"',
     'candidate.scopeResult === "partial"',
