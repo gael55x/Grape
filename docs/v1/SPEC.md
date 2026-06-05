@@ -1119,7 +1119,21 @@ no secret/redaction violation exists
 
 ### 13.4 Claim extraction rule
 
-V1.0 allowed durable extraction:
+V1.0 target durable extraction families are allowed only after the claim type has
+a policy entry that names its accepted proof type, source type, support status,
+scope requirements, and forbidden interpretations. A target family listed here is
+not enabled by default.
+
+Current enabled durable claim policy:
+
+| Claim type | Accepted proof | Accepted source | Required support | What it may prove | What it must not prove |
+|---|---|---|---|---|---|
+| `repository_source_excerpt_exists` | `exact_source_excerpt` | trusted allowed repository/config/lock/migration/rule source | `direct` | The exact excerpt exists in the current scoped source input. | Runtime behavior, correctness, root cause, deploy state, broad architecture. |
+| `project_rule` | `exact_project_rule_excerpt` | trusted allowed rule file | `direct` | The exact parsed rule text exists in the scoped rule file. | Generated policy, unstated implications, conflict resolution, precedence. |
+| `grape_observed_run_result` | `grape_observed_run_result` | trusted Grape-observed command/test run | `direct` | Grape observed one scoped command/test result. | Product correctness, root cause, fix success, production behavior. |
+
+Future V1.0 durable extraction families, once backed by policy, fixtures, and
+current-valid validation:
 
 - repository facts from code spans
 - symbol existence from provider-backed exact source extraction

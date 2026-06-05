@@ -28,6 +28,12 @@ The beta planner must not:
 - treat unsupported-language fallback as successful language-aware graph extraction
 - flatten monorepo package/workspace boundaries when dependency refs can be scoped
 
+Retrieval may rank only current-valid claims whose claim type is enabled by the
+Trust Kernel durable claim policy registry. Semantic candidates, graph expansion,
+compression artifacts, and summaries may help order or route context, but they
+cannot create durable claims, satisfy proof requirements, or override
+current-valid rejection.
+
 ## Current Inputs
 
 The current retrieval path may use:

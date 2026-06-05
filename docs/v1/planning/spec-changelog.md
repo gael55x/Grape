@@ -13,6 +13,7 @@ Each entry should include:
 
 ## Unreleased
 
+- 2026-06-05: Clarified the durable claim policy boundary for the currently enabled claim types. `repository_source_excerpt_exists`, `project_rule`, and `grape_observed_run_result` now have explicit accepted proof/source/support requirements and forbidden interpretations; broader V1.0 claim families remain disabled until policy entries, fixtures, and current-valid tests exist. Affected docs: SPEC, trust model, retrieval, testing. Tests required: claim policy rejection and overclaim safety tests. Migration impact: none.
 - Clarified language-agnostic indexing: Grape transport must safely handle unsupported languages through exact/path/lexical fallback and explicit blind spots, while language-aware graph extraction is provider/capability-based and currently strongest for TypeScript/JavaScript.
 - Clarified monorepo retrieval expectations: package/workspace boundaries should be detected and preserved for source budgets and dependency refs where possible, with partial warnings when boundaries are unknown.
 - Aligned beta trial and implementation-order requirements with safe polyglot fallback: Python, Java, Kotlin, Go, Rust, and other allowed text files must be safe fallback inputs, while stronger graph extraction requires providers, fixtures, and capability diagnostics.

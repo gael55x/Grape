@@ -84,6 +84,14 @@ Trust and scope:
 - `branch_invalid_claim_excluded`
 - `dirty_worktree_claim_not_branch_global`
 - `repo_file_claim_does_not_overclaim_runtime_behavior`
+- `claim_type_policy_rejects_unknown_claim_type`
+- `claim_type_policy_rejects_unproven_behavior_claim`
+- `observed_test_result_does_not_promote_correctness`
+- `source_excerpt_claim_proves_existence_only`
+- `project_rule_claim_does_not_resolve_rule_conflict`
+- `semantic_candidate_cannot_create_claim`
+- `graph_expansion_cannot_satisfy_claim_policy`
+- `summary_or_compression_artifact_cannot_satisfy_claim_policy`
 
 Artifact and diff:
 

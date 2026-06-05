@@ -114,6 +114,29 @@ After proof validation, local compile creates claim candidates for the narrow cl
 
 Grape-observed command/test runs can create the narrow claim type `grape_observed_run_result`. The proof type is `grape_observed_run_result`, uses direct support, and stores the observed-run result hash in the existing proof hash column. The result hash is derived only from scoped metadata: observed run ID, command hash, cwd, exit code, stdout/stderr hashes, timestamps, branch, commit, worktree hash, snapshot/session IDs, and test pass/framework labels when present. It never includes raw command, stdout, or stderr bodies. This claim proves only that local Grape observed that run result. It does not prove the implementation is correct, that a root cause was fixed, or that product behavior is globally true.
 
+## Durable Claim Policy Registry
+
+The Trust Kernel must enforce durable claim policy as data, not only as prose.
+Each enabled claim type needs a policy entry that names accepted proof types,
+accepted source types, required support status, required observer, scope
+requirements, and forbidden interpretations. Unknown claim types are rejected by
+default.
+
+Current enabled durable claim policies:
+
+| Claim type | Accepted proof type | Accepted source type | Required support | Required observer | May prove | Must reject as overclaim |
+|---|---|---|---|---|---|---|
+| `repository_source_excerpt_exists` | `exact_source_excerpt` | trusted allowed source/config/lockfile/migration/rule record | `direct` | local source reader | exact excerpt existence in the current scoped source input | behavior, correctness, root cause, deploy state, architecture conclusions |
+| `project_rule` | `exact_project_rule_excerpt` | trusted allowed `rule_file` record | `direct` | local source reader | exact parsed rule text exists in the scoped rule file | generated policy, unstated implications, precedence, conflict resolution |
+| `grape_observed_run_result` | `grape_observed_run_result` | trusted Grape-observed `command_run` or `test_run` record | `direct` | `grape` | one scoped observed command/test result happened | correctness, root cause, fix success, production behavior, broader runtime truth |
+
+Future policy entries for provider-backed symbol, import/export, AST edge,
+decision, runtime, CI, bug, or fix claims must be added with fixtures and
+current-valid tests before promotion code can persist them. Semantic candidates,
+graph expansion, compression artifacts, summaries, assistant text, and
+agent-reported runs cannot satisfy a durable policy entry unless a separate
+trusted proof validates the same claim.
+
 ## Promotion Rules
 
 - No proof means no durable claim.
