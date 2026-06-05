@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import type { SourceScope } from "../../shared/index.js";
+import { evaluateDurableClaimPolicy } from "./claim-policy.js";
 
 export const projectRuleClaimType = "project_rule";
 export const projectRuleProofType = "exact_project_rule_excerpt";
@@ -148,16 +149,21 @@ export function evaluateProjectRuleClaimGate(input: {
 }): ProjectRuleClaimGateResult {
   if (!input.source) return { accepted: false, reason: "source_missing" };
   if (!input.proof) return { accepted: false, reason: "proof_missing" };
-  if (input.source.sourceType !== "rule_file") return { accepted: false, reason: "source_type_not_allowed" };
-  if (input.source.trustClass !== "trusted") return { accepted: false, reason: "source_not_trusted" };
-  if (input.source.privacyStatus !== "allowed") return { accepted: false, reason: "source_not_allowed" };
-  if (input.source.redactionStatus === "blocked") return { accepted: false, reason: "source_redaction_blocked" };
+  const policy = evaluateDurableClaimPolicy({
+    claimType: projectRuleClaimType,
+    claimMeaning: "project_rule_exists",
+    proofType: input.proof.proofType,
+    sourceType: input.source.sourceType,
+    supportStatus: input.proof.supportStatus,
+    sourceTrustClass: input.source.trustClass,
+    sourcePrivacyStatus: input.source.privacyStatus,
+    sourceRedactionStatus: input.source.redactionStatus,
+    observer: "local_source_reader",
+    proofSignalKind: "exact_rule"
+  });
+  if (!policy.accepted) return { accepted: false, reason: policy.reason };
   if (input.source.sourceId !== input.rule.sourceId) return { accepted: false, reason: "source_id_mismatch" };
   if (input.source.sourceHash !== input.rule.sourceHash) return { accepted: false, reason: "source_hash_mismatch" };
-  if (input.proof.proofType !== projectRuleProofType) {
-    return { accepted: false, reason: "proof_type_not_allowed" };
-  }
-  if (input.proof.supportStatus !== "direct") return { accepted: false, reason: "proof_not_direct" };
   if (input.proof.sourceId !== input.rule.sourceId) return { accepted: false, reason: "proof_source_mismatch" };
   if (input.proof.sourceHash !== input.rule.sourceHash) {
     return { accepted: false, reason: "proof_source_hash_mismatch" };

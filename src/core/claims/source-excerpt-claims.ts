@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import type { SourceType } from "../../shared/index.js";
+import { evaluateDurableClaimPolicy } from "./claim-policy.js";
 
 export interface SourceExcerptClaimSource {
   readonly sourceId: string;
@@ -101,16 +102,19 @@ export function evaluateSourceExcerptClaimGate(input: {
 }): SourceExcerptClaimGateResult {
   if (!input.source) return { accepted: false, reason: "source_missing" };
   if (!input.proof) return { accepted: false, reason: "proof_missing" };
-  if (input.source.trustClass !== "trusted") return { accepted: false, reason: "source_not_trusted" };
-  if (input.source.privacyStatus !== "allowed") return { accepted: false, reason: "source_not_allowed" };
-  if (input.source.redactionStatus === "blocked") return { accepted: false, reason: "source_redaction_blocked" };
-  if (!sourceTypeCanProveExcerpt(input.source.sourceType)) {
-    return { accepted: false, reason: "source_type_not_allowed" };
-  }
-  if (input.proof.proofType !== "exact_source_excerpt") {
-    return { accepted: false, reason: "proof_type_not_allowed" };
-  }
-  if (input.proof.supportStatus !== "direct") return { accepted: false, reason: "proof_not_direct" };
+  const policy = evaluateDurableClaimPolicy({
+    claimType: "repository_source_excerpt_exists",
+    claimMeaning: "source_excerpt_exists",
+    proofType: input.proof.proofType,
+    sourceType: input.source.sourceType,
+    supportStatus: input.proof.supportStatus,
+    sourceTrustClass: input.source.trustClass,
+    sourcePrivacyStatus: input.source.privacyStatus,
+    sourceRedactionStatus: input.source.redactionStatus,
+    observer: "local_source_reader",
+    proofSignalKind: "exact_source"
+  });
+  if (!policy.accepted) return { accepted: false, reason: policy.reason };
   if (input.proof.sourceId !== input.excerpt.sourceId) return { accepted: false, reason: "proof_source_mismatch" };
   if (input.proof.sourceHash !== input.excerpt.sourceHash) return { accepted: false, reason: "proof_source_hash_mismatch" };
   if (input.proof.excerptHash !== input.excerpt.excerptHash) {
@@ -121,16 +125,6 @@ export function evaluateSourceExcerptClaimGate(input: {
 
 export function sourceExcerptClaimId(proofId: string): string {
   return `claim:${stableHash(["repository_source_excerpt_exists", proofId]).slice(0, 24)}`;
-}
-
-function sourceTypeCanProveExcerpt(sourceType: SourceType): boolean {
-  return (
-    sourceType === "repository_file" ||
-    sourceType === "rule_file" ||
-    sourceType === "config_file" ||
-    sourceType === "lockfile" ||
-    sourceType === "migration_file"
-  );
 }
 
 function stableHash(parts: readonly string[]): string {

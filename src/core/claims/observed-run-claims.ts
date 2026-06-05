@@ -2,10 +2,10 @@ import { createHash } from "node:crypto";
 
 import {
   observedRunProofId,
-  observedRunResultProofType,
   type ObservedRunProofMaterial
 } from "../proofs/index.js";
 import type { SourceScope } from "../../shared/index.js";
+import { evaluateDurableClaimPolicy } from "./claim-policy.js";
 
 export interface ObservedRunClaimSource {
   readonly sourceId: string;
@@ -109,20 +109,23 @@ export function evaluateObservedRunClaimGate(input: {
 }): ObservedRunClaimGateResult {
   if (!input.source) return { accepted: false, reason: "source_missing" };
   if (!input.proof) return { accepted: false, reason: "proof_missing" };
-  if (input.source.trustClass !== "trusted") return { accepted: false, reason: "source_not_trusted" };
-  if (input.source.privacyStatus !== "allowed") return { accepted: false, reason: "source_not_allowed" };
-  if (input.source.redactionStatus !== "redacted") return { accepted: false, reason: "source_not_redacted" };
-  if (input.source.sourceType !== "command_run" && input.source.sourceType !== "test_run") {
-    return { accepted: false, reason: "source_type_not_allowed" };
-  }
+  const policy = evaluateDurableClaimPolicy({
+    claimType: "grape_observed_run_result",
+    claimMeaning: "observed_run_result",
+    proofType: input.proof.proofType,
+    sourceType: input.source.sourceType,
+    supportStatus: input.proof.supportStatus,
+    sourceTrustClass: input.source.trustClass,
+    sourcePrivacyStatus: input.source.privacyStatus,
+    sourceRedactionStatus: input.source.redactionStatus,
+    observer: "grape",
+    proofSignalKind: "observed_run"
+  });
+  if (!policy.accepted) return { accepted: false, reason: policy.reason };
   if (input.source.sourceId !== input.material.sourceId) return { accepted: false, reason: "source_id_mismatch" };
   if (input.source.sourceHash !== input.material.sourceHash) {
     return { accepted: false, reason: "source_hash_mismatch" };
   }
-  if (input.proof.proofType !== observedRunResultProofType) {
-    return { accepted: false, reason: "proof_type_not_allowed" };
-  }
-  if (input.proof.supportStatus !== "direct") return { accepted: false, reason: "proof_not_direct" };
   if (input.proof.sourceId !== input.material.sourceId) return { accepted: false, reason: "proof_source_mismatch" };
   if (input.proof.sourceHash !== input.material.sourceHash) {
     return { accepted: false, reason: "proof_source_hash_mismatch" };
