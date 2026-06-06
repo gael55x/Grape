@@ -65,12 +65,19 @@ export interface RepositoryArtifactTaskRetrievalInput {
   readonly explicitSourceRefs: readonly string[];
   readonly testSourceRefs: readonly string[];
   readonly relatedTestSourceRefs: readonly string[];
+  readonly relatedTestRelationships: readonly RepositoryArtifactRelatedTestRelationshipInput[];
   readonly graphSourceRefs: readonly string[];
   readonly symbolSourceRefs: readonly string[];
   readonly lexicalSourceRefs: readonly string[];
   readonly sourceAnchors?: readonly RepositoryArtifactSourceAnchorInput[];
   readonly queryTerms: readonly string[];
   readonly warnings: readonly string[];
+}
+
+export interface RepositoryArtifactRelatedTestRelationshipInput {
+  readonly testSourceRef: string;
+  readonly targetSourceRef: string;
+  readonly relationship: "imports" | "calls";
 }
 
 export interface RepositoryArtifactSourceAnchorInput {

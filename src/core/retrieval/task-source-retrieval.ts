@@ -51,12 +51,19 @@ export interface TaskSourceRetrievalResult {
   readonly explicitSourceRefs: readonly string[];
   readonly testSourceRefs: readonly string[];
   readonly relatedTestSourceRefs: readonly string[];
+  readonly relatedTestRelationships: readonly TaskRetrievalRelatedTestRelationship[];
   readonly graphSourceRefs: readonly string[];
   readonly symbolSourceRefs: readonly string[];
   readonly lexicalSourceRefs: readonly string[];
   readonly sourceAnchors: readonly TaskSourceRetrievalAnchor[];
   readonly queryTerms: readonly string[];
   readonly warnings: readonly string[];
+}
+
+export interface TaskRetrievalRelatedTestRelationship {
+  readonly testSourceRef: string;
+  readonly targetSourceRef: string;
+  readonly relationship: "imports" | "calls";
 }
 
 export interface TaskSourceRetrievalAnchor {
@@ -135,6 +142,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   const sourceByRef = new Map(input.sources.map((source) => [source.sourceRef, source]));
   const sourceRefById = new Map(input.sources.map((source) => [source.sourceId, source.sourceRef]));
   const selectedReasons = new Map<string, Set<SelectionReason>>();
+  const relatedTestRelationships: TaskRetrievalRelatedTestRelationship[] = [];
   const sourceAnchors: TaskSourceRetrievalAnchor[] = [];
   const warnings: string[] = [];
   const explicitPathRefs = new Set<string>();
@@ -187,7 +195,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
 
   const relationships = input.relationships ?? [];
   addGraphRelatedSources(selectedReasons, sourceByRef, relationships, new Set(selectedReasons.keys()));
-  addRelatedTests(selectedReasons, sourceByRef, relationships, new Set(selectedReasons.keys()));
+  addRelatedTests(selectedReasons, sourceByRef, relationships, new Set(selectedReasons.keys()), relatedTestRelationships);
 
   for (const match of input.lexicalMatches) {
     const sourceRef = sourceRefById.get(match.sourceId) ?? match.sourceRef;
@@ -195,10 +203,11 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     if (!scopedCandidate(sourceRef)) continue;
     addReason(selectedReasons, sourceRef, "lexical_match");
     addGraphRelatedSources(selectedReasons, sourceByRef, relationships, new Set([sourceRef]));
-    addRelatedTests(selectedReasons, sourceByRef, relationships, new Set([sourceRef]));
+    addRelatedTests(selectedReasons, sourceByRef, relationships, new Set([sourceRef]), relatedTestRelationships);
   }
 
   const selectedSourceRefs = [...selectedReasons.keys()].slice(0, maxSelectedSources);
+  const selectedSourceRefSet = new Set(selectedSourceRefs);
   if (selectedReasons.size > maxSelectedSources) warnings.push("task_retrieval_truncated");
   if (queryTerms.length > 0 && selectedSourceRefs.length === 0) warnings.push("task_retrieval_no_source_matches");
   if (
@@ -214,6 +223,13 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     explicitSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "explicit_seed"),
     testSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "test_seed"),
     relatedTestSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "related_test"),
+    relatedTestRelationships: sortedRelatedTestRelationships(
+      relatedTestRelationships.filter(
+        (relationship) =>
+          selectedSourceRefSet.has(relationship.testSourceRef) &&
+          selectedSourceRefSet.has(relationship.targetSourceRef)
+      )
+    ),
     graphSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "graph_related"),
     symbolSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "symbol_match"),
     lexicalSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "lexical_match"),
@@ -230,7 +246,7 @@ function addGraphRelatedSources(
   sourceRefs: ReadonlySet<string>
 ): void {
   for (const relationship of relationships) {
-    if (!isGraphExpansionRelationship(relationship.relationship)) continue;
+    if (!graphExpansionRelationship(relationship.relationship)) continue;
     if (!sourceRefs.has(relationship.sourceRef)) continue;
     if (!sourceByRef.has(relationship.targetSourceRef)) continue;
     if (relationship.targetSourceRef === relationship.sourceRef) continue;
@@ -242,19 +258,60 @@ function addRelatedTests(
   selectedReasons: Map<string, Set<SelectionReason>>,
   sourceByRef: ReadonlyMap<string, TaskRetrievalSource>,
   relationships: readonly TaskRetrievalRelationship[],
-  targetSourceRefs: ReadonlySet<string>
+  targetSourceRefs: ReadonlySet<string>,
+  relatedTestRelationships: TaskRetrievalRelatedTestRelationship[]
 ): void {
   for (const relationship of relationships) {
-    if (!isGraphExpansionRelationship(relationship.relationship)) continue;
+    const relationshipKind = graphExpansionRelationship(relationship.relationship);
+    if (!relationshipKind) continue;
     if (!targetSourceRefs.has(relationship.targetSourceRef)) continue;
     if (!sourceByRef.has(relationship.sourceRef)) continue;
     if (!isTestSourceRef(relationship.sourceRef)) continue;
     addReason(selectedReasons, relationship.sourceRef, "related_test");
+    addRelatedTestRelationship(relatedTestRelationships, {
+      testSourceRef: relationship.sourceRef,
+      targetSourceRef: relationship.targetSourceRef,
+      relationship: relationshipKind
+    });
   }
 }
 
-function isGraphExpansionRelationship(relationship: string): boolean {
-  return relationship === "imports" || relationship === "calls";
+function graphExpansionRelationship(relationship: string): "imports" | "calls" | undefined {
+  if (relationship === "imports" || relationship === "calls") return relationship;
+  return undefined;
+}
+
+function addRelatedTestRelationship(
+  relationships: TaskRetrievalRelatedTestRelationship[],
+  relationship: TaskRetrievalRelatedTestRelationship
+): void {
+  if (
+    relationships.some(
+      (existing) =>
+        existing.testSourceRef === relationship.testSourceRef &&
+        existing.targetSourceRef === relationship.targetSourceRef &&
+        existing.relationship === relationship.relationship
+    )
+  ) {
+    return;
+  }
+  relationships.push(relationship);
+}
+
+function sortedRelatedTestRelationships(
+  relationships: readonly TaskRetrievalRelatedTestRelationship[]
+): readonly TaskRetrievalRelatedTestRelationship[] {
+  return [...relationships].sort((left, right) => {
+    const testRefOrder = left.testSourceRef.localeCompare(right.testSourceRef);
+    if (testRefOrder !== 0) return testRefOrder;
+    const targetRefOrder = left.targetSourceRef.localeCompare(right.targetSourceRef);
+    if (targetRefOrder !== 0) return targetRefOrder;
+    return relationshipOrder(left.relationship) - relationshipOrder(right.relationship);
+  });
+}
+
+function relationshipOrder(relationship: TaskRetrievalRelatedTestRelationship["relationship"]): number {
+  return relationship === "imports" ? 0 : 1;
 }
 
 function addReason(

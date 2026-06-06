@@ -14,6 +14,7 @@ export function taskRetrievalSection(
   if (!retrieval) return undefined;
   if (
     retrieval.selectedSourceRefs.length === 0 &&
+    retrieval.relatedTestRelationships.length === 0 &&
     retrieval.queryTerms.length === 0 &&
     retrieval.warnings.length === 0
   ) {
@@ -50,6 +51,8 @@ function taskRetrievalBody(
     ...listOrNone(retrieval.testSourceRefs),
     "Related test refs:",
     ...listOrNone(retrieval.relatedTestSourceRefs),
+    "Related test relationships (selection evidence only; not test execution or correctness proof):",
+    ...relationshipListOrNone(retrieval.relatedTestRelationships),
     "Graph-expanded refs:",
     ...listOrNone(retrieval.graphSourceRefs),
     "Symbol-matched refs:",
@@ -64,6 +67,17 @@ function taskRetrievalBody(
 
 function listOrNone(values: readonly string[]): readonly string[] {
   return values.length > 0 ? values.map((value) => `- ${value}`) : ["- none"];
+}
+
+function relationshipListOrNone(
+  relationships: NonNullable<CompileRepositoryContextArtifactInput["taskRetrieval"]>["relatedTestRelationships"]
+): readonly string[] {
+  return relationships.length > 0
+    ? relationships.map(
+        (relationship) =>
+          `- ${relationship.testSourceRef} ${relationship.relationship} ${relationship.targetSourceRef}`
+      )
+    : ["- none"];
 }
 
 function anchorListOrNone(

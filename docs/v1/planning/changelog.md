@@ -13,6 +13,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added narrow package-root scope derivation and package-local claim scope metadata for explicit package-local file/test refs so current-valid retrieval can reject claims from sibling packages without inferring a full package graph or manifest-backed package invalidation.
 - Added CLI and MCP feature-flag current-scope filters that reject mismatched feature-scoped claims without rendering private flag labels or treating flags as runtime proof.
 - Added provider-backed symbol declaration claims for high-confidence TypeScript/JavaScript AST declarations covered by accepted exact source excerpts, while keeping imports, call graphs, behavior, correctness, and root cause out of durable truth.
+- Added related-test relationship evidence in task retrieval output so agents can see which import/call edge selected a test file without treating that relationship as test execution, coverage, or correctness proof.
 - Applied MCP `environmentScope` as a caller-supplied current-valid scope label and artifact field without treating it as runtime proof.
 - Tightened compile-scoped current-valid filtering so session-scoped claims from another active session are excluded, while branch/worktree-scoped claims without a session remain eligible.
 - Centralized claim scope compatibility for current-valid retrieval and claim-edge blocking, including branch, dirty worktree, environment, feature flag, package boundary, and unknown-overlap handling.

@@ -62,6 +62,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 - Symbol matches may select source files and line anchors for exact excerpt windows.
 - Graph expansion may select directly related source files through supported import and call edges.
 - Related tests may be selected when a test imports or calls a selected source file.
+- When a related test is selected through an import/call edge, the task-retrieval section should render the test/source relationship as selection evidence only. This relationship does not prove the test was run, that the test covers the behavior, or that the implementation is correct.
 - Lexical matches may add source refs from safe indexed text.
 - Lexical repository search should use storage-bounded prefiltering where possible, but the deterministic normalized matcher remains the final authority so punctuation/case normalization behavior does not change.
 - In monorepos, explicit seed refs should be interpreted inside their package/workspace when known, and source budgets should avoid allowing unrelated packages or languages to exhaust the selected context.

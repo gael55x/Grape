@@ -129,6 +129,10 @@ test("monorepo fixture keeps task retrieval focused on package-local source and 
     assert.equal(output.warnings.includes("task_retrieval_no_related_tests_found"), false);
     assert.match(retrieval.text, /packages\/api\/src\/apiBilling\.ts/);
     assert.match(retrieval.text, /Related test refs:\n- packages\/api\/src\/apiBilling\.test\.ts/);
+    assert.match(
+      retrieval.text,
+      /Related test relationships \(selection evidence only; not test execution or correctness proof\):\n- packages\/api\/src\/apiBilling\.test\.ts imports packages\/api\/src\/apiBilling\.ts/
+    );
     assert.doesNotMatch(retrieval.text, /packages\/web\/src\/cart\.ts/);
     assert.match(exactEvidence.text, /Source: packages\/api\/src\/apiBilling\.ts/);
     assert.match(exactEvidence.text, /Source: packages\/api\/src\/apiBilling\.test\.ts/);

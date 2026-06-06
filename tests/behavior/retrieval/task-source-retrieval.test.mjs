@@ -118,6 +118,13 @@ test("task source retrieval includes related tests that import selected source f
 
   assert.deepEqual(result.selectedSourceRefs, ["src/billing.ts", "tests/billing.test.ts"]);
   assert.deepEqual(result.relatedTestSourceRefs, ["tests/billing.test.ts"]);
+  assert.deepEqual(result.relatedTestRelationships, [
+    {
+      testSourceRef: "tests/billing.test.ts",
+      targetSourceRef: "src/billing.ts",
+      relationship: "imports"
+    }
+  ]);
   assert.deepEqual(result.graphSourceRefs, []);
   assert.deepEqual(result.symbolSourceRefs, ["src/billing.ts"]);
   assert.deepEqual(result.lexicalSourceRefs, []);
