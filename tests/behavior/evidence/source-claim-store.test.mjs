@@ -57,8 +57,13 @@ function withGitRepo(fn) {
   try {
     execGit(dir, ["init", "-b", "main"]);
     mkdirSync(path.join(dir, "src"), { recursive: true });
+    mkdirSync(path.join(dir, "packages", "api", "src"), { recursive: true });
     writeFileSync(path.join(dir, "src", "app.ts"), "export function runApp() { return 'ok'; }\n");
-    execGit(dir, ["add", "src/app.ts"]);
+    writeFileSync(
+      path.join(dir, "packages", "api", "src", "app.ts"),
+      "export function runApiApp() { return 'api'; }\n"
+    );
+    execGit(dir, ["add", "src/app.ts", "packages/api/src/app.ts"]);
     execGit(dir, [
       "-c",
       "user.name=Grape Test",
@@ -113,6 +118,8 @@ test("validated source proofs promote narrow source excerpt claims", () => {
       assert.equal(claims[0].claimType, "repository_source_excerpt_exists");
       assert.equal(claims[0].verificationStatus, "verified");
       assert.match(claims[0].claimText, /contains the selected exact excerpt/);
+      const scope = JSON.parse(claims[0].scopeJson);
+      assert.equal(scope.packageRoot, undefined);
       const proof = ctx.proofRepositories.proofs.listByClaim(claims[0].claimId)[0];
       assert.ok(proof);
       assert.equal(proof.claimId, claims[0].claimId);
@@ -129,6 +136,38 @@ test("validated source proofs promote narrow source excerpt claims", () => {
       });
       assert.equal(second.candidatesInserted, 0);
       assert.equal(second.claimsInserted, 0);
+    });
+  });
+});
+
+test("validated package-local source claims record package root scope", () => {
+  withGitRepo((repoPath) => {
+    withMigratedDatabase((ctx) => {
+      const fixture = prepareClaimFixture(repoPath, ctx, ["packages/api/src/app.ts"]);
+      persistSourceProofs({
+        repositories: ctx.proofRepositories,
+        sources: fixture.sources,
+        sourceExcerpts: fixture.sourceExcerpts,
+        now
+      });
+
+      const result = persistSourceExcerptClaims({
+        repositories: ctx.claimRepositories,
+        proofRepositories: ctx.proofRepositories,
+        sources: fixture.sources,
+        sourceExcerpts: fixture.sourceExcerpts,
+        branch: fixture.snapshotResult.snapshot.branch,
+        commit: fixture.snapshotResult.snapshot.commit,
+        worktreeHash: fixture.snapshotResult.snapshot.worktreeHash,
+        now
+      });
+
+      assert.equal(result.rejectedCandidates.length, 0);
+      assert.equal(result.claimsInserted, 1);
+      const [claim] = ctx.claimRepositories.claims.list();
+      const scope = JSON.parse(claim.scopeJson);
+      assert.equal(scope.sourceRef, "packages/api/src/app.ts");
+      assert.equal(scope.packageRoot, "packages/api");
     });
   });
 });
@@ -158,7 +197,7 @@ test("source excerpt claim candidates are rejected without validated proofs", ()
   });
 });
 
-function prepareClaimFixture(repoPath, ctx) {
+function prepareClaimFixture(repoPath, ctx, preferredSourceRefs = ["src/app.ts"]) {
   const snapshotResult = persistGitRepoSnapshot({
     database: ctx.database,
     repositories: ctx.repositories,
@@ -173,7 +212,7 @@ function prepareClaimFixture(repoPath, ctx) {
   const sourceExcerpts = readLocalSourceExcerpts({
     rootPath: repoPath,
     sources,
-    preferredSourceRefs: ["src/app.ts"]
+    preferredSourceRefs
   });
 
   assert.equal(sourceExcerpts.length, 1);

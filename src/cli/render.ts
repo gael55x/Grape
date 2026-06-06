@@ -59,6 +59,7 @@ export function helpText(): string {
     "Options:",
     "  --repo <path>               Run against a repository path",
     "  --task-type <type>          Set task type for compile (default: analysis)",
+    "  --environment-scope <env>   Scope compile to local, test, ci, staging, production, or unknown",
     "  --risk <a,b>                Add compile risk overlays",
     "  --session <id>              Reuse a context session for diffing",
     "  --reset-session             Force full resend for a reused compile session",

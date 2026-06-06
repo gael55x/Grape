@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import type { SourceScope } from "../../shared/index.js";
+import { packageRootForSourceRef } from "../scope/package-root.js";
 import { evaluateDurableClaimPolicy } from "./claim-policy.js";
 
 export const projectRuleClaimType = "project_rule";
@@ -56,6 +57,7 @@ export interface ProjectRuleClaimScope {
   readonly branch: string;
   readonly commit: string;
   readonly environment?: string;
+  readonly packageRoot?: string;
   readonly worktreeHash: string;
   readonly sourceRef: string;
   readonly sourceId: string;
@@ -117,10 +119,12 @@ export function createProjectRuleClaimDraft(input: {
   readonly rule: ProjectRuleLine;
 }): ProjectRuleClaimDraft {
   const proofId = projectRuleProofId(input.rule);
+  const packageRoot = packageRootForSourceRef(input.rule.sourceRef);
   const scope: ProjectRuleClaimScope = {
     branch: input.branch,
     commit: input.commit,
     ...(input.environment ? { environment: input.environment } : {}),
+    ...(packageRoot ? { packageRoot } : {}),
     worktreeHash: input.worktreeHash,
     sourceRef: input.rule.sourceRef,
     sourceId: input.rule.sourceId,

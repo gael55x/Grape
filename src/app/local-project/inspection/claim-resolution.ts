@@ -25,6 +25,7 @@ export interface ResolveLocalCurrentValidClaimsInput {
   readonly snapshot: ReturnType<typeof createGitRepoSnapshot>;
   readonly sessionId?: string;
   readonly environment?: string;
+  readonly packageRoot?: string;
   readonly taskSourceRefs?: readonly string[];
 }
 
@@ -54,7 +55,8 @@ export function resolveLocalCurrentValidClaims(
         snapshot: input.snapshot,
         activeContradictionClaimIds: edgeBlocks.blockedClaimIds,
         sessionId: input.sessionId,
-        environment: input.environment
+        environment: input.environment,
+        packageRoot: input.packageRoot
       })
     )
   );
@@ -126,6 +128,7 @@ function toCurrentValidCandidate(input: {
   readonly activeContradictionClaimIds: ReadonlySet<string>;
   readonly sessionId?: string;
   readonly environment?: string;
+  readonly packageRoot?: string;
 }): CurrentValidCandidate {
   const scope = parseScope(input.claim.scopeJson);
   const sources = input.proofs.map(input.sourceForProof);
@@ -134,6 +137,7 @@ function toCurrentValidCandidate(input: {
     commit: input.snapshot.commit,
     worktreeHash: input.snapshot.worktreeHash,
     environment: input.environment,
+    packageRoot: input.packageRoot,
     sessionId: input.sessionId
   });
   return {

@@ -107,7 +107,7 @@ Current implementation is useful but not broad language-aware indexing:
 - Python, Java, Kotlin, Go, Rust, YAML, and other languages mostly fall back to file path/text indexing today.
 - Bootstrap detection can report Python, Go, Rust, package managers, and common frameworks from root manifests, but those are setup hints only.
 - Current provider diagnostics are not a first-class storage family.
-- Current selection caps are mostly global. If a task names an exact source path inside `packages/<name>/`, `apps/<name>/`, `services/<name>/`, or `libs/<name>/`, broad symbol and lexical expansion is scoped to that workspace path before the global cap is applied.
+- Current selection caps are mostly global. If a task names an exact source path inside `packages/<name>/`, `apps/<name>/`, `services/<name>/`, or `libs/<name>/`, broad symbol and lexical expansion is scoped to that workspace path before the global cap is applied. Current-valid claim filtering uses that same common-prefix root only when explicit source refs identify exactly one package root; claim scopes record the common-prefix package root from their own exact source refs.
 - `tests/fixtures/polyglot-fallback-repo` proves Python, Java, and Kotlin files can be selected as exact lexical/path evidence with partial-context warnings. It does not prove language-aware import, call, or test edges for those languages.
 - `tests/fixtures/monorepo-lite-repo` proves an explicit `packages/api/...` task can select package-local TS source plus related tests without pulling an unrelated `packages/web/...` source. It does not prove package-aware invalidation, nested manifest dependency scoping, or per-package budgets.
 - Current checked-in benchmark fixtures remain TypeScript-focused; the polyglot and monorepo fixtures are behavior proof fixtures, not token benchmark baselines.
@@ -120,7 +120,7 @@ This is acceptable for a controlled beta only if the promise stays: reliable con
 - JS-style import bias: local import resolution checks JS/TS extensions and `index.*` forms only.
 - Regex fallback bias: generic symbol detection recognizes JS/TS-like declarations, not Python, Java, Kotlin, Go, Rust, C#, Ruby, or PHP declarations.
 - Language detection gaps: unknown extensions collapse to `unknown`, and YAML/Python/Java/Kotlin/Go/Rust are not first-class in `languageForPath` yet.
-- Monorepo flattening: repository snapshot and retrieval mostly treat the repo as one source pool. Explicit package-path tasks are scoped, but package discovery, package-aware invalidation, and per-package budgets are not implemented yet.
+- Monorepo flattening: repository snapshot and retrieval mostly treat the repo as one source pool. Explicit package-path tasks and package-scoped claim activation use common-prefix scope metadata, but manifest-backed package discovery, package-aware invalidation, and per-package budgets are not implemented yet.
 - Root-manifest bias: bootstrap detection mostly checks root-level manifests/configs and can miss nested workspaces.
 - Test adjacency bias: related-test selection depends on import/call edges that exist today primarily for TS/JS.
 - Capability opacity: agents see blind spots, but not a complete provider capability report per language/package.

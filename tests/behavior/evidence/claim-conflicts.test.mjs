@@ -357,6 +357,18 @@ test("current-valid resolution rejects claims scoped to another current environm
   assert.equal(resolved.rejectedCount, 1);
 });
 
+test("current-valid resolution rejects claims scoped to another current package root", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    packageRoot: "packages/api",
+    scopeOverridesA: { packageRoot: "packages/web" },
+    scopeOverridesB: { packageRoot: "packages/api" },
+    edges: []
+  }));
+
+  assert.deepEqual(resolved.activeClaims.map((claim) => claim.claimId), ["claim-b"]);
+  assert.equal(resolved.rejectedCount, 1);
+});
+
 function claim(claimId, claimText, scopeHash) {
   return {
     claimId,
@@ -382,7 +394,8 @@ function currentValidInput({
   scopeOverridesA = {},
   scopeOverridesB = {},
   sessionId,
-  environment
+  environment,
+  packageRoot
 }) {
   const sourceA = source("source-a", sourceRefA, sourceHashA);
   const sourceB = source("source-b", sourceRefB, sourceHashB);
@@ -424,7 +437,8 @@ function currentValidInput({
       ]
     },
     sessionId,
-    environment
+    environment,
+    packageRoot
   };
 }
 

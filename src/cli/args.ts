@@ -13,6 +13,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     "--repo",
     "--task",
     "--task-type",
+    "--environment-scope",
     "--risk",
     "--session",
     "--token-budget",

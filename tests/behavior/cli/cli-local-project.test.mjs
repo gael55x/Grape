@@ -107,6 +107,25 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.match(result.stdout, /grape doctor --privacy/);
   assert.match(result.stdout, /grape mcp --print-config/);
   assert.match(result.stdout, /grape mcp --stdio/);
+  assert.match(result.stdout, /--environment-scope <env>/);
+});
+
+test("cli compile applies caller environment scope to compiled artifacts", () => {
+  withGitRepo((repoPath) => {
+    const output = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Review staging context",
+      "--session",
+      "cli-environment-session",
+      "--environment-scope",
+      "staging"
+    ]);
+
+    assert.equal(output.contextArtifact.environmentScope, "staging");
+    const artifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, output.artifactJsonPath), "utf8"));
+    assert.equal(artifactJson.contextArtifact.environmentScope, "staging");
+  });
 });
 
 test("cli run and test record Grape-observed trusted evidence without raw output bodies", () => {

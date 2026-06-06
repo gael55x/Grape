@@ -172,6 +172,47 @@ test("task source retrieval scopes broad matches when the task names a package s
   assert.equal(result.selectedSourceRefs.includes("packages/web/src/cart.test.ts"), false);
 });
 
+test("task source retrieval scopes broad matches when a package test seed is exact input", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix package total calculation",
+    sources: [
+      source("source-api", "packages/api/src/apiBilling.ts"),
+      source("source-api-test", "packages/api/src/apiBilling.test.ts"),
+      source("source-web", "packages/web/src/cart.ts"),
+      source("source-web-test", "packages/web/src/cart.test.ts")
+    ],
+    symbols: [
+      symbol("source-api", "packages/api/src/apiBilling.ts", "apiBillingTotal"),
+      symbol("source-web", "packages/web/src/cart.ts", "webCartTotal")
+    ],
+    relationships: [
+      {
+        sourceRef: "packages/api/src/apiBilling.test.ts",
+        targetSourceRef: "packages/api/src/apiBilling.ts",
+        relationship: "imports"
+      },
+      {
+        sourceRef: "packages/web/src/cart.test.ts",
+        targetSourceRef: "packages/web/src/cart.ts",
+        relationship: "imports"
+      }
+    ],
+    lexicalMatches: [
+      { sourceId: "source-api", sourceRef: "packages/api/src/apiBilling.ts", matchedTerm: "total" },
+      { sourceId: "source-web", sourceRef: "packages/web/src/cart.ts", matchedTerm: "total" }
+    ],
+    seedTests: ["packages/api/src/apiBilling.test.ts"]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "packages/api/src/apiBilling.test.ts",
+    "packages/api/src/apiBilling.ts"
+  ]);
+  assert.deepEqual(result.testSourceRefs, ["packages/api/src/apiBilling.test.ts"]);
+  assert.equal(result.selectedSourceRefs.includes("packages/web/src/cart.ts"), false);
+  assert.equal(result.selectedSourceRefs.includes("packages/web/src/cart.test.ts"), false);
+});
+
 test("task source retrieval warns when selected implementation sources have no related tests", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix calculateDiscount refund flow",

@@ -27,7 +27,7 @@ Before editing code, agents must identify:
 
 No production behavior is complete without tests for the related state transition or invariant.
 
-The in-memory smoke harness guards file shape and obvious contract drift. Project Skeleton And Tooling adds stronger local gates: `npm run architecture:check` for import-boundary drift, `npm run storage:check` for migration-contract drift, `npm run typecheck` for TypeScript compilation, `npm run package:check` for global package dry-run contents, and `npm run test:behavior` for Node's built-in behavioral tests over compiled source. Behavior tests live in domain folders under `tests/behavior/` and are discovered recursively by `scripts/run-behavior-tests.mjs`. The runner keeps `--test-concurrency=1` because CLI/MCP integration tests create many temporary Git repositories and SQLite databases; deterministic storage behavior is more important than parallel test throughput. Contributors should install with `npm ci` so checks use the pinned toolchain from `package-lock.json`.
+The in-memory smoke harness guards file shape and obvious contract drift. Project Skeleton And Tooling adds stronger local gates: `npm run architecture:check` for import-boundary drift, `npm run storage:check` for migration-contract drift, `npm run typecheck` for TypeScript compilation, `npm run package:check` for global package dry-run contents, and `npm run test:behavior` for Node's built-in behavioral tests over compiled source. Behavior and benchmark entrypoint scripts prune stale emitted `.tmp/build/src/**/*.js` files before compiling so files from earlier module layouts cannot affect CLI/MCP behavior tests without deleting the active compiled tree. Behavior tests live in domain folders under `tests/behavior/` and are discovered recursively by `scripts/run-behavior-tests.mjs`. The runner keeps `--test-concurrency=1` because CLI/MCP integration tests create many temporary Git repositories and SQLite databases; deterministic storage behavior is more important than parallel test throughput. Contributors should install with `npm ci` so checks use the pinned toolchain from `package-lock.json`.
 
 ## Behavior Test Layout
 
@@ -86,9 +86,12 @@ Trust and scope:
 - `current_valid_retrieval_respects_environment_scope`
 - `current_valid_resolution_rejects_claims_scoped_to_another_current_environment`
 - `feature_flag_scope_prevents_false_global_claim`
+- `package_root_helper_derives_only_one_explicit_workspace_root`
+- `current_valid_resolution_rejects_claims_scoped_to_another_current_package_root`
 - `current_session_does_not_reject_branch_scoped_claims_without_session_scope`
 - `current_valid_resolution_rejects_claims_scoped_to_another_current_session`
 - `monorepo_package_boundary_prevents_same_source_supersession`
+- `validated_package_local_source_claims_record_package_root_scope`
 - `unknown_scope_overlap_warning`
 - `repo_file_claim_does_not_overclaim_runtime_behavior`
 - `claim_type_policy_rejects_unknown_claim_type`
@@ -144,6 +147,7 @@ Compression:
 MCP and CLI:
 
 - `mcp_get_context_returns_structured_items`
+- `cli_compile_applies_caller_environment_scope`
 - `mcp_get_proofs_does_not_show_raw_secret`
 - `mcp_write_tool_cannot_promote_claim`
 - `agent_reported_test_result_is_temporary`
@@ -167,6 +171,7 @@ Storage and security:
 - `unsupported_language_gets_safe_lexical_fallback_with_warning`
 - `polyglot_repo_reports_provider_capability_gaps`
 - `monorepo_retrieval_preserves_package_boundaries`
+- `task_source_retrieval_scopes_broad_matches_when_package_test_seed_is_exact_input`
 - `package_manifest_change_invalidates_package_scoped_context`
 - `raw_env_value_not_in_artifact`
 - `redacted_display_hash_not_used_as_proof`

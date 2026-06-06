@@ -26,6 +26,7 @@ export async function runCompileLike(
       "--repo",
       "--task",
       "--task-type",
+      "--environment-scope",
       "--risk",
       "--session",
       "--reset-session",
@@ -51,6 +52,7 @@ export async function runCompileLike(
       rootPath,
       task,
       taskType: parsed.values.get("--task-type"),
+      environmentScope: parseEnvironmentScope(parsed.values.get("--environment-scope")),
       riskOverlays: parsed.values.get("--risk"),
       sessionId: parsed.values.get("--session"),
       tokenBudget: parseTokenBudget(parsed.values.get("--token-budget")),
@@ -100,6 +102,7 @@ function compileErrorExitCode(error: unknown): number {
   if (message.startsWith("unsupported task type") || message.startsWith("unsupported risk overlay")) {
     return exitCodes.usage;
   }
+  if (message.startsWith("environment scope must")) return exitCodes.usage;
   if (message.startsWith("token budget must")) return exitCodes.usage;
   if (message.includes("may only contain letters")) return exitCodes.usage;
   if (message.includes("secret scan blocked")) return exitCodes.unsafe;
@@ -118,4 +121,15 @@ function parseTokenBudget(value: string | undefined): number | undefined {
     throw new Error("token budget must be a positive integer");
   }
   return parsed;
+}
+
+function parseEnvironmentScope(
+  value: string | undefined
+): "local" | "test" | "ci" | "staging" | "production" | "unknown" | undefined {
+  if (value === undefined) return undefined;
+  const allowed = ["local", "test", "ci", "staging", "production", "unknown"] as const;
+  if (!allowed.includes(value as (typeof allowed)[number])) {
+    throw new Error("environment scope must be local, test, ci, staging, production, or unknown");
+  }
+  return value as (typeof allowed)[number];
 }

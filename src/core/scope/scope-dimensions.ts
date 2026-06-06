@@ -83,8 +83,17 @@ export function compareOptionalPackageRootToCurrent(
   scope: ScopeRecord,
   currentPackageRoot: string | undefined
 ): void {
-  const result = compareOptionalStringValues(packageRoot(scope), currentPackageRoot ?? "");
-  recordOptionalDimension(comparison, "packageRoot", result);
+  const scopedPackageRoot = packageRoot(scope);
+  if (!scopedPackageRoot) return;
+  if (!currentPackageRoot) {
+    comparison.unknownDimensions.push("packageRoot");
+    return;
+  }
+  recordDimension(
+    comparison,
+    "packageRoot",
+    scopedPackageRoot === currentPackageRoot ? "match" : "mismatch"
+  );
 }
 
 export function compareRequiredStringDimensions(

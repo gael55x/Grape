@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   claimScopesCompatibleForSupersession,
   claimScopesOverlap,
+  currentPackageRootFromSourceRefs,
   resolveCurrentClaimScope
 } from "../../../.tmp/build/src/core/scope/index.js";
 
@@ -92,6 +93,49 @@ test("monorepo_package_boundary_prevents_same_source_supersession", () => {
 
   assert.equal(overlap.status, "disjoint");
   assert.deepEqual(overlap.mismatchedDimensions, ["packageRoot"]);
+});
+
+test("package root helper derives only one explicit workspace root", () => {
+  assert.equal(
+    currentPackageRootFromSourceRefs([
+      "packages/api/src/index.ts",
+      "packages/api/src/index.test.ts"
+    ]),
+    "packages/api"
+  );
+  assert.equal(
+    currentPackageRootFromSourceRefs([
+      "packages/api/src/index.ts",
+      "packages/web/src/index.ts"
+    ]),
+    undefined
+  );
+  assert.equal(currentPackageRootFromSourceRefs(["src/index.ts"]), undefined);
+});
+
+test("current package root rejects package-scoped claims from another package", () => {
+  const apiClaim = resolveCurrentClaimScope({
+    branch: "main",
+    commit: "commit-a",
+    sourceScope: "committed",
+    packageRoot: "packages/api"
+  }, {
+    ...current,
+    packageRoot: "packages/api"
+  });
+  const webClaim = resolveCurrentClaimScope({
+    branch: "main",
+    commit: "commit-a",
+    sourceScope: "committed",
+    packageRoot: "packages/web"
+  }, {
+    ...current,
+    packageRoot: "packages/api"
+  });
+
+  assert.equal(apiClaim.scopeResult, "match");
+  assert.equal(webClaim.scopeResult, "mismatch");
+  assert.deepEqual(webClaim.mismatchedDimensions, ["packageRoot"]);
 });
 
 test("unknown_scope_overlap_warning", () => {

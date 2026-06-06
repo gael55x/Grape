@@ -10,6 +10,16 @@ const fixtures = [
   "session-reset-typescript-app"
 ];
 
+const clean = spawnSync(process.execPath, ["scripts/clean-test-build.mjs"], {
+  cwd: root,
+  encoding: "utf8",
+  stdio: ["ignore", "pipe", "pipe"]
+});
+if (clean.status !== 0) {
+  console.error(clean.stderr.trim());
+  process.exit(clean.status ?? 1);
+}
+
 const build = spawnSync("npm", ["run", "build:test"], {
   cwd: root,
   encoding: "utf8",

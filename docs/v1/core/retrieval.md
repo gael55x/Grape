@@ -55,7 +55,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 
 - Explicit seed files are selected first when they exist in the current snapshot.
 - Source file paths mentioned directly in the task are treated as explicit source anchors when they match current snapshot files.
-- When an explicit task or seed path is inside a common workspace directory such as `packages/<name>/`, broad symbol and lexical expansion is scoped to that package before global caps are applied.
+- When an explicit task, seed file, or path-like test seed is inside a common workspace directory such as `packages/<name>/`, broad symbol and lexical expansion is scoped to that package before global caps are applied.
 - Path-like test seeds may select matching test files as exact source context.
 - Symbol matches may select source files and line anchors for exact excerpt windows.
 - Graph expansion may select directly related source files through supported import and call edges.
@@ -63,6 +63,8 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 - Lexical matches may add source refs from safe indexed text.
 - Lexical repository search should use storage-bounded prefiltering where possible, but the deterministic normalized matcher remains the final authority so punctuation/case normalization behavior does not change.
 - In monorepos, explicit seed refs should be interpreted inside their package/workspace when known, and source budgets should avoid allowing unrelated packages or languages to exhaust the selected context.
+- Current-valid filtering may use a package root only when explicit file/task/test refs resolve to exactly one common workspace root under `packages/`, `apps/`, `services/`, or `libs/`. Mixed package roots, root-level `src/`, lexical-only matches, and graph-expanded refs do not create a package-root current scope.
+- Package-scoped source-excerpt and project-rule claims require a matching current package root. Broad repo/root claims without package scope remain eligible, but missing package discovery still means Grape must not claim complete package-aware invalidation.
 - Package-local manifests and lockfiles should be dependency refs for selected package context when the package/workspace root is known.
 - Current-valid `grape_observed_run_result` claims from the current compile session may be rendered with task-scoped claims. Compile sessions are task-bound, and current-valid checks still require matching branch, commit, worktree hash, source hash, result hash, and any caller-supplied environment scope.
 - Current-valid parsed `project_rule` claims may render with task-scoped claims, while exact rule text remains pinned in the active-project-rules section.
@@ -86,7 +88,7 @@ Current implementation can fail or become inefficient in these cases:
 - Python, Java, Kotlin, Go, Rust, YAML, C#, Ruby, PHP, and shell relationships are not extracted as language-aware graph edges today
 - JS/TS import resolution can miss aliases, package exports, generated code, framework routing, dynamic imports, and non-relative imports
 - global source caps can select too much from one package in a monorepo
-- checked-in polyglot and monorepo fixtures prove only safe fallback and explicit package-path scoping, not package-aware invalidation or full semantic graph coverage
+- checked-in polyglot and monorepo fixtures prove only safe fallback, explicit package-path scoping, and package-scoped current-valid filtering, not package-aware invalidation or full semantic graph coverage
 
 Retrieval should surface these cases as blind spots or `partial_with_risk` rather than silently acting as a complete graph.
 

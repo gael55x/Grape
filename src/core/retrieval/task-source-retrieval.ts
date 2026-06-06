@@ -1,4 +1,5 @@
 import type { SourceType } from "../../shared/index.js";
+import { packagePrefixForSourceRef } from "../scope/package-root.js";
 
 export interface TaskRetrievalSource {
   readonly sourceId: string;
@@ -161,6 +162,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
       continue;
     }
     addReason(selectedReasons, normalized, "test_seed");
+    explicitPathRefs.add(normalized);
   }
 
   const scopedCandidate = scopedCandidatePredicate(explicitPathRefs);
@@ -339,7 +341,7 @@ function normalizeSeedFile(value: string): string | undefined {
 
 function scopedCandidatePredicate(explicitPathRefs: ReadonlySet<string>): (sourceRef: string) => boolean {
   const scopePrefixes = [...explicitPathRefs]
-    .map(packageScopePrefix)
+    .map(packagePrefixForSourceRef)
     .filter((prefix): prefix is string => Boolean(prefix));
   if (scopePrefixes.length === 0) return () => true;
 
@@ -347,24 +349,6 @@ function scopedCandidatePredicate(explicitPathRefs: ReadonlySet<string>): (sourc
     explicitPathRefs.has(sourceRef) ||
     scopePrefixes.some((prefix) => sourceRef.startsWith(prefix))
   );
-}
-
-function packageScopePrefix(sourceRef: string): string | undefined {
-  const normalized = sourceRef.replace(/\\/g, "/");
-  const parts = normalized.split("/");
-  if (parts.length < 3) return undefined;
-
-  const [workspaceDir, packageName] = parts;
-  if (
-    workspaceDir === "packages" ||
-    workspaceDir === "apps" ||
-    workspaceDir === "services" ||
-    workspaceDir === "libs"
-  ) {
-    return `${workspaceDir}/${packageName}/`;
-  }
-
-  return undefined;
 }
 
 function isPathLikeTestSeed(value: string): boolean {

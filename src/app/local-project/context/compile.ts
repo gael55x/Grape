@@ -15,6 +15,7 @@ import {
   createProofStorageRepositories,
   createStorageRepositories
 } from "../../../core/storage/index.js";
+import { currentPackageRootFromSourceRefs } from "../../../core/scope/package-root.js";
 import { ensureLocalProjectLayout, readLocalProjectConfig } from "../setup/config.js";
 import {
   assertSafeId,
@@ -122,6 +123,10 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         seedSymbols: input.seedSymbols,
         seedTests: input.seedTests
       });
+      const currentPackageRoot = currentPackageRootFromSourceRefs([
+        ...taskRetrieval.explicitSourceRefs,
+        ...taskRetrieval.testSourceRefs
+      ]);
       const proofs = prepareLocalCompileProofs({
         database,
         proofRepositories,
@@ -160,6 +165,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         snapshot: snapshotResult.snapshot,
         sessionId,
         environment: claimEnvironment,
+        packageRoot: currentPackageRoot,
         taskSourceRefs: proofs.taskRetrieval.selectedSourceRefs.length > 0
           ? proofs.taskRetrieval.selectedSourceRefs
           : undefined
