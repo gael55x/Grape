@@ -10,7 +10,10 @@ import {
   createClaimStorageRepositories,
   storageMigrationReferences
 } from "../../../.tmp/build/src/core/storage/index.js";
-import { detectProjectRuleConflicts } from "../../../.tmp/build/src/core/claims/index.js";
+import {
+  claimIdsBlockedByActiveClaimEdges,
+  detectProjectRuleConflicts
+} from "../../../.tmp/build/src/core/claims/index.js";
 import { resolveLocalCurrentValidClaims } from "../../../.tmp/build/src/app/local-project/inspection/claim-resolution.js";
 
 const now = "2026-05-26T00:00:00.000Z";
@@ -92,6 +95,32 @@ test("project rule conflict detector creates review edges for opposing overlappi
   assert.match(conflicts[0].edgeId, /^edge:[a-f0-9]{24}$/);
 });
 
+test("claim edge policy keeps contradictions active after incompatible supersedes edges", () => {
+  const resolved = claimIdsBlockedByActiveClaimEdges({
+    claims: [
+      {
+        claimId: "claim-a",
+        subject: "src/a.ts",
+        claimType: "repository_source_excerpt_exists",
+        scope: { branch: "main", sourceRef: "src/a.ts" }
+      },
+      {
+        claimId: "claim-b",
+        subject: "src/b.ts",
+        claimType: "repository_source_excerpt_exists",
+        scope: { branch: "main", sourceRef: "src/b.ts" }
+      }
+    ],
+    edges: [
+      edge("edge-conflict", "claim-a", "claim-b", "contradicts", "2026-05-26T00:00:00.000Z"),
+      edge("edge-supersedes", "claim-a", "claim-b", "supersedes", "2026-05-26T00:00:01.000Z")
+    ]
+  });
+
+  assert.deepEqual([...resolved.blockedClaimIds].sort(), ["claim-a", "claim-b"]);
+  assert.equal(resolved.ignoredEdges.length, 1);
+});
+
 test("current-valid resolution rejects unresolved contradicted claims", () => {
   const resolved = resolveLocalCurrentValidClaims(currentValidInput({
     edges: [
@@ -117,6 +146,8 @@ test("current-valid resolution allows contradicted claims after conflict resolut
 
 test("current-valid resolution rejects superseded target claims only", () => {
   const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    sourceRefB: "src/a.ts",
+    sourceHashB: hashA,
     edges: [
       edge("edge-supersedes", "claim-a", "claim-b", "supersedes", "2026-05-26T00:00:00.000Z")
     ]
@@ -124,6 +155,31 @@ test("current-valid resolution rejects superseded target claims only", () => {
 
   assert.deepEqual(resolved.activeClaims.map((claim) => claim.claimId), ["claim-a"]);
   assert.equal(resolved.rejectedCount, 1);
+});
+
+test("current-valid resolution ignores incompatible supersedes edges", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    edges: [
+      edge("edge-supersedes", "claim-a", "claim-b", "supersedes", "2026-05-26T00:00:00.000Z")
+    ]
+  }));
+
+  assert.deepEqual(resolved.activeClaims.map((claim) => claim.claimId).sort(), ["claim-a", "claim-b"]);
+  assert.equal(resolved.rejectedCount, 0);
+  assert.match(resolved.warnings.join("\n"), /Ignored supersedes edge without compatible claim subject/);
+});
+
+test("current-valid resolution keeps contradicted claims blocked after incompatible supersedes edges", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    edges: [
+      edge("edge-conflict", "claim-a", "claim-b", "contradicts", "2026-05-26T00:00:00.000Z"),
+      edge("edge-supersedes", "claim-a", "claim-b", "supersedes", "2026-05-26T00:00:01.000Z")
+    ]
+  }));
+
+  assert.equal(resolved.activeClaims.length, 0);
+  assert.equal(resolved.rejectedCount, 2);
+  assert.match(resolved.warnings.join("\n"), /Ignored supersedes edge without compatible claim subject/);
 });
 
 test("current-valid resolution rejects claim types disabled by durable policy", () => {
@@ -154,12 +210,16 @@ function claim(claimId, claimText, scopeHash) {
 function currentValidInput({
   edges,
   claimTypeA = "repository_source_excerpt_exists",
-  claimTypeB = "repository_source_excerpt_exists"
+  claimTypeB = "repository_source_excerpt_exists",
+  sourceRefA = "src/a.ts",
+  sourceRefB = "src/b.ts",
+  sourceHashA = hashA,
+  sourceHashB = hashB
 }) {
-  const sourceA = source("src/a.ts", hashA);
-  const sourceB = source("src/b.ts", hashB);
-  const proofA = proof("proof-a", "claim-a", "source-a", hashA);
-  const proofB = proof("proof-b", "claim-b", "source-b", hashB);
+  const sourceA = source("source-a", sourceRefA, sourceHashA);
+  const sourceB = source("source-b", sourceRefB, sourceHashB);
+  const proofA = proof("proof-a", "claim-a", "source-a", sourceHashA);
+  const proofB = proof("proof-b", "claim-b", "source-b", sourceHashB);
   const claims = [
     currentClaim("claim-a", "Claim A", sourceA, proofA, claimTypeA),
     currentClaim("claim-b", "Claim B", sourceB, proofB, claimTypeB)
@@ -219,9 +279,9 @@ function currentClaim(claimId, claimText, sourceRecord, proofRecord, claimType) 
   };
 }
 
-function source(sourceRef, sourceHash) {
+function source(sourceId, sourceRef, sourceHash) {
   return {
-    sourceId: sourceRef === "src/a.ts" ? "source-a" : "source-b",
+    sourceId,
     sourceRef,
     sourceType: "repository_file",
     sourceHash,

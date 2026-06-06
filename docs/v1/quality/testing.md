@@ -89,6 +89,8 @@ Trust and scope:
 - `observed_test_result_does_not_promote_correctness`
 - `source_excerpt_claim_proves_existence_only`
 - `project_rule_claim_does_not_resolve_rule_conflict`
+- `incompatible_supersedes_edge_does_not_block_claim`
+- `incompatible_supersedes_edge_does_not_resolve_contradiction`
 - `semantic_candidate_cannot_create_claim`
 - `graph_expansion_cannot_satisfy_claim_policy`
 - `summary_or_compression_artifact_cannot_satisfy_claim_policy`

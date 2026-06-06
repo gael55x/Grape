@@ -1,13 +1,12 @@
 import { createGitRepoSnapshot } from "../../../core/git/index.js";
 import {
+  claimIdsBlockedByActiveClaimEdges,
   durableClaimPolicyDefaultsForClaimType,
   evaluateDurableClaimPolicy
 } from "../../../core/claims/index.js";
 import { resolveInMemoryCurrentValidCandidates } from "../../../core/retrieval/index.js";
 import type { CurrentValidCandidate } from "../../../core/retrieval/index.js";
 import type {
-  ClaimEdgeRecord,
-  ClaimEdgeType,
   ClaimRecord,
   ClaimStorageRepositories,
   EvidenceStorageRepositories,
@@ -38,7 +37,10 @@ export function resolveLocalCurrentValidClaims(
   input: ResolveLocalCurrentValidClaimsInput
 ): ResolveLocalCurrentValidClaimsResult {
   const claims = input.claims.list();
-  const activeContradictionClaimIds = claimIdsBlockedByActiveClaimEdges(input.claimEdges.list());
+  const edgeBlocks = claimIdsBlockedByActiveClaimEdges({
+    claims: claims.map(toClaimEdgePolicyClaim),
+    edges: input.claimEdges.list()
+  });
   const currentFiles = new Map(input.snapshot.files.map((file) => [file.path, file.sha256]));
   const resolved = resolveInMemoryCurrentValidCandidates(
     claims.map((claim) =>
@@ -48,7 +50,7 @@ export function resolveLocalCurrentValidClaims(
         sourceForProof: (proof) => input.sources.get(proof.sourceId),
         currentFiles,
         snapshot: input.snapshot,
-        activeContradictionClaimIds
+        activeContradictionClaimIds: edgeBlocks.blockedClaimIds
       })
     )
   );
@@ -61,7 +63,7 @@ export function resolveLocalCurrentValidClaims(
     activeClaims: selectTaskScopedClaims(allActiveClaims, input.taskSourceRefs, input.sessionId),
     visibleClaims: claims.map((claim) => toClaimSummary(claim, input.proofs.listByClaim(claim.claimId))),
     rejectedCount: resolved.rejected.length,
-    warnings: resolved.warnings
+    warnings: [...resolved.warnings, ...ignoredSupersessionWarnings(edgeBlocks.ignoredEdges)]
   };
 }
 
@@ -189,6 +191,29 @@ function toClaimSummary(claim: ClaimRecord, proofs: readonly ProofRecord[]): Loc
   };
 }
 
+function toClaimEdgePolicyClaim(claim: ClaimRecord): {
+  readonly claimId: string;
+  readonly subject: string;
+  readonly claimType: string;
+  readonly scope: Readonly<Record<string, unknown>>;
+} {
+  return {
+    claimId: claim.claimId,
+    subject: claim.subject,
+    claimType: claim.claimType,
+    scope: parseScope(claim.scopeJson)
+  };
+}
+
+function ignoredSupersessionWarnings(
+  edges: readonly { readonly sourceClaimId: string; readonly targetClaimId: string }[]
+): readonly string[] {
+  return edges.map(
+    (edge) =>
+      `Ignored supersedes edge without compatible claim subject, type, and scope: ${edge.sourceClaimId} -> ${edge.targetClaimId}`
+  );
+}
+
 function scopeMatchesCurrentSnapshot(
   scope: Record<string, unknown>,
   snapshot: ReturnType<typeof createGitRepoSnapshot>
@@ -262,43 +287,4 @@ function isObservedRunProof(proof: ProofRecord, source: SourceRecord): boolean {
     proof.proofType === "grape_observed_run_result" &&
     (source.sourceType === "command_run" || source.sourceType === "test_run")
   );
-}
-
-const conflictClosingEdgeTypes = new Set<ClaimEdgeType>(["coexists_with", "variant_of", "supersedes"]);
-const supersedesClosingEdgeTypes = new Set<ClaimEdgeType>(["coexists_with", "variant_of"]);
-
-export function claimIdsBlockedByActiveClaimEdges(edges: readonly ClaimEdgeRecord[]): ReadonlySet<string> {
-  const blocked = new Set<string>();
-
-  for (const edge of edges) {
-    if (edge.edgeType === "contradicts" && !hasLaterResolution(edge, edges, conflictClosingEdgeTypes)) {
-      blocked.add(edge.sourceClaimId);
-      blocked.add(edge.targetClaimId);
-    }
-    if (edge.edgeType === "violates" && !hasLaterResolution(edge, edges, conflictClosingEdgeTypes)) {
-      blocked.add(edge.sourceClaimId);
-    }
-    if (edge.edgeType === "supersedes" && !hasLaterResolution(edge, edges, supersedesClosingEdgeTypes)) {
-      blocked.add(edge.targetClaimId);
-    }
-  }
-
-  return blocked;
-}
-
-function hasLaterResolution(
-  edge: ClaimEdgeRecord,
-  edges: readonly ClaimEdgeRecord[],
-  resolutionTypes: ReadonlySet<ClaimEdgeType>
-): boolean {
-  return edges.some(
-    (candidate) =>
-      resolutionTypes.has(candidate.edgeType) &&
-      claimPairKey(candidate) === claimPairKey(edge) &&
-      candidate.createdAt > edge.createdAt
-  );
-}
-
-function claimPairKey(edge: Pick<ClaimEdgeRecord, "sourceClaimId" | "targetClaimId">): string {
-  return [edge.sourceClaimId, edge.targetClaimId].sort().join("\0");
 }
