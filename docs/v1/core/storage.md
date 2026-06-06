@@ -41,6 +41,7 @@ The V1 schema must define at least these tables or explicitly defer a table with
 | `claim_candidates` | claims/trust | non-durable candidate claims |
 | `proofs` | proofs/trust | proof refs, source hashes, excerpt hashes, support status |
 | `claim_edges` | claims/trust | supersedes, contradicts, depends_on relationships |
+| `claim_edge_authority` | claims/trust | edge provenance, reason, confidence, and authority metadata |
 | `project_rules` | evidence/trust | project rules and pinned safety invariants |
 | `symbol_nodes` | indexing | symbol/file index metadata |
 | `symbol_edges` | indexing | symbol relationship metadata |
@@ -74,6 +75,7 @@ Do not implement the full table set as the next storage step. The first persiste
 - `claim_candidates`
 - `proofs`
 - `claim_edges`
+- `claim_edge_authority`
 - `project_rules`
 - `context_sessions`
 - `session_events`
@@ -122,6 +124,16 @@ Migration `0005_context_performance_indexes.sql` adds performance indexes only:
 
 These indexes do not change persisted data shape or safety policy. App services still decide staleness, omission, restore, and invalidation behavior.
 
+Migration `0006_claim_edge_authority.sql` adds the sidecar `claim_edge_authority` table:
+
+- `claim_edge_authority` stores one optional authority row per `claim_edges` row.
+- `created_by` records the authority class: `deterministic_rule`, `model_suggestion`, `user_confirmation`, `test_verification`, `grape_observed`, `trusted_import`, `review_metadata`, or `legacy`.
+- `confidence` is a bounded numeric score from `0` through `1`.
+- `reason` is a short public-safe explanation and must not contain source excerpts, local paths, command output, prompts, responses, or secrets.
+- `metadata_json` is reserved for hash-only or ID-only provenance details.
+
+Existing `claim_edges` rows may have no sidecar row. Runtime policy must treat missing authority as legacy metadata rather than inferring stronger provenance from the edge type.
+
 Local snapshot persistence may reuse an already-captured `RepoSnapshot` from the caller instead of running Git/file hashing twice. When the same immutable snapshot row already exists, evidence and index materialization may be skipped only after storage proves the expected source/rejection rows and expected index families are present. Missing evidence or index rows force a rebuild instead of assuming the snapshot is complete.
 
 MCP restricted writes currently reuse existing V1 tables instead of adding premature write-specific migrations. Command/test observation writes use `sources` with `source_type = 'command_run'` or `source_type = 'test_run'`, `trust_class = 'temporary'`, and `redaction_status = 'redacted'`. The local CLI observed runner also reuses `sources` for Grape-observed command/test rows, but writes them with `trust_class = 'trusted'`, `redaction_status = 'redacted'`, `observedBy = 'grape'`, `observedByGrape = true`, and a Grape-created `observedRunId` in metadata. In the same application-owned transaction it can also write a direct `proofs` row with `proof_type = 'grape_observed_run_result'`, a `claim_candidates` row, a verified `claims` row with `claim_type = 'grape_observed_run_result'`, and a proof-to-claim link. For this proof type, `excerpt_hash` stores the deterministic observed-run result hash because the existing proof table has not yet split excerpt hashes from other proof support hashes. Candidate writes create a temporary `assistant_response` source when needed and link it to `claim_candidates` with `rejection_reason = 'mcp_candidate_requires_proof'`. User decisions use `sources` with `source_type = 'user_message'`, `trust_class = 'temporary'`, and `redaction_status = 'redacted'`. Raw command, stdout, stderr, prompt, response, and candidate evidence bodies are not stored in source metadata; only hashes and scoped metadata are persisted.
@@ -142,7 +154,7 @@ MCP restricted writes currently reuse existing V1 tables instead of adding prema
 - Evidence source storage is split into `src/core/storage/evidence/repositories.ts` so source/source-rejection persistence does not expand the session-ledger repository file.
 - Evidence repositories persist already-classified records from `src/core/evidence/`; they do not decide trust, privacy policy, source relevance, or proof validity.
 - Claim storage is split into `src/core/storage/claims/repositories.ts` so claim candidates and durable claims do not expand session-ledger or proof repositories.
-- Claim repositories persist already-gated candidate/claim records and claim edge records only; extraction, belief gates, scope policy, contradiction detection, and current-valid filtering stay in claims/trust/retrieval/app modules.
+- Claim repositories persist already-gated candidate/claim records, claim edge records, and claim edge authority metadata only; extraction, belief gates, scope policy, contradiction detection, authority policy, and current-valid filtering stay in claims/trust/retrieval/app modules.
 - Proof storage is split into `src/core/storage/proofs/repositories.ts` so validated proof rows are persisted without expanding session-ledger or evidence repositories.
 - Proof repositories persist already-validated proof records only and can link a proof row to an accepted claim. Validation stays in `src/core/proofs/`; claim gating stays out of storage.
 - Initial source storage keeps branch, commit, repo ID, project ID, worktree hash, and worktree state ID inside `metadata_json` until a later migration promotes first-class `Source` shape fields that the compiler and MCP surface will query directly.
@@ -237,3 +249,5 @@ Local bootstrap-capable flows (`init`, `sync`, and `compile`) may repair an unus
 - `compression_artifact_requires_input_hashes`
 - `compression_dependency_is_in_artifact_manifest`
 - `session_ledger_scoped_query_helpers_are_session_bound`
+- `claim_edge_authority_migration_applies_from_previous_schema`
+- `claim_edge_repository_persists_authority_metadata`

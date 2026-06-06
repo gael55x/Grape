@@ -1,6 +1,16 @@
 import type { DatabaseSync } from "node:sqlite";
 
 import { applySqliteConnectionPolicy } from "../sqlite-policy.js";
+import {
+  claimEdgeAuthorityJoinSql,
+  claimEdgeAuthoritySelectSql,
+  insertClaimEdgeAuthority,
+  mapClaimEdgeAuthority,
+  type ClaimEdgeAuthorityRecord,
+  type ClaimEdgeCreatedBy
+} from "./edge-authority.js";
+
+export type { ClaimEdgeAuthorityRecord, ClaimEdgeCreatedBy } from "./edge-authority.js";
 
 export interface ClaimCandidateRecord {
   readonly candidateId: string;
@@ -45,6 +55,7 @@ export interface ClaimEdgeRecord {
   readonly sourceClaimId: string;
   readonly targetClaimId: string;
   readonly edgeType: ClaimEdgeType;
+  readonly authority?: ClaimEdgeAuthorityRecord;
   readonly createdAt: string;
 }
 
@@ -160,19 +171,20 @@ export function createClaimStorageRepositories(database: DatabaseSync): ClaimSto
             ].join(" ")
           )
           .run(record.edgeId, record.sourceClaimId, record.targetClaimId, record.edgeType, record.createdAt);
+        if (record.authority) insertClaimEdgeAuthority(database, record.edgeId, record.authority);
         return result.changes === 1;
       },
       get(edgeId) {
         return mapClaimEdge(
           database
-            .prepare("SELECT * FROM claim_edges WHERE edge_id = ?")
+            .prepare(`${claimEdgeSelectSql()} WHERE claim_edges.edge_id = ?`)
             .get(edgeId) as Record<string, unknown> | undefined
         );
       },
       list() {
         return (
           database
-            .prepare("SELECT * FROM claim_edges ORDER BY created_at DESC, edge_id ASC")
+            .prepare(`${claimEdgeSelectSql()} ORDER BY claim_edges.created_at DESC, claim_edges.edge_id ASC`)
             .all() as Array<Record<string, unknown>>
         ).map(mapRequiredClaimEdge);
       },
@@ -181,9 +193,9 @@ export function createClaimStorageRepositories(database: DatabaseSync): ClaimSto
           database
             .prepare(
               [
-                "SELECT * FROM claim_edges",
+                claimEdgeSelectSql(),
                 "WHERE edge_type IN ('contradicts', 'needs_review', 'violates', 'unknown_scope_overlap')",
-                "ORDER BY created_at DESC, edge_id ASC"
+                "ORDER BY claim_edges.created_at DESC, claim_edges.edge_id ASC"
               ].join(" ")
             )
             .all() as Array<Record<string, unknown>>
@@ -241,8 +253,25 @@ function mapRequiredClaimEdge(row: Record<string, unknown>): ClaimEdgeRecord {
     sourceClaimId: stringField(row, "source_claim_id"),
     targetClaimId: stringField(row, "target_claim_id"),
     edgeType: stringField(row, "edge_type") as ClaimEdgeType,
+    authority: mapClaimEdgeAuthority(row),
     createdAt: stringField(row, "created_at")
   };
+}
+
+function claimEdgeSelectSql(): string {
+  return [
+    "SELECT",
+    [
+      "claim_edges.edge_id",
+      "claim_edges.source_claim_id",
+      "claim_edges.target_claim_id",
+      "claim_edges.edge_type",
+      "claim_edges.created_at",
+      claimEdgeAuthoritySelectSql()
+    ].join(", "),
+    "FROM claim_edges",
+    claimEdgeAuthorityJoinSql()
+  ].join(" ");
 }
 
 function stringField(row: Record<string, unknown>, key: string): string {

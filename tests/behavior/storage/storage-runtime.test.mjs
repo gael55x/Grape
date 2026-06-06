@@ -75,6 +75,53 @@ test("storage runtime skips already applied migrations", () => {
   });
 });
 
+test("claim_edge_authority_migration_applies_from_previous_schema", () => {
+  withDatabase((database) => {
+    const sources = migrationSources();
+    applyStorageMigrations(database, sources.slice(0, -1), () => "2026-05-24T00:00:00.000Z");
+    database
+      .prepare(
+        [
+          "INSERT INTO claims",
+          "(claim_id, subject, claim_type, claim_text, scope_json, scope_hash, verification_status, created_at, updated_at)",
+          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        ].join(" ")
+      )
+      .run("claim-a", "src/a.ts", "repository_source_excerpt_exists", "Claim A", "{}", "a".repeat(64), "verified", "2026-05-24T00:00:00.000Z", "2026-05-24T00:00:00.000Z");
+    database
+      .prepare(
+        [
+          "INSERT INTO claims",
+          "(claim_id, subject, claim_type, claim_text, scope_json, scope_hash, verification_status, created_at, updated_at)",
+          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        ].join(" ")
+      )
+      .run("claim-b", "src/b.ts", "repository_source_excerpt_exists", "Claim B", "b".repeat(64), "b".repeat(64), "verified", "2026-05-24T00:00:00.000Z", "2026-05-24T00:00:00.000Z");
+    database
+      .prepare(
+        [
+          "INSERT INTO claim_edges",
+          "(edge_id, source_claim_id, target_claim_id, edge_type, created_at)",
+          "VALUES (?, ?, ?, ?, ?)"
+        ].join(" ")
+      )
+      .run("edge-legacy", "claim-a", "claim-b", "contradicts", "2026-05-24T00:00:00.000Z");
+
+    const result = applyStorageMigrations(database, sources, () => "2026-05-24T00:00:01.000Z");
+
+    assert.deepEqual(result.applied, [{ id: "0006", filename: "0006_claim_edge_authority.sql" }]);
+    assert.ok(database.prepare("SELECT name FROM sqlite_master WHERE name = 'claim_edge_authority'").get());
+    assert.equal(
+      database.prepare("SELECT count(*) AS count FROM claim_edges WHERE edge_id = 'edge-legacy'").get().count,
+      1
+    );
+    assert.equal(
+      database.prepare("SELECT count(*) AS count FROM claim_edge_authority WHERE edge_id = 'edge-legacy'").get().count,
+      0
+    );
+  });
+});
+
 test("storage runtime rejects checksum drift before applying sql", () => {
   withDatabase((database) => {
     const [source] = migrationSources();

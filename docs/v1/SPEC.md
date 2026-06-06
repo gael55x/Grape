@@ -1880,7 +1880,16 @@ type ClaimEdge = {
   confidence: number;
   reason: string;
 
-  createdBy: "deterministic_rule" | "model_suggestion" | "user_confirmation" | "test_verification";
+  createdBy:
+    | "deterministic_rule"
+    | "model_suggestion"
+    | "user_confirmation"
+    | "test_verification"
+    | "grape_observed"
+    | "trusted_import"
+    | "review_metadata"
+    | "legacy";
+  metadata?: Record<string, string>;
   createdAt: string;
 };
 ```
@@ -1905,6 +1914,8 @@ overlapping feature flag scope if applicable
 new proof directly replaces old proof
 authority class is valid for that claim type
 ```
+
+`deterministic_rule`, `model_suggestion`, and `review_metadata` edges are review/orientation metadata only unless a separate trusted proof policy upgrades the edge. Legacy edges without recorded authority must not be treated as stronger than their stored metadata. Legacy `contradicts` and `violates` edges remain blocking with warnings because conflict uncertainty is not active truth. Legacy `supersedes` and legacy resolution edges do not suppress context because hiding context requires explicit eligible authority.
 
 ### 21.3 Contradiction rule
 

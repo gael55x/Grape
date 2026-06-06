@@ -110,6 +110,8 @@ Current-valid filtering consumes only explicit active contradiction/supersession
 
 Claim scope compatibility is resolved through the shared scope module before current-valid activation or claim-edge blocking. Branch and commit are required for current snapshot matches. Dirty or external source scopes require the current worktree hash; missing dirty scope is `unknown`, not a match. Session scope is checked when the caller supplies a current session; broad inspection surfaces may list otherwise-current session-scoped observed-run claims, while task-scoped rendering still filters observed-run claims to the active session. Claim-to-claim edge overlap compares branch, commit, environment, feature flags, package/service root, session scope when present, and dirty/worktree scope. Disjoint contradiction/violation edges do not deactivate claims. Unknown contradiction/violation overlap remains blocking and warning-bearing until scope is discovered. Supersession requires compatible scope and exact source-ref replacement; unknown or disjoint scope is warning metadata only.
 
+Claim-edge authority is explicit metadata, not inferred from edge type alone. Each new edge should record who or what created it, a bounded confidence score, a short non-secret reason, and optional hash-only metadata. `deterministic_rule`, `model_suggestion`, and `review_metadata` authority are review/orientation signals only and cannot create blocking `contradicts`, `violates`, or `supersedes` behavior by themselves. `user_confirmation`, `test_verification`, `grape_observed`, and `trusted_import` are eligible blocking authorities when the edge type, proof policy, and scope compatibility also allow blocking. Legacy edges without recorded authority are treated conservatively: legacy `contradicts` and `violates` remain blocking with warnings because conflict uncertainty must not be rendered as active truth, while legacy `supersedes` and legacy resolution edges do not suppress context because hiding context requires explicit authority. MCP write tools cannot mint blocking durable edge authority. Local CLI conflict resolution records `user_confirmation` authority and does not refute, merge, or promote either claim.
+
 Path-like MCP `tests` seed refs and import-related test refs can select allowed test files for exact source excerpts. That proof still means only that the excerpt exists in the current source input. A test file excerpt is not proof that the test was run, that the behavior passed, or that the implementation is correct. Runtime test claims still require a trusted test-run proof.
 
 After proof validation, local compile creates claim candidates for the narrow claim type `repository_source_excerpt_exists`. The belief gate accepts only direct exact-source proofs from trusted allowed source/config/lockfile/migration/rule records, then persists verified durable claims and links the proof row to the claim. Context artifacts render only the current-valid source-excerpt claims whose source refs match the task-selected refs when retrieval has selected refs; `grape claims --active` and `grape_get_claims` remain broader inspection surfaces over all current-valid claims. These claims prove only that a selected exact excerpt exists in the current scoped source input. They do not prove runtime behavior, correctness, root cause, deployment state, or broad architecture conclusions.
@@ -161,7 +163,7 @@ A claim is eligible for current-valid retrieval only when:
 1. `verificationStatus === "verified"`;
 2. shared scope result is `match`;
 3. source hash and proof hash still match current inputs;
-4. no active contradiction, violation, or supersession edge blocks it;
+4. no active contradiction, violation, or supersession edge with eligible authority blocks it;
 5. no ignored/private/secret policy blocks the source;
 6. dirty worktree scope matches the current dirty snapshot if the proof came from dirty files.
 
@@ -200,4 +202,8 @@ flowchart TD
 - `partially_verified_not_current_valid_by_default`
 - `dirty_worktree_claim_not_branch_global`
 - `branch_invalid_claim_excluded`
+- `claim_edge_authority_required_for_blocking_supersession`
+- `legacy_contradiction_edge_blocks_with_warning`
+- `review_metadata_edge_cannot_block_current_valid_claim`
+- `manual_resolution_edge_requires_user_confirmation_authority`
 - `repository_file_claim_does_not_overclaim_runtime_behavior`

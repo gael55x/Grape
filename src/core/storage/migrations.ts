@@ -37,6 +37,12 @@ export const storageMigrationReferences = [
     filename: "0005_context_performance_indexes.sql",
     checksumSha256: "70013da6ec154c753af733c5232833e049e3e8b9eacb3175fde4a5150e4a1318",
     description: "Add lookup indexes for context transport performance-critical session and lexical queries."
+  },
+  {
+    id: "0006",
+    filename: "0006_claim_edge_authority.sql",
+    checksumSha256: "0ee25bfa8ed4d634477d84acab271a3cb6d47c582c613c93dbc27bf3c0b1bd76",
+    description: "Create claim edge authority metadata for provenance-aware conflict and supersession policy."
   }
 ] as const satisfies readonly StorageMigrationReference[];
 

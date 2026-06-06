@@ -1,4 +1,5 @@
 export * from "./claim-edge-policy.js";
+export * from "./claim-edge-authority.js";
 export * from "./claim-policy.js";
 export * from "./observed-run-claims.js";
 export * from "./project-rule-conflicts.js";

@@ -2,6 +2,11 @@ import {
   claimScopesCompatibleForSupersession,
   claimScopesOverlap
 } from "../scope/index.js";
+import {
+  claimEdgeCanBlockCurrentValid,
+  claimEdgeCanResolveConflict,
+  type ClaimEdgeAuthorityMetadata
+} from "./claim-edge-authority.js";
 
 export interface ClaimEdgePolicyClaim {
   readonly claimId: string;
@@ -11,9 +16,11 @@ export interface ClaimEdgePolicyClaim {
 }
 
 export interface ClaimEdgePolicyEdge {
+  readonly edgeId?: string;
   readonly sourceClaimId: string;
   readonly targetClaimId: string;
   readonly edgeType: string;
+  readonly authority?: ClaimEdgeAuthorityMetadata;
   readonly createdAt: string;
 }
 
@@ -36,7 +43,10 @@ export function claimIdsBlockedByActiveClaimEdges(input: {
   const warnings: string[] = [];
 
   for (const edge of input.edges) {
-    if (edge.edgeType === "contradicts" && !hasLaterResolution(edge, input.edges, conflictClosingEdgeTypes)) {
+    if (edge.edgeType === "contradicts" && !hasLaterResolution(edge, input.edges, conflictClosingEdgeTypes, warnings)) {
+      const authority = claimEdgeCanBlockCurrentValid(edge);
+      if (authority.warning) warnings.push(authority.warning);
+      if (!authority.allowed) continue;
       blockIfScopesMayConflict({
         edge,
         sourceClaim: claimsById.get(edge.sourceClaimId),
@@ -46,7 +56,10 @@ export function claimIdsBlockedByActiveClaimEdges(input: {
       });
       continue;
     }
-    if (edge.edgeType === "violates" && !hasLaterResolution(edge, input.edges, conflictClosingEdgeTypes)) {
+    if (edge.edgeType === "violates" && !hasLaterResolution(edge, input.edges, conflictClosingEdgeTypes, warnings)) {
+      const authority = claimEdgeCanBlockCurrentValid(edge);
+      if (authority.warning) warnings.push(authority.warning);
+      if (!authority.allowed) continue;
       blockViolatingClaimIfScopesMayConflict({
         edge,
         sourceClaim: claimsById.get(edge.sourceClaimId),
@@ -56,7 +69,14 @@ export function claimIdsBlockedByActiveClaimEdges(input: {
       });
       continue;
     }
-    if (edge.edgeType !== "supersedes" || hasLaterResolution(edge, input.edges, supersedesClosingEdgeTypes)) {
+    if (edge.edgeType !== "supersedes" || hasLaterResolution(edge, input.edges, supersedesClosingEdgeTypes, warnings)) {
+      continue;
+    }
+
+    const authority = claimEdgeCanBlockCurrentValid(edge);
+    if (authority.warning) warnings.push(authority.warning);
+    if (!authority.allowed) {
+      ignoredEdges.push(edge);
       continue;
     }
 
@@ -132,14 +152,23 @@ function activeEdgeScopeOverlap(input: {
 function hasLaterResolution(
   edge: ClaimEdgePolicyEdge,
   edges: readonly ClaimEdgePolicyEdge[],
-  resolutionTypes: ReadonlySet<string>
+  resolutionTypes: ReadonlySet<string>,
+  warnings: string[]
 ): boolean {
-  return edges.some(
-    (candidate) =>
-      resolutionTypes.has(candidate.edgeType) &&
-      claimPairKey(candidate) === claimPairKey(edge) &&
-      candidate.createdAt > edge.createdAt
-  );
+  let resolved = false;
+  for (const candidate of edges) {
+    if (
+      !resolutionTypes.has(candidate.edgeType) ||
+      claimPairKey(candidate) !== claimPairKey(edge) ||
+      candidate.createdAt <= edge.createdAt
+    ) {
+      continue;
+    }
+    const authority = claimEdgeCanResolveConflict(candidate);
+    if (authority.warning) warnings.push(authority.warning);
+    if (authority.allowed) resolved = true;
+  }
+  return resolved;
 }
 
 function claimPairKey(edge: Pick<ClaimEdgePolicyEdge, "sourceClaimId" | "targetClaimId">): string {

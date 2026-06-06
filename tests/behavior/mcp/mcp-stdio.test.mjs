@@ -142,6 +142,25 @@ test("mcp stdio lists implemented Grape tools", () => {
 
 test("mcp grape_get_conflicts returns conflict inspection without root paths", () => {
   withGitRepo((repoPath) => {
+    writeFileSync(
+      path.join(repoPath, "AGENTS.md"),
+      [
+        "# Rules",
+        "",
+        "- Never use console logs in production code",
+        "- Use console logs in production code"
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "AGENTS.md"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add conflicting rules"
+    ]);
     runMcp(repoPath, [
       {
         jsonrpc: "2.0",
@@ -150,7 +169,7 @@ test("mcp grape_get_conflicts returns conflict inspection without root paths", (
         params: {
           name: "grape_get_context",
           arguments: {
-            query: "Explain the repository entry points",
+            query: "Review console logging rules",
             sessionId: "mcp-conflicts-session"
           }
         }
@@ -172,7 +191,9 @@ test("mcp grape_get_conflicts returns conflict inspection without root paths", (
     assert.equal(conflicts.isError, false);
     assert.equal(Object.hasOwn(conflicts.structuredContent, "rootPath"), false);
     assert.equal(conflicts.content[0].text.includes(repoPath), false);
-    assert.deepEqual(conflicts.structuredContent.conflicts, []);
+    assert.equal(conflicts.structuredContent.conflicts.length, 1);
+    assert.equal(conflicts.structuredContent.conflicts[0].authority.createdBy, "deterministic_rule");
+    assert.equal(conflicts.structuredContent.conflicts[0].authority.reason, "deterministic project-rule opposing-topic review");
     assert.deepEqual(conflicts.structuredContent.warnings, []);
   });
 });

@@ -96,6 +96,10 @@ Trust and scope:
 - `incompatible_supersedes_edge_does_not_block_claim`
 - `incompatible_supersedes_edge_does_not_resolve_contradiction`
 - `disjoint_contradiction_scope_does_not_block_claim`
+- `claim_edge_authority_required_for_blocking_supersession`
+- `legacy_contradiction_edge_blocks_with_warning`
+- `review_metadata_edge_cannot_block_current_valid_claim`
+- `manual_resolution_edge_requires_user_confirmation_authority`
 - `semantic_candidate_cannot_create_claim`
 - `graph_expansion_cannot_satisfy_claim_policy`
 - `summary_or_compression_artifact_cannot_satisfy_claim_policy`
@@ -165,6 +169,8 @@ Storage and security:
 - `redacted_display_hash_not_used_as_proof`
 - `path_normalization_handles_windows_separators`
 - `package_dry_run_contains_cli_and_migrations`
+- `claim_edge_authority_migration_applies_from_previous_schema`
+- `claim_edge_repository_persists_authority_metadata`
 
 ## Required Fixture Repositories
 

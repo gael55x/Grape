@@ -756,6 +756,10 @@ test("cli compile creates project-rule conflict edges and conflicts can be resol
 
     assert.equal(conflicts.conflicts.length, 1);
     assert.equal(conflicts.conflicts[0].edgeType, "needs_review");
+    assert.equal(conflicts.conflicts[0].authority.createdBy, "deterministic_rule");
+    assert.equal(conflicts.conflicts[0].authority.confidence, 0.5);
+    assert.equal(conflicts.conflicts[0].authority.reason, "deterministic project-rule opposing-topic review");
+    assert.equal(conflicts.conflicts[0].authority.recorded, true);
     assert.match(conflicts.conflicts[0].edgeId, /^edge:[a-f0-9]{24}$/);
     assert.match(conflicts.conflicts[0].sourceClaim.claimText, /console logs in production code/);
     assert.match(conflicts.conflicts[0].targetClaim.claimText, /console logs in production code/);
@@ -773,6 +777,7 @@ test("cli compile creates project-rule conflict edges and conflicts can be resol
     assert.match(resolution.resolutionEdgeId, /^edge:[a-f0-9]{24}$/);
     const afterResolution = runCliJson(repoPath, ["conflicts"]);
     assert.equal(afterResolution.conflicts.length, 0);
+    assert.deepEqual(afterResolution.warnings, []);
   });
 });
 

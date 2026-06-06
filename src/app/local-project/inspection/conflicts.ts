@@ -3,6 +3,11 @@ import { createHash } from "node:crypto";
 
 import { createGitRepoSnapshot } from "../../../core/git/index.js";
 import {
+  claimEdgeAuthoritySummary,
+  claimEdgeCanResolveConflict,
+  type ClaimEdgeAuthoritySummary
+} from "../../../core/claims/index.js";
+import {
   createClaimStorageRepositories,
   type ClaimEdgeType,
   type ClaimEdgeRecord,
@@ -23,6 +28,7 @@ export interface LocalConflictClaimSummary {
 export interface LocalConflictSummary {
   readonly edgeId: string;
   readonly edgeType: ClaimEdgeRecord["edgeType"];
+  readonly authority: ClaimEdgeAuthoritySummary;
   readonly sourceClaimId: string;
   readonly targetClaimId: string;
   readonly sourceClaim?: LocalConflictClaimSummary;
@@ -87,8 +93,8 @@ export function listLocalConflicts(input: ListLocalConflictsInput): ListLocalCon
     operation(database) {
       const claimRepositories = createClaimStorageRepositories(database);
       const allEdges = claimRepositories.claimEdges.list();
-      const edges = openConflictEdges(allEdges);
-      const conflicts = edges.map((edge) =>
+      const open = openConflictEdges(allEdges);
+      const conflicts = open.edges.map((edge) =>
         toConflictSummary(
           edge,
           claimRepositories.claims.get(edge.sourceClaimId),
@@ -97,6 +103,7 @@ export function listLocalConflicts(input: ListLocalConflictsInput): ListLocalCon
       );
       return {
         conflicts,
+        authorityWarnings: open.warnings,
         missingClaimCount: conflicts.filter(
           (conflict) => conflict.sourceClaim === undefined || conflict.targetClaim === undefined
         ).length
@@ -110,7 +117,10 @@ export function listLocalConflicts(input: ListLocalConflictsInput): ListLocalCon
     headCommit: snapshot.commit,
     dirtyWorktree: snapshot.worktreeStatus !== "clean",
     conflicts: databaseResult.value.conflicts,
-    warnings: databaseResult.value.missingClaimCount > 0 ? ["conflict_edge_missing_claim"] : []
+    warnings: [
+      ...databaseResult.value.authorityWarnings,
+      ...(databaseResult.value.missingClaimCount > 0 ? ["conflict_edge_missing_claim"] : [])
+    ]
   };
 }
 
@@ -145,6 +155,13 @@ export function resolveLocalConflict(input: ResolveLocalConflictInput): ResolveL
         sourceClaimId: edge.sourceClaimId,
         targetClaimId: edge.targetClaimId,
         edgeType: input.resolution,
+        authority: {
+          createdBy: "user_confirmation",
+          confidence: 1,
+          reason: "manual local conflict resolution",
+          metadataJson: "{}",
+          createdAt: now
+        },
         createdAt: now
       };
       claimRepositories.claimEdges.insertOrIgnore(record);
@@ -161,19 +178,29 @@ export function resolveLocalConflict(input: ResolveLocalConflictInput): ResolveL
   };
 }
 
-function openConflictEdges(edges: readonly ClaimEdgeRecord[]): readonly ClaimEdgeRecord[] {
+function openConflictEdges(edges: readonly ClaimEdgeRecord[]): {
+  readonly edges: readonly ClaimEdgeRecord[];
+  readonly warnings: readonly string[];
+} {
   const resolutionsByPair = new Map<string, string>();
+  const warnings: string[] = [];
   for (const edge of edges) {
     if (!resolutionEdgeTypes.has(edge.edgeType)) continue;
+    const authority = claimEdgeCanResolveConflict(edge);
+    if (authority.warning) warnings.push(authority.warning);
+    if (!authority.allowed) continue;
     const previous = resolutionsByPair.get(claimPairKey(edge));
     if (!previous || previous < edge.createdAt) resolutionsByPair.set(claimPairKey(edge), edge.createdAt);
   }
 
-  return edges.filter((edge) => {
-    if (!conflictEdgeTypes.has(edge.edgeType)) return false;
-    const resolvedAt = resolutionsByPair.get(claimPairKey(edge));
-    return !resolvedAt || resolvedAt < edge.createdAt;
-  });
+  return {
+    edges: edges.filter((edge) => {
+      if (!conflictEdgeTypes.has(edge.edgeType)) return false;
+      const resolvedAt = resolutionsByPair.get(claimPairKey(edge));
+      return !resolvedAt || resolvedAt < edge.createdAt;
+    }),
+    warnings
+  };
 }
 
 function toConflictSummary(
@@ -184,6 +211,7 @@ function toConflictSummary(
   return {
     edgeId: edge.edgeId,
     edgeType: edge.edgeType,
+    authority: claimEdgeAuthoritySummary(edge),
     sourceClaimId: edge.sourceClaimId,
     targetClaimId: edge.targetClaimId,
     sourceClaim: sourceClaim ? toClaimSummary(sourceClaim) : undefined,

@@ -103,7 +103,17 @@ export function persistProjectRuleClaims(input: PersistProjectRuleClaimsInput): 
   }
 
   for (const conflict of detectProjectRuleConflicts(input.repositories.claims.list())) {
-    if (input.repositories.claimEdges.insertOrIgnore({ ...conflict, createdAt: input.now })) {
+    if (input.repositories.claimEdges.insertOrIgnore({
+      ...conflict,
+      authority: {
+        createdBy: "deterministic_rule",
+        confidence: 0.5,
+        reason: "deterministic project-rule opposing-topic review",
+        metadataJson: "{}",
+        createdAt: input.now
+      },
+      createdAt: input.now
+    })) {
       conflictEdgesInserted += 1;
     }
   }

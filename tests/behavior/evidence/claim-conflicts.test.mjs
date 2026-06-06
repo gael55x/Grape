@@ -69,6 +69,29 @@ test("claim edge repository lists conflict relationships without non-conflict ed
   });
 });
 
+test("claim_edge_repository_persists_authority_metadata", () => {
+  withClaimRepositories((repositories) => {
+    repositories.claims.insertOrIgnore(claim("claim-a", "Runtime uses node:test", hashA));
+    repositories.claims.insertOrIgnore(claim("claim-b", "Runtime uses vitest", hashB));
+
+    repositories.claimEdges.insertOrIgnore({
+      edgeId: "edge-conflict",
+      sourceClaimId: "claim-a",
+      targetClaimId: "claim-b",
+      edgeType: "contradicts",
+      authority: authority("user_confirmation", now, "manual conflict assertion"),
+      createdAt: now
+    });
+
+    const edgeRecord = repositories.claimEdges.get("edge-conflict");
+
+    assert.equal(edgeRecord?.authority?.createdBy, "user_confirmation");
+    assert.equal(edgeRecord?.authority?.confidence, 1);
+    assert.equal(edgeRecord?.authority?.reason, "manual conflict assertion");
+    assert.equal(edgeRecord?.authority?.metadataJson, "{}");
+  });
+});
+
 test("project rule conflict detector creates review edges for opposing overlapping rules", () => {
   const conflicts = detectProjectRuleConflicts([
     {
@@ -206,6 +229,20 @@ test("current-valid resolution rejects superseded target claims only", () => {
   assert.equal(resolved.rejectedCount, 1);
 });
 
+test("claim_edge_authority_required_for_blocking_supersession", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    sourceRefB: "src/a.ts",
+    sourceHashB: hashA,
+    edges: [
+      legacyEdge("edge-supersedes", "claim-a", "claim-b", "supersedes", "2026-05-26T00:00:00.000Z")
+    ]
+  }));
+
+  assert.deepEqual(resolved.activeClaims.map((claim) => claim.claimId).sort(), ["claim-a", "claim-b"]);
+  assert.equal(resolved.rejectedCount, 0);
+  assert.match(resolved.warnings.join("\n"), /Ignored supersedes edge without eligible blocking authority/);
+});
+
 test("current-valid resolution ignores incompatible supersedes edges", () => {
   const resolved = resolveLocalCurrentValidClaims(currentValidInput({
     edges: [
@@ -229,6 +266,50 @@ test("current-valid resolution keeps contradicted claims blocked after incompati
   assert.equal(resolved.activeClaims.length, 0);
   assert.equal(resolved.rejectedCount, 2);
   assert.match(resolved.warnings.join("\n"), /Ignored supersedes edge without compatible claim subject/);
+});
+
+test("legacy_contradiction_edge_blocks_with_warning", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    edges: [
+      legacyEdge("edge-conflict", "claim-a", "claim-b", "contradicts", "2026-05-26T00:00:00.000Z")
+    ]
+  }));
+
+  assert.equal(resolved.activeClaims.length, 0);
+  assert.equal(resolved.rejectedCount, 2);
+  assert.match(resolved.warnings.join("\n"), /Legacy contradicts edge lacks authority metadata and remains blocking/);
+});
+
+test("review_metadata_edge_cannot_block_current_valid_claim", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    edges: [
+      edge(
+        "edge-conflict",
+        "claim-a",
+        "claim-b",
+        "contradicts",
+        "2026-05-26T00:00:00.000Z",
+        authority("review_metadata", "2026-05-26T00:00:00.000Z", "review metadata only")
+      )
+    ]
+  }));
+
+  assert.deepEqual(resolved.activeClaims.map((claim) => claim.claimId).sort(), ["claim-a", "claim-b"]);
+  assert.equal(resolved.rejectedCount, 0);
+  assert.match(resolved.warnings.join("\n"), /Ignored contradicts edge without eligible blocking authority/);
+});
+
+test("manual_resolution_edge_requires_user_confirmation_authority", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    edges: [
+      edge("edge-conflict", "claim-a", "claim-b", "contradicts", "2026-05-26T00:00:00.000Z"),
+      legacyEdge("edge-resolution", "claim-a", "claim-b", "coexists_with", "2026-05-26T00:00:01.000Z")
+    ]
+  }));
+
+  assert.equal(resolved.activeClaims.length, 0);
+  assert.equal(resolved.rejectedCount, 2);
+  assert.match(resolved.warnings.join("\n"), /Ignored coexists_with resolution without user-confirmation authority/);
 });
 
 test("current-valid resolution rejects claim types disabled by durable policy", () => {
@@ -366,12 +447,33 @@ function proof(proofId, claimId, sourceId, sourceHash) {
   };
 }
 
-function edge(edgeId, sourceClaimId, targetClaimId, edgeType, createdAt) {
+function edge(edgeId, sourceClaimId, targetClaimId, edgeType, createdAt, edgeAuthority = authority("user_confirmation", createdAt)) {
   return {
     edgeId,
     sourceClaimId,
     targetClaimId,
     edgeType,
+    authority: edgeAuthority,
+    createdAt
+  };
+}
+
+function legacyEdge(edgeId, sourceClaimId, targetClaimId, edgeType, createdAt) {
+  return {
+    edgeId,
+    sourceClaimId,
+    targetClaimId,
+    edgeType,
+    createdAt
+  };
+}
+
+function authority(createdBy, createdAt, reason = "test edge authority") {
+  return {
+    createdBy,
+    confidence: createdBy === "review_metadata" ? 0.25 : 1,
+    reason,
+    metadataJson: "{}",
     createdAt
   };
 }

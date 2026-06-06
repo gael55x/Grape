@@ -8,6 +8,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- Added explicit claim-edge authority metadata so blocking conflict/supersession behavior depends on recorded provenance instead of edge type alone.
 - Centralized claim scope compatibility for current-valid retrieval and claim-edge blocking, including branch, dirty worktree, environment, feature flag, package boundary, and unknown-overlap handling.
 - Hardened current-valid supersession filtering so incompatible `supersedes` edges no longer suppress unrelated claims.
 - Enforced the durable claim policy registry during current-valid claim resolution so legacy or unsupported durable claim rows are excluded even when proof hashes otherwise match.

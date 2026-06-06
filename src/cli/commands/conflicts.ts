@@ -77,6 +77,8 @@ function renderConflictResolution(result: ResolveLocalConflictResult): string {
 function renderConflict(conflict: LocalConflictSummary): string {
   return [
     `${conflict.edgeId}  ${conflict.edgeType}`,
+    `  Authority: ${conflict.authority.createdBy} confidence=${conflict.authority.confidence} recorded=${conflict.authority.recorded}`,
+    `  Reason: ${conflict.authority.reason}`,
     `  Source: ${renderClaim(conflict.sourceClaimId, conflict.sourceClaim)}`,
     `  Target: ${renderClaim(conflict.targetClaimId, conflict.targetClaim)}`,
     `  Created: ${conflict.createdAt}`
