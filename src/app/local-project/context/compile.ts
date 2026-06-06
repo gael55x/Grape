@@ -4,6 +4,7 @@ import { buildDurableContext } from "../../durable-context-build.js";
 import { persistGitRepoSnapshot } from "../../persist-repo-snapshot.js";
 import { persistProjectRuleClaims } from "../../persist-project-rules.js";
 import { persistSourceExcerptClaims } from "../../persist-source-claims.js";
+import { persistSymbolDeclarationClaims } from "../../persist-symbol-claims.js";
 import { toContextPackItems } from "../../../core/compiler/index.js";
 import { createGitRepoSnapshot } from "../../../core/git/index.js";
 import { assertArtifactTextHasNoSecrets } from "../../../core/security/index.js";
@@ -157,6 +158,18 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         worktreeHash: snapshotResult.snapshot.worktreeHash,
         now
       });
+      persistSymbolDeclarationClaims({
+        repositories: claimRepositories,
+        proofRepositories,
+        sources,
+        symbolNodes,
+        sourceExcerpts: proofs.sourceExcerpts,
+        branch: snapshotResult.snapshot.branch,
+        commit: snapshotResult.snapshot.commit,
+        environment: claimEnvironment,
+        worktreeHash: snapshotResult.snapshot.worktreeHash,
+        now
+      });
       const currentValidClaims = resolveLocalCurrentValidClaims({
         claims: claimRepositories.claims,
         claimEdges: claimRepositories.claimEdges,
@@ -169,7 +182,8 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         packageRoot: currentPackageRoot,
         taskSourceRefs: proofs.taskRetrieval.selectedSourceRefs.length > 0
           ? proofs.taskRetrieval.selectedSourceRefs
-          : undefined
+          : undefined,
+        taskSourceExcerpts: proofs.sourceExcerpts
       });
       const activeClaims = currentValidClaims.activeClaims.map((claim) => ({
         claimId: claim.claimId,

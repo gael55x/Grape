@@ -1130,13 +1130,13 @@ Current enabled durable claim policy:
 |---|---|---|---|---|---|
 | `repository_source_excerpt_exists` | `exact_source_excerpt` | trusted allowed repository/config/lock/migration/rule source | `direct` | The exact excerpt exists in the current scoped source input. | Runtime behavior, correctness, root cause, deploy state, broad architecture. |
 | `project_rule` | `exact_project_rule_excerpt` | trusted allowed rule file | `direct` | The exact parsed rule text exists in the scoped rule file. | Generated policy, unstated implications, conflict resolution, precedence. |
+| `repository_symbol_declaration_exists` | `provider_symbol_declaration` | trusted allowed repository source file with high-confidence AST symbol metadata | `direct` | The parser-backed declaration span exists in the current scoped source input. | Imports, exports, complete call graph, runtime behavior, correctness, root cause, ownership, broad architecture. |
 | `grape_observed_run_result` | `grape_observed_run_result` | trusted Grape-observed command/test run | `direct` | Grape observed one scoped command/test result. | Product correctness, root cause, fix success, production behavior. |
 
 Future V1.0 durable extraction families, once backed by policy, fixtures, and
 current-valid validation:
 
 - repository facts from code spans
-- symbol existence from provider-backed exact source extraction
 - imports/exports from parser
 - obvious AST edges when reliable
 - test result claims from Grape-observed test runs
@@ -3305,6 +3305,9 @@ Do not report token reduction against an ad hoc baseline.
 - `current_feature_flags_reject_mismatched_flag_scoped_claims`
 - `current_valid_resolution_rejects_claims_scoped_to_another_current_feature_flag_value`
 - `feature_flag_unknown_does_not_match_global_truth`
+- `symbol_declaration_claim_proves_declaration_existence_only`
+- `validated_symbol_declaration_claims_record_provider_proof_without_raw_body`
+- `cli_compile_renders_same_file_symbol_claims_only_when_covered_by_current_exact_evidence`
 - `test_output_only_partially_validates_broad_behavior_claim`
 - `current_valid_claims_ranked_by_task_relevance`
 

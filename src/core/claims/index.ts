@@ -5,3 +5,4 @@ export * from "./observed-run-claims.js";
 export * from "./project-rule-conflicts.js";
 export * from "./project-rule-claims.js";
 export * from "./source-excerpt-claims.js";
+export * from "./symbol-declaration-claims.js";

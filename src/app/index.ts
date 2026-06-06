@@ -7,3 +7,4 @@ export * from "./persist-repo-snapshot.js";
 export * from "./persist-snapshot-evidence.js";
 export * from "./persist-source-proofs.js";
 export * from "./persist-source-claims.js";
+export * from "./persist-symbol-claims.js";

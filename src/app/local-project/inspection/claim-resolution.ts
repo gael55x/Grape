@@ -28,6 +28,7 @@ export interface ResolveLocalCurrentValidClaimsInput {
   readonly featureFlags?: Readonly<Record<string, string | boolean>>;
   readonly packageRoot?: string;
   readonly taskSourceRefs?: readonly string[];
+  readonly taskSourceExcerpts?: readonly TaskScopedClaimExcerptWindow[];
 }
 
 export interface ResolveLocalCurrentValidClaimsResult {
@@ -35,6 +36,12 @@ export interface ResolveLocalCurrentValidClaimsResult {
   readonly visibleClaims: readonly LocalClaimSummary[];
   readonly rejectedCount: number;
   readonly warnings: readonly string[];
+}
+
+interface TaskScopedClaimExcerptWindow {
+  readonly sourceRef: string;
+  readonly startLine: number;
+  readonly endLine: number;
 }
 
 export function resolveLocalCurrentValidClaims(
@@ -68,7 +75,12 @@ export function resolveLocalCurrentValidClaims(
     .map((claim) => toClaimSummary(claim, input.proofs.listByClaim(claim.claimId)));
 
   return {
-    activeClaims: selectTaskScopedClaims(allActiveClaims, input.taskSourceRefs, input.sessionId),
+    activeClaims: selectTaskScopedClaims(
+      allActiveClaims,
+      input.taskSourceRefs,
+      input.sessionId,
+      input.taskSourceExcerpts
+    ),
     visibleClaims: claims.map((claim) => toClaimSummary(claim, input.proofs.listByClaim(claim.claimId))),
     rejectedCount: resolved.rejected.length,
     warnings: [...resolved.warnings, ...edgeBlocks.warnings]
@@ -78,21 +90,31 @@ export function resolveLocalCurrentValidClaims(
 function selectTaskScopedClaims(
   claims: readonly LocalClaimSummary[],
   taskSourceRefs: readonly string[] | undefined,
-  sessionId: string | undefined
+  sessionId: string | undefined,
+  taskSourceExcerpts: readonly TaskScopedClaimExcerptWindow[] | undefined
 ): readonly LocalClaimSummary[] {
   if (taskSourceRefs === undefined) return claims;
 
   const taskSourceOrder = new Map(taskSourceRefs.map((sourceRef, index) => [sourceRef, index]));
   return claims
-    .filter((claim) =>
-      claim.sourceRefs.some((sourceRef) => taskSourceOrder.has(sourceRef)) ||
-      isProjectRuleClaim(claim) ||
-      isCurrentSessionObservedRunClaim(claim, sessionId)
-    )
+    .filter((claim) => taskScopedClaimMatches(claim, taskSourceOrder, sessionId, taskSourceExcerpts))
     .sort(
       (left, right) =>
         claimTaskOrder(left, taskSourceOrder, sessionId) - claimTaskOrder(right, taskSourceOrder, sessionId)
     );
+}
+
+function taskScopedClaimMatches(
+  claim: LocalClaimSummary,
+  taskSourceOrder: ReadonlyMap<string, number>,
+  sessionId: string | undefined,
+  taskSourceExcerpts: readonly TaskScopedClaimExcerptWindow[] | undefined
+): boolean {
+  if (isProjectRuleClaim(claim)) return true;
+  if (isCurrentSessionObservedRunClaim(claim, sessionId)) return true;
+  if (!claim.sourceRefs.some((sourceRef) => taskSourceOrder.has(sourceRef))) return false;
+  if (!isSymbolDeclarationClaim(claim)) return true;
+  return symbolDeclarationCoveredByTaskExcerpt(claim, taskSourceExcerpts ?? []);
 }
 
 function claimTaskOrder(
@@ -113,11 +135,31 @@ function isProjectRuleClaim(claim: LocalClaimSummary): boolean {
   return claim.claimType === "project_rule";
 }
 
+function isSymbolDeclarationClaim(claim: LocalClaimSummary): boolean {
+  return claim.claimType === "repository_symbol_declaration_exists";
+}
+
 function isCurrentSessionObservedRunClaim(claim: LocalClaimSummary, sessionId: string | undefined): boolean {
   return (
     claim.claimType === "grape_observed_run_result" &&
     typeof claim.scope.sessionId === "string" &&
     claim.scope.sessionId === sessionId
+  );
+}
+
+function symbolDeclarationCoveredByTaskExcerpt(
+  claim: LocalClaimSummary,
+  taskSourceExcerpts: readonly TaskScopedClaimExcerptWindow[]
+): boolean {
+  const sourceRef = stringScope(claim.scope, "sourceRef");
+  const startLine = numberScope(claim.scope, "startLine");
+  const endLine = numberScope(claim.scope, "endLine");
+  if (!sourceRef || startLine === undefined || endLine === undefined) return false;
+  return taskSourceExcerpts.some(
+    (excerpt) =>
+      excerpt.sourceRef === sourceRef &&
+      startLine >= excerpt.startLine &&
+      endLine <= excerpt.endLine
   );
 }
 
@@ -277,6 +319,11 @@ function parseScope(scopeJson: string): Record<string, unknown> {
 function stringScope(scope: Record<string, unknown>, key: string): string {
   const value = scope[key];
   return typeof value === "string" ? value : "";
+}
+
+function numberScope(scope: Record<string, unknown>, key: string): number | undefined {
+  const value = scope[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
 function isObservedRunProof(proof: ProofRecord, source: SourceRecord): boolean {

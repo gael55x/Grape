@@ -42,6 +42,19 @@ const observedRunPolicyInput = {
   proofSignalKind: "observed_run"
 };
 
+const symbolDeclarationPolicyInput = {
+  claimType: "repository_symbol_declaration_exists",
+  claimMeaning: "symbol_declaration_exists",
+  proofType: "provider_symbol_declaration",
+  sourceType: "repository_file",
+  supportStatus: "direct",
+  sourceTrustClass: "trusted",
+  sourcePrivacyStatus: "allowed",
+  sourceRedactionStatus: "not_needed",
+  observer: "local_source_reader",
+  proofSignalKind: "exact_source"
+};
+
 test("claim_type_policy_rejects_unknown_claim_type", () => {
   const result = evaluateDurableClaimPolicy({
     ...sourceExcerptPolicyInput,
@@ -86,6 +99,27 @@ test("source_excerpt_claim_proves_existence_only", () => {
 
   assert.equal(overclaim.accepted, false);
   assert.equal(overclaim.reason, "claim_meaning_not_allowed");
+});
+
+test("symbol_declaration_claim_proves_declaration_existence_only", () => {
+  const allowed = evaluateDurableClaimPolicy(symbolDeclarationPolicyInput);
+  assert.equal(allowed.accepted, true);
+
+  const overclaim = evaluateDurableClaimPolicy({
+    ...symbolDeclarationPolicyInput,
+    claimMeaning: "architecture_conclusion"
+  });
+
+  assert.equal(overclaim.accepted, false);
+  assert.equal(overclaim.reason, "claim_meaning_not_allowed");
+
+  const graphExpansion = evaluateDurableClaimPolicy({
+    ...symbolDeclarationPolicyInput,
+    proofSignalKind: "graph_expansion"
+  });
+
+  assert.equal(graphExpansion.accepted, false);
+  assert.equal(graphExpansion.reason, "graph_expansion_not_proof");
 });
 
 test("project_rule_claim_does_not_resolve_rule_conflict", () => {

@@ -951,11 +951,98 @@ test("cli compile renders task-scoped current-valid claims instead of all active
 
     assert.ok(currentValidClaims);
     assert.match(currentValidClaims.text, /src\/search\.ts/);
+    assert.match(currentValidClaims.text, /repository_symbol_declaration_exists/);
+    assert.match(currentValidClaims.text, /buildSearchIndex/);
     assert.doesNotMatch(currentValidClaims.text, /src\/payments\.ts/);
+    assert.doesNotMatch(currentValidClaims.text, /authorizePayment/);
     assert.match(exactEvidence.text, /Source: src\/search\.ts/);
     assert.doesNotMatch(exactEvidence.text, /Source: src\/payments\.ts/);
     assert.equal(activeClaims.some((claim) => claim.subject === "src/payments.ts"), true);
     assert.equal(activeClaims.some((claim) => claim.subject === "src/search.ts"), true);
+    assert.equal(
+      activeClaims.some(
+        (claim) =>
+          claim.claimType === "repository_symbol_declaration_exists" &&
+          claim.subject === "src/search.ts#buildSearchIndex"
+      ),
+      true
+    );
+  });
+});
+
+test("cli compile renders same-file symbol claims only when covered by current exact evidence", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "src"));
+    writeFileSync(
+      path.join(repoPath, "src", "operations.ts"),
+      [
+        "export function loadInventory() {",
+        "  return 'loaded';",
+        "}",
+        "",
+        ...Array.from({ length: 55 }, (_, index) => `// filler ${index}`),
+        "",
+        "export function publishOrder() {",
+        "  return 'published';",
+        "}",
+        ""
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "src/operations.ts"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add same-file symbol fixture"
+    ]);
+
+    runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain loadInventory loading",
+      "--session",
+      "load-claim-session"
+    ]);
+    const publish = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain publishOrder publishing",
+      "--session",
+      "publish-claim-session"
+    ]);
+    const artifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, publish.artifactJsonPath), "utf8"));
+    const currentValidClaims = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "current-valid-claims"
+    );
+    const exactEvidence = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "exact-source-evidence"
+    );
+    const activeClaims = runCliJson(repoPath, ["claims", "--active"]).claims;
+
+    assert.ok(currentValidClaims);
+    assert.match(currentValidClaims.text, /publishOrder/);
+    assert.doesNotMatch(currentValidClaims.text, /loadInventory/);
+    assert.match(exactEvidence.text, /publishOrder/);
+    assert.doesNotMatch(exactEvidence.text, /loadInventory/);
+    assert.equal(
+      activeClaims.some(
+        (claim) =>
+          claim.claimType === "repository_symbol_declaration_exists" &&
+          claim.subject === "src/operations.ts#loadInventory"
+      ),
+      true
+    );
+    assert.equal(
+      activeClaims.some(
+        (claim) =>
+          claim.claimType === "repository_symbol_declaration_exists" &&
+          claim.subject === "src/operations.ts#publishOrder"
+      ),
+      true
+    );
   });
 });
 

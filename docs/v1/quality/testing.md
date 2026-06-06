@@ -98,6 +98,8 @@ Trust and scope:
 - `repo_file_claim_does_not_overclaim_runtime_behavior`
 - `claim_type_policy_rejects_unknown_claim_type`
 - `claim_type_policy_rejects_unproven_behavior_claim`
+- `symbol_declaration_claim_proves_declaration_existence_only`
+- `validated_symbol_declaration_claims_record_provider_proof_without_raw_body`
 - `observed_test_result_does_not_promote_correctness`
 - `source_excerpt_claim_proves_existence_only`
 - `project_rule_claim_does_not_resolve_rule_conflict`
@@ -152,6 +154,7 @@ MCP and CLI:
 - `cli_compile_applies_caller_environment_scope`
 - `cli_compile_accepts_caller_feature_flag_scope_without_exposing_flag_labels`
 - `cli_compile_rejects_unsafe_feature_flag_scope_input`
+- `cli_compile_renders_same_file_symbol_claims_only_when_covered_by_current_exact_evidence`
 - `mcp_get_context_accepts_caller_feature_flag_scope_without_exposing_flag_labels`
 - `mcp_get_proofs_does_not_show_raw_secret`
 - `mcp_write_tool_cannot_promote_claim`

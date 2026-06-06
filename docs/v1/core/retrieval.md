@@ -14,6 +14,7 @@ The beta planner may include:
 - safe lexical matches from allowed current-snapshot sources
 - provider-backed module, export, import, symbol, method, call, config, and test/source relationship edges when supported
 - current-valid source-excerpt claims
+- current-valid provider-backed symbol declaration claims
 - current-valid observed-run result claims
 - current-valid parsed `project_rule` claims from rule-file excerpts
 - deterministic conflict/supersession filters for conflict edges and manual resolution edges
@@ -45,6 +46,7 @@ The current retrieval path may use:
 - local import/export/call relationships discovered from AST traversal where supported
 - file-level module nodes and lexical rows for unsupported languages where source text is safe to index
 - current-valid narrow source-excerpt claims after proof validation
+- current-valid narrow symbol declaration claims after high-confidence AST extraction and provider proof validation
 - current-valid narrow observed-run result claims after trusted local `grape run` / `grape test` promotion
 
 Private, ignored, unreadable, oversized, binary, stale-hash, and secret-looking files are not valid retrieval inputs.
@@ -69,6 +71,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 - Package-local manifests and lockfiles should be dependency refs for selected package context when the package/workspace root is known.
 - Current-valid `grape_observed_run_result` claims from the current compile session may be rendered with task-scoped claims. Compile sessions are task-bound, and current-valid checks still require matching branch, commit, worktree hash, source hash, result hash, and any caller-supplied environment scope.
 - Current-valid parsed `project_rule` claims may render with task-scoped claims, while exact rule text remains pinned in the active-project-rules section.
+- Current-valid `repository_symbol_declaration_exists` claims may render only for task-selected source refs covered by accepted exact source excerpt windows. They prove declaration-span existence only and do not prove import/export behavior, call graph completeness, runtime behavior, correctness, root cause, ownership, or architecture conclusions.
 - Current-valid filtering rejects claims blocked by active claim edges after shared scope compatibility is resolved. Unresolved `contradicts` edges block both claims when scopes overlap or overlap is unknown; disjoint scopes do not deactivate either claim. Unresolved `violates` edges block the violating source claim when scopes overlap or overlap is unknown. Compatible `supersedes` edges block the superseded target claim until an applicable manual resolution edge says the claims may coexist or are variants. A `supersedes` edge is compatible only when the linked claims have matching claim type, resolved subject, exact source ref, and compatible branch/commit/environment/feature/package/dirty scope; otherwise it is warning metadata and does not suppress context.
 - Selection is capped; truncation is reported as a warning.
 - If query terms exist but no source matches, retrieval reports a warning instead of inventing context.

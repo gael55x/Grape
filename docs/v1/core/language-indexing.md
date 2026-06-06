@@ -4,7 +4,7 @@
 
 Define how Grape stays language-agnostic without pretending V1 has a complete parser for every language.
 
-Grape's transport protocol is language-agnostic. The compile layer can snapshot, hash, redact, diff, omit, restore, and invalidate context for any allowed Git-visible text file. Internally this is graph-shaped: source refs, symbols, package manifests, proofs, dependency refs, pack items, omissions, restore handles, and invalidations form connected context. Language-specific indexing is only an orientation layer that helps choose exact source spans. It is not proof, durable truth, or a complete impact graph.
+Grape's transport protocol is language-agnostic. The compile layer can snapshot, hash, redact, diff, omit, restore, and invalidate context for any allowed Git-visible text file. Internally this is graph-shaped: source refs, symbols, package manifests, proofs, dependency refs, pack items, omissions, restore handles, and invalidations form connected context. Language-specific indexing is primarily an orientation layer that helps choose exact source spans. Provider output is not proof, durable truth, or a complete impact graph unless a separate Trust Kernel policy promotes a narrow provider-backed claim with exact source hashes and current-valid scope.
 
 ## Core Rule
 
@@ -103,6 +103,7 @@ Invalidation should:
 Current implementation is useful but not broad language-aware indexing:
 
 - TypeScript/JavaScript files get deterministic AST-backed symbols, imports, exports, direct calls, and related-test orientation.
+- High-confidence TypeScript/JavaScript AST declaration nodes can promote the narrow `repository_symbol_declaration_exists` claim only when covered by an accepted exact source excerpt window and `provider_symbol_declaration` proof; this proves declaration-span existence only.
 - JSON and Markdown are classified as known languages for indexing and lexical search, but they do not have AST graph extraction.
 - Python, Java, Kotlin, Go, Rust, YAML, and other languages mostly fall back to file path/text indexing today.
 - Bootstrap detection can report Python, Go, Rust, package managers, and common frameworks from root manifests, but those are setup hints only.

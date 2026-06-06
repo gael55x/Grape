@@ -1,6 +1,7 @@
 export type DurableClaimMeaning =
   | "source_excerpt_exists"
   | "project_rule_exists"
+  | "symbol_declaration_exists"
   | "observed_run_result"
   | "runtime_behavior"
   | "correctness"
@@ -73,6 +74,15 @@ export const durableClaimPolicies: readonly DurableClaimPolicy[] = [
     observers: ["local_source_reader"],
     proofSignalKinds: ["exact_rule"],
     claimMeanings: ["project_rule_exists"]
+  },
+  {
+    claimType: "repository_symbol_declaration_exists",
+    proofTypes: ["provider_symbol_declaration"],
+    sourceTypes: ["repository_file"],
+    supportStatuses: ["direct"],
+    observers: ["local_source_reader"],
+    proofSignalKinds: ["exact_source"],
+    claimMeanings: ["symbol_declaration_exists"]
   },
   {
     claimType: "grape_observed_run_result",

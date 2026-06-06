@@ -118,6 +118,8 @@ Path-like MCP `tests` seed refs and import-related test refs can select allowed 
 
 After proof validation, local compile creates claim candidates for the narrow claim type `repository_source_excerpt_exists`. The belief gate accepts only direct exact-source proofs from trusted allowed source/config/lockfile/migration/rule records, then persists verified durable claims and links the proof row to the claim. Context artifacts render only the current-valid source-excerpt claims whose source refs match the task-selected refs when retrieval has selected refs; `grape claims --active` and `grape_get_claims` remain broader inspection surfaces over all current-valid claims. These claims prove only that a selected exact excerpt exists in the current scoped source input. They do not prove runtime behavior, correctness, root cause, deployment state, or broad architecture conclusions.
 
+Local compile may also create the narrow claim type `repository_symbol_declaration_exists` for high-confidence TypeScript/JavaScript AST declarations whose source file already has an accepted exact source excerpt window covering the declaration. The proof type is `provider_symbol_declaration`, uses direct support, and stores the deterministic declaration body hash in the existing proof hash column. The claim scope records the source ref/hash, declaration lines, symbol kind/name, symbol id, and signature/body hashes. This claim proves only that the parser-backed declaration span exists in the current scoped source input. It does not prove imports, exports, call graph completeness, runtime behavior, correctness, root cause, API ownership, or architecture conclusions. Regex fallback symbols, unsupported-language symbols, module/file nodes, unresolved imports, and graph-expanded candidates cannot satisfy this policy.
+
 Grape-observed command/test runs can create the narrow claim type `grape_observed_run_result`. The proof type is `grape_observed_run_result`, uses direct support, and stores the observed-run result hash in the existing proof hash column. The result hash is derived only from scoped metadata: observed run ID, command hash, cwd, exit code, stdout/stderr hashes, timestamps, branch, commit, worktree hash, snapshot/session IDs, and test pass/framework labels when present. It never includes raw command, stdout, or stderr bodies. This claim proves only that local Grape observed that run result. It does not prove the implementation is correct, that a root cause was fixed, or that product behavior is globally true.
 
 ## Durable Claim Policy Registry
@@ -134,14 +136,15 @@ Current enabled durable claim policies:
 |---|---|---|---|---|---|---|
 | `repository_source_excerpt_exists` | `exact_source_excerpt` | trusted allowed source/config/lockfile/migration/rule record | `direct` | local source reader | exact excerpt existence in the current scoped source input | behavior, correctness, root cause, deploy state, architecture conclusions |
 | `project_rule` | `exact_project_rule_excerpt` | trusted allowed `rule_file` record | `direct` | local source reader | exact parsed rule text exists in the scoped rule file | generated policy, unstated implications, precedence, conflict resolution |
+| `repository_symbol_declaration_exists` | `provider_symbol_declaration` | trusted allowed repository source file with high-confidence AST symbol metadata | `direct` | local source reader | parser-backed declaration span exists in the current scoped source input | imports, exports, call graph completeness, behavior, correctness, root cause, ownership, architecture conclusions |
 | `grape_observed_run_result` | `grape_observed_run_result` | trusted Grape-observed `command_run` or `test_run` record | `direct` | `grape` | one scoped observed command/test result happened | correctness, root cause, fix success, production behavior, broader runtime truth |
 
-Future policy entries for provider-backed symbol, import/export, AST edge,
-decision, runtime, CI, bug, or fix claims must be added with fixtures and
-current-valid tests before promotion code can persist them. Semantic candidates,
-graph expansion, compression artifacts, summaries, assistant text, and
-agent-reported runs cannot satisfy a durable policy entry unless a separate
-trusted proof validates the same claim.
+Future policy entries for import/export, AST edge, decision, runtime, CI, bug,
+or fix claims must be added with fixtures and current-valid tests before
+promotion code can persist them. Semantic candidates, graph expansion,
+compression artifacts, summaries, assistant text, and agent-reported runs cannot
+satisfy a durable policy entry unless a separate trusted proof validates the
+same claim.
 
 ## Promotion Rules
 

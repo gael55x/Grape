@@ -8,6 +8,7 @@ import test from "node:test";
 
 import {
   persistGitRepoSnapshot,
+  persistSymbolDeclarationClaims,
   persistSourceExcerptClaims,
   persistSourceProofs,
   readLocalSourceExcerpts
@@ -162,12 +163,58 @@ test("validated package-local source claims record package root scope", () => {
         now
       });
 
-      assert.equal(result.rejectedCandidates.length, 0);
+      assert.deepEqual(result.rejectedCandidates, []);
       assert.equal(result.claimsInserted, 1);
       const [claim] = ctx.claimRepositories.claims.list();
       const scope = JSON.parse(claim.scopeJson);
       assert.equal(scope.sourceRef, "packages/api/src/app.ts");
       assert.equal(scope.packageRoot, "packages/api");
+    });
+  });
+});
+
+test("validated symbol declaration claims record provider proof without raw body", () => {
+  withGitRepo((repoPath) => {
+    withMigratedDatabase((ctx) => {
+      const fixture = prepareClaimFixture(repoPath, ctx);
+      persistSourceProofs({
+        repositories: ctx.proofRepositories,
+        sources: fixture.sources,
+        sourceExcerpts: fixture.sourceExcerpts,
+        now
+      });
+
+      const result = persistSymbolDeclarationClaims({
+        repositories: ctx.claimRepositories,
+        proofRepositories: ctx.proofRepositories,
+        sources: fixture.sources,
+        symbolNodes: ctx.indexingRepositories.symbolNodes.listBySnapshot(fixture.snapshotResult.snapshotId),
+        sourceExcerpts: fixture.sourceExcerpts,
+        branch: fixture.snapshotResult.snapshot.branch,
+        commit: fixture.snapshotResult.snapshot.commit,
+        worktreeHash: fixture.snapshotResult.snapshot.worktreeHash,
+        now
+      });
+
+      assert.deepEqual(result.rejectedCandidates, []);
+      assert.equal(result.symbolsSeen, 1);
+      assert.equal(result.claimsInserted, 1);
+      const [claim] = ctx.claimRepositories.claims.list();
+      assert.equal(claim.claimType, "repository_symbol_declaration_exists");
+      assert.equal(claim.verificationStatus, "verified");
+      assert.match(claim.claimText, /runApp/);
+      const scope = JSON.parse(claim.scopeJson);
+      assert.equal(scope.symbolName, "runApp");
+      assert.equal(scope.symbolKind, "function");
+      assert.equal(scope.sourceRef, "src/app.ts");
+      assert.equal(typeof scope.bodyHash, "string");
+      const [proof] = ctx.proofRepositories.proofs.listByClaim(claim.claimId);
+      assert.ok(proof);
+      assert.equal(proof.proofType, "provider_symbol_declaration");
+      assert.equal(proof.excerptHash, scope.bodyHash);
+      assert.equal("excerpt" in proof, false);
+      assert.equal("body" in proof, false);
+      assert.equal(JSON.stringify({ claim, proof }).includes("return 'ok'"), false);
     });
   });
 });
