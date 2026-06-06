@@ -83,6 +83,10 @@ Trust and scope:
 - `scope_resolution_precedes_current_valid_filter`
 - `branch_invalid_claim_excluded`
 - `dirty_worktree_claim_not_branch_global`
+- `current_valid_retrieval_respects_environment_scope`
+- `feature_flag_scope_prevents_false_global_claim`
+- `monorepo_package_boundary_prevents_same_source_supersession`
+- `unknown_scope_overlap_warning`
 - `repo_file_claim_does_not_overclaim_runtime_behavior`
 - `claim_type_policy_rejects_unknown_claim_type`
 - `claim_type_policy_rejects_unproven_behavior_claim`
@@ -91,6 +95,7 @@ Trust and scope:
 - `project_rule_claim_does_not_resolve_rule_conflict`
 - `incompatible_supersedes_edge_does_not_block_claim`
 - `incompatible_supersedes_edge_does_not_resolve_contradiction`
+- `disjoint_contradiction_scope_does_not_block_claim`
 - `semantic_candidate_cannot_create_claim`
 - `graph_expansion_cannot_satisfy_claim_policy`
 - `summary_or_compression_artifact_cannot_satisfy_claim_policy`

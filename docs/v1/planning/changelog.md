@@ -8,6 +8,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- Centralized claim scope compatibility for current-valid retrieval and claim-edge blocking, including branch, dirty worktree, environment, feature flag, package boundary, and unknown-overlap handling.
 - Hardened current-valid supersession filtering so incompatible `supersedes` edges no longer suppress unrelated claims.
 - Enforced the durable claim policy registry during current-valid claim resolution so legacy or unsupported durable claim rows are excluded even when proof hashes otherwise match.
 - Defined the enabled durable claim policy boundary for `repository_source_excerpt_exists`, `project_rule`, and `grape_observed_run_result` so Trust Kernel behavior stays narrower than broader V1.0 target claim families until each family has proof policy, fixtures, and current-valid tests.
@@ -125,7 +126,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added `grape doctor --privacy` for local-first and scanner privacy diagnostics without returning file bodies or secret values.
 - Added token-budget pruning for compiled context packs. Required task, pinned, exact/safety-critical, omission/restore, and invalidation context is never pruned; optional non-safety context can be omitted from public pack items and output sections with explicit `omittedDueToBudget` metadata.
 - Added ADR-0008 to keep V1 artifact-first by deferring rendered agent-authored artifact annotations and preserving restricted MCP writes as non-authoritative evidence surfaces.
-- Renamed phase/version-prefixed implementation files and symbols to purpose-based names, including compiler artifact projection files and the initial storage migration filename.
+- Renamed version-prefixed implementation files and symbols to purpose-based names, including compiler artifact projection files and the initial storage migration filename.
 - Relaxed migration planning to tolerate filename-only drift when migration ID and checksum match, preserving setup compatibility after purpose-based migration renames.
 - Added task-query-anchored exact source excerpt windows so proof-backed exact context can target relevant lines beyond the first bounded file window while preserving source-hash and excerpt-hash validation.
 - Replaced the mandatory SQLite FTS5 virtual table with portable table-backed lexical search while accepting the previous migration checksum for existing local databases.

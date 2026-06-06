@@ -102,13 +102,13 @@ test("claim edge policy keeps contradictions active after incompatible supersede
         claimId: "claim-a",
         subject: "src/a.ts",
         claimType: "repository_source_excerpt_exists",
-        scope: { branch: "main", sourceRef: "src/a.ts" }
+        scope: { branch: "main", commit: "commit-a", sourceRef: "src/a.ts", sourceScope: "committed" }
       },
       {
         claimId: "claim-b",
         subject: "src/b.ts",
         claimType: "repository_source_excerpt_exists",
-        scope: { branch: "main", sourceRef: "src/b.ts" }
+        scope: { branch: "main", commit: "commit-a", sourceRef: "src/b.ts", sourceScope: "committed" }
       }
     ],
     edges: [
@@ -121,6 +121,43 @@ test("claim edge policy keeps contradictions active after incompatible supersede
   assert.equal(resolved.ignoredEdges.length, 1);
 });
 
+test("claim edge policy does not block disjoint contradiction scopes", () => {
+  const resolved = claimIdsBlockedByActiveClaimEdges({
+    claims: [
+      {
+        claimId: "claim-a",
+        subject: "src/index.ts",
+        claimType: "repository_source_excerpt_exists",
+        scope: {
+          branch: "main",
+          commit: "commit-a",
+          sourceRef: "src/index.ts",
+          sourceScope: "committed",
+          packageRoot: "packages/api"
+        }
+      },
+      {
+        claimId: "claim-b",
+        subject: "src/index.ts",
+        claimType: "repository_source_excerpt_exists",
+        scope: {
+          branch: "main",
+          commit: "commit-a",
+          sourceRef: "src/index.ts",
+          sourceScope: "committed",
+          packageRoot: "packages/web"
+        }
+      }
+    ],
+    edges: [
+      edge("edge-conflict", "claim-a", "claim-b", "contradicts", "2026-05-26T00:00:00.000Z")
+    ]
+  });
+
+  assert.deepEqual([...resolved.blockedClaimIds], []);
+  assert.deepEqual(resolved.warnings, []);
+});
+
 test("current-valid resolution rejects unresolved contradicted claims", () => {
   const resolved = resolveLocalCurrentValidClaims(currentValidInput({
     edges: [
@@ -130,6 +167,18 @@ test("current-valid resolution rejects unresolved contradicted claims", () => {
 
   assert.equal(resolved.activeClaims.length, 0);
   assert.equal(resolved.rejectedCount, 2);
+});
+
+test("current-valid resolution does not let stale contradiction block current claim", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    scopeOverridesA: { commit: "commit-old" },
+    edges: [
+      edge("edge-conflict", "claim-a", "claim-b", "contradicts", "2026-05-26T00:00:00.000Z")
+    ]
+  }));
+
+  assert.deepEqual(resolved.activeClaims.map((claim) => claim.claimId), ["claim-b"]);
+  assert.equal(resolved.rejectedCount, 1);
 });
 
 test("current-valid resolution allows contradicted claims after conflict resolution", () => {
@@ -193,6 +242,17 @@ test("current-valid resolution rejects claim types disabled by durable policy", 
   assert.match(resolved.warnings.join("\n"), /Durable claim policy blocked current-valid claim/);
 });
 
+test("current-valid resolution rejects unknown branch scope with warning", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    scopeOverridesA: { branch: undefined },
+    edges: []
+  }));
+
+  assert.deepEqual(resolved.activeClaims.map((claim) => claim.claimId), ["claim-b"]);
+  assert.equal(resolved.rejectedCount, 1);
+  assert.match(resolved.warnings.join("\n"), /Unknown scope is not current-valid: claim-a/);
+});
+
 function claim(claimId, claimText, scopeHash) {
   return {
     claimId,
@@ -214,15 +274,17 @@ function currentValidInput({
   sourceRefA = "src/a.ts",
   sourceRefB = "src/b.ts",
   sourceHashA = hashA,
-  sourceHashB = hashB
+  sourceHashB = hashB,
+  scopeOverridesA = {},
+  scopeOverridesB = {}
 }) {
   const sourceA = source("source-a", sourceRefA, sourceHashA);
   const sourceB = source("source-b", sourceRefB, sourceHashB);
   const proofA = proof("proof-a", "claim-a", "source-a", sourceHashA);
   const proofB = proof("proof-b", "claim-b", "source-b", sourceHashB);
   const claims = [
-    currentClaim("claim-a", "Claim A", sourceA, proofA, claimTypeA),
-    currentClaim("claim-b", "Claim B", sourceB, proofB, claimTypeB)
+    currentClaim("claim-a", "Claim A", sourceA, proofA, claimTypeA, scopeOverridesA),
+    currentClaim("claim-b", "Claim B", sourceB, proofB, claimTypeB, scopeOverridesB)
   ];
   const proofsByClaim = new Map([
     ["claim-a", [proofA]],
@@ -258,7 +320,7 @@ function currentValidInput({
   };
 }
 
-function currentClaim(claimId, claimText, sourceRecord, proofRecord, claimType) {
+function currentClaim(claimId, claimText, sourceRecord, proofRecord, claimType, scopeOverrides) {
   return {
     claimId,
     subject: sourceRecord.sourceRef,
@@ -270,7 +332,8 @@ function currentClaim(claimId, claimText, sourceRecord, proofRecord, claimType) 
       sourceRef: sourceRecord.sourceRef,
       sourceHash: sourceRecord.sourceHash,
       excerptHash: proofRecord.excerptHash,
-      sourceScope: "committed"
+      sourceScope: "committed",
+      ...scopeOverrides
     }),
     scopeHash: sourceRecord.sourceHash,
     verificationStatus: "verified",

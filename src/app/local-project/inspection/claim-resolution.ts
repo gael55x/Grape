@@ -6,6 +6,7 @@ import {
 } from "../../../core/claims/index.js";
 import { resolveInMemoryCurrentValidCandidates } from "../../../core/retrieval/index.js";
 import type { CurrentValidCandidate } from "../../../core/retrieval/index.js";
+import { resolveCurrentClaimScope } from "../../../core/scope/index.js";
 import type {
   ClaimRecord,
   ClaimStorageRepositories,
@@ -63,7 +64,7 @@ export function resolveLocalCurrentValidClaims(
     activeClaims: selectTaskScopedClaims(allActiveClaims, input.taskSourceRefs, input.sessionId),
     visibleClaims: claims.map((claim) => toClaimSummary(claim, input.proofs.listByClaim(claim.claimId))),
     rejectedCount: resolved.rejected.length,
-    warnings: [...resolved.warnings, ...ignoredSupersessionWarnings(edgeBlocks.ignoredEdges)]
+    warnings: [...resolved.warnings, ...edgeBlocks.warnings]
   };
 }
 
@@ -123,20 +124,25 @@ function toCurrentValidCandidate(input: {
 }): CurrentValidCandidate {
   const scope = parseScope(input.claim.scopeJson);
   const sources = input.proofs.map(input.sourceForProof);
+  const scopeResolution = resolveCurrentClaimScope(scope, {
+    branch: input.snapshot.branch,
+    commit: input.snapshot.commit,
+    worktreeHash: input.snapshot.worktreeHash
+  });
   return {
     id: input.claim.claimId,
     text: input.claim.claimText,
     sourceRefs: sources.map((source) => source?.sourceRef ?? stringScope(scope, "sourceRef")).filter(Boolean),
     proofRefs: input.proofs.map((proof) => proof.proofId),
     verificationStatus: input.claim.verificationStatus,
-    scopeResult: scopeMatchesCurrentSnapshot(scope, input.snapshot) ? "match" : "mismatch",
+    scopeResult: scopeResolution.scopeResult,
     sourceHashStatus: sourceHashesMatch(input.proofs, sources, input.currentFiles, scope),
     proofHashStatus: proofHashesMatch(input.proofs, scope),
     contradictionStatus: input.activeContradictionClaimIds.has(input.claim.claimId) ? "active" : "none",
     privacyStatus: sources.every((source) => source?.privacyStatus === "allowed" && source.redactionStatus !== "blocked")
       ? "allowed"
       : "blocked",
-    dirtyScopeStatus: dirtyScopeStatus(scope, input.snapshot),
+    dirtyScopeStatus: scopeResolution.dirtyScopeStatus,
     claimPolicyStatus: claimPolicyStatus({
       claim: input.claim,
       proofs: input.proofs,
@@ -205,22 +211,6 @@ function toClaimEdgePolicyClaim(claim: ClaimRecord): {
   };
 }
 
-function ignoredSupersessionWarnings(
-  edges: readonly { readonly sourceClaimId: string; readonly targetClaimId: string }[]
-): readonly string[] {
-  return edges.map(
-    (edge) =>
-      `Ignored supersedes edge without compatible claim subject, type, and scope: ${edge.sourceClaimId} -> ${edge.targetClaimId}`
-  );
-}
-
-function scopeMatchesCurrentSnapshot(
-  scope: Record<string, unknown>,
-  snapshot: ReturnType<typeof createGitRepoSnapshot>
-): boolean {
-  return stringScope(scope, "branch") === snapshot.branch && stringScope(scope, "commit") === snapshot.commit;
-}
-
 function sourceHashesMatch(
   proofs: readonly ProofRecord[],
   sources: readonly (SourceRecord | undefined)[],
@@ -259,14 +249,6 @@ function proofHashesMatch(
   })
     ? "match"
     : "mismatch";
-}
-
-function dirtyScopeStatus(
-  scope: Record<string, unknown>,
-  snapshot: ReturnType<typeof createGitRepoSnapshot>
-): CurrentValidCandidate["dirtyScopeStatus"] {
-  if (stringScope(scope, "sourceScope") === "committed") return "not_dirty";
-  return stringScope(scope, "worktreeHash") === snapshot.worktreeHash ? "match" : "mismatch";
 }
 
 function parseScope(scopeJson: string): Record<string, unknown> {

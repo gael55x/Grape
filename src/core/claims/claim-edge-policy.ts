@@ -1,3 +1,8 @@
+import {
+  claimScopesCompatibleForSupersession,
+  claimScopesOverlap
+} from "../scope/index.js";
+
 export interface ClaimEdgePolicyClaim {
   readonly claimId: string;
   readonly subject: string;
@@ -15,6 +20,7 @@ export interface ClaimEdgePolicyEdge {
 export interface ActiveClaimEdgeBlockResult {
   readonly blockedClaimIds: ReadonlySet<string>;
   readonly ignoredEdges: readonly ClaimEdgePolicyEdge[];
+  readonly warnings: readonly string[];
 }
 
 const conflictClosingEdgeTypes = new Set(["coexists_with", "variant_of"]);
@@ -27,15 +33,27 @@ export function claimIdsBlockedByActiveClaimEdges(input: {
   const claimsById = new Map(input.claims.map((claim) => [claim.claimId, claim]));
   const blocked = new Set<string>();
   const ignoredEdges: ClaimEdgePolicyEdge[] = [];
+  const warnings: string[] = [];
 
   for (const edge of input.edges) {
     if (edge.edgeType === "contradicts" && !hasLaterResolution(edge, input.edges, conflictClosingEdgeTypes)) {
-      blocked.add(edge.sourceClaimId);
-      blocked.add(edge.targetClaimId);
+      blockIfScopesMayConflict({
+        edge,
+        sourceClaim: claimsById.get(edge.sourceClaimId),
+        targetClaim: claimsById.get(edge.targetClaimId),
+        blocked,
+        warnings
+      });
       continue;
     }
     if (edge.edgeType === "violates" && !hasLaterResolution(edge, input.edges, conflictClosingEdgeTypes)) {
-      blocked.add(edge.sourceClaimId);
+      blockViolatingClaimIfScopesMayConflict({
+        edge,
+        sourceClaim: claimsById.get(edge.sourceClaimId),
+        targetClaim: claimsById.get(edge.targetClaimId),
+        blocked,
+        warnings
+      });
       continue;
     }
     if (edge.edgeType !== "supersedes" || hasLaterResolution(edge, input.edges, supersedesClosingEdgeTypes)) {
@@ -48,61 +66,67 @@ export function claimIdsBlockedByActiveClaimEdges(input: {
       blocked.add(edge.targetClaimId);
     } else {
       ignoredEdges.push(edge);
+      warnings.push(
+        `Ignored supersedes edge without compatible claim subject, type, and scope: ${edge.sourceClaimId} -> ${edge.targetClaimId}`
+      );
     }
   }
 
-  return { blockedClaimIds: blocked, ignoredEdges };
+  return { blockedClaimIds: blocked, ignoredEdges, warnings };
 }
 
 export function canSupersedeClaim(sourceClaim: ClaimEdgePolicyClaim, targetClaim: ClaimEdgePolicyClaim): boolean {
   return (
     sourceClaim.claimType === targetClaim.claimType &&
     sourceClaim.subject === targetClaim.subject &&
-    stringScope(sourceClaim.scope, "branch") !== "" &&
-    stringScope(sourceClaim.scope, "branch") === stringScope(targetClaim.scope, "branch") &&
-    sameOptionalScopeValue(sourceClaim.scope, targetClaim.scope, "environment") &&
-    sameOptionalScopeObject(sourceClaim.scope, targetClaim.scope, "featureFlags") &&
-    sameRequiredScopeValue(sourceClaim.scope, targetClaim.scope, "sourceRef")
+    claimScopesCompatibleForSupersession(sourceClaim.scope, targetClaim.scope).status === "overlap"
   );
 }
 
-function sameRequiredScopeValue(
-  sourceScope: Readonly<Record<string, unknown>>,
-  targetScope: Readonly<Record<string, unknown>>,
-  key: string
-): boolean {
-  const sourceValue = stringScope(sourceScope, key);
-  return sourceValue !== "" && sourceValue === stringScope(targetScope, key);
+function blockIfScopesMayConflict(input: {
+  readonly edge: ClaimEdgePolicyEdge;
+  readonly sourceClaim: ClaimEdgePolicyClaim | undefined;
+  readonly targetClaim: ClaimEdgePolicyClaim | undefined;
+  readonly blocked: Set<string>;
+  readonly warnings: string[];
+}): void {
+  const overlap = activeEdgeScopeOverlap(input);
+  if (overlap === "disjoint") return;
+  input.blocked.add(input.edge.sourceClaimId);
+  input.blocked.add(input.edge.targetClaimId);
 }
 
-function sameOptionalScopeValue(
-  sourceScope: Readonly<Record<string, unknown>>,
-  targetScope: Readonly<Record<string, unknown>>,
-  key: string
-): boolean {
-  const sourceValue = sourceScope[key];
-  const targetValue = targetScope[key];
-  if (sourceValue === undefined && targetValue === undefined) return true;
-  return typeof sourceValue === "string" && sourceValue === targetValue;
+function blockViolatingClaimIfScopesMayConflict(input: {
+  readonly edge: ClaimEdgePolicyEdge;
+  readonly sourceClaim: ClaimEdgePolicyClaim | undefined;
+  readonly targetClaim: ClaimEdgePolicyClaim | undefined;
+  readonly blocked: Set<string>;
+  readonly warnings: string[];
+}): void {
+  const overlap = activeEdgeScopeOverlap(input);
+  if (overlap === "disjoint") return;
+  input.blocked.add(input.edge.sourceClaimId);
 }
 
-function sameOptionalScopeObject(
-  sourceScope: Readonly<Record<string, unknown>>,
-  targetScope: Readonly<Record<string, unknown>>,
-  key: string
-): boolean {
-  const sourceValue = sourceScope[key];
-  const targetValue = targetScope[key];
-  if (sourceValue === undefined && targetValue === undefined) return true;
-  return stableJson(sourceValue) === stableJson(targetValue);
-}
-
-function stableJson(value: unknown): string {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return JSON.stringify(value);
-  const record = value as Record<string, unknown>;
-  return JSON.stringify(
-    Object.fromEntries(Object.keys(record).sort().map((key) => [key, record[key]]))
-  );
+function activeEdgeScopeOverlap(input: {
+  readonly edge: ClaimEdgePolicyEdge;
+  readonly sourceClaim: ClaimEdgePolicyClaim | undefined;
+  readonly targetClaim: ClaimEdgePolicyClaim | undefined;
+  readonly warnings: string[];
+}): "overlap" | "disjoint" | "unknown" {
+  if (!input.sourceClaim || !input.targetClaim) {
+    input.warnings.push(
+      `Claim edge has unknown scope because a linked claim is unavailable: ${input.edge.sourceClaimId} -> ${input.edge.targetClaimId}`
+    );
+    return "unknown";
+  }
+  const overlap = claimScopesOverlap(input.sourceClaim.scope, input.targetClaim.scope);
+  if (overlap.status === "unknown") {
+    input.warnings.push(
+      `Claim edge has unknown scope overlap and remains blocking: ${input.edge.sourceClaimId} -> ${input.edge.targetClaimId}`
+    );
+  }
+  return overlap.status;
 }
 
 function hasLaterResolution(
@@ -120,9 +144,4 @@ function hasLaterResolution(
 
 function claimPairKey(edge: Pick<ClaimEdgePolicyEdge, "sourceClaimId" | "targetClaimId">): string {
   return [edge.sourceClaimId, edge.targetClaimId].sort().join("\0");
-}
-
-function stringScope(scope: Readonly<Record<string, unknown>>, key: string): string {
-  const value = scope[key];
-  return typeof value === "string" ? value : "";
 }

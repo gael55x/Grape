@@ -108,6 +108,8 @@ Compile also creates conservative `needs_review` claim edges between parsed `pro
 
 Current-valid filtering consumes only explicit active contradiction/supersession edge semantics. An unresolved `contradicts` edge blocks both linked claims, an unresolved `violates` edge blocks the violating source claim, and a `supersedes` edge blocks the superseded target claim only when the linked claims have compatible claim type, subject, and scope. Incompatible supersession edges are surfaced as warnings and do not suppress current-valid context. A later applicable `coexists_with` or `variant_of` resolution edge keeps the pair eligible. A `needs_review` edge remains visible to conflict inspection but does not deactivate either claim by itself.
 
+Claim scope compatibility is resolved through the shared scope module before current-valid activation or claim-edge blocking. Branch and commit are required for current snapshot matches. Dirty or external source scopes require the current worktree hash; missing dirty scope is `unknown`, not a match. Session scope is checked when the caller supplies a current session; broad inspection surfaces may list otherwise-current session-scoped observed-run claims, while task-scoped rendering still filters observed-run claims to the active session. Claim-to-claim edge overlap compares branch, commit, environment, feature flags, package/service root, session scope when present, and dirty/worktree scope. Disjoint contradiction/violation edges do not deactivate claims. Unknown contradiction/violation overlap remains blocking and warning-bearing until scope is discovered. Supersession requires compatible scope and exact source-ref replacement; unknown or disjoint scope is warning metadata only.
+
 Path-like MCP `tests` seed refs and import-related test refs can select allowed test files for exact source excerpts. That proof still means only that the excerpt exists in the current source input. A test file excerpt is not proof that the test was run, that the behavior passed, or that the implementation is correct. Runtime test claims still require a trusted test-run proof.
 
 After proof validation, local compile creates claim candidates for the narrow claim type `repository_source_excerpt_exists`. The belief gate accepts only direct exact-source proofs from trusted allowed source/config/lockfile/migration/rule records, then persists verified durable claims and links the proof row to the claim. Context artifacts render only the current-valid source-excerpt claims whose source refs match the task-selected refs when retrieval has selected refs; `grape claims --active` and `grape_get_claims` remain broader inspection surfaces over all current-valid claims. These claims prove only that a selected exact excerpt exists in the current scoped source input. They do not prove runtime behavior, correctness, root cause, deployment state, or broad architecture conclusions.
@@ -157,7 +159,7 @@ The local CLI runner commands `grape run --session <id> -- <cmd...>` and `grape 
 A claim is eligible for current-valid retrieval only when:
 
 1. `verificationStatus === "verified"`;
-2. scope result is `match`;
+2. shared scope result is `match`;
 3. source hash and proof hash still match current inputs;
 4. no active contradiction, violation, or supersession edge blocks it;
 5. no ignored/private/secret policy blocks the source;
