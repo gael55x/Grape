@@ -14,6 +14,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     "--task",
     "--task-type",
     "--environment-scope",
+    "--feature-flags",
     "--risk",
     "--session",
     "--token-budget",

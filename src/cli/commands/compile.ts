@@ -27,6 +27,7 @@ export async function runCompileLike(
       "--task",
       "--task-type",
       "--environment-scope",
+      "--feature-flags",
       "--risk",
       "--session",
       "--reset-session",
@@ -53,6 +54,7 @@ export async function runCompileLike(
       task,
       taskType: parsed.values.get("--task-type"),
       environmentScope: parseEnvironmentScope(parsed.values.get("--environment-scope")),
+      featureFlags: parseFeatureFlags(parsed.values.get("--feature-flags")),
       riskOverlays: parsed.values.get("--risk"),
       sessionId: parsed.values.get("--session"),
       tokenBudget: parseTokenBudget(parsed.values.get("--token-budget")),
@@ -103,6 +105,7 @@ function compileErrorExitCode(error: unknown): number {
     return exitCodes.usage;
   }
   if (message.startsWith("environment scope must")) return exitCodes.usage;
+  if (message.startsWith("feature flags must")) return exitCodes.usage;
   if (message.startsWith("token budget must")) return exitCodes.usage;
   if (message.includes("may only contain letters")) return exitCodes.usage;
   if (message.includes("secret scan blocked")) return exitCodes.unsafe;
@@ -132,4 +135,35 @@ function parseEnvironmentScope(
     throw new Error("environment scope must be local, test, ci, staging, production, or unknown");
   }
   return value as (typeof allowed)[number];
+}
+
+function parseFeatureFlags(value: string | undefined): Readonly<Record<string, string | boolean>> | undefined {
+  if (value === undefined) return undefined;
+  const flags: Record<string, string | boolean> = {};
+  for (const rawEntry of value.split(",")) {
+    const entry = rawEntry.trim();
+    if (!entry) throw new Error("feature flags must be comma-separated name or name=value entries");
+    const [rawName, ...rawValueParts] = entry.split("=");
+    const name = rawName.trim();
+    if (!safeFeatureFlagName(name) || rawValueParts.length > 1) {
+      throw new Error("feature flags must use safe names and optional values");
+    }
+    const rawFlagValue = rawValueParts[0]?.trim();
+    flags[name] = parseFeatureFlagValue(rawFlagValue);
+  }
+  return Object.keys(flags).length > 0 ? flags : undefined;
+}
+
+function parseFeatureFlagValue(value: string | undefined): string | boolean {
+  if (value === undefined || value === "") return true;
+  if (value === "true") return true;
+  if (value === "false") return false;
+  if (/[\0\r\n\t]/.test(value) || value.length > 120) {
+    throw new Error("feature flags must use safe names and optional values");
+  }
+  return value;
+}
+
+function safeFeatureFlagName(value: string): boolean {
+  return /^[A-Za-z0-9_.:-]{1,80}$/.test(value);
 }

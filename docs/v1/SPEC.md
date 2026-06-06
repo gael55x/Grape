@@ -2771,6 +2771,7 @@ type GrapeGetContextInput = {
   tests?: string[];
 
   environmentScope?: "local" | "test" | "ci" | "staging" | "production" | "unknown";
+  featureFlags?: Record<string, string | boolean>;
 
   tokenBudget?: number;
 
@@ -2793,6 +2794,12 @@ lexical matches, or related-test imports, exact source proof rows are created
 from those selected refs instead of backfilling unrelated repository files.
 If retrieval finds no selected source refs, Grape may fall back to bounded
 generic exact-source excerpts so the artifact remains inspectable.
+
+`environmentScope` and `featureFlags` are caller-supplied current-scope
+labels. They can filter current-valid claims whose scopes already include those
+dimensions, but they are not runtime proof, source proof, test proof, or durable
+claim authority. Public MCP/CLI output must not expose raw feature flag values
+or treat them as correctness evidence.
 
 ### 28.6 `grape_get_context` output
 
@@ -3295,6 +3302,8 @@ Do not report token reduction against an ad hoc baseline.
 - `stale_file_hash_marks_claim_stale`
 - `current_valid_retrieval_respects_environment_scope`
 - `feature_flag_scope_prevents_false_global_claim`
+- `current_feature_flags_reject_mismatched_flag_scoped_claims`
+- `current_valid_resolution_rejects_claims_scoped_to_another_current_feature_flag_value`
 - `feature_flag_unknown_does_not_match_global_truth`
 - `test_output_only_partially_validates_broad_behavior_claim`
 - `current_valid_claims_ranked_by_task_relevance`

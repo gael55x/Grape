@@ -73,6 +73,21 @@ test("feature_flag_scope_prevents_false_global_claim", () => {
   assert.deepEqual(overlap.unknownDimensions, ["featureFlags"]);
 });
 
+test("current feature flags reject mismatched flag-scoped claims", () => {
+  const resolved = resolveCurrentClaimScope({
+    branch: "main",
+    commit: "commit-a",
+    sourceScope: "committed",
+    featureFlags: { betaCheckout: true }
+  }, {
+    ...current,
+    featureFlags: { betaCheckout: false }
+  });
+
+  assert.equal(resolved.scopeResult, "mismatch");
+  assert.deepEqual(resolved.mismatchedDimensions, ["featureFlags"]);
+});
+
 test("monorepo_package_boundary_prevents_same_source_supersession", () => {
   const overlap = claimScopesCompatibleForSupersession(
     {

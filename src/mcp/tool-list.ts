@@ -27,6 +27,15 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
               type: "string",
               enum: ["local", "test", "ci", "staging", "production", "unknown"]
             },
+            featureFlags: {
+              type: "object",
+              additionalProperties: {
+                anyOf: [
+                  { type: "boolean" },
+                  { type: "string", minLength: 1 }
+                ]
+              }
+            },
             tokenBudget: { type: "integer", minimum: 1 },
             sessionId: { type: "string", minLength: 1 },
             agentName: { type: "string", minLength: 1 },

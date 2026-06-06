@@ -11,6 +11,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added explicit claim-edge authority metadata so blocking conflict/supersession behavior depends on recorded provenance instead of edge type alone.
 - Added CLI `--environment-scope` parity for compile/diff-context so caller-supplied current environment scope reaches artifact projection and current-valid filtering.
 - Added narrow package-root scope derivation and package-local claim scope metadata for explicit package-local file/test refs so current-valid retrieval can reject claims from sibling packages without inferring a full package graph or manifest-backed package invalidation.
+- Added CLI and MCP feature-flag current-scope filters that reject mismatched feature-scoped claims without rendering private flag labels or treating flags as runtime proof.
 - Applied MCP `environmentScope` as a caller-supplied current-valid scope label and artifact field without treating it as runtime proof.
 - Tightened compile-scoped current-valid filtering so session-scoped claims from another active session are excluded, while branch/worktree-scoped claims without a session remain eligible.
 - Centralized claim scope compatibility for current-valid retrieval and claim-edge blocking, including branch, dirty worktree, environment, feature flag, package boundary, and unknown-overlap handling.

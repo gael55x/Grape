@@ -108,6 +108,7 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.match(result.stdout, /grape mcp --print-config/);
   assert.match(result.stdout, /grape mcp --stdio/);
   assert.match(result.stdout, /--environment-scope <env>/);
+  assert.match(result.stdout, /--feature-flags <flags>/);
 });
 
 test("cli compile applies caller environment scope to compiled artifacts", () => {
@@ -125,6 +126,41 @@ test("cli compile applies caller environment scope to compiled artifacts", () =>
     assert.equal(output.contextArtifact.environmentScope, "staging");
     const artifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, output.artifactJsonPath), "utf8"));
     assert.equal(artifactJson.contextArtifact.environmentScope, "staging");
+  });
+});
+
+test("cli compile accepts caller feature flag scope without exposing flag labels", () => {
+  withGitRepo((repoPath) => {
+    const output = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Review scoped context",
+      "--session",
+      "cli-feature-session",
+      "--feature-flags",
+      "betaCheckout=true"
+    ]);
+
+    assert.equal(JSON.stringify(output).includes("betaCheckout"), false);
+  });
+});
+
+test("cli compile rejects unsafe feature flag scope input", () => {
+  withGitRepo((repoPath) => {
+    const result = runCli(repoPath, [
+      "compile",
+      "--task",
+      "Review scoped context",
+      "--session",
+      "cli-feature-invalid-session",
+      "--feature-flags",
+      "bad flag=true",
+      "--json"
+    ]);
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /feature flags must use safe names/);
+    assert.equal(result.stdout, "");
   });
 });
 

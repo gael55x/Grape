@@ -86,6 +86,8 @@ Trust and scope:
 - `current_valid_retrieval_respects_environment_scope`
 - `current_valid_resolution_rejects_claims_scoped_to_another_current_environment`
 - `feature_flag_scope_prevents_false_global_claim`
+- `current_feature_flags_reject_mismatched_flag_scoped_claims`
+- `current_valid_resolution_rejects_claims_scoped_to_another_current_feature_flag_value`
 - `package_root_helper_derives_only_one_explicit_workspace_root`
 - `current_valid_resolution_rejects_claims_scoped_to_another_current_package_root`
 - `current_session_does_not_reject_branch_scoped_claims_without_session_scope`
@@ -148,6 +150,9 @@ MCP and CLI:
 
 - `mcp_get_context_returns_structured_items`
 - `cli_compile_applies_caller_environment_scope`
+- `cli_compile_accepts_caller_feature_flag_scope_without_exposing_flag_labels`
+- `cli_compile_rejects_unsafe_feature_flag_scope_input`
+- `mcp_get_context_accepts_caller_feature_flag_scope_without_exposing_flag_labels`
 - `mcp_get_proofs_does_not_show_raw_secret`
 - `mcp_write_tool_cannot_promote_claim`
 - `agent_reported_test_result_is_temporary`

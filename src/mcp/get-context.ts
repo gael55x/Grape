@@ -29,6 +29,7 @@ export interface GrapeGetContextToolInput {
   readonly symbols?: readonly string[];
   readonly tests?: readonly string[];
   readonly environmentScope?: "local" | "test" | "ci" | "staging" | "production" | "unknown";
+  readonly featureFlags?: Readonly<Record<string, string | boolean>>;
   readonly tokenBudget?: number;
   readonly sessionId?: string;
   readonly agentName?: string;
@@ -82,6 +83,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     task: parsed.query,
     taskType: parsed.taskType,
     environmentScope: parsed.environmentScope,
+    featureFlags: parsed.featureFlags,
     riskSeedRefs: [...(parsed.files ?? []), ...(parsed.symbols ?? []), ...(parsed.tests ?? [])],
     seedFiles: parsed.files,
     seedSymbols: parsed.symbols,
@@ -163,6 +165,7 @@ function parseInput(input: unknown): GrapeGetContextToolInput {
     "symbols",
     "tests",
     "environmentScope",
+    "featureFlags",
     "tokenBudget",
     "sessionId",
     "agentName",
@@ -178,6 +181,7 @@ function parseInput(input: unknown): GrapeGetContextToolInput {
     symbols: optionalStringArray(input.symbols, "symbols"),
     tests: optionalStringArray(input.tests, "tests"),
     environmentScope: optionalEnvironmentScope(input.environmentScope),
+    featureFlags: optionalFeatureFlags(input.featureFlags),
     tokenBudget: optionalPositiveInteger(input.tokenBudget, "tokenBudget"),
     sessionId: optionalString(input.sessionId, "sessionId"),
     agentName: optionalString(input.agentName, "agentName"),
@@ -247,6 +251,35 @@ function optionalEnvironmentScope(
     throw new Error("environmentScope must be local, test, ci, staging, production, or unknown");
   }
   return value as (typeof allowed)[number];
+}
+
+function optionalFeatureFlags(value: unknown): Readonly<Record<string, string | boolean>> | undefined {
+  if (value === undefined) return undefined;
+  if (!isRecord(value) || Object.keys(value).length === 0) {
+    throw new Error("featureFlags must be a non-empty object");
+  }
+  const flags: Record<string, string | boolean> = {};
+  for (const [key, flagValue] of Object.entries(value)) {
+    if (!safeFeatureFlagName(key)) throw new Error("featureFlags keys must use safe feature flag names");
+    if (typeof flagValue === "boolean") {
+      flags[key] = flagValue;
+      continue;
+    }
+    if (
+      typeof flagValue !== "string" ||
+      flagValue.trim() === "" ||
+      /[\0\r\n\t]/.test(flagValue) ||
+      flagValue.length > 120
+    ) {
+      throw new Error("featureFlags values must be booleans or non-empty safe strings");
+    }
+    flags[key] = flagValue;
+  }
+  return flags;
+}
+
+function safeFeatureFlagName(value: string): boolean {
+  return /^[A-Za-z0-9_.:-]{1,80}$/.test(value);
 }
 
 function taskTypeFromResult(inputTaskType: GrapeGetContextToolInput["taskType"]): TaskType {

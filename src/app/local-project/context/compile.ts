@@ -165,6 +165,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         snapshot: snapshotResult.snapshot,
         sessionId,
         environment: claimEnvironment,
+        featureFlags: input.featureFlags,
         packageRoot: currentPackageRoot,
         taskSourceRefs: proofs.taskRetrieval.selectedSourceRefs.length > 0
           ? proofs.taskRetrieval.selectedSourceRefs

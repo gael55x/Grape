@@ -357,6 +357,18 @@ test("current-valid resolution rejects claims scoped to another current environm
   assert.equal(resolved.rejectedCount, 1);
 });
 
+test("current-valid resolution rejects claims scoped to another current feature flag value", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    featureFlags: { betaCheckout: true },
+    scopeOverridesA: { featureFlags: { betaCheckout: false } },
+    scopeOverridesB: { featureFlags: { betaCheckout: true } },
+    edges: []
+  }));
+
+  assert.deepEqual(resolved.activeClaims.map((claim) => claim.claimId), ["claim-b"]);
+  assert.equal(resolved.rejectedCount, 1);
+});
+
 test("current-valid resolution rejects claims scoped to another current package root", () => {
   const resolved = resolveLocalCurrentValidClaims(currentValidInput({
     packageRoot: "packages/api",
@@ -395,6 +407,7 @@ function currentValidInput({
   scopeOverridesB = {},
   sessionId,
   environment,
+  featureFlags,
   packageRoot
 }) {
   const sourceA = source("source-a", sourceRefA, sourceHashA);
@@ -438,6 +451,7 @@ function currentValidInput({
     },
     sessionId,
     environment,
+    featureFlags,
     packageRoot
   };
 }
