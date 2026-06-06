@@ -24,6 +24,7 @@ export interface PersistProjectRuleClaimsInput {
   readonly sourceExcerpts: readonly RepositoryArtifactSourceExcerptInput[];
   readonly branch: string;
   readonly commit: string;
+  readonly environment?: string;
   readonly worktreeHash: string;
   readonly now: string;
 }
@@ -53,6 +54,7 @@ export function persistProjectRuleClaims(input: PersistProjectRuleClaimsInput): 
       const draft = createProjectRuleClaimDraft({
         branch: input.branch,
         commit: input.commit,
+        environment: input.environment,
         worktreeHash: input.worktreeHash,
         rule
       });

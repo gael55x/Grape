@@ -900,6 +900,31 @@ test("mcp grape_get_context compiles and returns structured context pack output"
   });
 });
 
+test("mcp grape_get_context applies caller environment scope to compiled artifacts", () => {
+  withGitRepo((repoPath) => {
+    const responses = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository entry points",
+            sessionId: "mcp-environment-session",
+            environmentScope: "staging",
+            outputMode: "full"
+          }
+        }
+      }
+    ]);
+
+    const output = responses[0].result.structuredContent;
+    assert.equal(output.contextArtifact.environmentScope, "staging");
+    assert.equal(output.warnings.includes("mcp_environment_scope_not_applied_in_scaffold_compile"), false);
+  });
+});
+
 test("mcp grape_get_context invalidates prior sent context when a session switches branches", () => {
   withGitRepo((repoPath) => {
     runMcp(repoPath, [

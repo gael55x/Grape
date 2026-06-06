@@ -84,7 +84,10 @@ Trust and scope:
 - `branch_invalid_claim_excluded`
 - `dirty_worktree_claim_not_branch_global`
 - `current_valid_retrieval_respects_environment_scope`
+- `current_valid_resolution_rejects_claims_scoped_to_another_current_environment`
 - `feature_flag_scope_prevents_false_global_claim`
+- `current_session_does_not_reject_branch_scoped_claims_without_session_scope`
+- `current_valid_resolution_rejects_claims_scoped_to_another_current_session`
 - `monorepo_package_boundary_prevents_same_source_supersession`
 - `unknown_scope_overlap_warning`
 - `repo_file_claim_does_not_overclaim_runtime_behavior`

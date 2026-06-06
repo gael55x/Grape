@@ -137,3 +137,17 @@ test("session_scope_is_checked_only_when_current_session_is_known", () => {
   assert.equal(scopedInspection.scopeResult, "mismatch");
   assert.deepEqual(scopedInspection.mismatchedDimensions, ["sessionId"]);
 });
+
+test("current session does not reject branch-scoped claims without session scope", () => {
+  const resolved = resolveCurrentClaimScope({
+    branch: "main",
+    commit: "commit-a",
+    sourceScope: "committed"
+  }, {
+    ...current,
+    sessionId: "session-a"
+  });
+
+  assert.equal(resolved.scopeResult, "match");
+  assert.equal(resolved.dirtyScopeStatus, "not_dirty");
+});

@@ -5,8 +5,8 @@ import {
   compareOptionalFeatureFlagsToCurrent,
   compareOptionalPackageRootDimensions,
   compareOptionalPackageRootToCurrent,
+  compareOptionalSessionToCurrent,
   compareOptionalSessionDimensions,
-  compareOptionalStringToCurrent,
   compareRequiredStringDimensions,
   compareRequiredStringToCurrent,
   compareSourceScopeDimensions,
@@ -34,7 +34,7 @@ export function resolveCurrentClaimScope(
   compareOptionalFeatureFlagsToCurrent(comparison, scope, current.featureFlags);
   compareOptionalPackageRootToCurrent(comparison, scope, current.packageRoot);
   if (current.sessionId !== undefined) {
-    compareOptionalStringToCurrent(comparison, scope, "sessionId", current.sessionId);
+    compareOptionalSessionToCurrent(comparison, scope, current.sessionId);
   }
 
   const scopeResult = scopeMatchResult(comparison);

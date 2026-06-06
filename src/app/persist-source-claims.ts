@@ -19,6 +19,7 @@ export interface PersistSourceClaimsInput {
   readonly sourceExcerpts: readonly RepositoryArtifactSourceExcerptInput[];
   readonly branch: string;
   readonly commit: string;
+  readonly environment?: string;
   readonly worktreeHash: string;
   readonly now: string;
 }
@@ -40,6 +41,7 @@ export function persistSourceExcerptClaims(input: PersistSourceClaimsInput): Per
     const draft = createSourceExcerptClaimDraft({
       branch: input.branch,
       commit: input.commit,
+      environment: input.environment,
       worktreeHash: input.worktreeHash,
       excerpt
     });

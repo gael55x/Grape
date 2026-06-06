@@ -6,6 +6,7 @@ export interface CompileLocalContextInput {
   readonly rootPath: string;
   readonly task: string;
   readonly taskType?: string;
+  readonly environmentScope?: ContextArtifactShape["environmentScope"];
   readonly riskOverlays?: string;
   readonly riskSeedRefs?: readonly string[];
   readonly seedFiles?: readonly string[];

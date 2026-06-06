@@ -22,6 +22,7 @@ export interface LocalCompileResultInput {
   readonly sessionId: string;
   readonly taskId: string;
   readonly riskOverlays: readonly RiskOverlay[];
+  readonly environmentScope?: CompileLocalContextResult["contextArtifact"]["environmentScope"];
   readonly value: LocalCompileDatabaseValue;
   readonly databaseBackupPath?: string;
 }
@@ -36,7 +37,8 @@ export function toCompileLocalContextResult(input: LocalCompileResultInput): Com
     worktreeStateId: input.value.snapshotResult.worktreeStateId,
     dirtyWorktree: input.value.snapshotResult.snapshot.worktreeStatus !== "clean",
     budget,
-    tokenCost: input.value.build.tokenMetric.grapeTokens
+    tokenCost: input.value.build.tokenMetric.grapeTokens,
+    environmentScope: input.environmentScope
   });
   const warnings = [
     ...input.value.artifact.warnings,

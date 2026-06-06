@@ -55,6 +55,7 @@ export interface ProjectRuleLine {
 export interface ProjectRuleClaimScope {
   readonly branch: string;
   readonly commit: string;
+  readonly environment?: string;
   readonly worktreeHash: string;
   readonly sourceRef: string;
   readonly sourceId: string;
@@ -111,6 +112,7 @@ export function parseProjectRuleLines(excerpt: ProjectRuleExcerptInput): readonl
 export function createProjectRuleClaimDraft(input: {
   readonly branch: string;
   readonly commit: string;
+  readonly environment?: string;
   readonly worktreeHash: string;
   readonly rule: ProjectRuleLine;
 }): ProjectRuleClaimDraft {
@@ -118,6 +120,7 @@ export function createProjectRuleClaimDraft(input: {
   const scope: ProjectRuleClaimScope = {
     branch: input.branch,
     commit: input.commit,
+    ...(input.environment ? { environment: input.environment } : {}),
     worktreeHash: input.worktreeHash,
     sourceRef: input.rule.sourceRef,
     sourceId: input.rule.sourceId,

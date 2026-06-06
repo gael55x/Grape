@@ -25,6 +25,7 @@ export interface LocalContextArtifactProjectionInput {
   readonly dirtyWorktree: boolean;
   readonly budget: ContextPackBudgetResult;
   readonly tokenCost: number;
+  readonly environmentScope?: ContextArtifactShape["environmentScope"];
 }
 
 export interface LocalContextOutputInput extends LocalContextArtifactProjectionInput {

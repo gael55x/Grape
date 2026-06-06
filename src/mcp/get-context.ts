@@ -81,6 +81,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     rootPath,
     task: parsed.query,
     taskType: parsed.taskType,
+    environmentScope: parsed.environmentScope,
     riskSeedRefs: [...(parsed.files ?? []), ...(parsed.symbols ?? []), ...(parsed.tests ?? [])],
     seedFiles: parsed.files,
     seedSymbols: parsed.symbols,
@@ -283,9 +284,6 @@ function countState(
 
 function unsupportedInputWarnings(input: GrapeGetContextToolInput): string[] {
   const warnings: string[] = [];
-  if (input.environmentScope && input.environmentScope !== "local") {
-    warnings.push("mcp_environment_scope_not_applied_in_scaffold_compile");
-  }
   if (input.agentName || input.agentSessionId) warnings.push("mcp_agent_identity_not_persisted_in_scaffold_compile");
   return warnings;
 }

@@ -24,6 +24,7 @@ export interface ResolveLocalCurrentValidClaimsInput {
   readonly sources: EvidenceStorageRepositories["sources"];
   readonly snapshot: ReturnType<typeof createGitRepoSnapshot>;
   readonly sessionId?: string;
+  readonly environment?: string;
   readonly taskSourceRefs?: readonly string[];
 }
 
@@ -51,7 +52,9 @@ export function resolveLocalCurrentValidClaims(
         sourceForProof: (proof) => input.sources.get(proof.sourceId),
         currentFiles,
         snapshot: input.snapshot,
-        activeContradictionClaimIds: edgeBlocks.blockedClaimIds
+        activeContradictionClaimIds: edgeBlocks.blockedClaimIds,
+        sessionId: input.sessionId,
+        environment: input.environment
       })
     )
   );
@@ -121,13 +124,17 @@ function toCurrentValidCandidate(input: {
   readonly currentFiles: ReadonlyMap<string, string>;
   readonly snapshot: ReturnType<typeof createGitRepoSnapshot>;
   readonly activeContradictionClaimIds: ReadonlySet<string>;
+  readonly sessionId?: string;
+  readonly environment?: string;
 }): CurrentValidCandidate {
   const scope = parseScope(input.claim.scopeJson);
   const sources = input.proofs.map(input.sourceForProof);
   const scopeResolution = resolveCurrentClaimScope(scope, {
     branch: input.snapshot.branch,
     commit: input.snapshot.commit,
-    worktreeHash: input.snapshot.worktreeHash
+    worktreeHash: input.snapshot.worktreeHash,
+    environment: input.environment,
+    sessionId: input.sessionId
   });
   return {
     id: input.claim.claimId,

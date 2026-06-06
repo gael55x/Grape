@@ -47,6 +47,16 @@ export function compareOptionalStringToCurrent(
   recordOptionalDimension(comparison, key, result);
 }
 
+export function compareOptionalSessionToCurrent(
+  comparison: MutableScopeComparison,
+  scope: ScopeRecord,
+  currentSessionId: string
+): void {
+  const sessionId = stringScope(scope, "sessionId");
+  if (!sessionId) return;
+  recordDimension(comparison, "sessionId", sessionId === currentSessionId ? "match" : "mismatch");
+}
+
 export function compareOptionalEnvironmentToCurrent(
   comparison: MutableScopeComparison,
   scope: ScopeRecord,

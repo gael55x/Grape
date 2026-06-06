@@ -334,6 +334,29 @@ test("current-valid resolution rejects unknown branch scope with warning", () =>
   assert.match(resolved.warnings.join("\n"), /Unknown scope is not current-valid: claim-a/);
 });
 
+test("current-valid resolution rejects claims scoped to another current session", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    sessionId: "session-b",
+    scopeOverridesA: { sessionId: "session-a" },
+    edges: []
+  }));
+
+  assert.deepEqual(resolved.activeClaims.map((claim) => claim.claimId), ["claim-b"]);
+  assert.equal(resolved.rejectedCount, 1);
+});
+
+test("current-valid resolution rejects claims scoped to another current environment", () => {
+  const resolved = resolveLocalCurrentValidClaims(currentValidInput({
+    environment: "staging",
+    scopeOverridesA: { environment: "production" },
+    scopeOverridesB: { environment: "staging" },
+    edges: []
+  }));
+
+  assert.deepEqual(resolved.activeClaims.map((claim) => claim.claimId), ["claim-b"]);
+  assert.equal(resolved.rejectedCount, 1);
+});
+
 function claim(claimId, claimText, scopeHash) {
   return {
     claimId,
@@ -357,7 +380,9 @@ function currentValidInput({
   sourceHashA = hashA,
   sourceHashB = hashB,
   scopeOverridesA = {},
-  scopeOverridesB = {}
+  scopeOverridesB = {},
+  sessionId,
+  environment
 }) {
   const sourceA = source("source-a", sourceRefA, sourceHashA);
   const sourceB = source("source-b", sourceRefB, sourceHashB);
@@ -397,7 +422,9 @@ function currentValidInput({
         { path: sourceA.sourceRef, sha256: sourceA.sourceHash },
         { path: sourceB.sourceRef, sha256: sourceB.sourceHash }
       ]
-    }
+    },
+    sessionId,
+    environment
   };
 }
 

@@ -65,6 +65,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
   }
   const taskId = taskIdFor(input.task, taskType, requestedRiskOverlays);
   const sessionId = input.sessionId ?? sessionIdFor(snapshot.repoId, snapshot.branch, taskId);
+  const claimEnvironment = currentValidEnvironment(input.environmentScope);
   assertSafeId("session id", sessionId);
   const lockToken = createLockToken();
 
@@ -136,6 +137,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sourceExcerpts: proofs.sourceExcerpts,
         branch: snapshotResult.snapshot.branch,
         commit: snapshotResult.snapshot.commit,
+        environment: claimEnvironment,
         worktreeHash: snapshotResult.snapshot.worktreeHash,
         now
       });
@@ -146,6 +148,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sourceExcerpts: proofs.sourceExcerpts,
         branch: snapshotResult.snapshot.branch,
         commit: snapshotResult.snapshot.commit,
+        environment: claimEnvironment,
         worktreeHash: snapshotResult.snapshot.worktreeHash,
         now
       });
@@ -156,6 +159,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sources: evidenceRepositories.sources,
         snapshot: snapshotResult.snapshot,
         sessionId,
+        environment: claimEnvironment,
         taskSourceRefs: proofs.taskRetrieval.selectedSourceRefs.length > 0
           ? proofs.taskRetrieval.selectedSourceRefs
           : undefined
@@ -256,7 +260,8 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
               worktreeStateId: snapshotResult.worktreeStateId,
               dirtyWorktree: snapshotResult.snapshot.worktreeStatus !== "clean",
               budget: preview.budget,
-              tokenCost: preview.tokenMetric.grapeTokens
+              tokenCost: preview.tokenMetric.grapeTokens,
+              environmentScope: input.environmentScope
             });
           }
         });
@@ -297,7 +302,12 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     sessionId,
     taskId,
     riskOverlays: requestedRiskOverlays,
+    environmentScope: input.environmentScope,
     value: databaseResult.value,
     databaseBackupPath: databaseResult.databaseBackupPath
   });
+}
+
+function currentValidEnvironment(environmentScope: CompileLocalContextInput["environmentScope"]): string | undefined {
+  return environmentScope === "unknown" ? undefined : environmentScope;
 }

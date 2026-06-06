@@ -37,6 +37,7 @@ export interface SourceExcerptClaimExcerpt {
 export interface SourceExcerptClaimScope {
   readonly branch: string;
   readonly commit: string;
+  readonly environment?: string;
   readonly worktreeHash: string;
   readonly sourceRef: string;
   readonly sourceId: string;
@@ -64,6 +65,7 @@ export type SourceExcerptClaimGateResult =
 export function createSourceExcerptClaimDraft(input: {
   readonly branch: string;
   readonly commit: string;
+  readonly environment?: string;
   readonly worktreeHash: string;
   readonly excerpt: SourceExcerptClaimExcerpt;
 }): SourceExcerptClaimDraft {
@@ -71,6 +73,7 @@ export function createSourceExcerptClaimDraft(input: {
   const scope: SourceExcerptClaimScope = {
     branch: input.branch,
     commit: input.commit,
+    ...(input.environment ? { environment: input.environment } : {}),
     worktreeHash: input.worktreeHash,
     sourceRef: input.excerpt.sourceRef,
     sourceId: input.excerpt.sourceId,
