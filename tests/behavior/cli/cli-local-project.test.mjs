@@ -467,7 +467,10 @@ test("cli init --connect bootstraps local .grape state and keeps it out of git s
     assert.deepEqual(localIndexedPaths(repoPath).filter((sourceRef) => sourceRef.startsWith(".grape/")), []);
 
     const status = runCliJson(repoPath, ["status"]);
+    assert.equal(status.status, "unknown");
+    assert.equal(status.freshness.status, "unknown");
     assert.equal(status.initialized, true);
+    assert.equal(status.databaseReady, true);
     assert.equal(status.databaseExists, true);
     assert.deepEqual(status.pendingMigrations, []);
     assert.equal(status.dirtyWorktree, false);
@@ -560,7 +563,11 @@ test("cli status and doctor provide recovery guidance before bootstrap", () => {
     const status = runCli(repoPath, ["status", "--json"]);
     assert.equal(status.status, 0, status.stderr);
     const parsedStatus = JSON.parse(status.stdout);
+    assert.equal(parsedStatus.status, "unknown");
+    assert.equal(parsedStatus.freshness.status, "unknown");
     assert.equal(parsedStatus.initialized, false);
+    assert.equal(parsedStatus.databaseReady, false);
+    assert.ok(parsedStatus.refreshRecommendations.some((item) => item.includes("grape init --connect")));
     assert.ok(
       parsedStatus.recoveryGuidance.includes(
         "Run grape init --connect from the repository root to bootstrap or repair local state."
@@ -576,6 +583,52 @@ test("cli status and doctor provide recovery guidance before bootstrap", () => {
         "Run grape init --connect from the repository root to bootstrap or repair local state."
       )
     );
+  });
+});
+
+test("cli status reports dirty worktree freshness without leaking file contents", () => {
+  withGitRepo((repoPath) => {
+    const init = runCli(repoPath, ["init", "--connect"]);
+    assert.equal(init.status, 0, init.stderr);
+
+    writeFileSync(path.join(repoPath, "dirty-status.txt"), "SERVICE_API_KEY=dirty-secret-value\n");
+
+    const status = runCli(repoPath, ["status", "--json"]);
+    assert.equal(status.status, 0, status.stderr);
+    assert.equal(status.stderr, "");
+    assert.equal(status.stdout.includes(repoPath), false);
+    assert.equal(status.stdout.includes("dirty-secret-value"), false);
+    const parsed = JSON.parse(status.stdout);
+    assert.equal(parsed.status, "partial");
+    assert.equal(parsed.dirtyWorktree, true);
+    assert.ok(parsed.freshness.reasons.includes("dirty_worktree"));
+    assert.ok(parsed.refreshRecommendations.some((item) => item.includes("worktree-scoped context")));
+  });
+});
+
+test("cli status reports stale session context with conservative refresh recommendations", () => {
+  withGitRepo((repoPath) => {
+    runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain repository status",
+      "--session",
+      "status-stale-session"
+    ]);
+    runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain repository status",
+      "--session",
+      "status-stale-session",
+      "--reset-session"
+    ]);
+
+    const status = runCliJson(repoPath, ["status"]);
+    assert.equal(status.status, "stale");
+    assert.equal(status.freshness.status, "stale");
+    assert.ok(status.sessionFreshness.staleItemCount > 0);
+    assert.ok(status.refreshRecommendations.some((item) => item.includes("fresh context")));
   });
 });
 
@@ -1748,7 +1801,7 @@ test("cli compile reports invalid task policy as usage errors", () => {
   });
 });
 
-test("cli status reports config root mismatch as stale local state", () => {
+test("cli status reports config root mismatch as unsafe local state", () => {
   withGitRepo((repoPath) => {
     const init = runCli(repoPath, ["init", "--connect"]);
     assert.equal(init.status, 0, init.stderr);
@@ -1759,9 +1812,11 @@ test("cli status reports config root mismatch as stale local state", () => {
     writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 
     const status = runCli(repoPath, ["status", "--json"]);
-    assert.equal(status.status, 3, status.stderr);
+    assert.equal(status.status, 0, status.stderr);
     assert.equal(status.stderr, "");
     const parsed = JSON.parse(status.stdout);
+    assert.equal(parsed.status, "unsafe");
+    assert.equal(parsed.freshness.status, "unsafe");
     assert.equal(parsed.initialized, false);
     assert.ok(parsed.errors.includes("Grape config root path does not match the current repository path."));
     assert.ok(parsed.recoveryGuidance.some((item) => item.includes("--repo")));

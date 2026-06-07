@@ -62,8 +62,10 @@ test("cli status, doctor, and init recover repairable malformed local config saf
     writeFileSync(configPath, "{not valid json");
 
     const status = runCli(repoPath, ["status", "--json"]);
-    assert.equal(status.status, 3, status.stderr);
+    assert.equal(status.status, 0, status.stderr);
     const parsedStatus = JSON.parse(status.stdout);
+    assert.equal(parsedStatus.status, "unsafe");
+    assert.equal(parsedStatus.freshness.status, "unsafe");
     assert.equal(parsedStatus.initialized, false);
     assert.ok(parsedStatus.errors.some((error) => error.startsWith("Grape config is repairable but invalid")));
     assert.ok(
@@ -95,8 +97,9 @@ test("cli status, doctor, and init recover repairable malformed local config saf
 
     writeFileSync(configPath, `${JSON.stringify({ schemaVersion: 999 })}\n`);
     const unsupportedStatus = runCli(repoPath, ["status", "--json"]);
-    assert.equal(unsupportedStatus.status, 3, unsupportedStatus.stderr);
+    assert.equal(unsupportedStatus.status, 0, unsupportedStatus.stderr);
     const parsedUnsupportedStatus = JSON.parse(unsupportedStatus.stdout);
+    assert.equal(parsedUnsupportedStatus.status, "unsafe");
     assert.ok(parsedUnsupportedStatus.errors.some((error) => error.startsWith("Grape config is unsupported")));
     assert.ok(
       parsedUnsupportedStatus.recoveryGuidance.includes(
@@ -184,8 +187,10 @@ test("cli status, doctor, and init recover unusable local database safely", () =
     writeFileSync(databasePath, "not sqlite");
 
     const status = runCli(repoPath, ["status", "--json"]);
-    assert.equal(status.status, 3, status.stderr);
+    assert.equal(status.status, 0, status.stderr);
     const parsedStatus = JSON.parse(status.stdout);
+    assert.equal(parsedStatus.status, "unsafe");
+    assert.equal(parsedStatus.freshness.status, "unsafe");
     assert.equal(parsedStatus.initialized, false);
     assert.ok(parsedStatus.errors.some((error) => error.startsWith("database check failed")));
     assert.ok(

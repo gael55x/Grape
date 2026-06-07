@@ -62,6 +62,68 @@ export interface LocalProjectStatus {
   readonly recoveryGuidance: readonly string[];
 }
 
+export type ContextFreshnessStatus = "fresh" | "stale" | "partial" | "unsafe" | "unknown";
+
+export interface LocalSessionFreshnessSummary {
+  readonly sessionId: string;
+  readonly status: ContextFreshnessStatus;
+  readonly reasons: readonly string[];
+  readonly warnings: readonly string[];
+  readonly sessionStatus: string;
+  readonly lockStatus: string;
+  readonly branchName: string;
+  readonly headCommitSha: string;
+  readonly taskType?: string;
+  readonly lastSeenAt: string;
+  readonly latestArtifactId?: string;
+}
+
+export interface LocalStatusSessionFreshness {
+  readonly inspectedSessionCount: number;
+  readonly activeSessionCount: number;
+  readonly freshSessionCount: number;
+  readonly staleSessionCount: number;
+  readonly partialSessionCount: number;
+  readonly unsafeSessionCount: number;
+  readonly unknownSessionCount: number;
+  readonly staleItemCount: number;
+  readonly sessions: readonly LocalSessionFreshnessSummary[];
+}
+
+export interface LocalContextFreshness {
+  readonly status: ContextFreshnessStatus;
+  readonly reasons: readonly string[];
+  readonly warnings: readonly string[];
+  readonly checkedAt: string;
+  readonly refreshRecommended: boolean;
+}
+
+export interface PublicLocalProjectStatus {
+  readonly rootPath: string;
+  readonly grapeDirPath: string;
+  readonly configPath: string;
+  readonly databasePath: string;
+  readonly status: ContextFreshnessStatus;
+  readonly freshness: LocalContextFreshness;
+  readonly initialized: boolean;
+  readonly configPresent: boolean;
+  readonly databaseExists: boolean;
+  readonly databaseReady: boolean;
+  readonly migrationStatus: "current" | "pending" | "unknown";
+  readonly appliedMigrations: readonly string[];
+  readonly pendingMigrations: readonly string[];
+  readonly branch?: string;
+  readonly headCommit?: string;
+  readonly dirtyWorktree?: boolean;
+  readonly snapshotHash?: string;
+  readonly scan: LocalScanDiagnostics;
+  readonly sessionFreshness: LocalStatusSessionFreshness;
+  readonly warnings: readonly string[];
+  readonly errors: readonly string[];
+  readonly recoveryGuidance: readonly string[];
+  readonly refreshRecommendations: readonly string[];
+}
+
 export interface LocalProjectDoctor {
   readonly rootPath: string;
   readonly overallStatus: DiagnosticStatus;

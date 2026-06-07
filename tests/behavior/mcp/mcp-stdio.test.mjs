@@ -61,6 +61,16 @@ function runMcp(repoPath, messages) {
   return runMcpFrom(repoPath, messages, repoPath);
 }
 
+function runCliJson(repoPath, args) {
+  const result = spawnSync(process.execPath, [cliPath, ...args, "--json"], {
+    cwd: repoPath,
+    encoding: "utf8"
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stderr, "");
+  return JSON.parse(result.stdout);
+}
+
 function runMcpFrom(repoPath, messages, cwd) {
   const input = Buffer.concat(messages.map(requestFrame));
   const result = spawnSync(process.execPath, [cliPath, "mcp", "--stdio", "--repo", repoPath], {
@@ -71,6 +81,11 @@ function runMcpFrom(repoPath, messages, cwd) {
   assert.equal(result.status, 0, result.stderr.toString("utf8"));
   assert.equal(result.stderr.toString("utf8"), "");
   return parseFrames(result.stdout);
+}
+
+function stripCliOnlyStatusFields(status) {
+  const { rootPath: _rootPath, grapeDirPath: _grapeDirPath, configPath: _configPath, databasePath: _databasePath, ...rest } = status;
+  return rest;
 }
 
 function sha256(text) {
@@ -1310,10 +1325,13 @@ test("mcp stdio can launch outside the repository when --repo is provided", () =
       );
 
       assert.equal(responses[0].result.isError, false);
+      assert.equal(responses[0].result.structuredContent.status, "unknown");
+      assert.equal(responses[0].result.structuredContent.databaseReady, false);
       assert.equal(Object.hasOwn(responses[0].result.structuredContent, "rootPath"), false);
       assert.equal(Object.hasOwn(responses[0].result.structuredContent, "grapeDirPath"), false);
       assert.equal(Object.hasOwn(responses[0].result.structuredContent, "configPath"), false);
       assert.equal(Object.hasOwn(responses[0].result.structuredContent, "databasePath"), false);
+      assert.equal(Object.hasOwn(responses[0].result.structuredContent, "config"), false);
       assert.equal(JSON.stringify(responses[0]).includes(repoPath), false);
       assert.equal(JSON.stringify(responses[0]).includes(cwd), false);
       assert.ok(
@@ -1324,6 +1342,35 @@ test("mcp stdio can launch outside the repository when --repo is provided", () =
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }
+  });
+});
+
+test("mcp grape_get_status matches cli status JSON without CLI-only path fields", () => {
+  withGitRepo((repoPath) => {
+    const cliStatus = runCliJson(repoPath, ["status"]);
+    const responses = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_status",
+          arguments: {}
+        }
+      }
+    ]);
+
+    const mcpStatus = responses[0].result.structuredContent;
+    const expected = stripCliOnlyStatusFields(cliStatus);
+    expected.freshness = {
+      ...expected.freshness,
+      checkedAt: mcpStatus.freshness.checkedAt
+    };
+
+    assert.equal(responses[0].result.isError, false);
+    assert.deepEqual(mcpStatus, expected);
+    assert.match(responses[0].result.content[0].text, /status=unknown/);
+    assert.match(responses[0].result.content[0].text, /databaseReady=false/);
   });
 });
 

@@ -181,30 +181,34 @@ async function runStatus(parsed: ParsedArgs): Promise<number> {
   try {
     const rootPath = repoPath(parsed);
     const outputOptions = repoOutputOptions(rootPath);
-    const { readLocalProjectStatus } = await import("../app/local-project/setup/status.js");
-    const status = readLocalProjectStatus(rootPath);
+    const { readPublicLocalProjectStatus } = await import("../app/local-project/setup/status.js");
+    const status = readPublicLocalProjectStatus(rootPath);
     if (parsed.flags.has("--json")) {
       writeJson(status, outputOptions);
-      return status.errors.length === 0 ? exitCodes.ok : exitCodes.stale;
+      return exitCodes.ok;
     }
 
     write([
+      `Grape context status: ${status.status}`,
       status.initialized ? "Grape project is initialized." : "Grape project is not initialized.",
       "",
       `Root: ${status.rootPath}`,
-      `Config: ${status.config ? "present" : "missing"}`,
+      `Config: ${status.configPresent ? "present" : "missing"}`,
       `Database: ${status.databaseExists ? "present" : "missing"}`,
       `Migrations: ${status.pendingMigrations.length === 0 ? "current" : `pending ${status.pendingMigrations.join(", ")}`}`,
       `Branch: ${status.branch ?? "unknown"}`,
       `Head: ${status.headCommit ?? "unknown"}`,
       `Worktree: ${status.dirtyWorktree === undefined ? "unknown" : status.dirtyWorktree ? "dirty" : "clean"}`,
+      `Sessions: ${status.sessionFreshness.inspectedSessionCount} inspected, ${status.sessionFreshness.staleItemCount} stale invalidation(s)`,
       `Scan: ${status.scan.visibleFileCount} visible, ${status.scan.rejectedFileCount} rejected (${renderReasonCounts(status.scan.rejectionReasonCounts)})`,
+      ...renderProblems("Freshness", status.freshness.reasons),
+      ...renderProblems("Freshness warnings", status.freshness.warnings),
       ...renderProblems("Warnings", status.warnings),
       ...renderProblems("Errors", status.errors),
-      ...renderProblems("Recovery", status.recoveryGuidance)
+      ...renderProblems("Refresh recommendations", status.refreshRecommendations)
     ].join("\n"), outputOptions);
 
-    return status.errors.length === 0 ? exitCodes.ok : exitCodes.stale;
+    return exitCodes.ok;
   } catch (error) {
     writeError(`grape status failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
     return exitCodes.stale;

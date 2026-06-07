@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -115,6 +115,7 @@ test("cli status JSON redacts local repository paths by default", () => {
     assert.equal(status.rootPath, "<repo-root>");
     assert.equal(status.configPath, "<repo-root>/.grape/config.json");
     assert.equal(status.databasePath, "<repo-root>/.grape/grape.db");
+    assert.equal(Object.hasOwn(status, "config"), false);
   });
 });
 
@@ -131,9 +132,27 @@ test("cli --repo JSON redacts the target repository path when launched elsewhere
       assert.equal(status.rootPath, "<repo-root>");
       assert.equal(status.configPath, "<repo-root>/.grape/config.json");
       assert.equal(status.databasePath, "<repo-root>/.grape/grape.db");
+      assert.equal(Object.hasOwn(status, "config"), false);
     } finally {
       rmSync(outsideCwd, { recursive: true, force: true });
     }
+  });
+});
+
+test("cli status JSON does not expose internal feature flag allowlists", () => {
+  withGitRepo((repoPath) => {
+    runCli(repoPath, ["init", "--connect"]);
+    const configPath = path.join(repoPath, ".grape", "config.json");
+    const config = JSON.parse(readFileSync(configPath, "utf8"));
+    config.scope = { featureFlagAllowlist: ["privateRolloutFlag"] };
+    writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+
+    const result = runCli(repoPath, ["status", "--json"]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout.includes("privateRolloutFlag"), false);
+    const status = JSON.parse(result.stdout);
+    assert.equal(Object.hasOwn(status, "config"), false);
   });
 });
 
@@ -173,12 +192,13 @@ test("cli status refuses symlinked local state without leaking target paths", ()
 
       const result = runCli(repoPath, ["status", "--json"]);
 
-      assert.equal(result.status, 3, result.stderr);
+      assert.equal(result.status, 0, result.stderr);
       assert.equal(result.stderr.includes(repoPath), false);
       assert.equal(result.stderr.includes(externalState), false);
       assert.equal(result.stdout.includes(repoPath), false);
       assert.equal(result.stdout.includes(externalState), false);
       const status = JSON.parse(result.stdout);
+      assert.equal(status.status, "unsafe");
       assert.ok(status.errors.includes("Grape local directory must not be a symlink: .grape"));
       assert.equal(status.initialized, false);
     } finally {
