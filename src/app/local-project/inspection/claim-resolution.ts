@@ -114,6 +114,9 @@ function taskScopedClaimMatches(
   if (isCurrentSessionObservedRunClaim(claim, sessionId)) {
     return observedRunClaimMatchesTask(claim, taskSourceOrder, sessionId);
   }
+  if (isPackageManifestDependencyClaim(claim)) {
+    return packageManifestDependencyClaimMatchesTask(claim, taskSourceOrder);
+  }
   if (!claim.sourceRefs.some((sourceRef) => taskSourceOrder.has(sourceRef))) return false;
   if (!isSymbolDeclarationClaim(claim)) return true;
   return symbolDeclarationCoveredByTaskExcerpt(claim, taskSourceExcerpts ?? []);
@@ -126,6 +129,8 @@ function claimTaskOrder(
 ): number {
   const observedRunOrder = observedRunTaskOrder(claim, taskSourceOrder, sessionId);
   if (observedRunOrder !== undefined) return observedRunOrder;
+  const manifestDependencyOrder = packageManifestDependencyTaskOrder(claim, taskSourceOrder);
+  if (manifestDependencyOrder !== undefined) return manifestDependencyOrder;
   const positions = claim.sourceRefs
     .map((sourceRef) => taskSourceOrder.get(sourceRef))
     .filter((position): position is number => position !== undefined);
@@ -143,12 +148,41 @@ function isSymbolDeclarationClaim(claim: LocalClaimSummary): boolean {
   return claim.claimType === "repository_symbol_declaration_exists";
 }
 
+function isPackageManifestDependencyClaim(claim: LocalClaimSummary): boolean {
+  return claim.claimType === "package_manifest_dependency_exists";
+}
+
 function isCurrentSessionObservedRunClaim(claim: LocalClaimSummary, sessionId: string | undefined): boolean {
   return (
     claim.claimType === "grape_observed_run_result" &&
     typeof claim.scope.sessionId === "string" &&
     claim.scope.sessionId === sessionId
   );
+}
+
+function packageManifestDependencyClaimMatchesTask(
+  claim: LocalClaimSummary,
+  taskSourceOrder: ReadonlyMap<string, number>
+): boolean {
+  return packageManifestDependencyTaskOrder(claim, taskSourceOrder) !== undefined;
+}
+
+function packageManifestDependencyTaskOrder(
+  claim: LocalClaimSummary,
+  taskSourceOrder: ReadonlyMap<string, number>
+): number | undefined {
+  if (!isPackageManifestDependencyClaim(claim)) return undefined;
+  const manifestRef = stringScope(claim.scope, "manifestRef") || stringScope(claim.scope, "sourceRef");
+  const directOrder = taskSourceOrder.get(manifestRef);
+  if (directOrder !== undefined) return directOrder;
+
+  const packageRoot = stringScope(claim.scope, "packageRoot");
+  if (!packageRoot) return undefined;
+  const prefix = `${packageRoot}/`;
+  const positions = [...taskSourceOrder.entries()]
+    .filter(([sourceRef]) => sourceRef === packageRoot || sourceRef.startsWith(prefix))
+    .map(([, position]) => position);
+  return positions.length > 0 ? Math.min(...positions) : undefined;
 }
 
 function observedRunClaimMatchesTask(
@@ -273,6 +307,7 @@ function toClaimSummary(claim: ClaimRecord, proofs: readonly ProofRecord[]): Loc
     scope,
     scopeHash: claim.scopeHash,
     proofRefs: proofs.map((proof) => proof.proofId),
+    proofHashes: proofs.map((proof) => proof.excerptHash),
     sourceRefs: [...new Set(proofs.map((proof) => stringScope(scope, "sourceRef") || proof.sourceId))],
     createdAt: claim.createdAt,
     updatedAt: claim.updatedAt

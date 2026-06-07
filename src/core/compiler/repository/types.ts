@@ -96,6 +96,7 @@ export interface RepositoryArtifactActiveClaimInput {
   readonly scopeHash: string;
   readonly sourceRefs: readonly string[];
   readonly proofRefs: readonly string[];
+  readonly proofHashes?: readonly string[];
 }
 
 export interface RepositoryArtifactCompressionInput {

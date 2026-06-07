@@ -8,6 +8,8 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- Added narrow provider-backed package manifest dependency claims for trusted npm `package.json` dependency entries. They persist direct manifest-entry proofs with repo-relative manifest/package refs, source hashes, line span, provider capability metadata, dependency specifier hashes, normalized package scope, current-valid filtering, and conservative conflict blocking while proving only `Manifest declares dependency <dependency-name>.`
+- Render current-valid package manifest dependency claims in task-scoped context artifacts only for selected manifests or selected sources in the same current package root, with claim/proof dependency refs and without raw manifest specifiers.
 - Added explicit claim-edge authority metadata so blocking conflict/supersession behavior depends on recorded provenance instead of edge type alone.
 - Added one normalized current-scope shape across CLI, MCP, compiler projection, retrieval filters, and claim persistence, including worktree hash/dirty status, package/service root, source refs, warnings, and redacted feature-flag count/hash.
 - Added CLI `--environment-scope` parity for compile/diff-context so caller-supplied current environment scope reaches artifact output and current-valid filtering.

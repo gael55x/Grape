@@ -79,6 +79,22 @@ export function dependencyManifest(
         proofRefs: claim.proofRefs
       }
     });
+    claim.proofRefs.forEach((proofRef, index) => {
+      const dependencyId = sourceProofDependencyId(proofRef);
+      if (dependencies.some((dependency) => dependency.id === dependencyId)) return;
+      dependencies.push({
+        id: dependencyId,
+        kind: "proof",
+        ref: proofRef,
+        hash: claim.proofHashes?.[index] ?? claim.scopeHash,
+        scope: {
+          ...baseScope,
+          claimId: claim.claimId,
+          claimType: claim.claimType,
+          sourceRefs: claim.sourceRefs
+        }
+      });
+    });
   }
 
   for (const artifact of input.compressionArtifacts ?? []) {

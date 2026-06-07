@@ -415,6 +415,81 @@ test("cli observed test run records explicit test file refs without rendering un
   });
 });
 
+test("cli compile renders package manifest dependency claims without raw manifest specifiers", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "packages", "api", "src"), { recursive: true });
+    mkdirSync(path.join(repoPath, "packages", "web", "src"), { recursive: true });
+    writeFileSync(
+      path.join(repoPath, "packages", "api", "package.json"),
+      [
+        "{",
+        "  \"name\": \"api-fixture\",",
+        "  \"dependencies\": {",
+        "    \"grape-api-client\": \"^1.2.3\"",
+        "  }",
+        "}",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(
+      path.join(repoPath, "packages", "api", "src", "app.js"),
+      "export function runApiApp() { return 'api'; }\n"
+    );
+    writeFileSync(
+      path.join(repoPath, "packages", "web", "package.json"),
+      [
+        "{",
+        "  \"name\": \"web-fixture\",",
+        "  \"dependencies\": {",
+        "    \"grape-web-client\": \"^4.5.6\"",
+        "  }",
+        "}",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(
+      path.join(repoPath, "packages", "web", "src", "app.js"),
+      "export function runWebApp() { return 'web'; }\n"
+    );
+    execGit(repoPath, ["add", "packages"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add package manifest dependency fixture"
+    ]);
+
+    const output = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Review packages/api/src/app.js package dependency context",
+      "--session",
+      "manifest-dependency-session"
+    ]);
+    const artifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, output.artifactJsonPath), "utf8"));
+    const currentValidClaims = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "current-valid-claims"
+    );
+
+    assert.equal(output.currentScope.packageRoot, "packages/api");
+    assert.ok(currentValidClaims);
+    assert.match(currentValidClaims.text, /Type: package_manifest_dependency_exists/);
+    assert.match(currentValidClaims.text, /Manifest declares dependency grape-api-client\./);
+    assert.match(currentValidClaims.text, /Sources: packages\/api\/package\.json/);
+    assert.doesNotMatch(currentValidClaims.text, /grape-web-client/);
+    assert.equal(currentValidClaims.itemRefs.some((ref) => ref.kind === "claim"), true);
+    assert.equal(currentValidClaims.itemRefs.some((ref) => ref.kind === "proof"), true);
+
+    const publicClaimsSection = JSON.stringify(currentValidClaims);
+    assert.equal(publicClaimsSection.includes("^1.2.3"), false);
+    assert.equal(publicClaimsSection.includes("^4.5.6"), false);
+    assert.equal(JSON.stringify(artifactJson).includes(repoPath), false);
+  });
+});
+
 test("cli observed runner rejects secret-looking commands before execution", () => {
   withGitRepo((repoPath) => {
     runCliJson(repoPath, ["compile", "--task", "Observe local commands", "--session", "observed-session"]);

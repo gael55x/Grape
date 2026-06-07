@@ -1131,7 +1131,15 @@ Current enabled durable claim policy:
 | `repository_source_excerpt_exists` | `exact_source_excerpt` | trusted allowed repository/config/lock/migration/rule source | `direct` | The exact excerpt exists in the current scoped source input. | Runtime behavior, correctness, root cause, deploy state, broad architecture. |
 | `project_rule` | `exact_project_rule_excerpt` | trusted allowed rule file | `direct` | The exact parsed rule text exists in the scoped rule file. | Generated policy, unstated implications, conflict resolution, precedence. |
 | `repository_symbol_declaration_exists` | `provider_symbol_declaration` | trusted allowed repository source file with high-confidence AST symbol metadata | `direct` | The parser-backed declaration span exists in the current scoped source input. | Imports, exports, complete call graph, runtime behavior, correctness, root cause, ownership, broad architecture. |
+| `package_manifest_dependency_exists` | `package_manifest_dependency_entry` | trusted allowed npm `package.json` classified as package metadata | `direct` | The current scoped manifest declares one dependency entry. | Installed package state, import/use, runtime requirement, dependency safety, dependency validity, lockfile resolution, correct configuration. |
 | `grape_observed_run_result` | `grape_observed_run_result` | trusted Grape-observed command/test run | `direct` | Grape observed one scoped command/test result. | Product correctness, test coverage, root cause, fix success, production behavior. |
+
+The initial package manifest dependency policy is intentionally narrow. It
+accepts only npm `package.json` entries from `dependencies`,
+`devDependencies`, `peerDependencies`, and `optionalDependencies`; stores
+repo-relative manifest/package refs, source hashes, line span, provider
+provenance, and dependency specifier hashes; and renders only the wording
+`Manifest declares dependency <dependency-name>.`
 
 Future V1.0 durable extraction families, once backed by policy, fixtures, and
 current-valid validation:
@@ -3308,7 +3316,11 @@ Do not report token reduction against an ad hoc baseline.
 - `feature_flag_unknown_does_not_match_global_truth`
 - `symbol_declaration_claim_proves_declaration_existence_only`
 - `validated_symbol_declaration_claims_record_provider_proof_without_raw_body`
+- `manifest_dependency_claim_proves_manifest_declaration_only`
+- `validated_package_manifest_dependency_claims_persist_after_proofs`
+- `package_manifest_dependency_claim_requires_current_manifest_hash_and_scope`
 - `cli_compile_renders_same_file_symbol_claims_only_when_covered_by_current_exact_evidence`
+- `cli_compile_renders_package_manifest_dependency_claims_without_raw_manifest_specifiers`
 - `task_source_retrieval_reports_related_test_relationships`
 - `monorepo_fixture_renders_related_test_relationship_evidence`
 - `task_source_retrieval_carries_relationship_refs`

@@ -2,6 +2,7 @@ export type DurableClaimMeaning =
   | "source_excerpt_exists"
   | "project_rule_exists"
   | "symbol_declaration_exists"
+  | "manifest_dependency_declared"
   | "observed_run_result"
   | "runtime_behavior"
   | "correctness"
@@ -83,6 +84,15 @@ export const durableClaimPolicies: readonly DurableClaimPolicy[] = [
     observers: ["local_source_reader"],
     proofSignalKinds: ["exact_source"],
     claimMeanings: ["symbol_declaration_exists"]
+  },
+  {
+    claimType: "package_manifest_dependency_exists",
+    proofTypes: ["package_manifest_dependency_entry"],
+    sourceTypes: ["config_file"],
+    supportStatuses: ["direct"],
+    observers: ["local_source_reader"],
+    proofSignalKinds: ["exact_source"],
+    claimMeanings: ["manifest_dependency_declared"]
   },
   {
     claimType: "grape_observed_run_result",

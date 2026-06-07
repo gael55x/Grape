@@ -108,6 +108,7 @@ Current implementation is useful but not broad language-aware indexing:
 - Every indexed file is tagged with normalized provider metadata. TypeScript/JavaScript AST rows use the `typescript_ast` provider. Safe fallback rows use the `generic_text` provider with explicit `module_edges` and `test_edges` capability-gap diagnostics.
 - Generic manifest detection tags package-root evidence for common manifests such as `package.json`, `pyproject.toml`, `requirements.txt`, `Cargo.toml`, `go.mod`, `pom.xml`, and Gradle build/settings files. Nested source files under those roots carry the manifest ref and manifest kind as index metadata.
 - High-confidence TypeScript/JavaScript AST declaration nodes can promote the narrow `repository_symbol_declaration_exists` claim only when covered by an accepted exact source excerpt window and `provider_symbol_declaration` proof; this proves declaration-span existence only.
+- Supported npm `package.json` dependency entries can promote the narrow `package_manifest_dependency_exists` claim only when the allowed manifest source hash matches, the exact dependency entry is hashed as a direct `package_manifest_dependency_entry` proof, and current-valid scope matches. This proves only that the manifest declares the dependency entry; it does not prove installation, import usage, runtime requirement, safety, validity, lockfile resolution, or package-aware invalidation.
 - JSON and Markdown are classified as known languages for indexing and lexical search, but they do not have AST graph extraction.
 - Python, Java, Kotlin, Go, Rust, YAML, and other languages mostly fall back to file path/text indexing today.
 - Bootstrap detection can report Python, Go, Rust, package managers, and common frameworks from root manifests, but those are setup hints only.
@@ -126,6 +127,7 @@ This is acceptable for a controlled beta only if the promise stays: reliable con
 - Regex fallback bias: generic symbol detection recognizes JS/TS-like declarations, not Python, Java, Kotlin, Go, Rust, C#, Ruby, or PHP declarations.
 - Language detection gaps: unknown extensions still collapse to `unknown`, and language labels do not imply graph extraction capability.
 - Monorepo flattening: repository snapshot and retrieval mostly treat the repo as one source pool. Explicit package-path tasks and package-scoped claim activation use common-prefix scope metadata, and package manifests now produce package-root index metadata, but package-aware invalidation and per-package budgets are not implemented yet.
+- Manifest dependency narrowness: durable manifest dependency claims are currently npm `package.json` declaration facts only. Other manifest formats, dependency closure, lockfile resolution, and import-derived dependency claims remain disabled.
 - Root-manifest bias: bootstrap detection mostly checks root-level manifests/configs and can miss nested workspaces.
 - Test adjacency bias: related-test selection depends on import/call edges that exist today primarily for TS/JS.
 - Capability opacity: agents see blind spots, but not a complete provider capability report per language/package.

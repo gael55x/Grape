@@ -70,6 +70,7 @@ export interface LocalClaimSummary {
   readonly scope: Record<string, unknown>;
   readonly scopeHash: string;
   readonly proofRefs: readonly string[];
+  readonly proofHashes: readonly string[];
   readonly sourceRefs: readonly string[];
   readonly createdAt: string;
   readonly updatedAt: string;

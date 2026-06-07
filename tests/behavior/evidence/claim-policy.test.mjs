@@ -55,6 +55,19 @@ const symbolDeclarationPolicyInput = {
   proofSignalKind: "exact_source"
 };
 
+const manifestDependencyPolicyInput = {
+  claimType: "package_manifest_dependency_exists",
+  claimMeaning: "manifest_dependency_declared",
+  proofType: "package_manifest_dependency_entry",
+  sourceType: "config_file",
+  supportStatus: "direct",
+  sourceTrustClass: "trusted",
+  sourcePrivacyStatus: "allowed",
+  sourceRedactionStatus: "not_needed",
+  observer: "local_source_reader",
+  proofSignalKind: "exact_source"
+};
+
 test("claim_type_policy_rejects_unknown_claim_type", () => {
   const result = evaluateDurableClaimPolicy({
     ...sourceExcerptPolicyInput,
@@ -120,6 +133,39 @@ test("symbol_declaration_claim_proves_declaration_existence_only", () => {
 
   assert.equal(graphExpansion.accepted, false);
   assert.equal(graphExpansion.reason, "graph_expansion_not_proof");
+});
+
+test("manifest dependency claim proves manifest declaration only", () => {
+  const allowed = evaluateDurableClaimPolicy(manifestDependencyPolicyInput);
+  assert.equal(allowed.accepted, true);
+
+  const runtime = evaluateDurableClaimPolicy({
+    ...manifestDependencyPolicyInput,
+    claimMeaning: "runtime_behavior"
+  });
+  assert.equal(runtime.accepted, false);
+  assert.equal(runtime.reason, "claim_meaning_not_allowed");
+
+  const correctness = evaluateDurableClaimPolicy({
+    ...manifestDependencyPolicyInput,
+    claimMeaning: "correctness"
+  });
+  assert.equal(correctness.accepted, false);
+  assert.equal(correctness.reason, "claim_meaning_not_allowed");
+
+  const graphExpansion = evaluateDurableClaimPolicy({
+    ...manifestDependencyPolicyInput,
+    proofSignalKind: "graph_expansion"
+  });
+  assert.equal(graphExpansion.accepted, false);
+  assert.equal(graphExpansion.reason, "graph_expansion_not_proof");
+
+  const summary = evaluateDurableClaimPolicy({
+    ...manifestDependencyPolicyInput,
+    proofSignalKind: "summary"
+  });
+  assert.equal(summary.accepted, false);
+  assert.equal(summary.reason, "summary_not_proof");
 });
 
 test("project_rule_claim_does_not_resolve_rule_conflict", () => {

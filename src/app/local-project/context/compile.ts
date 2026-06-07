@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { buildDurableContext } from "../../durable-context-build.js";
 import { persistGitRepoSnapshot } from "../../persist-repo-snapshot.js";
+import { persistPackageManifestDependencyClaims } from "../../persist-package-manifest-dependency-claims.js";
 import { persistProjectRuleClaims } from "../../persist-project-rules.js";
 import { persistSourceExcerptClaims } from "../../persist-source-claims.js";
 import { persistSymbolDeclarationClaims } from "../../persist-symbol-claims.js";
@@ -182,6 +183,17 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         worktreeHash: snapshotResult.snapshot.worktreeHash,
         now
       });
+      persistPackageManifestDependencyClaims({
+        repositories: claimRepositories,
+        proofRepositories,
+        rootPath: snapshot.rootPath,
+        sources,
+        branch: snapshotResult.snapshot.branch,
+        commit: snapshotResult.snapshot.commit,
+        environment: currentScope.claimEnvironment,
+        worktreeHash: snapshotResult.snapshot.worktreeHash,
+        now
+      });
       const currentValidClaims = resolveLocalCurrentValidClaims({
         claims: claimRepositories.claims,
         claimEdges: claimRepositories.claimEdges,
@@ -203,7 +215,8 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         claimText: claim.claimText,
         scopeHash: claim.scopeHash,
         sourceRefs: claim.sourceRefs,
-        proofRefs: claim.proofRefs
+        proofRefs: claim.proofRefs,
+        proofHashes: claim.proofHashes
       }));
       const artifactTaskRetrieval = {
         ...proofs.taskRetrieval,
