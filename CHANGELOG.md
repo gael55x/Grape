@@ -96,14 +96,14 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added omitted-context restore lookup through `grape omitted --session <id> --token <restoreToken>` and MCP `grape_get_omitted_item`, with stale-dependency rejection before omitted context is returned.
 - Added artifact inspection through `grape artifacts`, `grape artifacts --artifact <id>`, and MCP `grape_get_artifact`.
 - Added branch-switch invalidation for explicit session reuse in CLI and MCP context compilation, returning `INVALIDATE_PREVIOUS` for stale previous-branch context.
-- Added bounded exact-source evidence sections with deterministic proof refs to repository-derived scaffold context artifacts.
+- Added bounded exact-source evidence sections with deterministic proof refs to repository-derived context artifacts.
 - Added session reset recovery through CLI `--reset-session` and MCP `resetSession: true`, returning `INVALIDATE_PREVIOUS` and forcing full current resend for reused sessions.
-- Added pinned active project rules from trusted rule files to repository-derived scaffold context artifacts.
+- Added pinned active project rules from trusted rule files to repository-derived context artifacts.
 - Added safe FTS5 lexical index persistence for allowed source records as an indexing foundation.
 - Updated public context pack items returned by CLI, artifact JSON, and MCP to use the V1 `ContextPackItem` output shape.
-- Added task source retrieval for scaffold context compilation, using safe FTS rows, symbol/path matches, and MCP seed refs to prioritize exact source evidence.
+- Added task source retrieval for context compilation, using safe FTS rows, symbol/path matches, and MCP seed refs to prioritize exact source evidence.
 - Added conservative token-budget evaluation for CLI `--token-budget` and MCP `tokenBudget`, including unsafe output when required context cannot fit.
-- Added public V1 `ContextArtifact` JSON projection for compile artifacts while keeping scaffold restore data in an internal sidecar.
+- Added public V1 `ContextArtifact` JSON output for compile artifacts while keeping restore verification data in an internal repository backing file.
 - Added validated exact source proof-row persistence during local compile, while keeping durable claim promotion deferred.
 - Added proof-row inspection through CLI `grape proofs` and MCP `grape_get_proofs`.
 - Hardened omitted-context restore so stale proof dependencies reject restore tokens before content is returned.

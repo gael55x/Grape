@@ -1684,12 +1684,13 @@ After current-valid filtering, rank by:
 - branch/worktree match
 
 Current V1 implementation note: when task retrieval selects concrete source
-refs, scaffold exact-source proof creation and artifact `current-valid-claims`
-rendering are scoped to those selected refs plus pinned rule excerpts. Grape
-uses the broader exact-source fallback only when retrieval has no selected
-source refs, so a task-specific artifact does not fill unused proof/claim slots
-with unrelated files from the same commit. Inspection commands such as
-`grape claims --active` may still list all current-valid claims for debugging.
+refs, repository exact-source proof creation and artifact
+`current-valid-claims` rendering are scoped to those selected refs plus pinned
+rule excerpts. Grape uses the broader exact-source fallback only when retrieval
+has no selected source refs, so a task-specific artifact does not fill unused
+proof/claim slots with unrelated files from the same commit. Inspection
+commands such as `grape claims --active` may still list all current-valid
+claims for debugging.
 
 ---
 

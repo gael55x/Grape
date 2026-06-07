@@ -317,7 +317,7 @@ function countState(
 
 function unsupportedInputWarnings(input: GrapeGetContextToolInput): string[] {
   const warnings: string[] = [];
-  if (input.agentName || input.agentSessionId) warnings.push("mcp_agent_identity_not_persisted_in_scaffold_compile");
+  if (input.agentName || input.agentSessionId) warnings.push("mcp_agent_identity_not_persisted_in_context_compile");
   return warnings;
 }
 

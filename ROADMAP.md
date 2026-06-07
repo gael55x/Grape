@@ -92,7 +92,7 @@ Beta readiness is not a bigger feature list. It means the current transport slic
 - agent session/task identity is explicit and testable
 - common mismatch and stale-cache failures have recovery guidance
 - install smoke, MCP stdio smoke, restore, invalidation, and benchmark checks are reproducible
-- known scaffold and retrieval limitations are visible before users rely on them
+- known artifact and retrieval limitations are visible before users rely on them
 
 ## Non-Goals For V1
 

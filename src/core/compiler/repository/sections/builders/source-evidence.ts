@@ -38,7 +38,7 @@ function exactSourceEvidenceBody(
 ): string {
   if (excerpts.length === 0) {
     return [
-      "No exact source excerpts were selected for this scaffold artifact.",
+      "No exact source excerpts were selected for this repository artifact.",
       "Use source manifest and relationship sections for orientation only."
     ].join("\n");
   }

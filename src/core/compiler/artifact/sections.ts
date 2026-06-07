@@ -31,7 +31,7 @@ export function toContextSection(
     tokenCount: estimateTextTokens(section.body),
     contentHash: section.contentHash,
     pinned: section.pinned,
-    safetyCritical: section.pinned || section.exactRequired || isScaffoldSectionSafetyCritical(section),
+    safetyCritical: section.pinned || section.exactRequired || isRepositorySectionSafetyCritical(section),
     requiresExactCode: section.exactRequired,
     canCompress: canCompressSection(section),
     containsActiveContradiction: section.type === "contradiction",
@@ -42,7 +42,7 @@ export function toContextSection(
   };
 }
 
-export function isScaffoldSectionSafetyCritical(section: InMemoryContextSectionShape): boolean {
+export function isRepositorySectionSafetyCritical(section: InMemoryContextSectionShape): boolean {
   return section.type === "risk_warning" || section.type === "stale_warning" || section.type === "contradiction";
 }
 
@@ -79,7 +79,7 @@ function contextSectionTypeFor(section: InMemoryContextSectionShape): ContextSec
 }
 
 function canCompressSection(section: InMemoryContextSectionShape): boolean {
-  return !section.pinned && !section.exactRequired && !isScaffoldSectionSafetyCritical(section);
+  return !section.pinned && !section.exactRequired && !isRepositorySectionSafetyCritical(section);
 }
 
 function estimateTextTokens(text: string): number {

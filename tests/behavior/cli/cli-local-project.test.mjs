@@ -613,7 +613,7 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
 
     const firstArtifactJsonPath = localPublicPath(repoPath, first.artifactJsonPath);
     const artifactJson = JSON.parse(readFileSync(firstArtifactJsonPath, "utf8"));
-    const scaffoldJsonPath = firstArtifactJsonPath.replace(/\.json$/, ".scaffold.json");
+    const repositoryArtifactJsonPath = firstArtifactJsonPath.replace(/\.json$/, ".repository.json");
     assert.equal(artifactJson.contextPackItemShape, "ContextPackItem");
     assert.equal(artifactJson.artifactFormat, "grape.context-pack.v1");
     assert.equal(artifactJson.contextArtifact.id, first.artifactId);
@@ -660,9 +660,9 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(compressionOrientation?.itemRefs.some((ref) => ref.kind === "compression_artifact"), true);
     assert.equal(artifactJson.contextArtifact.compressionArtifactRefs.length > 0, true);
     assert.equal(first.contextPackItems.some((item) => item.itemKind === "compression_artifact"), true);
-    assert.equal(existsSync(scaffoldJsonPath), true);
-    const scaffoldJson = JSON.parse(readFileSync(scaffoldJsonPath, "utf8"));
-    assert.equal(scaffoldJson.artifact.artifactId, first.artifactId);
+    assert.equal(existsSync(repositoryArtifactJsonPath), true);
+    const repositoryArtifactJson = JSON.parse(readFileSync(repositoryArtifactJsonPath, "utf8"));
+    assert.equal(repositoryArtifactJson.artifact.artifactId, first.artifactId);
     assert.equal(localContextArtifactCount(repoPath), 1);
     assert.equal(localProofCount(repoPath) > 0, true);
     assert.equal(localClaimCount(repoPath) > 0, true);
@@ -1379,12 +1379,12 @@ test("cli omitted rejects stale restore tokens after repository changes", () => 
 
 test("cli omitted rejects restore tokens when proof dependencies changed", () => {
   withGitRepo((repoPath) => {
-    const { artifactScaffoldJsonPath, restoreToken } = createRestorableOmission(
+    const { artifactRepositoryJsonPath, restoreToken } = createRestorableOmission(
       repoPath,
       "stale-proof-restore-session",
       "exact-source-evidence"
     );
-    const proofId = proofIdForSection(artifactScaffoldJsonPath, "exact-source-evidence");
+    const proofId = proofIdForSection(artifactRepositoryJsonPath, "exact-source-evidence");
     tamperProofExcerptHash(repoPath, proofId);
 
     const restore = runCli(repoPath, [
@@ -1406,8 +1406,8 @@ test("cli omitted rejects restore tokens when proof dependencies changed", () =>
 
 test("cli omitted rejects tampered artifact body before restoring context", () => {
   withGitRepo((repoPath) => {
-    const { artifactScaffoldJsonPath, restoreToken } = createRestorableOmission(repoPath, "tamper-restore-session");
-    updateArtifactJson(artifactScaffoldJsonPath, (artifactPack) => {
+    const { artifactRepositoryJsonPath, restoreToken } = createRestorableOmission(repoPath, "tamper-restore-session");
+    updateArtifactJson(artifactRepositoryJsonPath, (artifactPack) => {
       artifactPack.artifact.sections.find((section) => section.id === "task").body = "Task type: tampered";
     });
 
@@ -1429,8 +1429,8 @@ test("cli omitted rejects tampered artifact body before restoring context", () =
 
 test("cli omitted rejects blocked-redaction artifact sections before restoring context", () => {
   withGitRepo((repoPath) => {
-    const { artifactScaffoldJsonPath, restoreToken } = createRestorableOmission(repoPath, "redaction-restore-session");
-    updateArtifactJson(artifactScaffoldJsonPath, (artifactPack) => {
+    const { artifactRepositoryJsonPath, restoreToken } = createRestorableOmission(repoPath, "redaction-restore-session");
+    updateArtifactJson(artifactRepositoryJsonPath, (artifactPack) => {
       artifactPack.artifact.sections.find((section) => section.id === "task").redactionStatus = "blocked";
     });
 
@@ -1630,13 +1630,13 @@ function createRestorableOmission(repoPath, sessionId, sectionId) {
   assert.ok(restoreToken);
   return {
     artifactJsonPath: localPublicPath(repoPath, second.artifactJsonPath),
-    artifactScaffoldJsonPath: localPublicPath(repoPath, second.artifactJsonPath).replace(/\.json$/, ".scaffold.json"),
+    artifactRepositoryJsonPath: localPublicPath(repoPath, second.artifactJsonPath).replace(/\.json$/, ".repository.json"),
     restoreToken
   };
 }
 
-function proofIdForSection(artifactScaffoldJsonPath, sectionId) {
-  const artifactPack = JSON.parse(readFileSync(artifactScaffoldJsonPath, "utf8"));
+function proofIdForSection(artifactRepositoryJsonPath, sectionId) {
+  const artifactPack = JSON.parse(readFileSync(artifactRepositoryJsonPath, "utf8"));
   const proofId = artifactPack.artifact.sections.find((section) => section.id === sectionId)?.proofRefs?.[0];
   assert.ok(proofId);
   return proofId;

@@ -9,25 +9,29 @@ export interface LocalArtifactWriteInput {
   readonly artifact: InMemoryContextArtifactShape;
   readonly json: string;
   readonly markdown: string;
-  readonly scaffoldJson: string;
+  readonly repositoryArtifactJson: string;
 }
 
 export interface LocalArtifactWriteResult {
   readonly jsonPath: string;
   readonly markdownPath: string;
-  readonly scaffoldJsonPath: string;
+  readonly repositoryArtifactJsonPath: string;
 }
 
 export function writeLocalArtifactFiles(input: LocalArtifactWriteInput): LocalArtifactWriteResult {
   const baseName = artifactFileBaseName(input.artifact.artifactId);
   const jsonPath = path.join(input.artifactDirPath, `${baseName}.json`);
   const markdownPath = path.join(input.artifactDirPath, `${baseName}.md`);
-  const scaffoldJsonPath = path.join(input.artifactDirPath, `${baseName}.scaffold.json`);
+  const repositoryArtifactJsonPath = path.join(input.artifactDirPath, `${baseName}.repository.json`);
   const tempSuffix = `.tmp-${process.pid}-${randomUUID()}`;
   const writes = [
     { finalPath: jsonPath, tempPath: `${jsonPath}${tempSuffix}`, body: input.json },
     { finalPath: markdownPath, tempPath: `${markdownPath}${tempSuffix}`, body: input.markdown },
-    { finalPath: scaffoldJsonPath, tempPath: `${scaffoldJsonPath}${tempSuffix}`, body: input.scaffoldJson }
+    {
+      finalPath: repositoryArtifactJsonPath,
+      tempPath: `${repositoryArtifactJsonPath}${tempSuffix}`,
+      body: input.repositoryArtifactJson
+    }
   ];
 
   try {
@@ -43,7 +47,7 @@ export function writeLocalArtifactFiles(input: LocalArtifactWriteInput): LocalAr
     }
   }
 
-  return { jsonPath, markdownPath, scaffoldJsonPath };
+  return { jsonPath, markdownPath, repositoryArtifactJsonPath };
 }
 
 export function artifactFileBaseName(artifactId: string): string {

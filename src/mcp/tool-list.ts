@@ -4,7 +4,7 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
       {
         name: "grape_get_context",
         description:
-          "Compile a branch-aware, dependency-tracked scaffold context pack for the current repository and session.",
+          "Compile a branch-aware, dependency-tracked context pack for the current repository and session.",
         inputSchema: {
           type: "object",
           required: ["query"],
@@ -53,7 +53,7 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
           }
         }
       },
-      readTool("grape_get_artifact", "Inspect stored scaffold context artifact metadata and optionally fetch the stored public artifact JSON.", {
+      readTool("grape_get_artifact", "Inspect stored context artifact metadata and optionally fetch the stored public artifact JSON.", {
         artifactId: { type: "string", minLength: 1 },
         outputMode: {
           type: "string",

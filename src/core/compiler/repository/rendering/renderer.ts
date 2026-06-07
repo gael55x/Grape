@@ -25,10 +25,10 @@ export function renderRepositoryContextPackJson(input: RepositoryContextRenderIn
   )}\n`;
 }
 
-export function renderRepositoryScaffoldArtifactJson(artifact: InMemoryContextArtifactShape): string {
+export function renderRepositoryArtifactJson(artifact: InMemoryContextArtifactShape): string {
   return `${JSON.stringify(
     {
-      artifactShape: "InMemoryContextArtifactShape",
+      artifactShape: "RepositoryContextArtifactShape",
       artifact
     },
     null,

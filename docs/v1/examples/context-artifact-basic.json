@@ -7,7 +7,7 @@
       "repository_artifact_uses_lightweight_index"
     ],
     "relatedTests": [
-      "repository artifact compiler projects scaffold output to the V1 ContextArtifact shape",
+      "repository artifact compiler maps repository output to the V1 ContextArtifact shape",
       "cli compile auto-bootstraps and writes inspectable context artifact files"
     ]
   },

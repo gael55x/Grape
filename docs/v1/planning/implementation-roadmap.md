@@ -135,9 +135,9 @@ Before adding V1 scope, confirm the work improves at least one of:
 
 ## Human Review Bar
 
-- **Minimum bar (met for first review):** clone, `npm run check`, honest docs/contracts, scaffold warnings, passing gates.
+- **Minimum bar (met for first review):** clone, `npm run check`, honest docs/contracts, artifact limitations, passing gates.
 - **V1 alpha bar (current target):** npm install, `grape_get_context` twice with safe `OMIT_UNCHANGED`, dependency invalidation benchmarks, install smoke CI.
-- **Full product bar (not V1):** broad durable retrieval, multi-fixture gold labels, observed-run result-to-behavior workflows, non-scaffold artifacts, optional graph-memory parity with dedicated memory products.
+- **Full product bar (not V1):** broad durable retrieval, multi-fixture gold labels, observed-run result-to-behavior workflows, optional graph-memory parity with dedicated memory products.
 
 Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations uses the built-in `node:sqlite` runtime path to avoid native package compilation; the published alpha package requires Node.js 22.13+.
 
@@ -207,4 +207,4 @@ Transport-first (ADR-0010):
 Compile minimum (supports the protocol, not a separate product):
 
 - task compile returns useful exact spans + pinned rules on a real fixture repo
-- public artifacts remain inspectable; scaffold limitations documented honestly
+- public artifacts remain inspectable; artifact limitations documented honestly

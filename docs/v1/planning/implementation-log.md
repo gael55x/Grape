@@ -97,7 +97,7 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: added deterministic approximate token accounting for naive resend cost, Grape context pack cost, omitted unchanged tokens, pinned overhead, invalidation overhead, unsafe omissions, stale sends, and reduction percent.
 - Checks run: `npm run check`.
-- Risks/follow-ups: numbers are scaffold estimates only; release benchmark claims require a real tokenizer, scripted workflows, and gold fixtures.
+- Risks/follow-ups: numbers are approximate estimates only; release benchmark claims require a real tokenizer, scripted workflows, and gold fixtures.
 
 ### 2026-05-24 - Project Skeleton Tooling Gates
 
@@ -179,9 +179,9 @@ Keep entries simple:
 ### 2026-05-26 - Repository Artifact Compile Path
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: added a repository-derived context artifact compiler and CLI fallback path. `grape compile --task <text>` now auto-bootstraps local state, captures/persists the current repo snapshot, compiles from source evidence and lightweight relationship indexes, prepares artifact files before durable send ledgers are committed, persists session-scoped diff rows, writes artifact files under `.grape/artifacts/`, and blocks obvious raw secrets before artifact output. Later slices changed public JSON to a V1 `ContextArtifact` projection with an internal scaffold sidecar.
+- Summary: added a repository-derived context artifact compiler and CLI fallback path. `grape compile --task <text>` now auto-bootstraps local state, captures/persists the current repo snapshot, compiles from source evidence and lightweight relationship indexes, prepares artifact files before durable send ledgers are committed, persists session-scoped diff rows, writes artifact files under `.grape/artifacts/`, and blocks obvious raw secrets before artifact output. Later slices changed public JSON to a V1 `ContextArtifact` with an internal repository backing file.
 - Checks run: `npm run typecheck`; focused behavior tests; `npm run check`; `npm run build`.
-- Risks/follow-ups: the JSON/Markdown files are still scaffold `InMemoryContextArtifactShape` outputs, not final V1 artifact schema. MCP stdio, exact-span high-risk policies, stronger secret/redaction scanning, restore lookup, and broader inspection commands remain required. Risk overlays intentionally return unsafe output until exact spans exist.
+- Risks/follow-ups: the initial JSON/Markdown files were internal repository artifact outputs, not the final public V1 artifact contract. MCP stdio, exact-span high-risk policies, stronger secret/redaction scanning, restore lookup, and broader inspection commands remained required. Risk overlays intentionally returned unsafe output until exact spans existed.
 
 ### 2026-05-26 - MCP Get Context Foundation
 
@@ -193,16 +193,16 @@ Keep entries simple:
 ### 2026-05-26 - Omitted Context Restore Lookup
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: added product-facing restore lookup for session-scoped omitted context. `grape omitted --session <id>` lists omitted rows, `grape omitted --session <id> --token <restoreToken>` validates and restores an omitted scaffold section, and `grape_get_omitted_item` exposes the same app service over MCP stdio.
+- Summary: added product-facing restore lookup for session-scoped omitted context. `grape omitted --session <id>` lists omitted rows, `grape omitted --session <id> --token <restoreToken>` validates and restores an omitted repository artifact section, and `grape_get_omitted_item` exposes the same app service over MCP stdio.
 - Checks run: `npm run typecheck`; `npm run build:test`; focused CLI/MCP behavior tests.
-- Risks/follow-ups: restore currently verifies internal scaffold sidecar files while public JSON exposes the V1 projection. Branch-switch/session-reset recovery and the remaining MCP read/write tools still need implementation. The restore path fails closed on tampered scaffold artifact bodies, blocked redaction status, stale dependencies, and mismatched stored artifact/dependency metadata.
+- Risks/follow-ups: restore verifies internal repository backing files while public JSON exposes the V1 artifact contract. Branch-switch/session-reset recovery and the remaining MCP read/write tools still need implementation. The restore path fails closed on tampered repository artifact bodies, blocked redaction status, stale dependencies, and mismatched stored artifact/dependency metadata.
 
 ### 2026-05-26 - Artifact Inspection Surface
 
 - Author/agent: Gaille Amolong / Codex
 - Summary: added metadata-first artifact inspection through `grape artifacts`, `grape artifacts --artifact <id>`, and MCP `grape_get_artifact`. The surface returns stored artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative public file refs without exposing absolute roots over MCP.
 - Checks run: `npm run typecheck`; `npm run build:test`; focused CLI/MCP behavior tests.
-- Risks/follow-ups: this is an inspection surface over the scaffold artifact shape. Final V1 artifact schema, exact-span policies, and the remaining MCP read/write tools are still pending.
+- Risks/follow-ups: this is an inspection surface over stored artifact metadata. Exact-span policies and the remaining MCP read/write tools were still pending at this point.
 
 ### 2026-05-26 - Branch Switch Invalidation
 
@@ -211,24 +211,24 @@ Keep entries simple:
 - Checks run: `npm run typecheck`; focused CLI/MCP/storage behavior tests; full checks before commit.
 - Risks/follow-ups: branch/global distinction still depends on future durable claim scope filtering.
 
-### 2026-05-26 - Exact Source Evidence Scaffold
+### 2026-05-26 - Exact Source Evidence Foundation
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: repository-derived scaffold artifacts now include bounded exact-source evidence for selected allowed source records. The local reader verifies source hashes before creating deterministic proof refs and excerpt hashes, and the compiler records proof dependencies alongside source dependencies.
+- Summary: repository-derived artifacts now include bounded exact-source evidence for selected allowed source records. The local reader verifies source hashes before creating deterministic proof refs and excerpt hashes, and the compiler records proof dependencies alongside source dependencies.
 - Checks run: full checks before commit.
-- Risks/follow-ups: this is a scaffold proof foundation. Durable claim promotion, task-specific high-risk exact spans, and final V1 artifact schema remain pending.
+- Risks/follow-ups: this is a proof foundation. Durable claim promotion, task-specific high-risk exact spans, and the final public V1 artifact contract remained pending.
 
 ### 2026-05-26 - Session Reset Recovery
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: added explicit session reset recovery for the scaffold diff path. CLI `grape compile --reset-session` and MCP `grape_get_context` with `resetSession: true` now record `session_reset` invalidation events, emit `INVALIDATE_PREVIOUS` for active prior sent items, and force current scaffold sections to be resent instead of omitted.
+- Summary: added explicit session reset recovery for the context diff path. CLI `grape compile --reset-session` and MCP `grape_get_context` with `resetSession: true` now record `session_reset` invalidation events, emit `INVALIDATE_PREVIOUS` for active prior sent items, and force current sections to be resent instead of omitted.
 - Checks run: focused durable/CLI/MCP behavior tests before full verification.
-- Risks/follow-ups: reset recovery still operates on scaffold diff rows internally. Durable claim/proof invalidation remains pending.
+- Risks/follow-ups: reset recovery still operates on internal diff rows. Durable claim/proof invalidation remains pending.
 
 ### 2026-05-26 - Pinned Active Project Rules
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: repository-derived scaffold artifacts now include a pinned `active-project-rules` section when trusted rule files are present. Rule file excerpts use the same source-hash verification, proof refs, and dependency refs as exact-source evidence, and scanner classification now covers `AGENTS.md`, `.cursor/rules`, `.cursorrules`, `.aiassistant/rules`, `.junie/guidelines.md`, and `.grape/` rule paths when they are Git-visible and privacy-allowed.
+- Summary: repository-derived artifacts now include a pinned `active-project-rules` section when trusted rule files are present. Rule file excerpts use the same source-hash verification, proof refs, and dependency refs as exact-source evidence, and scanner classification now covers `AGENTS.md`, `.cursor/rules`, `.cursorrules`, `.aiassistant/rules`, `.junie/guidelines.md`, and `.grape/` rule paths when they are Git-visible and privacy-allowed.
 - Checks run: focused source-excerpt, repo-snapshot, repository-artifact, and CLI behavior tests; `npm run check`; `npm run build`; `git diff --check`.
 - Risks/follow-ups: this renders exact rule text as pinned context only. Parsed `project_rules`, conflicts, nested scope resolution, candidate/generated rules, and rule-specific MCP/CLI inspection remain pending.
 
@@ -237,19 +237,19 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: added `fts_entries` metadata rows plus a lexical text table for allowed source records. Lexical persistence now reuses source-hash/path/binary/symlink guards, skips secret-looking text, exposes source-linked search results through storage repositories, and remains separate from compiler selection policy.
 - Checks run: focused file-index and storage-runtime behavior tests; `npm run check`; `npm run build`; `git diff --check`.
-- Risks/follow-ups: lexical rows are persisted and searchable. Later slices use them for scaffold source selection; durable current-valid claim filtering and final high-risk compiler policy remain pending.
+- Risks/follow-ups: lexical rows are persisted and searchable. Later slices use them for source selection; durable current-valid claim filtering and final high-risk compiler policy remain pending.
 
 ### 2026-05-26 - V1 ContextPackItem Output Mapping
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: public CLI JSON, artifact JSON, Markdown rendering, and MCP `grape_get_context` output now map internal scaffold diff rows into V1-shaped `ContextPackItem` objects. Pack items expose `content`, `itemKind`, `itemRef`, `inputRefs`, `restoreId`, token counts, and safety flags while durable storage can continue using scaffold rows internally.
+- Summary: public CLI JSON, artifact JSON, Markdown rendering, and MCP `grape_get_context` output now map internal diff rows into V1-shaped `ContextPackItem` objects. Pack items expose `content`, `itemKind`, `itemRef`, `inputRefs`, `restoreId`, token counts, and safety flags while durable storage can continue using internal rows.
 - Checks run: focused CLI/MCP behavior tests; `npm run check`; `npm run build`; `git diff --check`.
-- Risks/follow-ups: the public pack item shape is now V1-shaped, but the stored artifact body remains the repository-derived scaffold artifact. Final V1 `ContextArtifact` schema promotion remains pending.
+- Risks/follow-ups: the public pack item shape is now V1-shaped, but broader durable retrieval remained pending.
 
 ### 2026-05-26 - Task Source Retrieval Foundation
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: scaffold context compilation now resolves task source hints from task terms, MCP seed file/symbol/test refs, safe lexical rows, and symbol/path metadata. Selected source refs are surfaced in a `task-retrieval` section and prioritized across source manifests, dependency manifests, symbol summaries, and bounded exact-source evidence.
+- Summary: context compilation now resolves task source hints from task terms, MCP seed file/symbol/test refs, safe lexical rows, and symbol/path metadata. Selected source refs are surfaced in a `task-retrieval` section and prioritized across source manifests, dependency manifests, symbol summaries, and bounded exact-source evidence.
 - Checks run: focused retrieval/source-excerpt/CLI/MCP/repository-artifact behavior tests before full verification.
 - Risks/follow-ups: retrieval is still source selection over allowed snapshot records. Durable current-valid claim retrieval, final ContextArtifact schema, budget pruning/compression policy, and high-risk exact-span policies remain pending.
 
@@ -263,37 +263,37 @@ Keep entries simple:
 ### 2026-05-26 - Public V1 ContextArtifact Projection
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: public compile JSON now exposes `artifactFormat: "grape.context-pack.v1"`, a V1 `contextArtifact` projection, V1-shaped context pack items, omitted metadata, token metrics, and budget status. CLI `--json` and MCP `grape_get_context` also return the projected `contextArtifact`. Internal scaffold artifact bodies are now written to `.scaffold.json` sidecars so omitted restore can still validate section hashes without making the scaffold body the public contract.
+- Summary: public compile JSON now exposes `artifactFormat: "grape.context-pack.v1"`, a V1 `contextArtifact`, V1-shaped context pack items, omitted metadata, token metrics, and budget status. CLI `--json` and MCP `grape_get_context` also return the public `contextArtifact`. Internal repository artifact bodies are now written to `.repository.json` backing files so omitted restore can still validate section hashes without making the backing file the public contract.
 - Checks run: focused repository-artifact, CLI, and MCP behavior tests before full verification.
-- Risks/follow-ups: the V1 `ContextArtifact` is still projected from the repository-derived scaffold. Durable current-valid claim retrieval, task-policy-specific exact spans, and final high-risk safe compile remain pending.
+- Risks/follow-ups: durable current-valid claim retrieval, task-policy-specific exact spans, and final high-risk safe compile remained pending.
 
 ### 2026-05-26 - Exact Source Proof Row Persistence
 
 - Author/agent: Gaille Amolong / Codex
 - Summary: local compile now validates bounded exact source and rule excerpts against trusted allowed source records, persists accepted direct proof rows in `proofs`, rejects invalid excerpt hashes, and compiles only from accepted proof excerpts. The proof storage repository, proof validator, and app orchestration remain split by ownership.
 - Checks run: focused proof-store and CLI behavior tests before full verification.
-- Risks/follow-ups: persisted proof rows are scaffold proof material only. Durable claim candidates, belief gating, current-valid claim retrieval, and proof/claim stale invalidation remain pending.
+- Risks/follow-ups: persisted proof rows are proof material only. Durable claim candidates, belief gating, current-valid claim retrieval, and proof/claim stale invalidation remain pending.
 
 ### 2026-05-26 - Proof Inspection Surface
 
 - Author/agent: Gaille Amolong / Codex
 - Summary: added `grape proofs`, `grape proofs --proof <id>`, `grape proofs --source <sourceId>`, and MCP `grape_get_proofs` so persisted proof rows are inspectable without raw excerpts or absolute root paths. The service is app-owned; CLI and MCP adapters only parse and render.
 - Checks run: focused CLI/MCP behavior tests before full verification.
-- Risks/follow-ups: this inspects claimless scaffold proof rows. Claim-linked `grape proofs <claim_id>` remains pending until durable claims exist.
+- Risks/follow-ups: this inspects claimless proof rows. Claim-linked `grape proofs <claim_id>` remains pending until durable claims exist.
 
 ### 2026-05-26 - Proof-Aware Omitted Restore Validation
 
 - Author/agent: Gaille Amolong / Codex
 - Summary: omitted-context restore now validates proof dependencies against persisted proof rows before returning omitted bodies. Missing proof rows, changed excerpt hashes, and changed source hashes make restore return stale metadata.
 - Checks run: focused CLI omitted-restore regression test before full verification.
-- Risks/follow-ups: proof invalidation is enforced at restore time for scaffold artifacts. Durable claim stale-state propagation remains pending.
+- Risks/follow-ups: proof invalidation is enforced at restore time for repository artifacts. Durable claim stale-state propagation remains pending.
 
 ### 2026-05-26 - High-Risk Exact Context Policy
 
 - Author/agent: Gaille Amolong / Codex
 - Summary: added compiler-owned high-risk policy evaluation. Risk overlays now require task-selected proof-backed exact source/config/rule excerpts and fail closed with `risk_overlay_missing_exact_context` when retrieval cannot select one.
 - Checks run: focused compiler/CLI/MCP behavior tests before full verification.
-- Risks/follow-ups: this is still source-selection over scaffold evidence, not durable current-valid claim retrieval or full exact-span ranking.
+- Risks/follow-ups: this is still source-selection over exact evidence, not broad durable current-valid claim retrieval or full exact-span ranking.
 
 ### 2026-05-26 - Narrow Source-Excerpt Claim Foundation
 
@@ -494,7 +494,7 @@ Keep entries simple:
 ### 2026-05-28 - Purpose-Based Implementation Naming
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: removed release-phase/version prefixes from implementation filenames and source symbols where the version was not an external contract. Compiler artifact projection files now use purpose names, the initial storage migration no longer uses an alpha label, internal extractor labels use capability names, and migration planning tolerates filename-only drift when ID/checksum still match.
+- Summary: removed release-stage/version prefixes from implementation filenames and source symbols where the version was not an external contract. Compiler artifact output-mapping files now use purpose names, the initial storage migration no longer uses an alpha label, internal extractor labels use capability names, and migration planning tolerates filename-only drift when ID/checksum still match.
 - Checks run: `npm run docs:check`; `npm run architecture:check`; `npm run storage:check`; `npm run typecheck`; `npm run build`; `npm run build:test`; focused storage, compiler, indexing, and CLI behavior tests; `npm run check`.
 - Risks/follow-ups: versioned docs namespaces and artifact format strings intentionally remain versioned because they are external contract identifiers, not implementation filename prefixes.
 
@@ -585,7 +585,7 @@ Keep entries simple:
 ### 2026-05-30 - Context Transport Protocol Roadmap
 
 - Author/agent: Gaille Amolong / Composer
-- Summary: adopted ADR-0010 anchoring V1 on session-safe `ContextPack` transport, refocused root `ROADMAP.md` into product phases, and aligned `implementation-roadmap.md` with compile-vs-transport code ownership, a V1 feature filter, and transport-first alpha exit criteria.
+- Summary: adopted ADR-0010 anchoring V1 on session-safe `ContextPack` transport, refocused root `ROADMAP.md` into product stages, and aligned `implementation-roadmap.md` with compile-vs-transport code ownership, a V1 feature filter, and transport-first alpha exit criteria.
 - Checks run: `npm run docs:check`.
 - Risks/follow-ups: implementation must follow the feature filter; next work is protocol golden tests, compiler hardening, and multi-fixture benchmarks (see `ROADMAP.md`).
 
@@ -613,7 +613,7 @@ Keep entries simple:
 ### 2026-05-30 - CI Node 22.13 and roadmap wording
 
 - Author/agent: Gaille Amolong / Composer
-- Summary: raised the documented runtime floor to Node 22.13+ so CI and install smoke match `node:sqlite` without `--experimental-sqlite`; install smoke passes `NODE_OPTIONS` for spawned `grape` on 22.5–22.12; replaced roadmap “Phase N” headings with Done / Now / Next / Later.
+- Summary: raised the documented runtime floor to Node 22.13+ so CI and install smoke match `node:sqlite` without `--experimental-sqlite`; install smoke passes `NODE_OPTIONS` for spawned `grape` on 22.5–22.12; replaced numeric roadmap headings with Done / Now / Next / Later.
 - Checks run: `npm run check`.
 - Risks/follow-ups: contributors on Node 22.5–22.12 must set `NODE_OPTIONS=--experimental-sqlite` until they upgrade.
 
@@ -741,7 +741,7 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: hardened local compile performance without changing V1 transport semantics. Compile/init/write-session flows now pass the already-captured immutable repo snapshot into persistence, snapshot persistence skips repeat evidence/index materialization only when expected rows already exist, storage exposes scoped sent-ledger and invalidation-ref queries, lexical search uses bounded SQL prefiltering before the existing normalized matcher fallback, and migration `0005_context_performance_indexes.sql` adds supporting lookup indexes. Artifact file writes now use temp-file then rename materialization to reduce partial-file risk while preserving durable send rollback semantics.
 - Checks run: `npm run build:test`; focused snapshot/index/storage/durable/compression behavior tests.
-- Risks/follow-ups: artifact writes intentionally still happen before the durable send transaction returns, because moving them fully after commit can mark context as sent before local output exists. A future two-phase materialization design should solve that without weakening session-ledger correctness.
+- Risks/follow-ups: artifact writes intentionally still happen before the durable send transaction returns, because moving them fully after commit can mark context as sent before local output exists. A future staged materialization design should solve that without weakening session-ledger correctness.
 
 ### 2026-06-03 - Language-Agnostic Retrieval Boundary
 

@@ -234,7 +234,7 @@ test("repository artifact compiler derives a dependency-backed context artifact 
   });
 });
 
-test("repository artifact compiler projects scaffold output to the V1 ContextArtifact shape", () => {
+test("repository artifact compiler maps repository output to the V1 ContextArtifact shape", () => {
   withGitRepo((repoPath) => {
     withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
       const snapshotResult = persistGitRepoSnapshot({

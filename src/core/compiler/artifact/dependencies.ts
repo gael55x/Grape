@@ -8,7 +8,7 @@ import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
 } from "../../../shared/index.js";
-import { isScaffoldSectionSafetyCritical } from "./sections.js";
+import { isRepositorySectionSafetyCritical } from "./sections.js";
 
 export function compressionArtifactRefs(dependencies: readonly ContextDependencyShape[]): string[] {
   return [...new Set(
@@ -21,7 +21,7 @@ export function compressionArtifactRefs(dependencies: readonly ContextDependency
 export function requiredDependencyIds(sections: readonly InMemoryContextSectionShape[]): Set<string> {
   const required = new Set<string>();
   for (const section of sections) {
-    if (!section.pinned && !section.exactRequired && !isScaffoldSectionSafetyCritical(section)) continue;
+    if (!section.pinned && !section.exactRequired && !isRepositorySectionSafetyCritical(section)) continue;
     for (const dependencyRef of section.dependencyRefs) required.add(dependencyRef);
   }
   return required;

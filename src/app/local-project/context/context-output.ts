@@ -7,7 +7,7 @@ import {
   buildContextArtifact,
   renderRepositoryContextPackJson,
   renderRepositoryContextPackMarkdown,
-  renderRepositoryScaffoldArtifactJson
+  renderRepositoryArtifactJson
 } from "../../../core/compiler/index.js";
 import type {
   ContextPackBudgetResult,
@@ -51,17 +51,17 @@ export function writeLocalContextOutput(input: LocalContextOutputInput): LocalAr
   };
   const json = renderRepositoryContextPackJson(renderInput);
   const markdown = renderRepositoryContextPackMarkdown(renderInput);
-  const scaffoldJson = renderRepositoryScaffoldArtifactJson(input.artifact);
+  const repositoryArtifactJson = renderRepositoryArtifactJson(input.artifact);
 
   assertArtifactTextHasNoSecrets(json, "context artifact JSON");
   assertArtifactTextHasNoSecrets(markdown, "context artifact Markdown");
-  assertArtifactTextHasNoSecrets(scaffoldJson, "context artifact scaffold JSON");
+  assertArtifactTextHasNoSecrets(repositoryArtifactJson, "repository artifact JSON");
 
   return writeLocalArtifactFiles({
     artifactDirPath: input.artifactDirPath,
     artifact: input.artifact,
     json,
     markdown,
-    scaffoldJson
+    repositoryArtifactJson
   });
 }

@@ -35,7 +35,7 @@ Before adding benchmark code, agents must verify:
 
 ## In-Memory Token Accounting
 
-The In-Memory Context Loop uses deterministic approximate token accounting only. It is a scaffold for comparing naive resend cost with structured context pack cost before a real tokenizer and benchmark harness exist.
+The In-Memory Context Loop uses deterministic approximate token accounting only. It is a foundation for comparing naive resend cost with structured context pack cost before a real tokenizer and benchmark harness exist.
 
 Rules:
 

@@ -6,7 +6,7 @@ Accepted.
 
 ## Context
 
-`src/core/compiler/` grew into several distinct responsibilities: scaffold artifact guards, public V1 projection, context-pack budget mapping, repository-derived artifact compilation, section construction, dependency manifests, integrity hashes, source proof refs, and risk policy. Keeping all compiler files flat made navigation harder and encouraged future contributors to add new compiler behavior without first choosing a clear owner.
+`src/core/compiler/` grew into several distinct responsibilities: artifact guards, public V1 output, context-pack budget mapping, repository-derived artifact compilation, section construction, dependency manifests, integrity hashes, source proof refs, and risk policy. Keeping all compiler files flat made navigation harder and encouraged future contributors to add new compiler behavior without first choosing a clear owner.
 
 The V1 architecture requires small modules with explicit responsibilities and stable public interfaces. The compiler also sits on a trust boundary: it may render proof-backed context, but it must not validate proofs, promote claims, or write storage SQL.
 
@@ -14,7 +14,7 @@ The V1 architecture requires small modules with explicit responsibilities and st
 
 Split `src/core/compiler/` into ownership subdirectories:
 
-- `artifact/` owns artifact shape guards and public artifact projection code.
+- `artifact/` owns artifact shape guards and public artifact output mapping code.
 - `pack/` owns context-pack item mapping and token-budget evaluation.
 - `repository/` owns repository-derived context artifact compilation.
 - `repository/manifest/` owns dependency manifest construction and dependency ID helpers.

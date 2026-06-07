@@ -921,7 +921,7 @@ test("mcp grape_get_context applies caller environment scope to compiled artifac
 
     const output = responses[0].result.structuredContent;
     assert.equal(output.contextArtifact.environmentScope, "staging");
-    assert.equal(output.warnings.includes("mcp_environment_scope_not_applied_in_scaffold_compile"), false);
+    assert.equal(output.warnings.includes("mcp_environment_scope_not_applied_in_context_compile"), false);
   });
 });
 
@@ -1199,8 +1199,8 @@ test("mcp seed files participate in retrieval while token budget is evaluated", 
     );
 
     assert.equal(output.compileMode, "partial_with_risk");
-    assert.equal(output.warnings.includes("mcp_seed_files_not_used_in_scaffold_compile"), false);
-    assert.equal(output.warnings.includes("mcp_token_budget_not_enforced_in_scaffold_compile"), false);
+    assert.equal(output.warnings.includes("mcp_seed_files_not_used_in_context_compile"), false);
+    assert.equal(output.warnings.includes("mcp_token_budget_not_enforced_in_context_compile"), false);
     assert.equal(output.budget.status, "within_budget");
     assert.equal(retrievalSection.itemRefs.some((ref) => ref.ref === "src/main.ts"), true);
     assert.equal(retrievalSection.itemRefs.some((ref) => ref.ref === "tests/main.test.ts"), true);

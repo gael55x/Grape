@@ -145,4 +145,4 @@ Use the byte length of the JSON body, not the character count. Grape writes resp
 - CLI command and exit-code contract: [`cli.md`](cli.md)
 - MCP tool schemas and safety rules: [`mcp-tools.md`](mcp-tools.md)
 - Context diff wire protocol: [`../contracts/context-diff.md`](../contracts/context-diff.md)
-- Context artifact projection: [`../contracts/context-artifact.md`](../contracts/context-artifact.md)
+- Context artifact contract: [`../contracts/context-artifact.md`](../contracts/context-artifact.md)

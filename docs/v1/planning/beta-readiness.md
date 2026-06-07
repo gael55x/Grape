@@ -18,7 +18,7 @@ Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client tri
 - The happy path is `npm install -g grape-context@0.1.0-alpha.3`, then `grape init --connect`, then an MCP-capable agent calls `grape_get_context`.
 - Manual CLI commands are debugging and fallback surfaces.
 - Stable task/session identity is required for same-session omission.
-- The external benchmark workspace has a 13/13 scripted pass when run with the documented methodology.
+- The external benchmark workspace has a scripted pass when run with the documented methodology.
 
 ## Human Review Checklist
 
@@ -117,14 +117,14 @@ Observed:
 
 - `npm run check` passed in the latest follow-up gate, including the behavior suite, docs checks, fixture checks, package dry-run contents check, and TypeScript build checks.
 - `npm pack --dry-run` passed with a temporary npm cache and confirmed `README.md`, `CHANGELOG.md`, `dist/`, package metadata, and storage migrations ship. The default local npm cache had an ownership issue, so the dry-run used a temporary npm cache path.
-- `npm run benchmark:run` passed all four fixtures. The stable no-change fixture saved 45.12 percent on turn 2; branch-switch, stale-source, and session-reset fixtures intentionally reported 0 percent reduction because they emitted `INVALIDATE_PREVIOUS` instead of unsafe omission.
-- Follow-up token-efficiency hardening added a serialized default MCP agent-output estimate and a 400 percent first-turn overhead gate. The refreshed benchmark suite passed with compact `agent_pack` output; the stable fixture reported `serializedAgentOutputTokens: 30352` and first-turn agent-output overhead of 348.22 percent, while still preserving the 45.12 percent turn-2 logical token reduction.
-- Follow-up pipeline performance hardening reused caller-captured snapshots, guarded repeat evidence/index skips by existing rows, added scoped ledger queries and lookup indexes, and bounded lexical SQL prefiltering with normalized fallback. Artifact output now uses temp-file then rename materialization, but full post-commit file materialization remains deferred until a two-phase design can preserve sent-ledger correctness.
+- `npm run benchmark:run` passed all four fixtures. The stable no-change fixture met the second-turn reduction threshold; branch-switch, stale-source, and session-reset fixtures intentionally emitted `INVALIDATE_PREVIOUS` instead of unsafe omission.
+- Follow-up token-efficiency hardening added a serialized default MCP agent-output estimate and a first-turn overhead gate. The refreshed benchmark suite passed with compact `agent_pack` output while preserving the second-turn reduction threshold.
+- Follow-up pipeline performance hardening reused caller-captured snapshots, guarded repeat evidence/index skips by existing rows, added scoped ledger queries and lookup indexes, and bounded lexical SQL prefiltering with normalized fallback. Artifact output now uses temp-file then rename materialization, but full post-commit file materialization remains deferred until a staged design can preserve sent-ledger correctness.
 - `npm run e2e:alpha` initially failed inside restricted sandbox networking while resolving `registry.npmjs.org`; rerun with approved network access passed.
 - `npm run global:smoke` passed against global `grape-context@0.1.0-alpha.3`.
-- External benchmark workspace `node run-pass.mjs` passed 13/13 scenarios. The same-task no-change turn saved 2,121 estimated tokens on turn 2 (`naiveTokens: 4410`, `grapeTokens: 2289`, `reductionPercent: 48.1`) while preserving 7 `OMIT_UNCHANGED` and 7 `RESTORE_AVAILABLE` rows.
+- External benchmark workspace `node run-pass.mjs` passed all scripted scenarios. The same-task no-change turn preserved safe omission and restore behavior without recording raw token counts in this planning note.
 - External `node smoke-published.mjs` passed 8/8 checks against the published/global CLI, including MCP `initialize`, `tools/list`, two `grape_get_context` turns, and `grape_get_omitted_item` restore.
-- Graphify AST update produced a local graph for `ts-checkout-app` with 16 nodes, 17 edges, and 5 communities; `graphify query` found the expected discount/cart/test neighborhood. Graphify's built-in `benchmark` command did not run on this small graph because its sample questions found no matching nodes, so Graphify is recorded here as a structural orientation comparison, not as an equivalent context-transport benchmark.
+- Graphify AST update produced a local graph for `ts-checkout-app`, and `graphify query` found the expected discount/cart/test neighborhood. Graphify's built-in `benchmark` command did not run on this small graph because its sample questions found no matching nodes, so Graphify is recorded here as a structural orientation comparison, not as an equivalent context-transport benchmark.
 - The sample repo was dirty during the external trial because generated/local files were present, and Grape surfaced `dirty_worktree_context` rather than treating the context as branch-global.
 
 Verdict:
@@ -161,7 +161,7 @@ npm install -g grape-context@0.1.0-alpha.3
 
 ## Do Not Treat As Beta Complete
 
-- Scaffold-backed artifact sections are still documented limitations.
+- Repository artifact sections remain limited to enabled narrow claim policies and source-selection evidence.
 - Grape-observed command/test runners can promote the narrow `grape_observed_run_result` proof/claim, but broader runtime truth from those runs is not implemented.
 - Broader durable claim types, generated/candidate rule promotion, nested rule scope resolution, and automatic conflict resolution are explicitly excluded from the beta transport promise. Conservative parsed-rule conflict creation and manual CLI resolution are included.
 - Retrieval includes deterministic TypeScript/JavaScript AST graph expansion, but embeddings, semantic ranking, complete call graphs, and broad language-aware graph support are later work.
