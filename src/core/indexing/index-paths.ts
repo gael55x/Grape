@@ -1,7 +1,13 @@
 import path from "node:path";
 
 export function languageForPath(repoPath: string): string {
-  const extension = path.posix.extname(normalizeIndexRepoPath(repoPath)).toLowerCase();
+  const normalized = normalizeIndexRepoPath(repoPath);
+  const basename = path.posix.basename(normalized).toLowerCase();
+  const extension = path.posix.extname(normalized).toLowerCase();
+  if (basename === "go.mod") return "go";
+  if (basename === "requirements.txt") return "python_requirements";
+  if (basename === "build.gradle") return "gradle";
+  if (basename === "settings.gradle") return "gradle";
   switch (extension) {
     case ".ts":
       return "typescript";
@@ -33,6 +39,10 @@ export function languageForPath(repoPath: string): string {
       return "yaml";
     case ".toml":
       return "toml";
+    case ".xml":
+      return "xml";
+    case ".gradle":
+      return "gradle";
     default:
       return "unknown";
   }

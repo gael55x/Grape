@@ -365,8 +365,79 @@ test("file indexing skips binary files without storing raw bytes", () => {
   }
 });
 
+test("file indexing detects package roots from common manifest boundaries", () => {
+  const rootPath = mkdtempSync(path.join(tmpdir(), "grape-file-index-packages-"));
+
+  try {
+    mkdirSync(path.join(rootPath, "services", "billing", "src"), { recursive: true });
+    mkdirSync(path.join(rootPath, "apps", "web", "src"), { recursive: true });
+    const files = [
+      file(rootPath, "services/billing/pyproject.toml", "[project]\nname = \"billing\"\n", "source:pyproject", "package"),
+      file(rootPath, "services/billing/src/pricing.py", "def total(value):\n    return value\n", "source:pricing"),
+      file(rootPath, "apps/web/package.json", "{\"name\":\"web\"}\n", "source:web-package", "package"),
+      file(rootPath, "apps/web/src/cart.ts", "export const cartTotal = 1;\n", "source:cart"),
+      file(rootPath, "Cargo.toml", "[package]\nname = \"root\"\n", "source:cargo", "package")
+    ];
+
+    const result = buildFileIndex({
+      projectId: "project-1",
+      repoId: "repo-1",
+      snapshotId: "snapshot-1",
+      rootPath,
+      files,
+      createdAt: now
+    });
+    const nodeByPathAndName = new Map(result.nodes.map((node) => [`${node.path}:${node.name}`, node]));
+    const pyprojectMetadata = nodeMetadata(nodeByPathAndName.get(
+      "services/billing/pyproject.toml:services/billing/pyproject.toml"
+    ));
+    const pricingMetadata = nodeMetadata(nodeByPathAndName.get(
+      "services/billing/src/pricing.py:services/billing/src/pricing.py"
+    ));
+    const packageMetadata = nodeMetadata(nodeByPathAndName.get("apps/web/package.json:apps/web/package.json"));
+    const cartMetadata = nodeMetadata(nodeByPathAndName.get("apps/web/src/cart.ts:apps/web/src/cart.ts"));
+    const rootManifestMetadata = nodeMetadata(nodeByPathAndName.get("Cargo.toml:Cargo.toml"));
+
+    assert.equal(pyprojectMetadata.manifestPackageRoot, "services/billing");
+    assert.equal(pyprojectMetadata.packageRootManifestKind, "python_pyproject");
+    assert.equal(pyprojectMetadata.packageRootManifestSourceId, "source:pyproject");
+    assert.match(pyprojectMetadata.packageRootManifestHash, /^[a-f0-9]{64}$/);
+    assert.equal(pyprojectMetadata.packageRootProviderId, "generic_manifest");
+    assert.deepEqual(pyprojectMetadata.packageRootProviderCapabilities, ["package_roots"]);
+    assert.equal(pricingMetadata.packageRoot, "services/billing");
+    assert.equal(pricingMetadata.packageRootManifestRef, "services/billing/pyproject.toml");
+    assert.equal(pricingMetadata.packageRootManifestKind, "python_pyproject");
+    assert.equal(pricingMetadata.packageRootManifestSourceId, "source:pyproject");
+    assert.match(pricingMetadata.packageRootManifestHash, /^[a-f0-9]{64}$/);
+    assert.equal(packageMetadata.manifestPackageRoot, "apps/web");
+    assert.equal(cartMetadata.packageRoot, "apps/web");
+    assert.equal(cartMetadata.packageRootManifestRef, "apps/web/package.json");
+    assert.equal(rootManifestMetadata.manifestPackageRoot, ".");
+    assert.equal(JSON.stringify(result).includes(rootPath), false);
+    assert.equal(JSON.stringify(result).includes("return value"), false);
+  } finally {
+    rmSync(rootPath, { recursive: true, force: true });
+  }
+});
+
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+function file(rootPath, repoPath, content, sourceId, sourceKind = "source") {
+  writeFileSync(path.join(rootPath, repoPath), content);
+  return {
+    path: repoPath,
+    sha256: sha256(Buffer.from(content)),
+    sourceKind,
+    sourceId
+  };
+}
+
+function nodeMetadata(node) {
+  assert.ok(node, "expected indexed module node");
+  if (node.metadata) return node.metadata;
+  return JSON.parse(node.metadataJson ?? "{}");
 }
 
 test("snapshot file indexing is idempotent for unchanged snapshots", () => {

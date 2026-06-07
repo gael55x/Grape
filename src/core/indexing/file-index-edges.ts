@@ -1,6 +1,7 @@
 import { hashStableParts } from "./index-hash.js";
 import { importSpecifiers, resolveLocalImport } from "./import-resolution.js";
 import { languageProviderMetadataFields, type LanguageProviderMetadata } from "./language-provider.js";
+import { packageRootMetadataFields, type PackageRootMetadata } from "./package-roots.js";
 import type { AstCallCandidate } from "./typescript-ast-index.js";
 import type { FileIndexEdge, FileIndexInput, FileIndexNode, ParsedFileIndex } from "./file-index-types.js";
 import { moduleSymbolId } from "./file-index-nodes.js";
@@ -21,10 +22,10 @@ export function fileIndexEdgesForParsedFiles(
 
   for (const parsed of parsedFiles) {
     edges.push(...parsed.symbols.map((symbol) =>
-      containsEdge(input, parsed.moduleNode.symbolId, symbol, parsed.provider)
+      containsEdge(input, parsed.moduleNode.symbolId, symbol, parsed.provider, parsed.packageRoot)
     ));
     edges.push(...parsed.symbols.filter((symbol) => symbol.metadata.exported === true).map((symbol) =>
-      exportEdge(input, parsed.moduleNode.symbolId, symbol.symbolId, symbol.name, parsed.provider)
+      exportEdge(input, parsed.moduleNode.symbolId, symbol.symbolId, symbol.name, parsed.provider, parsed.packageRoot)
     ));
     edges.push(...detectImportEdges(input, parsed, filePaths));
     if (parsed.ast) {
@@ -70,6 +71,7 @@ function detectImportEdges(
       discoveryMethod: candidate.dynamic ? "ast" : "import_resolution",
       metadata: {
         ...languageProviderMetadataFields(parsed.provider),
+        ...packageRootMetadataFields(parsed.packageRoot),
         specifier: candidate.specifier,
         targetPath,
         bindings: candidate.bindings,
@@ -109,6 +111,7 @@ function detectReExportEdges(
       discoveryMethod: "ast",
       metadata: {
         ...languageProviderMetadataFields(parsed.provider),
+        ...packageRootMetadataFields(parsed.packageRoot),
         specifier: candidate.specifier,
         targetPath,
         bindings: candidate.bindings,
@@ -149,6 +152,7 @@ function detectCallEdges(
       discoveryMethod: "ast",
       metadata: {
         ...languageProviderMetadataFields(parsed.provider),
+        ...packageRootMetadataFields(parsed.packageRoot),
         name: call.name,
         expression: call.expression,
         line: call.line,
@@ -163,7 +167,8 @@ function containsEdge(
   input: FileIndexInput,
   fromSymbolId: string,
   symbol: FileIndexNode,
-  provider: LanguageProviderMetadata
+  provider: LanguageProviderMetadata,
+  packageRoot?: PackageRootMetadata
 ): FileIndexEdge {
   return {
     edgeId: `symbol_edge:${hashStableParts([
@@ -181,7 +186,11 @@ function containsEdge(
     edgeType: "contains",
     confidence: "medium",
     discoveryMethod: "inferred",
-    metadata: { name: symbol.name, ...languageProviderMetadataFields(provider) },
+    metadata: {
+      name: symbol.name,
+      ...languageProviderMetadataFields(provider),
+      ...(packageRoot ? packageRootMetadataFields(packageRoot) : {})
+    },
     createdAt: input.createdAt
   };
 }
@@ -191,7 +200,8 @@ function exportEdge(
   fromSymbolId: string,
   toSymbolId: string,
   name: string,
-  provider: LanguageProviderMetadata
+  provider: LanguageProviderMetadata,
+  packageRoot: PackageRootMetadata
 ): FileIndexEdge {
   return {
     edgeId: `symbol_edge:${hashStableParts([
@@ -209,7 +219,12 @@ function exportEdge(
     edgeType: "exports",
     confidence: "high",
     discoveryMethod: "ast",
-    metadata: { name, ...languageProviderMetadataFields(provider), extractor: "typescript_ast" },
+    metadata: {
+      name,
+      ...languageProviderMetadataFields(provider),
+      ...packageRootMetadataFields(packageRoot),
+      extractor: "typescript_ast"
+    },
     createdAt: input.createdAt
   };
 }

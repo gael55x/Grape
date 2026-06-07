@@ -187,6 +187,17 @@ test("source kind classifier recognizes local agent rule files", () => {
   assert.equal(classifySourceKind(".grape/rules.md"), "rule");
 });
 
+test("source kind classifier recognizes common package manifests", () => {
+  assert.equal(classifySourceKind("package.json"), "package");
+  assert.equal(classifySourceKind("packages/api/pyproject.toml"), "package");
+  assert.equal(classifySourceKind("services/api/requirements.txt"), "package");
+  assert.equal(classifySourceKind("crates/core/Cargo.toml"), "package");
+  assert.equal(classifySourceKind("cmd/api/go.mod"), "package");
+  assert.equal(classifySourceKind("java/pom.xml"), "package");
+  assert.equal(classifySourceKind("apps/web/build.gradle"), "package");
+  assert.equal(classifySourceKind("apps/web/settings.gradle.kts"), "package");
+});
+
 test("git repo snapshot marks dirty worktree and changes worktree hash", () => {
   withGitRepo((repoPath) => {
     const clean = createGitRepoSnapshot({ rootPath: repoPath, repoId: "repo-1", createdAt: now });

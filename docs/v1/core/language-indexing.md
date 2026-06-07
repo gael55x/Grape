@@ -106,12 +106,13 @@ Current implementation is useful but not broad language-aware indexing:
 
 - TypeScript/JavaScript files get deterministic AST-backed symbols, imports, exports, direct calls, and related-test orientation.
 - Every indexed file is tagged with normalized provider metadata. TypeScript/JavaScript AST rows use the `typescript_ast` provider. Safe fallback rows use the `generic_text` provider with explicit `module_edges` and `test_edges` capability-gap diagnostics.
+- Generic manifest detection tags package-root evidence for common manifests such as `package.json`, `pyproject.toml`, `requirements.txt`, `Cargo.toml`, `go.mod`, `pom.xml`, and Gradle build/settings files. Nested source files under those roots carry the manifest ref and manifest kind as index metadata.
 - High-confidence TypeScript/JavaScript AST declaration nodes can promote the narrow `repository_symbol_declaration_exists` claim only when covered by an accepted exact source excerpt window and `provider_symbol_declaration` proof; this proves declaration-span existence only.
 - JSON and Markdown are classified as known languages for indexing and lexical search, but they do not have AST graph extraction.
 - Python, Java, Kotlin, Go, Rust, YAML, and other languages mostly fall back to file path/text indexing today.
 - Bootstrap detection can report Python, Go, Rust, package managers, and common frameworks from root manifests, but those are setup hints only.
 - Current provider diagnostics live in index metadata, not a first-class storage family.
-- Current selection caps are mostly global. If a task names an exact source path inside `packages/<name>/`, `apps/<name>/`, `services/<name>/`, or `libs/<name>/`, broad symbol and lexical expansion is scoped to that workspace path before the global cap is applied. Current-valid claim filtering uses that same common-prefix root only when explicit source refs identify exactly one package root; claim scopes record the common-prefix package root from their own exact source refs.
+- Current selection caps are mostly global. If a task names an exact source path inside `packages/<name>/`, `apps/<name>/`, `services/<name>/`, or `libs/<name>/`, broad symbol and lexical expansion is scoped to that workspace path before the global cap is applied. Current-valid claim filtering uses that same common-prefix root only when explicit source refs identify exactly one package root; claim scopes record the common-prefix package root from their own exact source refs. Manifest-derived package roots are index evidence today, not a complete package-aware retrieval or invalidation policy.
 - `tests/fixtures/polyglot-fallback-repo` proves Python, Java, and Kotlin files can be selected as exact lexical/path evidence with partial-context warnings. It does not prove language-aware import, call, or test edges for those languages.
 - `tests/fixtures/monorepo-lite-repo` proves an explicit `packages/api/...` task can select package-local TS source plus related tests without pulling an unrelated `packages/web/...` source. It does not prove package-aware invalidation, nested manifest dependency scoping, or per-package budgets.
 - Current checked-in benchmark fixtures remain TypeScript-focused; the polyglot and monorepo fixtures are behavior proof fixtures, not token benchmark baselines.
@@ -124,7 +125,7 @@ This is acceptable for a controlled beta only if the promise stays: reliable con
 - JS-style import bias: local import resolution checks JS/TS extensions and `index.*` forms only.
 - Regex fallback bias: generic symbol detection recognizes JS/TS-like declarations, not Python, Java, Kotlin, Go, Rust, C#, Ruby, or PHP declarations.
 - Language detection gaps: unknown extensions still collapse to `unknown`, and language labels do not imply graph extraction capability.
-- Monorepo flattening: repository snapshot and retrieval mostly treat the repo as one source pool. Explicit package-path tasks and package-scoped claim activation use common-prefix scope metadata, but manifest-backed package discovery, package-aware invalidation, and per-package budgets are not implemented yet.
+- Monorepo flattening: repository snapshot and retrieval mostly treat the repo as one source pool. Explicit package-path tasks and package-scoped claim activation use common-prefix scope metadata, and package manifests now produce package-root index metadata, but package-aware invalidation and per-package budgets are not implemented yet.
 - Root-manifest bias: bootstrap detection mostly checks root-level manifests/configs and can miss nested workspaces.
 - Test adjacency bias: related-test selection depends on import/call edges that exist today primarily for TS/JS.
 - Capability opacity: agents see blind spots, but not a complete provider capability report per language/package.
@@ -136,7 +137,7 @@ Before Grape claims broad polyglot or monorepo retrieval, it needs:
 
 - a provider dispatcher with a stable normalized output contract
 - capability metadata surfaced in artifacts or diagnostics
-- package/workspace boundary detection beyond explicit source-path scoping
+- package/workspace boundary metadata consumed by retrieval, current-valid scope, and invalidation policy
 - per-package/per-language retrieval caps beyond the current explicit-path guard
 - checked-in polyglot fixture coverage for safe lexical/path fallback
 - checked-in monorepo fixture coverage for explicit package-path scoping
