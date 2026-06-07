@@ -111,7 +111,9 @@ function taskScopedClaimMatches(
   taskSourceExcerpts: readonly TaskScopedClaimExcerptWindow[] | undefined
 ): boolean {
   if (isProjectRuleClaim(claim)) return true;
-  if (isCurrentSessionObservedRunClaim(claim, sessionId)) return true;
+  if (isCurrentSessionObservedRunClaim(claim, sessionId)) {
+    return observedRunClaimMatchesTask(claim, taskSourceOrder, sessionId);
+  }
   if (!claim.sourceRefs.some((sourceRef) => taskSourceOrder.has(sourceRef))) return false;
   if (!isSymbolDeclarationClaim(claim)) return true;
   return symbolDeclarationCoveredByTaskExcerpt(claim, taskSourceExcerpts ?? []);
@@ -122,6 +124,8 @@ function claimTaskOrder(
   taskSourceOrder: ReadonlyMap<string, number>,
   sessionId: string | undefined
 ): number {
+  const observedRunOrder = observedRunTaskOrder(claim, taskSourceOrder, sessionId);
+  if (observedRunOrder !== undefined) return observedRunOrder;
   const positions = claim.sourceRefs
     .map((sourceRef) => taskSourceOrder.get(sourceRef))
     .filter((position): position is number => position !== undefined);
@@ -145,6 +149,27 @@ function isCurrentSessionObservedRunClaim(claim: LocalClaimSummary, sessionId: s
     typeof claim.scope.sessionId === "string" &&
     claim.scope.sessionId === sessionId
   );
+}
+
+function observedRunClaimMatchesTask(
+  claim: LocalClaimSummary,
+  taskSourceOrder: ReadonlyMap<string, number>,
+  sessionId: string | undefined
+): boolean {
+  return observedRunTaskOrder(claim, taskSourceOrder, sessionId) !== undefined;
+}
+
+function observedRunTaskOrder(
+  claim: LocalClaimSummary,
+  taskSourceOrder: ReadonlyMap<string, number>,
+  sessionId: string | undefined
+): number | undefined {
+  if (!isCurrentSessionObservedRunClaim(claim, sessionId)) return undefined;
+  if (stringScope(claim.scope, "sourceType") !== "test_run") return undefined;
+  const positions = stringArrayScope(claim.scope, "testFiles")
+    .map((sourceRef) => taskSourceOrder.get(sourceRef))
+    .filter((position): position is number => position !== undefined);
+  return positions.length > 0 ? Math.min(...positions) : undefined;
 }
 
 function symbolDeclarationCoveredByTaskExcerpt(
@@ -319,6 +344,11 @@ function parseScope(scopeJson: string): Record<string, unknown> {
 function stringScope(scope: Record<string, unknown>, key: string): string {
   const value = scope[key];
   return typeof value === "string" ? value : "";
+}
+
+function stringArrayScope(scope: Record<string, unknown>, key: string): readonly string[] {
+  const value = scope[key];
+  return Array.isArray(value) && value.every((item) => typeof item === "string") ? value : [];
 }
 
 function numberScope(scope: Record<string, unknown>, key: string): number | undefined {

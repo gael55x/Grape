@@ -284,6 +284,114 @@ test("cli run and test record Grape-observed trusted evidence without raw output
   });
 });
 
+test("cli observed test run records explicit test file refs without rendering unrelated task claims", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "src"));
+    mkdirSync(path.join(repoPath, "tests"));
+    writeFileSync(
+      path.join(repoPath, "src", "search.js"),
+      [
+        "function buildSearchIndex() {",
+        "  return 'search-ready';",
+        "}",
+        "module.exports = { buildSearchIndex };",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(
+      path.join(repoPath, "tests", "search.test.js"),
+      [
+        "const { buildSearchIndex } = require('../src/search');",
+        "if (buildSearchIndex() !== 'search-ready') process.exit(1);",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(path.join(repoPath, "tests", "unrelated.test.js"), "process.exit(0);\n");
+    execGit(repoPath, ["add", "src", "tests"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add observed test scoping fixture"
+    ]);
+
+    runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain buildSearchIndex search indexing",
+      "--session",
+      "observed-test-scope-session"
+    ]);
+    const unrelatedResult = runCli(repoPath, [
+      "test",
+      "--session",
+      "observed-test-scope-session",
+      "--test-framework",
+      "node",
+      "--json",
+      "--",
+      process.execPath,
+      "tests/unrelated.test.js"
+    ]);
+    assert.equal(unrelatedResult.status, 0, unrelatedResult.stderr);
+    assert.equal(unrelatedResult.stderr, "");
+    const unrelated = JSON.parse(unrelatedResult.stdout);
+    const unrelatedSource = localSourceById(repoPath, unrelated.sourceId);
+    const unrelatedMetadata = JSON.parse(unrelatedSource.metadataJson);
+    assert.deepEqual(unrelatedMetadata.testFiles, ["tests/unrelated.test.js"]);
+
+    const afterUnrelated = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain buildSearchIndex search indexing",
+      "--session",
+      "observed-test-scope-session"
+    ]);
+    const unrelatedArtifactJson = JSON.parse(
+      readFileSync(localPublicPath(repoPath, afterUnrelated.artifactJsonPath), "utf8")
+    );
+    const unrelatedClaims = unrelatedArtifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "current-valid-claims"
+    );
+    assert.doesNotMatch(unrelatedClaims?.text ?? "", new RegExp(escapeRegExp(unrelated.claimId)));
+
+    const relatedResult = runCli(repoPath, [
+      "test",
+      "--session",
+      "observed-test-scope-session",
+      "--test-framework",
+      "node",
+      "--json",
+      "--",
+      process.execPath,
+      "tests/search.test.js"
+    ]);
+    assert.equal(relatedResult.status, 0, relatedResult.stderr);
+    assert.equal(relatedResult.stderr, "");
+    const related = JSON.parse(relatedResult.stdout);
+    const relatedSource = localSourceById(repoPath, related.sourceId);
+    const relatedMetadata = JSON.parse(relatedSource.metadataJson);
+    assert.deepEqual(relatedMetadata.testFiles, ["tests/search.test.js"]);
+
+    const afterRelated = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain buildSearchIndex search indexing",
+      "--session",
+      "observed-test-scope-session"
+    ]);
+    const relatedArtifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, afterRelated.artifactJsonPath), "utf8"));
+    const relatedClaims = relatedArtifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "current-valid-claims"
+    );
+    assert.match(relatedClaims?.text ?? "", new RegExp(escapeRegExp(related.claimId)));
+    assert.equal((relatedClaims?.text ?? "").includes("observed test output"), false);
+  });
+});
+
 test("cli observed runner rejects secret-looking commands before execution", () => {
   withGitRepo((repoPath) => {
     runCliJson(repoPath, ["compile", "--task", "Observe local commands", "--session", "observed-session"]);

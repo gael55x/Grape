@@ -92,6 +92,7 @@ Trust and scope:
 - `current_valid_resolution_rejects_claims_scoped_to_another_current_package_root`
 - `current_session_does_not_reject_branch_scoped_claims_without_session_scope`
 - `current_valid_resolution_rejects_claims_scoped_to_another_current_session`
+- `observed_test_run_without_task_file_ref_not_rendered`
 - `monorepo_package_boundary_prevents_same_source_supersession`
 - `validated_package_local_source_claims_record_package_root_scope`
 - `unknown_scope_overlap_warning`
@@ -168,6 +169,7 @@ MCP and CLI:
 - `cli_bench_reports_fixture_token_reduction`
 - `cli_bench_requires_named_fixture`
 - `cli_doctor_privacy_redacts_secrets`
+- `cli_observed_test_run_records_explicit_test_file_refs`
 - `cli_init_repairs_unusable_local_database`
 - `cli_compile_repairs_unusable_local_database`
 

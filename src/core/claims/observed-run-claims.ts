@@ -50,6 +50,7 @@ export interface ObservedRunClaimScope {
   readonly snapshotId: string;
   readonly passed?: boolean;
   readonly testFramework?: string;
+  readonly testFiles?: readonly string[];
 }
 
 export interface ObservedRunClaimDraft {
@@ -89,7 +90,8 @@ export function createObservedRunClaimDraft(material: ObservedRunProofMaterial):
     sessionId: material.metadata.sessionId,
     snapshotId: material.metadata.snapshotId,
     passed: material.metadata.passed,
-    testFramework: material.metadata.testFramework
+    testFramework: material.metadata.testFramework,
+    testFiles: material.metadata.testFiles
   };
 
   return {

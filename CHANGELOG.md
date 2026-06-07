@@ -15,6 +15,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added narrow provider-backed symbol declaration claims for high-confidence TypeScript/JavaScript declarations covered by accepted exact source excerpts. They prove declaration-span existence only, not imports, behavior, correctness, root cause, or complete architecture.
 - Added related-test relationship details to task retrieval output so agents can see which import/call edge selected a test file without treating it as proof that tests ran, covered behavior, or proved correctness.
 - Added stable relationship refs for related-test retrieval evidence when the selected import/call edge comes from the indexed symbol graph.
+- Scoped observed test-run claims to explicit test file refs in selected-source artifacts so unrelated current-session test results stay inspectable without being rendered as task evidence.
 - Added conservative project-rule conflict creation and manual CLI resolution. Parsed `project_rule` claims can now create `needs_review` conflict edges, `grape conflicts` shows open conflicts, and `grape conflicts --resolve <edge> --as coexists_with|variant_of` records a local resolution edge.
 - Added the language-provider documentation boundary: Grape context is graph-shaped, TypeScript/JavaScript graph extraction is strongest today, and Kotlin/Java/Python/etc. must use safe exact/path/lexical fallback until providers and fixtures prove stronger support.
 

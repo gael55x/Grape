@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
+import { statSync } from "node:fs";
+import path from "node:path";
 
 import { hashStableParts } from "../../../core/evidence/index.js";
 import { assertArtifactTextHasNoSecrets } from "../../../core/security/index.js";
@@ -8,6 +10,7 @@ import {
   recordLocalGrapeObservedTestResult
 } from "./recording.js";
 import { sha256 } from "../context/compile-ids.js";
+import { normalizeRepoRelativePath } from "./path.js";
 import type { RecordLocalObservationResult } from "./types.js";
 
 export interface RunLocalObservedCommandInput {
@@ -158,9 +161,35 @@ function persistObservedResult(
         ...base,
         passed: observed.exitCode === 0,
         testFramework: input.testFramework,
-        testFiles: []
+        testFiles: explicitTestFileRefs(input.rootPath, input.commandArgs)
       })
     : recordLocalGrapeObservedCommandResult(base);
+}
+
+function explicitTestFileRefs(rootPath: string, commandArgs: readonly string[]): readonly string[] {
+  const refs = new Set<string>();
+  for (const arg of commandArgs) {
+    const ref = explicitTestFileRef(rootPath, arg);
+    if (ref) refs.add(ref);
+  }
+  return [...refs].sort();
+}
+
+function explicitTestFileRef(rootPath: string, arg: string): string | undefined {
+  if (arg.startsWith("-") || arg.includes("\0")) return undefined;
+  let ref: string;
+  try {
+    ref = normalizeRepoRelativePath(rootPath, arg, "test file");
+  } catch {
+    return undefined;
+  }
+  if (!isLikelyTestFileRef(ref)) return undefined;
+  const stat = statSync(path.join(rootPath, ref), { throwIfNoEntry: false });
+  return stat?.isFile() ? ref : undefined;
+}
+
+function isLikelyTestFileRef(ref: string): boolean {
+  return /(?:^|\/)[^/]+\.(?:test|spec)\.(?:[cm]?js|[cm]?ts|jsx|tsx)$/.test(ref);
 }
 
 function normalizeCommandArgs(commandArgs: readonly string[]): readonly string[] {

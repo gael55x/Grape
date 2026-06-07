@@ -1131,7 +1131,7 @@ Current enabled durable claim policy:
 | `repository_source_excerpt_exists` | `exact_source_excerpt` | trusted allowed repository/config/lock/migration/rule source | `direct` | The exact excerpt exists in the current scoped source input. | Runtime behavior, correctness, root cause, deploy state, broad architecture. |
 | `project_rule` | `exact_project_rule_excerpt` | trusted allowed rule file | `direct` | The exact parsed rule text exists in the scoped rule file. | Generated policy, unstated implications, conflict resolution, precedence. |
 | `repository_symbol_declaration_exists` | `provider_symbol_declaration` | trusted allowed repository source file with high-confidence AST symbol metadata | `direct` | The parser-backed declaration span exists in the current scoped source input. | Imports, exports, complete call graph, runtime behavior, correctness, root cause, ownership, broad architecture. |
-| `grape_observed_run_result` | `grape_observed_run_result` | trusted Grape-observed command/test run | `direct` | Grape observed one scoped command/test result. | Product correctness, root cause, fix success, production behavior. |
+| `grape_observed_run_result` | `grape_observed_run_result` | trusted Grape-observed command/test run | `direct` | Grape observed one scoped command/test result. | Product correctness, test coverage, root cause, fix success, production behavior. |
 
 Future V1.0 durable extraction families, once backed by policy, fixtures, and
 current-valid validation:
@@ -2746,7 +2746,7 @@ Rules:
 
 - Agent-reported command/test results are temporary unless tied to a Grape-observed `observedRunId`.
 - A command/test result is trusted only when `observedByGrape = true`, hashes are recorded, and the working directory is scoped.
-- A Grape-observed command/test result may promote only a narrow `grape_observed_run_result` proof/claim from hashes and scoped metadata. It proves the observed run result only, never product correctness or root cause.
+- A Grape-observed command/test result may promote only a narrow `grape_observed_run_result` proof/claim from hashes and scoped metadata. Explicit safe test file refs may help task-scoped rendering, but prove only that the run named those files. The claim proves the observed run result only, never product correctness, test coverage, or root cause.
 - User decisions require direct confirmation with prompt hash, response hash, timestamp, confirmation channel, and scope.
 - `grape_record_user_decision` may record a candidate decision, but durable decision claims require Trust Kernel promotion from direct confirmation proof.
 
@@ -3312,6 +3312,8 @@ Do not report token reduction against an ad hoc baseline.
 - `monorepo_fixture_renders_related_test_relationship_evidence`
 - `task_source_retrieval_carries_relationship_refs`
 - `task_retrieval_relationships_carry_dependency_refs_without_proofs`
+- `cli_observed_test_run_records_explicit_test_file_refs`
+- `observed_test_run_without_task_file_ref_not_rendered`
 - `test_output_only_partially_validates_broad_behavior_claim`
 - `current_valid_claims_ranked_by_task_relevance`
 
