@@ -103,6 +103,7 @@ test("task source retrieval includes related tests that import selected source f
     symbols: [symbol("source-billing", "src/billing.ts", "calculateDiscount")],
     relationships: [
       {
+        relationshipRef: "symbol_edge:billing-test-import",
         sourceRef: "tests/billing.test.ts",
         targetSourceRef: "src/billing.ts",
         relationship: "imports"
@@ -120,6 +121,7 @@ test("task source retrieval includes related tests that import selected source f
   assert.deepEqual(result.relatedTestSourceRefs, ["tests/billing.test.ts"]);
   assert.deepEqual(result.relatedTestRelationships, [
     {
+      relationshipRef: "symbol_edge:billing-test-import",
       testSourceRef: "tests/billing.test.ts",
       targetSourceRef: "src/billing.ts",
       relationship: "imports"

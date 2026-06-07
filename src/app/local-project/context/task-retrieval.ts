@@ -59,16 +59,26 @@ export function resolveLocalTaskRetrieval(
 function importRelationships(
   symbolNodes: readonly RepositoryArtifactSymbolNodeInput[],
   symbolEdges: readonly RepositoryArtifactSymbolEdgeInput[]
-): Array<{ sourceRef: string; targetSourceRef: string; relationship: "imports" | "calls" }> {
+): Array<{
+  relationshipRef: string;
+  sourceRef: string;
+  targetSourceRef: string;
+  relationship: "imports" | "calls";
+}> {
   const pathBySymbolId = new Map(symbolNodes.map((node) => [node.symbolId, node.path]));
-  const relationships: Array<{ sourceRef: string; targetSourceRef: string; relationship: "imports" | "calls" }> = [];
+  const relationships: Array<{
+    relationshipRef: string;
+    sourceRef: string;
+    targetSourceRef: string;
+    relationship: "imports" | "calls";
+  }> = [];
 
   for (const edge of symbolEdges) {
     if (edge.edgeType !== "imports" && edge.edgeType !== "calls") continue;
     const sourceRef = pathBySymbolId.get(edge.fromSymbolId);
     const targetSourceRef = edge.toSymbolId ? pathBySymbolId.get(edge.toSymbolId) : edge.toRef;
     if (!sourceRef || !targetSourceRef) continue;
-    relationships.push({ sourceRef, targetSourceRef, relationship: edge.edgeType });
+    relationships.push({ relationshipRef: edge.edgeId, sourceRef, targetSourceRef, relationship: edge.edgeType });
   }
 
   return relationships;

@@ -23,6 +23,7 @@ export interface TaskRetrievalLexicalMatch {
 }
 
 export interface TaskRetrievalRelationship {
+  readonly relationshipRef?: string;
   readonly sourceRef: string;
   readonly targetSourceRef: string;
   readonly relationship: "imports" | "calls" | string;
@@ -61,6 +62,7 @@ export interface TaskSourceRetrievalResult {
 }
 
 export interface TaskRetrievalRelatedTestRelationship {
+  readonly relationshipRef?: string;
   readonly testSourceRef: string;
   readonly targetSourceRef: string;
   readonly relationship: "imports" | "calls";
@@ -269,6 +271,7 @@ function addRelatedTests(
     if (!isTestSourceRef(relationship.sourceRef)) continue;
     addReason(selectedReasons, relationship.sourceRef, "related_test");
     addRelatedTestRelationship(relatedTestRelationships, {
+      relationshipRef: relationship.relationshipRef,
       testSourceRef: relationship.sourceRef,
       targetSourceRef: relationship.targetSourceRef,
       relationship: relationshipKind
@@ -290,7 +293,8 @@ function addRelatedTestRelationship(
       (existing) =>
         existing.testSourceRef === relationship.testSourceRef &&
         existing.targetSourceRef === relationship.targetSourceRef &&
-        existing.relationship === relationship.relationship
+        existing.relationship === relationship.relationship &&
+        existing.relationshipRef === relationship.relationshipRef
     )
   ) {
     return;
@@ -306,7 +310,9 @@ function sortedRelatedTestRelationships(
     if (testRefOrder !== 0) return testRefOrder;
     const targetRefOrder = left.targetSourceRef.localeCompare(right.targetSourceRef);
     if (targetRefOrder !== 0) return targetRefOrder;
-    return relationshipOrder(left.relationship) - relationshipOrder(right.relationship);
+    const relationshipKindOrder = relationshipOrder(left.relationship) - relationshipOrder(right.relationship);
+    if (relationshipKindOrder !== 0) return relationshipKindOrder;
+    return (left.relationshipRef ?? "").localeCompare(right.relationshipRef ?? "");
   });
 }
 

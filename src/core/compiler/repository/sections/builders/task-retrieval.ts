@@ -3,7 +3,7 @@ import type {
   InMemoryContextSectionShape
 } from "../../../../../shared/index.js";
 import { repositoryContextSection } from "../factory.js";
-import { sectionDependencyRefs, sourceDependencyRefForSourceRef } from "../dependencies.js";
+import { dependencyIdForRef, sectionDependencyRefs, sourceDependencyRefForSourceRef } from "../dependencies.js";
 import type { CompileRepositoryContextArtifactInput } from "../../types.js";
 
 export function taskRetrievalSection(
@@ -29,9 +29,14 @@ export function taskRetrievalSection(
     sourceRefs: retrieval.selectedSourceRefs,
     dependencyRefs: sectionDependencyRefs(
       ["repo-snapshot", "worktree-state"],
-      retrieval.selectedSourceRefs
-        .map((sourceRef) => sourceDependencyRefForSourceRef(sourceRef, dependencies))
-        .filter((ref): ref is string => Boolean(ref))
+      [
+        ...retrieval.selectedSourceRefs
+          .map((sourceRef) => sourceDependencyRefForSourceRef(sourceRef, dependencies)),
+        ...retrieval.relatedTestRelationships
+          .map((relationship) => relationship.relationshipRef)
+          .filter((ref): ref is string => Boolean(ref))
+          .map((relationshipRef) => dependencyIdForRef(relationshipRef, dependencies))
+      ].filter((ref): ref is string => Boolean(ref))
     ),
     pinned: false,
     exactRequired: false
@@ -75,7 +80,10 @@ function relationshipListOrNone(
   return relationships.length > 0
     ? relationships.map(
         (relationship) =>
-          `- ${relationship.testSourceRef} ${relationship.relationship} ${relationship.targetSourceRef}`
+          [
+            `- ${relationship.testSourceRef} ${relationship.relationship} ${relationship.targetSourceRef}`,
+            relationship.relationshipRef ? ` (relationshipRef: ${relationship.relationshipRef})` : ""
+          ].join("")
       )
     : ["- none"];
 }

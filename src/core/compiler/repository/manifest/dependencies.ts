@@ -9,7 +9,8 @@ import {
 import { sourceProofDependencyId } from "../proofs/source-proofs.js";
 import type {
   CompileRepositoryContextArtifactInput,
-  RepositoryArtifactSourceInput
+  RepositoryArtifactSourceInput,
+  RepositoryArtifactSymbolEdgeInput
 } from "../types.js";
 
 export function dependencyManifest(
@@ -111,7 +112,7 @@ export function dependencyManifest(
     });
   }
 
-  for (const edge of selectedSymbolEdges(input.symbolEdges)) {
+  for (const edge of selectedSymbolEdgesForDependencies(input)) {
     dependencies.push({
       id: symbolDependencyId(edge.edgeId),
       kind: "symbol",
@@ -127,6 +128,23 @@ export function dependencyManifest(
   }
 
   return dependencies;
+}
+
+function selectedSymbolEdgesForDependencies(
+  input: CompileRepositoryContextArtifactInput
+): readonly RepositoryArtifactSymbolEdgeInput[] {
+  const selectedById = new Map(selectedSymbolEdges(input.symbolEdges).map((edge) => [edge.edgeId, edge]));
+  const taskRelationshipRefs = new Set(
+    (input.taskRetrieval?.relatedTestRelationships ?? [])
+      .map((relationship) => relationship.relationshipRef)
+      .filter((ref): ref is string => Boolean(ref))
+  );
+
+  for (const edge of input.symbolEdges) {
+    if (taskRelationshipRefs.has(edge.edgeId)) selectedById.set(edge.edgeId, edge);
+  }
+
+  return [...selectedById.values()].sort((left, right) => left.edgeId.localeCompare(right.edgeId));
 }
 
 function sourceDependencyKind(source: RepositoryArtifactSourceInput): InMemoryContextDependencyShape["kind"] {

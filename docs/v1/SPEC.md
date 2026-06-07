@@ -3310,6 +3310,8 @@ Do not report token reduction against an ad hoc baseline.
 - `cli_compile_renders_same_file_symbol_claims_only_when_covered_by_current_exact_evidence`
 - `task_source_retrieval_reports_related_test_relationships`
 - `monorepo_fixture_renders_related_test_relationship_evidence`
+- `task_source_retrieval_carries_relationship_refs`
+- `task_retrieval_relationships_carry_dependency_refs_without_proofs`
 - `test_output_only_partially_validates_broad_behavior_claim`
 - `current_valid_claims_ranked_by_task_relevance`
 

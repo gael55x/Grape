@@ -123,6 +123,7 @@ Artifact and diff:
 - `path_like_test_seed_selects_exact_source_without_runtime_claim`
 - `related_test_import_selects_exact_source_without_runtime_claim`
 - `monorepo_fixture_renders_related_test_relationship_evidence`
+- `task_retrieval_relationships_carry_dependency_refs_without_proofs`
 - `task_selected_exact_source_evidence_excludes_unrelated_fillers`
 - `task_scoped_current_valid_claims_exclude_unrelated_active_claims`
 - `multi_window_exact_source_excerpts_use_distant_task_anchors`
@@ -181,6 +182,7 @@ Storage and security:
 - `polyglot_repo_reports_provider_capability_gaps`
 - `monorepo_retrieval_preserves_package_boundaries`
 - `task_source_retrieval_reports_related_test_relationships`
+- `task_source_retrieval_carries_relationship_refs`
 - `task_source_retrieval_scopes_broad_matches_when_package_test_seed_is_exact_input`
 - `package_manifest_change_invalidates_package_scoped_context`
 - `raw_env_value_not_in_artifact`

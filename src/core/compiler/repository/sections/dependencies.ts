@@ -13,3 +13,10 @@ export function sourceDependencyRefForSourceRef(
 ): string | undefined {
   return dependencies.find((dependency) => dependency.ref === sourceRef)?.id;
 }
+
+export function dependencyIdForRef(
+  ref: string,
+  dependencies: readonly InMemoryContextDependencyShape[]
+): string | undefined {
+  return dependencies.find((dependency) => dependency.ref === ref)?.id;
+}

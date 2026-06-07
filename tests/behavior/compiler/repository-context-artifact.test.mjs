@@ -336,6 +336,99 @@ test("repository artifact compiler renders current-valid claim sections with cla
   });
 });
 
+test("repository artifact compiler dependency-backs related test relationship refs", () => {
+  const artifact = compileRepositoryContextArtifact({
+    projectId: "project-1",
+    sessionId: "session-1",
+    taskId: "task-1",
+    taskType: "bug_fix",
+    riskOverlays: [],
+    userRequestHash: "u".repeat(64),
+    snapshot: {
+      snapshotId: "snapshot-1",
+      repoId: "repo-1",
+      branch: "main",
+      commit: "commit-a",
+      worktreeStatus: "clean",
+      worktreeHash: "d".repeat(64),
+      snapshotHash: "e".repeat(64),
+      dirtyPaths: []
+    },
+    worktreeStateId: "worktree-state-1",
+    sources: [
+      {
+        sourceId: "source-billing",
+        sourceType: "repository_file",
+        sourceRef: "src/billing.ts",
+        sourceHash: "b".repeat(64),
+        sourceScope: "committed",
+        trustClass: "trusted",
+        privacyStatus: "allowed",
+        redactionStatus: "not_needed"
+      },
+      {
+        sourceId: "source-billing-test",
+        sourceType: "repository_file",
+        sourceRef: "tests/billing.test.ts",
+        sourceHash: "c".repeat(64),
+        sourceScope: "committed",
+        trustClass: "trusted",
+        privacyStatus: "allowed",
+        redactionStatus: "not_needed"
+      }
+    ],
+    sourceExcerpts: [],
+    symbolNodes: [],
+    symbolEdges: [
+      {
+        edgeId: "symbol_edge:billing-test-import",
+        projectId: "project-1",
+        repoId: "repo-1",
+        snapshotId: "snapshot-1",
+        fromSymbolId: "symbol:test",
+        toRef: "src/billing.ts",
+        edgeType: "imports",
+        confidence: "high",
+        discoveryMethod: "ast",
+        metadataJson: "{}",
+        createdAt: now
+      }
+    ],
+    taskRetrieval: {
+      selectedSourceRefs: ["src/billing.ts", "tests/billing.test.ts"],
+      explicitSourceRefs: ["src/billing.ts"],
+      testSourceRefs: [],
+      relatedTestSourceRefs: ["tests/billing.test.ts"],
+      relatedTestRelationships: [
+        {
+          relationshipRef: "symbol_edge:billing-test-import",
+          testSourceRef: "tests/billing.test.ts",
+          targetSourceRef: "src/billing.ts",
+          relationship: "imports"
+        }
+      ],
+      graphSourceRefs: [],
+      symbolSourceRefs: ["src/billing.ts"],
+      lexicalSourceRefs: [],
+      queryTerms: ["billing"],
+      warnings: []
+    },
+    createdAt: now
+  });
+  const retrieval = artifact.sections.find((section) => section.id === "task-retrieval");
+  const relationshipDependency = artifact.dependencyManifest.dependencies.find(
+    (dependency) => dependency.ref === "symbol_edge:billing-test-import"
+  );
+
+  assert.match(
+    retrieval?.body ?? "",
+    /tests\/billing\.test\.ts imports src\/billing\.ts \(relationshipRef: symbol_edge:billing-test-import\)/
+  );
+  assert.equal(relationshipDependency?.kind, "symbol");
+  assert.equal(retrieval?.dependencyRefs.includes("symbol:billing-test-import"), true);
+  assert.deepEqual(retrieval?.proofRefs, []);
+});
+
 test("repository artifact compiler renders compression artifacts as non-proof orientation", () => {
   withGitRepo((repoPath) => {
     withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {

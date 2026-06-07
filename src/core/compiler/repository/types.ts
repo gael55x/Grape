@@ -75,6 +75,7 @@ export interface RepositoryArtifactTaskRetrievalInput {
 }
 
 export interface RepositoryArtifactRelatedTestRelationshipInput {
+  readonly relationshipRef?: string;
   readonly testSourceRef: string;
   readonly targetSourceRef: string;
   readonly relationship: "imports" | "calls";
