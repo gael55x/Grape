@@ -7,12 +7,14 @@ import type { LocalProjectConfig } from "../setup/config.js";
 import { projectLocalContextArtifact } from "./context-output.js";
 import { recoveryGuidanceForCompileResult } from "../setup/recovery.js";
 import type { CompileLocalContextResult } from "../types.js";
+import type { PublicCurrentScopeShape } from "../../../core/scope/index.js";
 
 export interface LocalCompileDatabaseValue {
   readonly snapshotResult: PersistGitRepoSnapshotResult;
   readonly build: DurableContextBuildResult;
   readonly artifact: InMemoryContextArtifactShape;
   readonly files: LocalArtifactWriteResult;
+  readonly currentScope: PublicCurrentScopeShape;
   readonly sessionResetId?: string;
 }
 
@@ -23,6 +25,7 @@ export interface LocalCompileResultInput {
   readonly taskId: string;
   readonly riskOverlays: readonly RiskOverlay[];
   readonly environmentScope?: CompileLocalContextResult["contextArtifact"]["environmentScope"];
+  readonly currentScope: PublicCurrentScopeShape;
   readonly value: LocalCompileDatabaseValue;
   readonly databaseBackupPath?: string;
 }
@@ -38,7 +41,8 @@ export function toCompileLocalContextResult(input: LocalCompileResultInput): Com
     dirtyWorktree: input.value.snapshotResult.snapshot.worktreeStatus !== "clean",
     budget,
     tokenCost: input.value.build.tokenMetric.grapeTokens,
-    environmentScope: input.environmentScope
+    environmentScope: input.environmentScope,
+    currentScope: input.currentScope
   });
   const warnings = [
     ...input.value.artifact.warnings,
@@ -60,6 +64,7 @@ export function toCompileLocalContextResult(input: LocalCompileResultInput): Com
     branch: input.value.snapshotResult.snapshot.branch,
     headCommit: input.value.snapshotResult.snapshot.commit,
     dirtyWorktree: input.value.snapshotResult.snapshot.worktreeStatus !== "clean",
+    currentScope: input.currentScope,
     contextPackItems,
     contextArtifact,
     omittedItemCount: input.value.build.omittedItems.length,

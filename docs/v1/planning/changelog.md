@@ -9,9 +9,10 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 ### Changed
 
 - Added explicit claim-edge authority metadata so blocking conflict/supersession behavior depends on recorded provenance instead of edge type alone.
+- Added one normalized current-scope shape across CLI, MCP, compiler projection, retrieval filters, and claim persistence, including worktree hash/dirty status, package/service root, source refs, warnings, and redacted feature-flag count/hash.
 - Added CLI `--environment-scope` parity for compile/diff-context so caller-supplied current environment scope reaches artifact output and current-valid filtering.
 - Added narrow package-root scope derivation and package-local claim scope metadata for explicit package-local file/test refs so current-valid retrieval can reject claims from sibling packages without inferring a full package graph or manifest-backed package invalidation.
-- Added CLI and MCP feature-flag current-scope filters that reject mismatched feature-scoped claims without rendering private flag labels or treating flags as runtime proof.
+- Added CLI and MCP feature-flag current-scope filters that accept only allowlisted names, reject mismatched feature-scoped claims, avoid rendering private flag labels or values, and do not treat flags as runtime proof.
 - Added provider-backed symbol declaration claims for high-confidence TypeScript/JavaScript AST declarations covered by accepted exact source excerpts, while keeping imports, call graphs, behavior, correctness, and root cause out of durable truth.
 - Added related-test relationship evidence in task retrieval output so agents can see which import/call edge selected a test file without treating that relationship as test execution, coverage, or correctness proof.
 - Added dependency-backed relationship refs for related-test retrieval evidence when the selected import/call edge comes from the indexed symbol graph.

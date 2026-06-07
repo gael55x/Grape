@@ -92,6 +92,7 @@ function assertContextArtifactShape(artifact) {
   assertNonEmptyString(artifact.branch, "contextArtifact.branch");
   assertNonEmptyString(artifact.headCommit, "contextArtifact.headCommit");
   assert.equal(typeof artifact.dirtyWorktree, "boolean");
+  assertCurrentScope(artifact.currentScope);
   assert.ok(Array.isArray(artifact.inputRefs));
   assert.ok(Array.isArray(artifact.outputSections));
   assert.ok(Array.isArray(artifact.compressionArtifactRefs));
@@ -102,6 +103,21 @@ function assertContextArtifactShape(artifact) {
   assertDependencyManifestShape(artifact);
   assertInputRefs(artifact.inputRefs);
   assertOutputSections(artifact.outputSections, artifact.dependencyManifest.dependencies);
+}
+
+function assertCurrentScope(scope) {
+  assert.equal(typeof scope?.repoId, "string");
+  assert.equal(typeof scope.branch, "string");
+  assert.equal(typeof scope.commit, "string");
+  assert.equal(typeof scope.worktreeHash, "string");
+  assert.equal(typeof scope.dirtyWorktree, "boolean");
+  assert.equal(typeof scope.taskId, "string");
+  assert.equal(typeof scope.sessionId, "string");
+  assert.equal(typeof scope.environment, "string");
+  assert.equal(typeof scope.featureFlagCount, "number");
+  assert.ok(Array.isArray(scope.sourceRefs));
+  assert.ok(Array.isArray(scope.warnings));
+  assert.equal(Object.hasOwn(scope, "featureFlags"), false);
 }
 
 function assertDependencyManifestShape(artifact) {
@@ -173,7 +189,8 @@ function assertOutputSections(sections, dependencies) {
 
 function assertContextPackItems(items, artifact) {
   assert.ok(items.length > 0, "contextPackItems should not be empty");
-  const artifactInputKeys = new Set(artifact.inputRefs.map((inputRef) => dependencyKey(inputRef)));
+  const artifactInputsByKey = new Map(artifact.inputRefs.map((inputRef) => [dependencyKey(inputRef), inputRef]));
+  const artifactInputKeys = new Set(artifactInputsByKey.keys());
 
   for (const item of items) {
     for (const field of ["id", "itemRef", "title", "contentHash"]) {
@@ -195,7 +212,9 @@ function assertContextPackItems(items, artifact) {
       for (const field of ["id", "ref", "hash"]) {
         assertNonEmptyString(inputRef[field], `contextPackItem.inputRef.${field}`);
       }
-      assert.ok(artifactInputKeys.has(dependencyKey(inputRef)), `pack item ${item.id} input should resolve to artifact input`);
+      const key = dependencyKey(inputRef);
+      assert.ok(artifactInputKeys.has(key), `pack item ${item.id} input should resolve to artifact input`);
+      assert.deepEqual(inputRef.scope, artifactInputsByKey.get(key).scope);
     }
   }
 }

@@ -1,6 +1,7 @@
 import type {
   ContextDependencyShape,
   ContextInputKind,
+  ContextInputRefShape,
   ContextInputShape,
   ContextScopeShape,
   DependencyStrength,
@@ -32,16 +33,30 @@ export function toContextDependency(
   dependency: InMemoryContextDependencyShape,
   requiredIds: ReadonlySet<string>
 ): ContextDependencyShape {
-  const kind = contextInputKindForDependency(dependency.kind);
+  const inputRef = toContextInputRef(artifact, dependency);
+  const scope = contextScopeForDependency(artifact, dependency);
   return {
     id: dependency.id,
-    kind,
+    kind: inputRef.kind,
     ref: dependency.ref,
     hash: dependency.hash,
-    scope: contextScopeForDependency(artifact, dependency),
-    strength: dependencyStrengthForKind(kind),
+    scope,
+    strength: dependencyStrengthForKind(inputRef.kind),
     requiredForSafety: requiredIds.has(dependency.id),
-    invalidates: invalidationTargetsForKind(kind)
+    invalidates: invalidationTargetsForKind(inputRef.kind)
+  };
+}
+
+export function toContextInputRef(
+  artifact: InMemoryContextArtifactShape,
+  dependency: InMemoryContextDependencyShape
+): ContextInputRefShape {
+  return {
+    id: dependency.id,
+    kind: contextInputKindForDependency(dependency.kind),
+    ref: dependency.ref,
+    hash: dependency.hash,
+    scope: contextScopeForDependency(artifact, dependency)
   };
 }
 

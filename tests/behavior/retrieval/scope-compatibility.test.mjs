@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   claimScopesCompatibleForSupersession,
   claimScopesOverlap,
+  collectCurrentScope,
   currentPackageRootFromSourceRefs,
   resolveCurrentClaimScope
 } from "../../../.tmp/build/src/core/scope/index.js";
@@ -13,6 +14,47 @@ const current = {
   commit: "commit-a",
   worktreeHash: "worktree-a"
 };
+
+test("current scope collector normalizes public scope without raw feature flag details", () => {
+  const collected = collectCurrentScope({
+    repoId: "repo-a",
+    branch: "main",
+    commit: "commit-a",
+    worktreeHash: "worktree-a",
+    dirtyWorktree: true,
+    taskId: "task-a",
+    sessionId: "session-a",
+    defaultEnvironmentScope: "local",
+    featureFlags: { betaCheckout: "rollout_secret" },
+    allowedFeatureFlags: ["betaCheckout"],
+    sourceRefs: ["packages/api/src/index.ts"]
+  });
+
+  assert.equal(collected.publicScope.environment, "local");
+  assert.equal(collected.publicScope.dirtyWorktree, true);
+  assert.equal(collected.publicScope.worktreeHash, "worktree-a");
+  assert.equal(collected.publicScope.packageRoot, "packages/api");
+  assert.equal(collected.publicScope.serviceRoot, "packages/api");
+  assert.equal(collected.publicScope.featureFlagCount, 1);
+  assert.equal(typeof collected.publicScope.featureFlagScopeHash, "string");
+  assert.equal(JSON.stringify(collected.publicScope).includes("betaCheckout"), false);
+  assert.equal(JSON.stringify(collected.publicScope).includes("rollout_secret"), false);
+  assert.deepEqual(collected.currentClaimScope.featureFlags, { betaCheckout: "rollout_secret" });
+  assert.throws(
+    () => collectCurrentScope({
+      repoId: "repo-a",
+      branch: "main",
+      commit: "commit-a",
+      worktreeHash: "worktree-a",
+      dirtyWorktree: false,
+      taskId: "task-a",
+      sessionId: "session-a",
+      featureFlags: { unlistedFlag: true },
+      allowedFeatureFlags: ["betaCheckout"]
+    }),
+    /feature flags must be allowlisted/
+  );
+});
 
 test("branch_invalid_claim_excluded", () => {
   const resolved = resolveCurrentClaimScope({

@@ -17,6 +17,7 @@ import type {
 } from "../../../core/storage/index.js";
 import type {
   InMemoryContextArtifactShape,
+  ContextScopeShape,
   RiskOverlay,
   TaskType
 } from "../../../shared/index.js";
@@ -43,6 +44,8 @@ export interface CompileLocalRepositoryArtifactInput {
   readonly symbolEdges: readonly RepositoryArtifactSymbolEdgeInput[];
   readonly activeClaims: readonly RepositoryArtifactActiveClaimInput[];
   readonly taskRetrieval: RepositoryArtifactTaskRetrievalInput;
+  readonly currentScope?: ContextScopeShape;
+  readonly currentScopeWarnings?: readonly string[];
   readonly now: string;
 }
 
@@ -103,6 +106,8 @@ function compileArtifact(
     activeClaims: input.activeClaims,
     compressionArtifacts,
     taskRetrieval: input.taskRetrieval,
+    currentScope: input.currentScope,
+    currentScopeWarnings: input.currentScopeWarnings,
     createdAt: input.now
   });
 }

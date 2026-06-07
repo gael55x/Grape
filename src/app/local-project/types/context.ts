@@ -1,5 +1,6 @@
 import type { ContextPackBudgetResult } from "../../../core/compiler/index.js";
 import type { InMemoryTokenSavingsMetric } from "../../../core/diff/index.js";
+import type { PublicCurrentScopeShape } from "../../../core/scope/index.js";
 import type { ContextArtifactShape, ContextPackItemShape, RiskOverlay } from "../../../shared/index.js";
 
 export interface CompileLocalContextInput {
@@ -34,6 +35,7 @@ export interface CompileLocalContextResult {
   readonly branch: string;
   readonly headCommit: string;
   readonly dirtyWorktree: boolean;
+  readonly currentScope: PublicCurrentScopeShape;
   readonly contextPackItems: readonly ContextPackItemShape[];
   readonly contextArtifact: ContextArtifactShape;
   readonly omittedItemCount: number;

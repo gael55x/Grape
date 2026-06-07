@@ -38,6 +38,11 @@ interface InMemoryContextRequest {
   branch: string;
   commit: string;
   worktreeHash: string;
+  environmentScope?: EnvironmentScope;
+  packageRoot?: string;
+  serviceRoot?: string;
+  featureFlagCount?: number;
+  featureFlagScopeHash?: string;
   taskType: TaskType;
   riskOverlays: RiskOverlay[];
   userRequestHash: string;
@@ -131,7 +136,7 @@ Public `.grape/artifacts/ctx_<id>.json` files now include:
 
 - `artifactFormat: "grape.context-pack.v1"`
 - `artifactFormatVersion: 1`
-- `contextArtifact`, a V1 `ContextArtifact` projection with output sections, dependency manifest, compile mode, confidence fields, token fields, and current branch/worktree identity
+- `contextArtifact`, a V1 `ContextArtifact` projection with output sections, dependency manifest, compile mode, confidence fields, token fields, current branch/worktree identity, and normalized `currentScope`
 - `contextPackItems`
 - `omittedItems`
 - `tokenMetric`
@@ -174,7 +179,7 @@ Local compile also resolves current-valid durable claims and renders a `current-
 
 Local compile now persists deterministic `symbol_outline`, `rule_digest`, and `context_pack_summary` compression artifacts. Symbol/rule artifacts are built before compilation from the lightweight symbol index and verified active rule excerpts. When prior sent context exists for the same session, branch, and head commit, local compile first builds a base artifact with current exact dependencies, filters the prior sent ledger through the same stale-dependency rules used by durable diffing, and only then rebuilds a current `context_pack_summary` from active non-compression sent rows. These artifacts render as `compression-orientation`. The public V1 `ContextArtifact` includes `compressionArtifactRefs`, `compressionArtifactsUsed`, and `compression_artifact` dependency refs for compression artifacts that are actually rendered. The compression section is non-proof orientation only; it has no proof refs and cannot satisfy exact-required or high-risk context. Exact rule text still lives in the pinned active-project-rules section; the rule digest carries only rule refs, line spans, proof refs, and hashes. The context pack summary carries prior sent item IDs, states, hashes, timestamps, and token counts, not freeform model memory, and it must not include rows the current compile is about to invalidate.
 
-`grape compile --task <text>` now writes an inspectable V1 context-pack JSON and Markdown under `.grape/artifacts/ctx_<id>.json` and `.grape/artifacts/ctx_<id>.md`, after a basic artifact-level secret scan. The public JSON contains the V1 `ContextArtifact` plus the diffed `ContextPackItem[]`; the Markdown renders the same structured contract with an artifact summary, diff-state counts, pack item metadata/input refs, omitted/restore metadata, output section metadata, dependency manifest details, token metrics, budget status when requested, and warnings/safety fields. The internal repository backing file remains available only so restore can verify section hashes against the original compiled sections. The artifact ID identifies a compile output instance; the artifact hash is the deterministic repository artifact content identity and excludes `createdAt` and instance IDs.
+`grape compile --task <text>` now writes an inspectable V1 context-pack JSON and Markdown under `.grape/artifacts/ctx_<id>.json` and `.grape/artifacts/ctx_<id>.md`, after a basic artifact-level secret scan. The public JSON contains the V1 `ContextArtifact` plus the diffed `ContextPackItem[]`; the Markdown renders the same structured contract with an artifact summary, diff-state counts, pack item metadata/input refs, omitted/restore metadata, output section metadata, dependency manifest details, token metrics, budget status when requested, and warnings/safety fields. Public `contextArtifact.currentScope` carries branch, commit, worktree hash, dirty-worktree status, task/session IDs, environment label, package/service root when known, selected source refs, warning labels, and feature-flag count/hash only. It must not render raw environment variables, feature flag labels or values, dirty file contents, or absolute local paths. The internal repository backing file remains available only so restore can verify section hashes against the original compiled sections. The artifact ID identifies a compile output instance; the artifact hash is the deterministic repository artifact content identity and excludes `createdAt` and instance IDs.
 
 When `--token-budget` or MCP `tokenBudget` is supplied, the durable pack builder applies budget policy before context pack rows are persisted. Required context means the task summary, pinned rules, exact/safety-critical sections, unchanged omission/restore metadata, and invalidation items. Required context is never pruned. If required context is larger than the requested budget, output is marked unsafe with `token_budget_below_required_context`. If required context fits but optional context does not, Grape prunes optional non-safety sections from the public `contextPackItems` and public `contextArtifact.outputSections`, records them in `contextArtifact.omittedDueToBudget` and `budget.omittedDueToBudget`, and returns `token_budget_pruned_optional_context`. Budget-pruned items are not treated as sent or restoreable; callers should rerun with a larger budget if they need those optional bodies.
 

@@ -16,7 +16,7 @@ import {
   createProofStorageRepositories,
   createStorageRepositories
 } from "../../../core/storage/index.js";
-import { currentPackageRootFromSourceRefs } from "../../../core/scope/package-root.js";
+import { collectCurrentScope } from "../../../core/scope/index.js";
 import { ensureLocalProjectLayout, readLocalProjectConfig } from "../setup/config.js";
 import {
   assertSafeId,
@@ -67,7 +67,6 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
   }
   const taskId = taskIdFor(input.task, taskType, requestedRiskOverlays);
   const sessionId = input.sessionId ?? sessionIdFor(snapshot.repoId, snapshot.branch, taskId);
-  const claimEnvironment = currentValidEnvironment(input.environmentScope);
   assertSafeId("session id", sessionId);
   const lockToken = createLockToken();
 
@@ -124,10 +123,23 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         seedSymbols: input.seedSymbols,
         seedTests: input.seedTests
       });
-      const currentPackageRoot = currentPackageRootFromSourceRefs([
-        ...taskRetrieval.explicitSourceRefs,
-        ...taskRetrieval.testSourceRefs
-      ]);
+      const currentScope = collectCurrentScope({
+        repoId: snapshotResult.snapshot.repoId,
+        branch: snapshotResult.snapshot.branch,
+        commit: snapshotResult.snapshot.commit,
+        worktreeHash: snapshotResult.snapshot.worktreeHash,
+        dirtyWorktree: snapshotResult.snapshot.worktreeStatus !== "clean",
+        taskId,
+        sessionId,
+        environmentScope: input.environmentScope,
+        defaultEnvironmentScope: config.defaultEnvironment,
+        featureFlags: input.featureFlags,
+        allowedFeatureFlags: config.scope?.featureFlagAllowlist,
+        sourceRefs: [
+          ...taskRetrieval.explicitSourceRefs,
+          ...taskRetrieval.testSourceRefs
+        ]
+      });
       const proofs = prepareLocalCompileProofs({
         database,
         proofRepositories,
@@ -143,7 +155,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sourceExcerpts: proofs.sourceExcerpts,
         branch: snapshotResult.snapshot.branch,
         commit: snapshotResult.snapshot.commit,
-        environment: claimEnvironment,
+        environment: currentScope.claimEnvironment,
         worktreeHash: snapshotResult.snapshot.worktreeHash,
         now
       });
@@ -154,7 +166,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sourceExcerpts: proofs.sourceExcerpts,
         branch: snapshotResult.snapshot.branch,
         commit: snapshotResult.snapshot.commit,
-        environment: claimEnvironment,
+        environment: currentScope.claimEnvironment,
         worktreeHash: snapshotResult.snapshot.worktreeHash,
         now
       });
@@ -166,7 +178,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sourceExcerpts: proofs.sourceExcerpts,
         branch: snapshotResult.snapshot.branch,
         commit: snapshotResult.snapshot.commit,
-        environment: claimEnvironment,
+        environment: currentScope.claimEnvironment,
         worktreeHash: snapshotResult.snapshot.worktreeHash,
         now
       });
@@ -177,9 +189,9 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sources: evidenceRepositories.sources,
         snapshot: snapshotResult.snapshot,
         sessionId,
-        environment: claimEnvironment,
-        featureFlags: input.featureFlags,
-        packageRoot: currentPackageRoot,
+        environment: currentScope.claimEnvironment,
+        featureFlags: currentScope.featureFlags,
+        packageRoot: currentScope.packageRoot,
         taskSourceRefs: proofs.taskRetrieval.selectedSourceRefs.length > 0
           ? proofs.taskRetrieval.selectedSourceRefs
           : undefined,
@@ -217,6 +229,8 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         symbolEdges,
         activeClaims,
         taskRetrieval: artifactTaskRetrieval,
+        currentScope: currentScope.artifactScope,
+        currentScopeWarnings: currentScope.warnings,
         now
       });
 
@@ -282,7 +296,8 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
               dirtyWorktree: snapshotResult.snapshot.worktreeStatus !== "clean",
               budget: preview.budget,
               tokenCost: preview.tokenMetric.grapeTokens,
-              environmentScope: input.environmentScope
+              environmentScope: input.environmentScope,
+              currentScope: currentScope.publicScope
             });
           }
         });
@@ -312,6 +327,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         build,
         artifact,
         files,
+        currentScope: currentScope.publicScope,
         sessionResetId: sessionReset?.resetId
       };
     }
@@ -324,11 +340,8 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     taskId,
     riskOverlays: requestedRiskOverlays,
     environmentScope: input.environmentScope,
+    currentScope: databaseResult.value.currentScope,
     value: databaseResult.value,
     databaseBackupPath: databaseResult.databaseBackupPath
   });
-}
-
-function currentValidEnvironment(environmentScope: CompileLocalContextInput["environmentScope"]): string | undefined {
-  return environmentScope === "unknown" ? undefined : environmentScope;
 }

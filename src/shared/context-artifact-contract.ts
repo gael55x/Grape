@@ -170,6 +170,7 @@ export interface ContextArtifactShape {
   readonly branch: string;
   readonly headCommit: string;
   readonly dirtyWorktree: boolean;
+  readonly currentScope: ContextScopeShape;
   readonly stagedDiffHash?: string;
   readonly unstagedDiffHash?: string;
   readonly untrackedRelevantFilesHash?: string;

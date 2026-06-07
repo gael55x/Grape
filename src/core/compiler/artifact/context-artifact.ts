@@ -1,6 +1,7 @@
 import type {
   CompileMode,
   ContextArtifactShape,
+  ContextScopeShape,
   InMemoryContextArtifactShape
 } from "../../../shared/index.js";
 import type { ContextPackBudgetResult } from "../pack/context-budget.js";
@@ -23,6 +24,7 @@ export interface ContextArtifactBuildInput {
   readonly budget: ContextPackBudgetResult;
   readonly tokenCost: number;
   readonly environmentScope?: ContextArtifactShape["environmentScope"];
+  readonly currentScope?: ContextScopeShape;
 }
 
 export function buildContextArtifact(input: ContextArtifactBuildInput): ContextArtifactShape {
@@ -56,6 +58,7 @@ export function buildContextArtifact(input: ContextArtifactBuildInput): ContextA
     branch: input.artifact.input.branch,
     headCommit: input.artifact.input.commit,
     dirtyWorktree: input.dirtyWorktree,
+    currentScope: contextArtifactCurrentScope(input),
     environmentScope: input.environmentScope ?? "local",
     inputRefs: dependencies.map(toContextInput),
     compressionArtifactRefs: compressionArtifactRefs(dependencies),
@@ -103,6 +106,24 @@ export function buildContextArtifact(input: ContextArtifactBuildInput): ContextA
   return {
     ...withoutHash,
     contentHash: hashStableJson(withoutHash)
+  };
+}
+
+function contextArtifactCurrentScope(input: ContextArtifactBuildInput): ContextScopeShape {
+  return {
+    repoId: input.artifact.input.repoId,
+    branch: input.artifact.input.branch,
+    commit: input.artifact.input.commit,
+    worktreeHash: input.artifact.input.worktreeHash,
+    dirtyWorktree: input.dirtyWorktree,
+    taskId: input.artifact.input.taskId,
+    sessionId: input.artifact.input.sessionId,
+    environment: input.environmentScope ?? input.artifact.input.environmentScope ?? "local",
+    packageRoot: input.artifact.input.packageRoot,
+    serviceRoot: input.artifact.input.serviceRoot,
+    featureFlagCount: input.artifact.input.featureFlagCount ?? 0,
+    featureFlagScopeHash: input.artifact.input.featureFlagScopeHash,
+    ...(input.currentScope ?? {})
   };
 }
 

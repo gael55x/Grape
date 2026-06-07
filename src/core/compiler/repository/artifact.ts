@@ -1,4 +1,5 @@
 import type {
+  EnvironmentScope,
   InMemoryContextArtifactShape,
   InMemoryContextRequest
 } from "../../../shared/index.js";
@@ -64,6 +65,11 @@ function artifactInput(input: CompileRepositoryContextArtifactInput): InMemoryCo
     branch: input.snapshot.branch,
     commit: input.snapshot.commit,
     worktreeHash: input.snapshot.worktreeHash,
+    environmentScope: environmentScope(input),
+    packageRoot: stringScope(input, "packageRoot"),
+    serviceRoot: stringScope(input, "serviceRoot"),
+    featureFlagCount: numberScope(input, "featureFlagCount"),
+    featureFlagScopeHash: stringScope(input, "featureFlagScopeHash"),
     taskType: input.taskType,
     riskOverlays: [...input.riskOverlays],
     userRequestHash: input.userRequestHash
@@ -77,6 +83,7 @@ function compileWarnings(input: CompileRepositoryContextArtifactInput): string[]
   if (input.symbolNodes.length > maxListedSymbols) warnings.push("symbol_nodes_truncated");
   if (input.symbolEdges.length > maxListedEdges) warnings.push("symbol_edges_truncated");
   if (input.snapshot.worktreeStatus !== "clean") warnings.push("dirty_worktree_context");
+  warnings.push(...(input.currentScopeWarnings ?? []));
   warnings.push(...riskPolicy.warnings);
   warnings.push(...(input.taskRetrieval?.warnings ?? []));
   return warnings;
@@ -84,4 +91,30 @@ function compileWarnings(input: CompileRepositoryContextArtifactInput): string[]
 
 function unsafeReasons(input: CompileRepositoryContextArtifactInput): string[] {
   return [...evaluateRepositoryRiskPolicy(input).unsafeReasons];
+}
+
+function environmentScope(input: CompileRepositoryContextArtifactInput): EnvironmentScope | undefined {
+  const value = input.currentScope?.environment;
+  return isEnvironmentScope(value) ? value : undefined;
+}
+
+function stringScope(input: CompileRepositoryContextArtifactInput, key: string): string | undefined {
+  const value = input.currentScope?.[key];
+  return typeof value === "string" ? value : undefined;
+}
+
+function numberScope(input: CompileRepositoryContextArtifactInput, key: string): number | undefined {
+  const value = input.currentScope?.[key];
+  return typeof value === "number" ? value : undefined;
+}
+
+function isEnvironmentScope(value: unknown): value is EnvironmentScope {
+  return (
+    value === "local" ||
+    value === "test" ||
+    value === "ci" ||
+    value === "staging" ||
+    value === "production" ||
+    value === "unknown"
+  );
 }

@@ -17,20 +17,21 @@ export function dependencyManifest(
   input: CompileRepositoryContextArtifactInput
 ): InMemoryContextDependencyShape[] {
   const preferredSourceRefs = input.taskRetrieval?.selectedSourceRefs ?? [];
+  const baseScope = currentScope(input);
   const dependencies: InMemoryContextDependencyShape[] = [
     {
       id: "repo-snapshot",
       kind: "repo_snapshot",
       ref: input.snapshot.snapshotId,
       hash: input.snapshot.snapshotHash,
-      scope: { branch: input.snapshot.branch, commit: input.snapshot.commit }
+      scope: baseScope
     },
     {
       id: "worktree-state",
       kind: "worktree_state",
       ref: input.worktreeStateId,
       hash: input.snapshot.worktreeHash,
-      scope: { branch: input.snapshot.branch, commit: input.snapshot.commit }
+      scope: baseScope
     }
   ];
 
@@ -41,8 +42,7 @@ export function dependencyManifest(
       ref: source.sourceRef,
       hash: source.sourceHash,
       scope: {
-        branch: input.snapshot.branch,
-        commit: input.snapshot.commit,
+        ...baseScope,
         sourceScope: source.sourceScope
       }
     });
@@ -55,8 +55,7 @@ export function dependencyManifest(
       ref: excerpt.proofId,
       hash: excerpt.excerptHash,
       scope: {
-        branch: input.snapshot.branch,
-        commit: input.snapshot.commit,
+        ...baseScope,
         sourceId: excerpt.sourceId,
         sourceHash: excerpt.sourceHash,
         sourceRef: excerpt.sourceRef,
@@ -74,8 +73,7 @@ export function dependencyManifest(
       ref: claim.claimId,
       hash: claim.scopeHash,
       scope: {
-        branch: input.snapshot.branch,
-        commit: input.snapshot.commit,
+        ...baseScope,
         claimType: claim.claimType,
         sourceRefs: claim.sourceRefs,
         proofRefs: claim.proofRefs
@@ -90,8 +88,7 @@ export function dependencyManifest(
       ref: artifact.compressionId,
       hash: artifact.outputHash,
       scope: {
-        branch: input.snapshot.branch,
-        commit: input.snapshot.commit,
+        ...baseScope,
         compressionType: artifact.type,
         inputHash: artifact.inputHash,
         inputRefs: artifact.inputRefs,
@@ -108,7 +105,7 @@ export function dependencyManifest(
       kind: "symbol",
       ref: node.symbolId,
       hash: node.bodyHash ?? node.signatureHash ?? hashStableJson(node),
-      scope: { branch: input.snapshot.branch, path: node.path, sourceId: node.sourceId }
+      scope: { ...baseScope, path: node.path, sourceId: node.sourceId }
     });
   }
 
@@ -119,7 +116,7 @@ export function dependencyManifest(
       ref: edge.edgeId,
       hash: hashStableJson(edge),
       scope: {
-        branch: input.snapshot.branch,
+        ...baseScope,
         edgeType: edge.edgeType,
         fromSymbolId: edge.fromSymbolId,
         target: edge.toRef ?? edge.toSymbolId
@@ -128,6 +125,16 @@ export function dependencyManifest(
   }
 
   return dependencies;
+}
+
+function currentScope(input: CompileRepositoryContextArtifactInput): Record<string, unknown> {
+  return {
+    repoId: input.snapshot.repoId,
+    branch: input.snapshot.branch,
+    commit: input.snapshot.commit,
+    worktreeHash: input.snapshot.worktreeHash,
+    ...(input.currentScope ?? {})
+  };
 }
 
 function selectedSymbolEdgesForDependencies(

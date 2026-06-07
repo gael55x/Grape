@@ -937,7 +937,7 @@ test("mcp grape_get_context accepts caller feature flag scope without exposing f
           arguments: {
             query: "Explain scoped repository entry points",
             sessionId: "mcp-feature-session",
-            featureFlags: { betaCheckout: true },
+            featureFlags: { betaCheckout: "rollout_secret" },
             outputMode: "full"
           }
         }
@@ -945,7 +945,35 @@ test("mcp grape_get_context accepts caller feature flag scope without exposing f
     ]);
 
     const output = responses[0].result.structuredContent;
+    assert.equal(output.currentScope.featureFlagCount, 1);
+    assert.equal(typeof output.currentScope.featureFlagScopeHash, "string");
+    assert.equal(output.contextArtifact.currentScope.featureFlagCount, 1);
     assert.equal(JSON.stringify(output).includes("betaCheckout"), false);
+    assert.equal(JSON.stringify(output).includes("rollout_secret"), false);
+  });
+});
+
+test("mcp grape_get_context rejects unallowlisted feature flag scope input", () => {
+  withGitRepo((repoPath) => {
+    const responses = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain scoped repository entry points",
+            sessionId: "mcp-feature-unlisted-session",
+            featureFlags: { unlistedFlag: true }
+          }
+        }
+      }
+    ]);
+
+    const output = responses[0].result;
+    assert.equal(output.isError, true);
+    assert.match(output.content[0].text, /feature flags must be allowlisted/);
   });
 });
 

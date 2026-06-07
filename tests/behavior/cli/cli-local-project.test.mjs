@@ -138,10 +138,33 @@ test("cli compile accepts caller feature flag scope without exposing flag labels
       "--session",
       "cli-feature-session",
       "--feature-flags",
-      "betaCheckout=true"
+      "betaCheckout=rollout_secret"
     ]);
 
+    assert.equal(output.currentScope.featureFlagCount, 1);
+    assert.equal(typeof output.currentScope.featureFlagScopeHash, "string");
+    assert.equal(output.contextArtifact.currentScope.featureFlagCount, 1);
     assert.equal(JSON.stringify(output).includes("betaCheckout"), false);
+    assert.equal(JSON.stringify(output).includes("rollout_secret"), false);
+  });
+});
+
+test("cli compile rejects unallowlisted feature flag scope input", () => {
+  withGitRepo((repoPath) => {
+    const result = runCli(repoPath, [
+      "compile",
+      "--task",
+      "Review scoped context",
+      "--session",
+      "cli-feature-unlisted-session",
+      "--feature-flags",
+      "unlistedFlag=true",
+      "--json"
+    ]);
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /feature flags must be allowlisted/);
+    assert.equal(result.stdout, "");
   });
 });
 

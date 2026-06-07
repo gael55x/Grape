@@ -1,5 +1,6 @@
 import type {
   ContextArtifactShape,
+  ContextScopeShape,
   ContextPackItemShape,
   InMemoryContextArtifactShape
 } from "../../../shared/index.js";
@@ -26,6 +27,7 @@ export interface LocalContextArtifactProjectionInput {
   readonly budget: ContextPackBudgetResult;
   readonly tokenCost: number;
   readonly environmentScope?: ContextArtifactShape["environmentScope"];
+  readonly currentScope?: ContextScopeShape;
 }
 
 export interface LocalContextOutputInput extends LocalContextArtifactProjectionInput {

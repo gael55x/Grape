@@ -1,4 +1,4 @@
-import type { ContextInputKind } from "./context-artifact-contract.js";
+import type { ContextInputKind, EnvironmentScope } from "./context-artifact-contract.js";
 
 export const taskTypes = [
   "bug_fix",
@@ -127,6 +127,11 @@ export interface InMemoryContextRequest {
   branch: string;
   commit: string;
   worktreeHash: string;
+  environmentScope?: EnvironmentScope;
+  packageRoot?: string;
+  serviceRoot?: string;
+  featureFlagCount?: number;
+  featureFlagScopeHash?: string;
   taskType: TaskType;
   riskOverlays: RiskOverlay[];
   userRequestHash: string;

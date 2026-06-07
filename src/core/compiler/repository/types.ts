@@ -1,4 +1,4 @@
-import type { RiskOverlay, SourceType, TaskType } from "../../../shared/index.js";
+import type { ContextScopeShape, RiskOverlay, SourceType, TaskType } from "../../../shared/index.js";
 
 export interface RepositoryArtifactSnapshotInput {
   readonly snapshotId: string;
@@ -126,5 +126,7 @@ export interface CompileRepositoryContextArtifactInput {
   readonly activeClaims?: readonly RepositoryArtifactActiveClaimInput[];
   readonly compressionArtifacts?: readonly RepositoryArtifactCompressionInput[];
   readonly taskRetrieval?: RepositoryArtifactTaskRetrievalInput;
+  readonly currentScope?: ContextScopeShape;
+  readonly currentScopeWarnings?: readonly string[];
   readonly createdAt: string;
 }

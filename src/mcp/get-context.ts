@@ -46,6 +46,7 @@ export interface GrapeGetContextToolOutput {
   readonly branch: string;
   readonly headCommit: string;
   readonly dirtyWorktree: boolean;
+  readonly currentScope: CompileLocalContextResult["currentScope"];
   readonly taskType: TaskType;
   readonly riskOverlays: readonly RiskOverlay[];
   readonly compileMode: "safe_minimum" | "partial_with_risk" | "broad_context_required" | "cannot_compile_safely";
@@ -117,6 +118,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     branch: result.branch,
     headCommit: result.headCommit,
     dirtyWorktree: result.dirtyWorktree,
+    currentScope: result.currentScope,
     taskType: taskTypeFromResult(parsed.taskType),
     riskOverlays: result.riskOverlays,
     compileMode: compileModeFor(result, warnings),

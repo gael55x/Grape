@@ -6,6 +6,7 @@ import type {
   InMemoryContextPackItemShape,
   InMemoryContextSectionShape
 } from "../../../shared/index.js";
+import { toContextInputRef } from "../artifact/dependencies.js";
 
 export function toContextPackItems(
   artifact: InMemoryContextArtifactShape,
@@ -91,19 +92,7 @@ function inputRefsForItem(
   return dependencyRefs
     .map((dependencyRef) => dependenciesById.get(dependencyRef))
     .filter((dependency): dependency is InMemoryContextDependencyShape => dependency !== undefined)
-    .map((dependency) => ({
-      id: dependency.id,
-      kind: inputRefKindForDependency(dependency.kind),
-      ref: dependency.ref,
-      hash: dependency.hash,
-      scope: dependency.scope
-    }));
-}
-
-function inputRefKindForDependency(
-  kind: InMemoryContextDependencyShape["kind"]
-): ContextPackItemShape["inputRefs"][number]["kind"] {
-  return kind === "source_file" ? "file" : kind;
+    .map((dependency) => toContextInputRef(artifact, dependency));
 }
 
 function estimateTextTokens(text: string): number {

@@ -1,6 +1,8 @@
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { defaultAllowedFeatureFlags } from "../../../core/scope/index.js";
+
 export const localProjectSchemaVersion = 1;
 
 export interface LocalProjectPaths {
@@ -38,6 +40,9 @@ export interface LocalProjectConfig {
     readonly minimumSafetyBudget: number;
     readonly resendPinnedOnSessionReset: boolean;
     readonly restoreOmittedItems: boolean;
+  };
+  readonly scope?: {
+    readonly featureFlagAllowlist?: readonly string[];
   };
   readonly compression: {
     readonly enabled: boolean;
@@ -187,6 +192,9 @@ export function defaultLocalProjectConfig(input: {
       minimumSafetyBudget: 4000,
       resendPinnedOnSessionReset: true,
       restoreOmittedItems: true
+    },
+    scope: {
+      featureFlagAllowlist: [...defaultAllowedFeatureFlags]
     },
     compression: {
       enabled: true,
