@@ -17,6 +17,22 @@ export function languageForPath(repoPath: string): string {
       return "json";
     case ".md":
       return "markdown";
+    case ".py":
+      return "python";
+    case ".java":
+      return "java";
+    case ".kt":
+    case ".kts":
+      return "kotlin";
+    case ".go":
+      return "go";
+    case ".rs":
+      return "rust";
+    case ".yml":
+    case ".yaml":
+      return "yaml";
+    case ".toml":
+      return "toml";
     default:
       return "unknown";
   }

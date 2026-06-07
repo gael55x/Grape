@@ -4,6 +4,7 @@ import type {
   SymbolEdgeType,
   SymbolKind
 } from "../storage/index.js";
+import type { LanguageProviderMetadata } from "./language-provider.js";
 import type { TypeScriptAstIndexResult } from "./typescript-ast-index.js";
 
 export interface FileIndexSource {
@@ -71,6 +72,7 @@ export interface ParsedFileIndex {
   readonly file: FileIndexSource;
   readonly moduleNode: FileIndexNode;
   readonly symbols: readonly FileIndexNode[];
+  readonly provider: LanguageProviderMetadata;
   readonly ast?: TypeScriptAstIndexResult;
   readonly text: string;
 }

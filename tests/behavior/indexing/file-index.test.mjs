@@ -59,8 +59,17 @@ function withGitRepo(fn) {
 
   try {
     execGit(dir, ["init", "-b", "main"]);
+    mkdirSync(path.join(dir, "python"), { recursive: true });
     mkdirSync(path.join(dir, "src"), { recursive: true });
     writeFileSync(path.join(dir, ".aiignore"), "private.ts\n");
+    writeFileSync(
+      path.join(dir, "python", "pricing.py"),
+      [
+        "def price_total(value):",
+        "    return value",
+        ""
+      ].join("\n")
+    );
     writeFileSync(
       path.join(dir, "src", "lib.ts"),
       [
@@ -89,7 +98,7 @@ function withGitRepo(fn) {
     );
     writeFileSync(path.join(dir, "src", "secret.ts"), "export const leaked = 'TOKEN=value';\n");
     writeFileSync(path.join(dir, "private.ts"), "export const privateToken = 'PRIVATE=value';\n");
-    execGit(dir, ["add", ".aiignore", "src/lib.ts", "src/app.ts", "src/secret.ts", "private.ts"]);
+    execGit(dir, ["add", ".aiignore", "python/pricing.py", "src/lib.ts", "src/app.ts", "src/secret.ts", "private.ts"]);
     execGit(dir, [
       "-c",
       "user.name=Grape Test",
@@ -139,8 +148,11 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
       const nodeByPathAndName = new Map(nodes.map((node) => [`${node.path}:${node.name}`, node]));
       const appModule = nodeByPathAndName.get("src/app.ts:src/app.ts");
       const libModule = nodeByPathAndName.get("src/lib.ts:src/lib.ts");
+      const pythonModule = nodeByPathAndName.get("python/pricing.py:python/pricing.py");
       const runAppSymbol = nodeByPathAndName.get("src/app.ts:runApp");
       const calculateDiscountSymbol = nodeByPathAndName.get("src/lib.ts:calculateDiscount");
+      const appMetadata = JSON.parse(appModule?.metadataJson ?? "{}");
+      const pythonMetadata = JSON.parse(pythonModule?.metadataJson ?? "{}");
 
       assert.equal(result.index.nodesInserted, nodes.length);
       assert.equal(result.index.edgesInserted, edges.length);
@@ -152,6 +164,8 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
       assert.equal(secretMatches.length, 0);
       assert.equal(appModule?.symbolKind, "module");
       assert.equal(libModule?.symbolKind, "module");
+      assert.equal(pythonModule?.symbolKind, "module");
+      assert.equal(pythonModule?.language, "python");
       assert.equal(runAppSymbol?.symbolKind, "function");
       assert.equal(nodeByPathAndName.get("src/app.ts:loadUser")?.symbolKind, "function");
       assert.equal(nodeByPathAndName.get("src/app.ts:localValue")?.symbolKind, "constant");
@@ -160,6 +174,28 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
       assert.equal(calculateDiscountSymbol?.symbolKind, "function");
       assert.equal(runAppSymbol?.confidence, "high");
       assert.equal(JSON.parse(runAppSymbol?.metadataJson ?? "{}").extractor, "typescript_ast");
+      assert.equal(appMetadata.providerId, "typescript_ast");
+      assert.deepEqual(appMetadata.providerCapabilities, [
+        "lexical_path",
+        "symbols_ast",
+        "module_edges",
+        "test_edges"
+      ]);
+      assert.deepEqual(appMetadata.providerDiagnostics, []);
+      assert.equal(pythonMetadata.providerId, "generic_text");
+      assert.deepEqual(pythonMetadata.providerCapabilities, ["lexical_path", "symbols_basic"]);
+      assert.deepEqual(pythonMetadata.providerDiagnostics, [
+        {
+          code: "provider_capability_gap",
+          severity: "warning",
+          capability: "module_edges"
+        },
+        {
+          code: "provider_capability_gap",
+          severity: "warning",
+          capability: "test_edges"
+        }
+      ]);
       assert.equal(nodes.some((node) => node.path === "private.ts"), false);
       assert.ok(nodes.every((node) => typeof node.sourceId === "string" && node.sourceId.startsWith("source:")));
 
@@ -188,6 +224,17 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
             edge.toRef === "src/lib.ts"
         )
       );
+      assert.equal(
+        JSON.parse(
+          edges.find(
+            (edge) =>
+              edge.edgeType === "imports" &&
+              edge.fromSymbolId === appModule?.symbolId &&
+              edge.toSymbolId === libModule?.symbolId
+          )?.metadataJson ?? "{}"
+        ).providerId,
+        "typescript_ast"
+      );
       assert.ok(
         edges.some(
           (edge) =>
@@ -209,6 +256,7 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
 
       const persistedText = JSON.stringify({ nodes, edges });
       assert.equal(persistedText.includes("PRIVATE=value"), false);
+      assert.equal(persistedText.includes("return value"), false);
       assert.equal(JSON.stringify({ ftsEntries, lexicalMatches, secretMatches }).includes("TOKEN=value"), false);
     });
   });

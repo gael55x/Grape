@@ -1,6 +1,10 @@
 import type { SymbolKind } from "../storage/index.js";
 import { hashStableParts, sha256 } from "./index-hash.js";
-import { languageForPath } from "./index-paths.js";
+import {
+  languageProviderMetadataFields,
+  type FileIndexExtractor,
+  type LanguageProviderMetadata
+} from "./language-provider.js";
 import { detectSymbolOnLine } from "./symbol-detection.js";
 import type { AstSymbolCandidate } from "./typescript-ast-index.js";
 import type { FileIndexInput, FileIndexNode, FileIndexSource } from "./file-index-types.js";
@@ -8,7 +12,8 @@ import type { FileIndexInput, FileIndexNode, FileIndexSource } from "./file-inde
 export function moduleNodeForFile(
   input: FileIndexInput,
   file: FileIndexSource,
-  extractor: "typescript_ast" | "regex_basic"
+  extractor: FileIndexExtractor,
+  provider: LanguageProviderMetadata
 ): FileIndexNode {
   return {
     symbolId: moduleSymbolId(input, file.path),
@@ -17,19 +22,24 @@ export function moduleNodeForFile(
     snapshotId: input.snapshotId,
     sourceId: file.sourceId,
     path: file.path,
-    language: languageForPath(file.path),
+    language: provider.language,
     name: file.path,
     symbolKind: "module",
     startLine: 1,
     endLine: 1,
     bodyHash: file.sha256,
     confidence: "high",
-    metadata: { sourceKind: file.sourceKind, extractor },
+    metadata: { sourceKind: file.sourceKind, extractor, ...languageProviderMetadataFields(provider) },
     createdAt: input.createdAt
   };
 }
 
-export function detectRegexSymbols(input: FileIndexInput, file: FileIndexSource, content: string): FileIndexNode[] {
+export function detectRegexSymbols(
+  input: FileIndexInput,
+  file: FileIndexSource,
+  content: string,
+  provider: LanguageProviderMetadata
+): FileIndexNode[] {
   const lines = content.split(/\r?\n/);
   const symbols: FileIndexNode[] = [];
 
@@ -45,14 +55,19 @@ export function detectRegexSymbols(input: FileIndexInput, file: FileIndexSource,
       snapshotId: input.snapshotId,
       sourceId: file.sourceId,
       path: file.path,
-      language: languageForPath(file.path),
+      language: provider.language,
       name: symbol.name,
       symbolKind: symbol.kind,
       startLine: index + 1,
       endLine: index + 1,
       signatureHash: sha256(Buffer.from(line.trim())),
       confidence: symbol.confidence,
-      metadata: { sourceKind: file.sourceKind, extractor: "regex_basic", exported: false },
+      metadata: {
+        sourceKind: file.sourceKind,
+        extractor: "regex_basic",
+        ...languageProviderMetadataFields(provider),
+        exported: false
+      },
       createdAt: input.createdAt
     });
   }
@@ -63,7 +78,8 @@ export function detectRegexSymbols(input: FileIndexInput, file: FileIndexSource,
 export function symbolNodeForAstSymbol(
   input: FileIndexInput,
   file: FileIndexSource,
-  symbol: AstSymbolCandidate
+  symbol: AstSymbolCandidate,
+  provider: LanguageProviderMetadata
 ): FileIndexNode {
   return {
     symbolId: symbolIdFor(input, file.path, symbol.kind, symbol.name, symbol.startLine),
@@ -72,7 +88,7 @@ export function symbolNodeForAstSymbol(
     snapshotId: input.snapshotId,
     sourceId: file.sourceId,
     path: file.path,
-    language: languageForPath(file.path),
+    language: provider.language,
     name: symbol.name,
     symbolKind: symbol.kind,
     startLine: symbol.startLine,
@@ -80,7 +96,7 @@ export function symbolNodeForAstSymbol(
     bodyHash: symbol.bodyHash,
     signatureHash: symbol.signatureHash,
     confidence: symbol.confidence,
-    metadata: { sourceKind: file.sourceKind, ...symbol.metadata },
+    metadata: { sourceKind: file.sourceKind, ...languageProviderMetadataFields(provider), ...symbol.metadata },
     createdAt: input.createdAt
   };
 }

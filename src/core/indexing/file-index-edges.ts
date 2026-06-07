@@ -1,5 +1,6 @@
 import { hashStableParts } from "./index-hash.js";
 import { importSpecifiers, resolveLocalImport } from "./import-resolution.js";
+import { languageProviderMetadataFields, type LanguageProviderMetadata } from "./language-provider.js";
 import type { AstCallCandidate } from "./typescript-ast-index.js";
 import type { FileIndexEdge, FileIndexInput, FileIndexNode, ParsedFileIndex } from "./file-index-types.js";
 import { moduleSymbolId } from "./file-index-nodes.js";
@@ -19,9 +20,11 @@ export function fileIndexEdgesForParsedFiles(
   const symbolLookup = symbolLookupFor(allNodes);
 
   for (const parsed of parsedFiles) {
-    edges.push(...parsed.symbols.map((symbol) => containsEdge(input, parsed.moduleNode.symbolId, symbol)));
+    edges.push(...parsed.symbols.map((symbol) =>
+      containsEdge(input, parsed.moduleNode.symbolId, symbol, parsed.provider)
+    ));
     edges.push(...parsed.symbols.filter((symbol) => symbol.metadata.exported === true).map((symbol) =>
-      exportEdge(input, parsed.moduleNode.symbolId, symbol.symbolId, symbol.name)
+      exportEdge(input, parsed.moduleNode.symbolId, symbol.symbolId, symbol.name, parsed.provider)
     ));
     edges.push(...detectImportEdges(input, parsed, filePaths));
     if (parsed.ast) {
@@ -66,6 +69,7 @@ function detectImportEdges(
       confidence: targetPath ? "medium" : "low",
       discoveryMethod: candidate.dynamic ? "ast" : "import_resolution",
       metadata: {
+        ...languageProviderMetadataFields(parsed.provider),
         specifier: candidate.specifier,
         targetPath,
         bindings: candidate.bindings,
@@ -104,6 +108,7 @@ function detectReExportEdges(
       confidence: targetPath ? "medium" : "low",
       discoveryMethod: "ast",
       metadata: {
+        ...languageProviderMetadataFields(parsed.provider),
         specifier: candidate.specifier,
         targetPath,
         bindings: candidate.bindings,
@@ -143,6 +148,7 @@ function detectCallEdges(
       confidence: targetSymbol ? "medium" : "low",
       discoveryMethod: "ast",
       metadata: {
+        ...languageProviderMetadataFields(parsed.provider),
         name: call.name,
         expression: call.expression,
         line: call.line,
@@ -153,7 +159,12 @@ function detectCallEdges(
   });
 }
 
-function containsEdge(input: FileIndexInput, fromSymbolId: string, symbol: FileIndexNode): FileIndexEdge {
+function containsEdge(
+  input: FileIndexInput,
+  fromSymbolId: string,
+  symbol: FileIndexNode,
+  provider: LanguageProviderMetadata
+): FileIndexEdge {
   return {
     edgeId: `symbol_edge:${hashStableParts([
       input.repoId,
@@ -170,12 +181,18 @@ function containsEdge(input: FileIndexInput, fromSymbolId: string, symbol: FileI
     edgeType: "contains",
     confidence: "medium",
     discoveryMethod: "inferred",
-    metadata: { name: symbol.name },
+    metadata: { name: symbol.name, ...languageProviderMetadataFields(provider) },
     createdAt: input.createdAt
   };
 }
 
-function exportEdge(input: FileIndexInput, fromSymbolId: string, toSymbolId: string, name: string): FileIndexEdge {
+function exportEdge(
+  input: FileIndexInput,
+  fromSymbolId: string,
+  toSymbolId: string,
+  name: string,
+  provider: LanguageProviderMetadata
+): FileIndexEdge {
   return {
     edgeId: `symbol_edge:${hashStableParts([
       input.repoId,
@@ -192,7 +209,7 @@ function exportEdge(input: FileIndexInput, fromSymbolId: string, toSymbolId: str
     edgeType: "exports",
     confidence: "high",
     discoveryMethod: "ast",
-    metadata: { name, extractor: "typescript_ast" },
+    metadata: { name, ...languageProviderMetadataFields(provider), extractor: "typescript_ast" },
     createdAt: input.createdAt
   };
 }
