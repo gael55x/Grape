@@ -2,6 +2,7 @@ import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
 } from "../../../../../shared/index.js";
+import { TRUST_WORDING_DISCLAIMERS } from "../../../../../shared/trust-wording.js";
 import { repositoryContextSection } from "../factory.js";
 import { dependencyIdForRef, sectionDependencyRefs, sourceDependencyRefForSourceRef } from "../dependencies.js";
 import type { CompileRepositoryContextArtifactInput } from "../../types.js";
@@ -16,6 +17,7 @@ export function taskRetrievalSection(
     retrieval.selectedSourceRefs.length === 0 &&
     retrieval.relatedTestRelationships.length === 0 &&
     retrieval.queryTerms.length === 0 &&
+    retrieval.semanticCandidates.length === 0 &&
     retrieval.warnings.length === 0
   ) {
     return undefined;
@@ -50,6 +52,10 @@ function taskRetrievalBody(
     `Query terms: ${retrieval.queryTerms.length > 0 ? retrieval.queryTerms.join(", ") : "none"}`,
     "Selected source refs:",
     ...listOrNone(retrieval.selectedSourceRefs),
+    "Semantic-ranked source refs (advisory ordering only; not proof):",
+    ...listOrNone(retrieval.rankedSourceRefs),
+    TRUST_WORDING_DISCLAIMERS.semanticCandidateSectionHeader,
+    ...semanticCandidateListOrNone(retrieval.semanticCandidates),
     "Explicit seed refs:",
     ...listOrNone(retrieval.explicitSourceRefs),
     "Test seed refs:",
@@ -72,6 +78,17 @@ function taskRetrievalBody(
 
 function listOrNone(values: readonly string[]): readonly string[] {
   return values.length > 0 ? values.map((value) => `- ${value}`) : ["- none"];
+}
+
+function semanticCandidateListOrNone(
+  candidates: NonNullable<CompileRepositoryContextArtifactInput["taskRetrieval"]>["semanticCandidates"]
+): readonly string[] {
+  return candidates.length > 0
+    ? candidates.map(
+        (candidate) =>
+          `- ${candidate.sourceRef} score=${candidate.score} signals=[${candidate.matchedSignals.join(", ")}] (${candidate.advisoryLabel})`
+      )
+    : ["- none"];
 }
 
 function relationshipListOrNone(

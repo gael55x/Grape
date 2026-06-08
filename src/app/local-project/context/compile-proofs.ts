@@ -32,7 +32,8 @@ export function prepareLocalCompileProofs(
   const sourceExcerpts = readLocalSourceExcerpts({
     rootPath: input.rootPath,
     sources: input.sources,
-    preferredSourceRefs: input.taskRetrieval.selectedSourceRefs,
+    preferredSourceRefs:
+      input.taskRetrieval.rankedSourceRefs ?? input.taskRetrieval.selectedSourceRefs,
     queryTerms: input.taskRetrieval.queryTerms,
     sourceAnchors: input.taskRetrieval.sourceAnchors
   });

@@ -40,7 +40,11 @@ export const TRUST_WORDING_DISCLAIMERS = {
     "Durable claim proves observed result only, not correctness, coverage, or root cause.",
   benchmarkFixtureNote:
     "Scripted fixture estimate only; not production savings guarantee or benchmark-proven savings.",
-  statusFreshnessAdvisory: "(advisory; not guaranteed agent enforcement)"
+  statusFreshnessAdvisory: "(advisory; not guaranteed agent enforcement)",
+  semanticCandidateSectionHeader:
+    "Advisory semantic candidates (ranking only; non-authoritative; not proof; not a durable claim):",
+  semanticCandidateAdvisoryLabel:
+    "advisory ranking signal (non-authoritative; not proof; not a durable claim)"
 } as const;
 
 export function findForbiddenTrustWording(text: string): readonly string[] {

@@ -152,6 +152,12 @@ compression artifacts, summaries, assistant text, and agent-reported runs cannot
 satisfy a durable policy entry unless a separate trusted proof validates the
 same claim.
 
+Semantic candidates are advisory ranking signals only. They may appear in task
+retrieval artifact sections with explicit non-authoritative wording, may reorder
+compiler preference refs, and are rejected at the durable claim policy layer when
+used as `proofSignalKind = semantic_candidate`. They do not prove correctness,
+root cause, fix validity, benchmark savings, or agent enforcement.
+
 ## Trust Wording Guardrails
 
 Grape must use conservative, evidence-based wording in generated claim text,

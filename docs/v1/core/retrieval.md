@@ -38,6 +38,15 @@ current-valid rejection. Rendered retrieval and relationship sections must use
 selection-evidence wording and must not imply semantic authority, proof of
 behavior, root cause, or fix validity.
 
+Current implementation exposes advisory `semantic_candidate` rows from a local
+deterministic scorer over task query terms, symbol names, path segments, and
+lexical matches. These candidates reorder `rankedSourceRefs` for compiler
+preference ordering only. Impact selection membership remains in
+`selectedSourceRefs`. Semantic candidates are not proofs, not durable claims, and
+not accepted by `proof_policy_accepted`. This slice is pre-beta technical review
+territory and does not use embeddings, external APIs, or semantic authority
+claims.
+
 ## Current Inputs
 
 The current retrieval path may use:

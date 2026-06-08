@@ -1,5 +1,10 @@
 import type { SourceType } from "../../shared/index.js";
 import { packagePrefixForSourceRef } from "../scope/package-root.js";
+import {
+  buildTaskSemanticCandidates,
+  orderSourceRefsBySemanticCandidates,
+  type TaskSemanticCandidate
+} from "./semantic-candidates.js";
 
 export interface TaskRetrievalSource {
   readonly sourceId: string;
@@ -49,6 +54,8 @@ export interface TaskSourceRetrievalInput {
 
 export interface TaskSourceRetrievalResult {
   readonly selectedSourceRefs: readonly string[];
+  readonly rankedSourceRefs: readonly string[];
+  readonly semanticCandidates: readonly TaskSemanticCandidate[];
   readonly explicitSourceRefs: readonly string[];
   readonly testSourceRefs: readonly string[];
   readonly relatedTestSourceRefs: readonly string[];
@@ -209,6 +216,13 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   }
 
   const selectedSourceRefs = [...selectedReasons.keys()].slice(0, maxSelectedSources);
+  const semanticCandidates = buildTaskSemanticCandidates({
+    sourceRefs: selectedSourceRefs,
+    symbols: input.symbols,
+    queryTerms,
+    lexicalMatches: input.lexicalMatches
+  });
+  const rankedSourceRefs = orderSourceRefsBySemanticCandidates(selectedSourceRefs, semanticCandidates);
   const selectedSourceRefSet = new Set(selectedSourceRefs);
   if (selectedReasons.size > maxSelectedSources) warnings.push("task_retrieval_truncated");
   if (queryTerms.length > 0 && selectedSourceRefs.length === 0) warnings.push("task_retrieval_no_source_matches");
@@ -222,6 +236,8 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
 
   return {
     selectedSourceRefs,
+    rankedSourceRefs,
+    semanticCandidates,
     explicitSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "explicit_seed"),
     testSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "test_seed"),
     relatedTestSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "related_test"),

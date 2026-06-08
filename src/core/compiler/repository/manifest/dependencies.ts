@@ -16,7 +16,8 @@ import type {
 export function dependencyManifest(
   input: CompileRepositoryContextArtifactInput
 ): InMemoryContextDependencyShape[] {
-  const preferredSourceRefs = input.taskRetrieval?.selectedSourceRefs ?? [];
+  const preferredSourceRefs =
+    input.taskRetrieval?.rankedSourceRefs ?? input.taskRetrieval?.selectedSourceRefs ?? [];
   const baseScope = currentScope(input);
   const dependencies: InMemoryContextDependencyShape[] = [
     {

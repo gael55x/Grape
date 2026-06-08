@@ -60,8 +60,18 @@ export interface RepositoryArtifactSymbolEdgeInput {
   readonly discoveryMethod: string;
 }
 
+export interface RepositoryArtifactSemanticCandidateInput {
+  readonly candidateType: "semantic_candidate";
+  readonly sourceRef: string;
+  readonly score: number;
+  readonly matchedSignals: readonly string[];
+  readonly advisoryLabel: string;
+}
+
 export interface RepositoryArtifactTaskRetrievalInput {
   readonly selectedSourceRefs: readonly string[];
+  readonly rankedSourceRefs: readonly string[];
+  readonly semanticCandidates: readonly RepositoryArtifactSemanticCandidateInput[];
   readonly explicitSourceRefs: readonly string[];
   readonly testSourceRefs: readonly string[];
   readonly relatedTestSourceRefs: readonly string[];

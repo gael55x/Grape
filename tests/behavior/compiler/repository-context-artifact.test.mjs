@@ -396,6 +396,8 @@ test("repository artifact compiler dependency-backs related test relationship re
     ],
     taskRetrieval: {
       selectedSourceRefs: ["src/billing.ts", "tests/billing.test.ts"],
+      rankedSourceRefs: ["src/billing.ts", "tests/billing.test.ts"],
+      semanticCandidates: [],
       explicitSourceRefs: ["src/billing.ts"],
       testSourceRefs: [],
       relatedTestSourceRefs: ["tests/billing.test.ts"],
@@ -641,6 +643,8 @@ test("repository risk policy accepts task-selected exact source spans", () => {
         riskOverlays: ["auth"],
         taskRetrieval: {
           selectedSourceRefs: ["src/auth.ts"],
+          rankedSourceRefs: ["src/auth.ts"],
+          semanticCandidates: [],
           explicitSourceRefs: [],
           testSourceRefs: [],
           relatedTestSourceRefs: [],
@@ -681,6 +685,8 @@ test("repository risk policy rejects irrelevant exact source spans for high-risk
         riskOverlays: ["auth"],
         taskRetrieval: {
           selectedSourceRefs: ["src/lib.ts"],
+          rankedSourceRefs: ["src/lib.ts"],
+          semanticCandidates: [],
           explicitSourceRefs: [],
           testSourceRefs: [],
           relatedTestSourceRefs: [],

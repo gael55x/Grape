@@ -116,6 +116,11 @@ Trust and scope:
 - `review_metadata_edge_cannot_block_current_valid_claim`
 - `manual_resolution_edge_requires_user_confirmation_authority`
 - `semantic_candidate_cannot_create_claim`
+- `semantic_candidates_generated_for_task_input`
+- `semantic_candidates_reorder_ranked_refs_only`
+- `semantic_candidates_not_persisted_as_durable_claims`
+- `semantic_candidate_advisory_wording_avoids_forbidden_phrases`
+- `task_retrieval_section_labels_semantic_candidates_advisory`
 - `graph_expansion_cannot_satisfy_claim_policy`
 - `summary_or_compression_artifact_cannot_satisfy_claim_policy`
 - `forbidden_trust_wording_detected_in_overclaim_phrases`
