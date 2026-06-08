@@ -1,3 +1,7 @@
+import {
+  SCOPED_DURABLE_CLAIMS_SECTION_FOOTER,
+  SCOPED_DURABLE_CLAIMS_SECTION_TITLE
+} from "../../../../../shared/trust-wording.js";
 import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
@@ -17,7 +21,7 @@ export function activeClaimsSection(
   return section({
     id: "current-valid-claims",
     type: "active_claim",
-    title: "Current Valid Claims",
+    title: SCOPED_DURABLE_CLAIMS_SECTION_TITLE,
     body: activeClaimsBody(claims),
     sourceRefs: [...new Set(claims.flatMap((claim) => claim.sourceRefs))],
     proofRefs: [...new Set(claims.flatMap((claim) => claim.proofRefs))],
@@ -47,7 +51,7 @@ function activeClaimDependencyRefs(
 function activeClaimsBody(
   claims: NonNullable<CompileRepositoryContextArtifactInput["activeClaims"]>
 ): string {
-  return claims
+  const claimBlocks = claims
     .map((claim) =>
       [
         `Claim: ${claim.claimId}`,
@@ -58,4 +62,5 @@ function activeClaimsBody(
       ].join("\n")
     )
     .join("\n\n");
+  return [claimBlocks, SCOPED_DURABLE_CLAIMS_SECTION_FOOTER].filter(Boolean).join("\n\n");
 }

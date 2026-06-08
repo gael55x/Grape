@@ -1,3 +1,4 @@
+import { TRUST_WORDING_DISCLAIMERS } from "../../../../../shared/trust-wording.js";
 import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
@@ -19,6 +20,7 @@ export function symbolSummarySection(
     type: "compression_orientation",
     title: "File Relationship Index",
     body: [
+      TRUST_WORDING_DISCLAIMERS.relationshipIndexHeader,
       `Indexed symbol nodes: ${input.symbolNodes.length}`,
       `Indexed symbol edges: ${input.symbolEdges.length}`,
       "Selected nodes:",

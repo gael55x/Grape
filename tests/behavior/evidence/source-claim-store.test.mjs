@@ -292,7 +292,8 @@ test("npm package manifest dependency claims persist with proof-backed package s
       assert.equal(claims.length, 3);
       const apiClientClaim = claims.find((claim) => claim.subject.endsWith("#dependencies:grape-api-client"));
       assert.ok(apiClientClaim);
-      assert.equal(apiClientClaim.claimText, "Manifest declares dependency grape-api-client.");
+      assert.match(apiClientClaim.claimText, /Manifest declares dependency grape-api-client\./);
+      assert.match(apiClientClaim.claimText, /manifest entry declaration only/i);
       assert.equal(apiClientClaim.verificationStatus, "verified");
 
       const scope = JSON.parse(apiClientClaim.scopeJson);

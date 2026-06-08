@@ -34,7 +34,9 @@ Retrieval may rank only current-valid claims whose claim type is enabled by the
 Trust Kernel durable claim policy registry. Semantic candidates, graph expansion,
 compression artifacts, and summaries may help order or route context, but they
 cannot create durable claims, satisfy proof requirements, or override
-current-valid rejection.
+current-valid rejection. Rendered retrieval and relationship sections must use
+selection-evidence wording and must not imply semantic authority, proof of
+behavior, root cause, or fix validity.
 
 ## Current Inputs
 

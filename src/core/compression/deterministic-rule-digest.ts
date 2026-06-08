@@ -116,6 +116,7 @@ function ruleDigestSummary(input: BuildRuleDigestCompressionInput): string {
   const omitted = sortedRules.length - shownRules.length;
 
   return [
+    "Non-authoritative orientation digest: deterministic rule digest.",
     `Deterministic rule digest for ${input.branch}@${input.commit}`,
     `Active rule files: ${input.rules.length}`,
     "Rules:",

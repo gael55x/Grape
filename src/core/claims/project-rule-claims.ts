@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import type { SourceScope } from "../../shared/index.js";
 import { packageRootForSourceRef } from "../scope/package-root.js";
+import { assertConservativeTrustWording, TRUST_WORDING_DISCLAIMERS } from "../../shared/trust-wording.js";
 import { evaluateDurableClaimPolicy } from "./claim-policy.js";
 
 export const projectRuleClaimType = "project_rule";
@@ -144,9 +145,15 @@ export function createProjectRuleClaimDraft(input: {
     claimId: projectRuleClaimId(input.rule),
     subject: `${input.rule.sourceRef}:${input.rule.line}`,
     claimType: projectRuleClaimType,
-    claimText: `Project rule from ${input.rule.sourceRef} line ${input.rule.line}: ${input.rule.ruleText}`,
+    claimText: projectRuleClaimText(input.rule),
     scope
   };
+}
+
+function projectRuleClaimText(rule: ProjectRuleLine): string {
+  const claimText = `${TRUST_WORDING_DISCLAIMERS.repositoryRulePrefix} Project rule from ${rule.sourceRef} line ${rule.line}: ${rule.ruleText}`;
+  assertConservativeTrustWording(claimText, "project_rule_claim_text");
+  return claimText;
 }
 
 export function evaluateProjectRuleClaimGate(input: {

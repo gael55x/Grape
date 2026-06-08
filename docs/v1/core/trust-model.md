@@ -152,6 +152,68 @@ compression artifacts, summaries, assistant text, and agent-reported runs cannot
 satisfy a durable policy entry unless a separate trusted proof validates the
 same claim.
 
+## Trust Wording Guardrails
+
+Grape must use conservative, evidence-based wording in generated claim text,
+artifact sections, CLI/MCP inspection output, compression orientation, status
+messages, and benchmark reports. Wording guardrails do not weaken proof-backed
+claims; they prevent agents and reviewers from treating narrow evidence as root
+cause, correctness proof, fix validity, semantic authority, benchmark savings,
+or guaranteed background enforcement.
+
+Allowed wording examples:
+
+- `possible cause`
+- `candidate source span`
+- `candidate test span`
+- `observed failure relation`
+- `evidence suggests`
+- `linked candidate span`
+- `needs verification`
+- `not proven`
+- `not guaranteed`
+- `non-authoritative candidate`
+- `requires supporting evidence`
+- `proof_policy_accepted` (inspection gloss for `verificationStatus = verified`)
+
+Forbidden wording examples in generated or agent-submitted claim text:
+
+- `this is correct`
+- `this definitely caused the bug`
+- `this code is wrong`
+- `this fix is proven correct`
+- `guaranteed root cause`
+- `proven fix`
+- `root cause confirmed`
+- `Grape guarantees every agent uses this context`
+- `benchmark-proven savings`
+- `semantic result is proof`
+
+Current implementation:
+
+- `src/shared/trust-wording.ts` centralizes forbidden phrase detection and
+  shared disclaimer strings.
+- Durable claim generators append narrow negative disclaimers for observed runs,
+  manifest dependencies, symbol declarations, source excerpts, and repository
+  rules. Observed failure span links keep explicit no-causality wording.
+- Context artifact active-claim sections render as
+  `Scoped Proof-Backed Claims (Current-Valid)` with a scope footer.
+- MCP `grape_record_candidate` rejects forbidden trust wording before persisting
+  non-durable candidate text.
+- CLI `grape claims` labels `verified` as `proof_policy_accepted (verified)`.
+- Status `fresh` is advisory and does not claim guaranteed agent enforcement.
+- Benchmark and token-metric output labels reductions as fixture estimates, not
+  production savings guarantees.
+
+Evidence vs proof vs candidate relation:
+
+- **Evidence** is raw or hashed observation material (source rows, run metadata).
+- **Proof** is a validated, hash-backed support row under a narrow proof policy.
+- **Claim** is a durable statement allowed only when proof policy accepts a
+  narrow meaning for the current scope.
+- **Candidate relation** (for example `observed_test_failure_span_link`) links
+  available evidence to spans without proving causality or fix validity.
+
 ## Promotion Rules
 
 - No proof means no durable claim.

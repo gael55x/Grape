@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { packageRootForSourceRef } from "../scope/package-root.js";
+import { assertConservativeTrustWording, TRUST_WORDING_DISCLAIMERS } from "../../shared/trust-wording.js";
 import { evaluateDurableClaimPolicy } from "./claim-policy.js";
 
 export const symbolDeclarationClaimType = "repository_symbol_declaration_exists";
@@ -126,10 +127,7 @@ export function createSymbolDeclarationClaimDraft(input: {
     proofId,
     subject: `${input.source.sourceRef}#${input.symbol.name}`,
     claimType: symbolDeclarationClaimType,
-    claimText: [
-      `Symbol ${input.symbol.name} (${input.symbol.symbolKind}) is declared in ${input.source.sourceRef}`,
-      `at lines ${input.symbol.startLine}-${input.symbol.endLine}.`
-    ].join(" "),
+    claimText: symbolDeclarationClaimText(input),
     scope
   };
 }
@@ -187,6 +185,19 @@ export function symbolDeclarationProofId(symbol: SymbolDeclarationClaimSymbol): 
     symbol.symbolId,
     symbol.bodyHash ?? ""
   ]).slice(0, 24)}`;
+}
+
+function symbolDeclarationClaimText(input: {
+  readonly source: SymbolDeclarationClaimSource;
+  readonly symbol: SymbolDeclarationClaimSymbol;
+}): string {
+  const claimText = [
+    `Symbol ${input.symbol.name} (${input.symbol.symbolKind}) declaration span exists in ${input.source.sourceRef}`,
+    `at lines ${input.symbol.startLine}-${input.symbol.endLine}.`,
+    TRUST_WORDING_DISCLAIMERS.symbolDeclaration
+  ].join(" ");
+  assertConservativeTrustWording(claimText, "symbol_declaration_claim_text");
+  return claimText;
 }
 
 function sourceKind(source: SymbolDeclarationClaimSource): string {

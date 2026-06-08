@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import type { ObservedTestFailureRelationMaterial } from "../proofs/observed-test-failure-relation-types.js";
 import { observedTestFailureRelationProofId } from "../proofs/observed-test-failure-relation-hash.js";
 import type { SourceScope } from "../../shared/index.js";
+import { assertConservativeTrustWording } from "../../shared/trust-wording.js";
 import { evaluateDurableClaimPolicy } from "./claim-policy.js";
 
 export interface ObservedTestFailureRelationClaimSource {
@@ -147,12 +148,14 @@ function observedTestFailureRelationClaimText(relation: ObservedTestFailureRelat
       return `${testRef} -> ${sourceRef}`;
     })
     .join("; ");
-  return [
+  const claimText = [
     "This test was observed failing and is linked to these candidate source/test spans.",
     `Observed run ${relation.observedRunId}.`,
     `Candidate links: ${spanSummary}.`,
     "This does not prove root cause, code correctness, or fix validity."
   ].join(" ");
+  assertConservativeTrustWording(claimText, "observed_test_failure_relation_claim_text");
+  return claimText;
 }
 
 function stableHash(parts: readonly string[]): string {

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { statusFreshnessLabel } from "../shared/trust-wording.js";
 import { runArtifacts } from "./commands/artifacts.js";
 import { runBench } from "./commands/bench.js";
 import { runClaims } from "./commands/claims.js";
@@ -189,7 +190,7 @@ async function runStatus(parsed: ParsedArgs): Promise<number> {
     }
 
     write([
-      `Grape context status: ${status.status}`,
+      `Grape context status: ${statusFreshnessLabel(status.status)}`,
       status.initialized ? "Grape project is initialized." : "Grape project is not initialized.",
       "",
       `Root: ${status.rootPath}`,

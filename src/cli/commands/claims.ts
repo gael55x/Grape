@@ -1,3 +1,4 @@
+import { verificationStatusLabel } from "../../shared/trust-wording.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
 import { errorMessage, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
@@ -40,7 +41,7 @@ function renderClaims(result: ListLocalClaimsResult): string {
     "",
     ...result.claims.map((claim) =>
       [
-        `${claim.claimId}  ${claim.claimType}  ${claim.verificationStatus}`,
+        `${claim.claimId}  ${claim.claimType}  ${verificationStatusLabel(claim.verificationStatus)}`,
         `  Subject: ${claim.subject}`,
         `  Claim: ${claim.claimText}`,
         `  Proofs: ${claim.proofRefs.length > 0 ? claim.proofRefs.join(", ") : "none"}`

@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import { TRUST_WORDING_DISCLAIMERS } from "../../shared/trust-wording.js";
 import { exitCodes } from "../exit-codes.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
 import { errorMessage, renderProblems, repoOutputOptions, write, writeError, writeJson } from "../render.js";
@@ -77,6 +78,7 @@ function renderBenchmarkReport(result: {
 }): string {
   const lines = [
     `Grape benchmark: ${result.benchmark}`,
+    TRUST_WORDING_DISCLAIMERS.benchmarkFixtureNote,
     "",
     `Fixture: ${result.fixture}`,
     `Status: ${result.status}`,
@@ -88,7 +90,7 @@ function renderBenchmarkReport(result: {
   if (result.totals) {
     lines.push(
       "",
-      `Second-turn reduction: ${result.totals.secondTurnReductionPercent}%`,
+      `Second-turn reduction (fixture estimate vs naive resend): ${result.totals.secondTurnReductionPercent}%`,
       `Omitted unchanged tokens: ${result.totals.omittedUnchangedTokens}`,
       `Restore hints: ${result.totals.restoreAvailableCount}`,
       `Invalidation items: ${result.totals.invalidationItemCount}`
@@ -119,7 +121,7 @@ function renderTurn(turn: {
 }): string {
   return [
     `Turn ${turn.turn}:`,
-    `  tokens: ${turn.grapeTokens} grape / ${turn.naiveTokens} naive (${turn.reductionPercent}% reduction)`,
+    `  tokens: ${turn.grapeTokens} grape / ${turn.naiveTokens} naive (${turn.reductionPercent}% fixture estimate vs naive resend)`,
     `  pack items: ${turn.contextPackItemCount}`,
     `  duration: ${turn.durationMs}ms`
   ].join("\n");

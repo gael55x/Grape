@@ -6,6 +6,7 @@ import {
   type UserDecisionConfirmationChannel
 } from "../../../core/evidence/index.js";
 import { assertArtifactTextHasNoSecrets } from "../../../core/security/index.js";
+import { assertConservativeTrustWording } from "../../../shared/trust-wording.js";
 import {
   createClaimStorageRepositories,
   createEvidenceStorageRepositories
@@ -109,6 +110,7 @@ export function recordLocalCandidate(input: RecordLocalCandidateInput): RecordLo
   const claimType = safeToken(input.claimType, "claimType");
   const claimText = boundedString(input.claimText, "claimText", 2000);
   const scope = normalizedScope(input.scope);
+  assertConservativeTrustWording(claimText, "claim candidate");
   assertArtifactTextHasNoSecrets(JSON.stringify({ subject, claimType, claimText, scope }), "claim candidate");
 
   const result = withWritableSession(input, ({ database, context }) => {

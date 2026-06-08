@@ -130,6 +130,7 @@ function contextPackSummary(input: BuildContextPackSummaryCompressionInput): str
   const omitted = sentItems.length - shownItems.length;
 
   return [
+    "Non-authoritative orientation digest: deterministic context pack summary.",
     `Deterministic context pack summary for ${input.sessionId} on ${input.branch}@${input.commit}`,
     `Prior sent items: ${input.sentItems.length}`,
     "Items:",

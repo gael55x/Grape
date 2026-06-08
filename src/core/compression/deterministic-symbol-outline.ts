@@ -126,6 +126,7 @@ function symbolOutlineSummary(input: BuildSymbolOutlineCompressionInput): string
     .slice(0, policy.maxEdges);
 
   return [
+    "Non-authoritative orientation digest: deterministic symbol outline.",
     `Deterministic symbol outline for ${input.branch}@${input.commit}`,
     `Indexed symbol nodes: ${input.symbolNodes.length}`,
     `Indexed symbol relationships: ${input.symbolEdges.length}`,

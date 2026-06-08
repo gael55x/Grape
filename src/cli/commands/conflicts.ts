@@ -68,7 +68,7 @@ function renderConflicts(result: ListLocalConflictsResult): string {
 
 function renderConflictResolution(result: ResolveLocalConflictResult): string {
   return [
-    `Resolved conflict: ${result.edgeId}`,
+    `Recorded coexistence resolution edge: ${result.edgeId}`,
     `Resolution: ${result.resolution}`,
     `Resolution edge: ${result.resolutionEdgeId}`
   ].join("\n");

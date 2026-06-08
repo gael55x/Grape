@@ -1,4 +1,5 @@
 import { recoveryGuidanceForErrorMessage } from "../../app/local-project/setup/recovery.js";
+import { compileSuccessTitle } from "../../shared/trust-wording.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
 import { errorMessage, renderProblems, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
@@ -67,7 +68,7 @@ export async function runCompileLike(
     }
 
     write([
-      output.successTitle,
+      compileSuccessTitle(result.unsafeReasons.length, output.successTitle),
       "",
       `Session: ${result.sessionId}`,
       `Artifact: ${result.artifactId}`,

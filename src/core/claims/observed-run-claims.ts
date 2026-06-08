@@ -5,6 +5,7 @@ import {
   type ObservedRunProofMaterial
 } from "../proofs/index.js";
 import type { SourceScope } from "../../shared/index.js";
+import { assertConservativeTrustWording, TRUST_WORDING_DISCLAIMERS } from "../../shared/trust-wording.js";
 import { evaluateDurableClaimPolicy } from "./claim-policy.js";
 
 export interface ObservedRunClaimSource {
@@ -143,19 +144,21 @@ export function observedRunClaimId(proofId: string): string {
 }
 
 function observedRunClaimText(material: ObservedRunProofMaterial): string {
-  if (material.sourceType === "test_run") {
-    const result = material.metadata.passed ? "passed" : "failed";
-    const framework = material.metadata.testFramework ? ` with ${material.metadata.testFramework}` : "";
-    return [
-      `Grape observed test run ${material.metadata.observedRunId}${framework} ${result}`,
-      `with exit code ${material.metadata.exitCode}.`
-    ].join(" ");
-  }
-
-  return [
-    `Grape observed command run ${material.metadata.observedRunId}`,
-    `exit with code ${material.metadata.exitCode}.`
-  ].join(" ");
+  const base =
+    material.sourceType === "test_run"
+      ? [
+          `Grape observed test run ${material.metadata.observedRunId}${
+            material.metadata.testFramework ? ` with ${material.metadata.testFramework}` : ""
+          } ${material.metadata.passed ? "passed" : "failed"}`,
+          `with exit code ${material.metadata.exitCode}.`
+        ].join(" ")
+      : [
+          `Grape observed command run ${material.metadata.observedRunId}`,
+          `exit with code ${material.metadata.exitCode}.`
+        ].join(" ");
+  const claimText = `${base} ${TRUST_WORDING_DISCLAIMERS.observedRunResult}`;
+  assertConservativeTrustWording(claimText, "observed_run_claim_text");
+  return claimText;
 }
 
 function stableHash(parts: readonly string[]): string {

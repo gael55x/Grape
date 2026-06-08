@@ -3,6 +3,7 @@ import path from "node:path";
 import ts from "typescript";
 
 import { packageRootForSourceRef } from "../scope/package-root.js";
+import { assertConservativeTrustWording, TRUST_WORDING_DISCLAIMERS } from "../../shared/trust-wording.js";
 import { evaluateDurableClaimPolicy } from "./claim-policy.js";
 
 export const packageManifestDependencyClaimType = "package_manifest_dependency_exists";
@@ -207,7 +208,7 @@ export function createPackageManifestDependencyClaimDraft(input: {
     proofId,
     subject: `${input.entry.sourceRef}#${input.entry.dependencySection}:${input.entry.dependencyName}`,
     claimType: packageManifestDependencyClaimType,
-    claimText: `Manifest declares dependency ${input.entry.dependencyName}.`,
+    claimText: packageManifestDependencyClaimText(input.entry.dependencyName),
     scope
   };
 }
@@ -269,6 +270,12 @@ export function packageManifestDependencyProofId(entry: PackageManifestDependenc
     entry.dependencyName,
     entry.entryHash
   ]).slice(0, 24)}`;
+}
+
+function packageManifestDependencyClaimText(dependencyName: string): string {
+  const claimText = `Manifest declares dependency ${dependencyName}. ${TRUST_WORDING_DISCLAIMERS.manifestDependency}`;
+  assertConservativeTrustWording(claimText, "package_manifest_dependency_claim_text");
+  return claimText;
 }
 
 function isNpmPackageManifestSource(source: PackageManifestDependencyClaimSource): boolean {

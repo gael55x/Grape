@@ -44,6 +44,7 @@ The in-memory smoke harness guards file shape and obvious contract drift. Projec
 | `indexing/` | file index and cross-platform path behavior |
 | `mcp/` | MCP stdio contract and adapter behavior |
 | `privacy-security/` | public artifact redaction and secret-scan behavior |
+| `trust/` | trust wording guardrails and overclaim rejection |
 | `retrieval/` | task source retrieval, source excerpts, and polyglot/monorepo fallback behavior |
 | `snapshot/` | repository snapshot persistence and Git snapshot behavior |
 | `storage/` | storage runtime, repositories, policy, and migration behavior |
@@ -117,6 +118,10 @@ Trust and scope:
 - `semantic_candidate_cannot_create_claim`
 - `graph_expansion_cannot_satisfy_claim_policy`
 - `summary_or_compression_artifact_cannot_satisfy_claim_policy`
+- `forbidden_trust_wording_detected_in_overclaim_phrases`
+- `durable_claim_generators_avoid_forbidden_root_cause_wording`
+- `active_claims_artifact_section_uses_conservative_scoped_title`
+- `mcp_candidate_claim_text_rejects_forbidden_trust_wording`
 
 Artifact and diff:
 

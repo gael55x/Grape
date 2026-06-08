@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import type { SourceType } from "../../shared/index.js";
 import { packageRootForSourceRef } from "../scope/package-root.js";
+import { assertConservativeTrustWording, TRUST_WORDING_DISCLAIMERS } from "../../shared/trust-wording.js";
 import { evaluateDurableClaimPolicy } from "./claim-policy.js";
 
 export interface SourceExcerptClaimSource {
@@ -94,10 +95,7 @@ export function createSourceExcerptClaimDraft(input: {
     claimId,
     subject: input.excerpt.sourceRef,
     claimType: "repository_source_excerpt_exists",
-    claimText: [
-      `Source ${input.excerpt.sourceRef} contains the selected exact excerpt`,
-      `at lines ${input.excerpt.startLine}-${input.excerpt.endLine}.`
-    ].join(" "),
+    claimText: sourceExcerptClaimText(input.excerpt),
     scope
   };
 }
@@ -128,6 +126,16 @@ export function evaluateSourceExcerptClaimGate(input: {
     return { accepted: false, reason: "proof_excerpt_hash_mismatch" };
   }
   return { accepted: true };
+}
+
+function sourceExcerptClaimText(excerpt: SourceExcerptClaimExcerpt): string {
+  const claimText = [
+    `Source ${excerpt.sourceRef} contains the selected exact excerpt`,
+    `at lines ${excerpt.startLine}-${excerpt.endLine}.`,
+    TRUST_WORDING_DISCLAIMERS.sourceExcerpt
+  ].join(" ");
+  assertConservativeTrustWording(claimText, "source_excerpt_claim_text");
+  return claimText;
 }
 
 export function sourceExcerptClaimId(proofId: string): string {

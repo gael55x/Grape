@@ -167,7 +167,7 @@ function renderTokenMetric(input: RepositoryContextRenderInput): string[] {
     "",
     `Naive resend tokens: ${input.tokenMetric.naiveTokens}`,
     `Grape context pack tokens: ${input.tokenMetric.grapeTokens}`,
-    `Reduction: ${input.tokenMetric.reductionPercent}%`,
+    `Reduction (fixture estimate vs naive resend): ${input.tokenMetric.reductionPercent}%`,
     ...renderBudget(input.budget)
   ];
 }

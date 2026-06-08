@@ -1,3 +1,4 @@
+import { TRUST_WORDING_DISCLAIMERS } from "../../../../../shared/trust-wording.js";
 import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
@@ -17,8 +18,10 @@ export function compressionArtifactsSection(
     id: "compression-orientation",
     type: "compression_orientation",
     title: "Deterministic Compression Cache",
-    body: artifacts
-      .map((artifact) =>
+    body: [
+      `${TRUST_WORDING_DISCLAIMERS.compressionOrientationPrefix} Non-authoritative orientation only; not proof.`,
+      "",
+      ...artifacts.map((artifact) =>
         [
           `Compression artifact: ${artifact.compressionId}`,
           `Type: ${artifact.type}`,
@@ -27,7 +30,7 @@ export function compressionArtifactsSection(
           artifact.summaryText
         ].join("\n")
       )
-      .join("\n\n"),
+    ].join("\n\n"),
     dependencyRefs: compressionDependencyRefs(artifacts, dependencies),
     pinned: false,
     exactRequired: false

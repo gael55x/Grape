@@ -1,3 +1,4 @@
+import { TRUST_WORDING_DISCLAIMERS } from "../../shared/trust-wording.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
 import { errorMessage, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
@@ -53,7 +54,8 @@ export async function runObservedCommand(parsed: ParsedArgs, mode: "command" | "
       `Command hash: ${result.commandHash}`,
       `Stdout: ${result.stdoutBytes} bytes (${result.stdoutHash})`,
       `Stderr: ${result.stderrBytes} bytes (${result.stderrHash})`,
-      `Warnings: ${result.warnings.length === 0 ? "none" : result.warnings.join(", ")}`
+      `Warnings: ${result.warnings.length === 0 ? "none" : result.warnings.join(", ")}`,
+      result.claimId ? TRUST_WORDING_DISCLAIMERS.observedRunCliNote : undefined
     ].filter((line): line is string => line !== undefined).join("\n"), outputOptions);
     return result.exitCode;
   } catch (error) {
