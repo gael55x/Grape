@@ -114,6 +114,9 @@ function taskScopedClaimMatches(
   if (isCurrentSessionObservedRunClaim(claim, sessionId)) {
     return observedRunClaimMatchesTask(claim, taskSourceOrder, sessionId);
   }
+  if (isObservedTestFailureSpanLinkClaim(claim, sessionId)) {
+    return observedFailureSpanLinkMatchesTask(claim, taskSourceOrder, sessionId);
+  }
   if (isPackageManifestDependencyClaim(claim)) {
     return packageManifestDependencyClaimMatchesTask(claim, taskSourceOrder);
   }
@@ -129,6 +132,8 @@ function claimTaskOrder(
 ): number {
   const observedRunOrder = observedRunTaskOrder(claim, taskSourceOrder, sessionId);
   if (observedRunOrder !== undefined) return observedRunOrder;
+  const failureLinkOrder = observedFailureSpanLinkTaskOrder(claim, taskSourceOrder, sessionId);
+  if (failureLinkOrder !== undefined) return failureLinkOrder;
   const manifestDependencyOrder = packageManifestDependencyTaskOrder(claim, taskSourceOrder);
   if (manifestDependencyOrder !== undefined) return manifestDependencyOrder;
   const positions = claim.sourceRefs
@@ -137,6 +142,7 @@ function claimTaskOrder(
   if (positions.length > 0) return Math.min(...positions);
   if (isProjectRuleClaim(claim)) return Number.MAX_SAFE_INTEGER - 2;
   if (isCurrentSessionObservedRunClaim(claim, sessionId)) return Number.MAX_SAFE_INTEGER - 1;
+  if (isObservedTestFailureSpanLinkClaim(claim, sessionId)) return Number.MAX_SAFE_INTEGER - 1;
   return Number.MAX_SAFE_INTEGER;
 }
 
@@ -201,6 +207,40 @@ function observedRunTaskOrder(
   if (!isCurrentSessionObservedRunClaim(claim, sessionId)) return undefined;
   if (stringScope(claim.scope, "sourceType") !== "test_run") return undefined;
   const positions = stringArrayScope(claim.scope, "testFiles")
+    .map((sourceRef) => taskSourceOrder.get(sourceRef))
+    .filter((position): position is number => position !== undefined);
+  return positions.length > 0 ? Math.min(...positions) : undefined;
+}
+
+function isObservedTestFailureSpanLinkClaim(
+  claim: LocalClaimSummary,
+  sessionId: string | undefined
+): boolean {
+  return (
+    claim.claimType === "observed_test_failure_span_link" &&
+    typeof claim.scope.sessionId === "string" &&
+    claim.scope.sessionId === sessionId
+  );
+}
+
+function observedFailureSpanLinkMatchesTask(
+  claim: LocalClaimSummary,
+  taskSourceOrder: ReadonlyMap<string, number>,
+  sessionId: string | undefined
+): boolean {
+  return observedFailureSpanLinkTaskOrder(claim, taskSourceOrder, sessionId) !== undefined;
+}
+
+function observedFailureSpanLinkTaskOrder(
+  claim: LocalClaimSummary,
+  taskSourceOrder: ReadonlyMap<string, number>,
+  sessionId: string | undefined
+): number | undefined {
+  if (!isObservedTestFailureSpanLinkClaim(claim, sessionId)) return undefined;
+  const positions = [
+    ...stringArrayScope(claim.scope, "linkedSourceRefs"),
+    ...stringArrayScope(claim.scope, "testFiles")
+  ]
     .map((sourceRef) => taskSourceOrder.get(sourceRef))
     .filter((position): position is number => position !== undefined);
   return positions.length > 0 ? Math.min(...positions) : undefined;
@@ -308,7 +348,7 @@ function toClaimSummary(claim: ClaimRecord, proofs: readonly ProofRecord[]): Loc
     scopeHash: claim.scopeHash,
     proofRefs: proofs.map((proof) => proof.proofId),
     proofHashes: proofs.map((proof) => proof.excerptHash),
-    sourceRefs: [...new Set(proofs.map((proof) => stringScope(scope, "sourceRef") || proof.sourceId))],
+    sourceRefs: claimSourceRefs(claim.claimType, scope, proofs),
     createdAt: claim.createdAt,
     updatedAt: claim.updatedAt
   };
@@ -340,7 +380,7 @@ function sourceHashesMatch(
     const proof = proofs[index];
     if (!source) return "mismatch";
     if (source.sourceHash !== proof.sourceHash) return "mismatch";
-    if (isObservedRunProof(proof, source)) {
+    if (isObservedRunProof(proof, source) || isObservedTestFailureRelationProof(proof, source)) {
       const scopedSourceHash = stringScope(scope, "sourceHash");
       if (scopedSourceHash && scopedSourceHash !== proof.sourceHash) return "mismatch";
       continue;
@@ -357,15 +397,33 @@ function proofHashesMatch(
   if (proofs.length === 0) return "unknown";
   const expectedExcerptHash = stringScope(scope, "excerptHash");
   const expectedResultHash = stringScope(scope, "resultHash");
-  if (!expectedExcerptHash && !expectedResultHash) return "unknown";
+  const expectedRelationHash = stringScope(scope, "relationHash");
+  if (!expectedExcerptHash && !expectedResultHash && !expectedRelationHash) return "unknown";
   return proofs.every((proof) => {
-    const expected = proof.proofType === "grape_observed_run_result"
-      ? expectedResultHash
-      : expectedExcerptHash;
+    const expected =
+      proof.proofType === "grape_observed_run_result"
+        ? expectedResultHash
+        : proof.proofType === "observed_test_failure_relation"
+          ? expectedRelationHash
+          : expectedExcerptHash;
     return expected.length > 0 && proof.excerptHash === expected;
   })
     ? "match"
     : "mismatch";
+}
+
+function claimSourceRefs(
+  claimType: string,
+  scope: Record<string, unknown>,
+  proofs: readonly ProofRecord[]
+): string[] {
+  const refs = new Set(proofs.map((proof) => stringScope(scope, "sourceRef") || proof.sourceId));
+  if (claimType === "observed_test_failure_span_link") {
+    for (const sourceRef of stringArrayScope(scope, "linkedSourceRefs")) {
+      refs.add(sourceRef);
+    }
+  }
+  return [...refs];
 }
 
 function parseScope(scopeJson: string): Record<string, unknown> {
@@ -396,4 +454,8 @@ function isObservedRunProof(proof: ProofRecord, source: SourceRecord): boolean {
     proof.proofType === "grape_observed_run_result" &&
     (source.sourceType === "command_run" || source.sourceType === "test_run")
   );
+}
+
+function isObservedTestFailureRelationProof(proof: ProofRecord, source: SourceRecord): boolean {
+  return proof.proofType === "observed_test_failure_relation" && source.sourceType === "test_run";
 }

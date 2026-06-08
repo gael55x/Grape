@@ -86,6 +86,10 @@ export function runLocalObservedCommand(input: RunLocalObservedCommandInput): Ru
     endedAt
   ]).slice(0, 24)}`;
 
+  const failureOutputText =
+    input.mode === "test" && exitCode !== 0
+      ? Buffer.concat([stdout, stderr]).toString("utf8")
+      : undefined;
   const observation = persistObservedResult(input, {
     observedRunId,
     command: commandText,
@@ -94,7 +98,8 @@ export function runLocalObservedCommand(input: RunLocalObservedCommandInput): Ru
     stdoutHash,
     stderrHash,
     startedAt,
-    endedAt
+    endedAt,
+    failureOutputText
   });
 
   return {
@@ -138,6 +143,7 @@ function persistObservedResult(
     readonly stderrHash: string;
     readonly startedAt: string;
     readonly endedAt: string;
+    readonly failureOutputText?: string;
   }
 ): RecordLocalObservationResult {
   const base = {
@@ -161,7 +167,8 @@ function persistObservedResult(
         ...base,
         passed: observed.exitCode === 0,
         testFramework: input.testFramework,
-        testFiles: explicitTestFileRefs(input.rootPath, input.commandArgs)
+        testFiles: explicitTestFileRefs(input.rootPath, input.commandArgs),
+        failureOutputText: observed.failureOutputText
       })
     : recordLocalGrapeObservedCommandResult(base);
 }

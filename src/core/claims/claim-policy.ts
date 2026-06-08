@@ -4,6 +4,7 @@ export type DurableClaimMeaning =
   | "symbol_declaration_exists"
   | "manifest_dependency_declared"
   | "observed_run_result"
+  | "observed_failure_span_link"
   | "runtime_behavior"
   | "correctness"
   | "root_cause"
@@ -102,6 +103,16 @@ export const durableClaimPolicies: readonly DurableClaimPolicy[] = [
     observers: ["grape"],
     proofSignalKinds: ["observed_run"],
     claimMeanings: ["observed_run_result"],
+    requiredRedactionStatuses: ["redacted"]
+  },
+  {
+    claimType: "observed_test_failure_span_link",
+    proofTypes: ["observed_test_failure_relation"],
+    sourceTypes: ["test_run"],
+    supportStatuses: ["direct"],
+    observers: ["grape"],
+    proofSignalKinds: ["observed_run"],
+    claimMeanings: ["observed_failure_span_link"],
     requiredRedactionStatuses: ["redacted"]
   }
 ];

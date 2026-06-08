@@ -8,6 +8,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- Added observed test failure span-link claims for failed Grape-observed `grape test` runs. They persist `observed_test_failure_relation` proofs and `observed_test_failure_span_link` claims with command/output hashes, bounded exact test/source span proof refs, separate import/filename/package/manifest evidence slots, missing-evidence warnings, and `related_to` edges from the observed-run claim while proving only candidate linkage without causality or fix proof.
 - Added narrow provider-backed package manifest dependency claims for trusted npm `package.json` dependency entries. They persist direct manifest-entry proofs with repo-relative manifest/package refs, source hashes, line span, provider capability metadata, dependency specifier hashes, normalized package scope, current-valid filtering, and conservative conflict blocking while proving only `Manifest declares dependency <dependency-name>.`
 - Render current-valid package manifest dependency claims in task-scoped context artifacts only for selected manifests or selected sources in the same current package root, with claim/proof dependency refs and without raw manifest specifiers.
 - Added explicit claim-edge authority metadata so blocking conflict/supersession behavior depends on recorded provenance instead of edge type alone.

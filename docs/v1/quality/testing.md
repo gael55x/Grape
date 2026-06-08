@@ -174,6 +174,9 @@ MCP and CLI:
 - `cli_bench_requires_named_fixture`
 - `cli_doctor_privacy_redacts_secrets`
 - `cli_observed_test_run_records_explicit_test_file_refs`
+- `observed_test_failure_span_link_policy_rejects_root_cause_overclaim`
+- `failed_observed_test_run_promotes_candidate_span_link_claim_with_hash_only_failure_output`
+- `cli_observed_failing_test_links_candidate_spans_without_raw_failure_logs`
 - `cli_init_repairs_unusable_local_database`
 - `cli_compile_repairs_unusable_local_database`
 

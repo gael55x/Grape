@@ -415,6 +415,92 @@ test("cli observed test run records explicit test file refs without rendering un
   });
 });
 
+test("cli observed failing test links candidate spans without raw failure logs or causality claims", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "src"), { recursive: true });
+    mkdirSync(path.join(repoPath, "tests"), { recursive: true });
+    writeFileSync(
+      path.join(repoPath, "src", "counter.js"),
+      "export function increment(value) {\n  return value;\n}\n"
+    );
+    writeFileSync(
+      path.join(repoPath, "tests", "counter.test.js"),
+      [
+        "import test from 'node:test';",
+        "import assert from 'node:assert/strict';",
+        "import { increment } from '../src/counter.js';",
+        "test('increments', () => {",
+        "  assert.equal(increment(1), 2);",
+        "});"
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "src/counter.js", "tests/counter.test.js"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add failing counter test fixture"
+    ]);
+
+    runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Fix counter test failure in tests/counter.test.js",
+      "--session",
+      "failure-link-session"
+    ]);
+
+    const failedRun = runCli(repoPath, [
+      "test",
+      "--session",
+      "failure-link-session",
+      "--test-framework",
+      "node",
+      "--json",
+      "--",
+      process.execPath,
+      "-e",
+      "process.exit(1)",
+      "tests/counter.test.js"
+    ]);
+    const failedJson = JSON.parse(failedRun.stdout);
+    assert.equal(failedJson.passed, false);
+    assert.equal(failedJson.exitCode, 1);
+    assert.equal(failedJson.durableClaim, true);
+    assert.equal(failedRun.stdout.includes("AssertionError"), false);
+
+    const activeClaims = runCliJson(repoPath, ["claims", "--active"]).claims;
+    const failureLinkClaim = activeClaims.find((claim) => claim.claimType === "observed_test_failure_span_link");
+    assert.ok(failureLinkClaim);
+    assert.match(failureLinkClaim.claimText, /candidate source\/test spans/i);
+    assert.match(failureLinkClaim.claimText, /does not prove root cause/i);
+    assert.doesNotMatch(failureLinkClaim.claimText, /caused the failure/i);
+    assert.equal(failureLinkClaim.scope.failureOutput.stdoutHash, failedJson.stdoutHash);
+    assert.equal("stdout" in failureLinkClaim.scope.failureOutput, false);
+    assert.ok(failureLinkClaim.scope.candidateLinks[0].testSpan);
+    assert.ok(failureLinkClaim.scope.candidateLinks[0].candidateSourceSpan);
+
+    const artifact = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Fix counter test failure in tests/counter.test.js",
+      "--session",
+      "failure-link-session"
+    ]);
+    const artifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, artifact.artifactJsonPath), "utf8"));
+    const currentValidClaims = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "current-valid-claims"
+    );
+    assert.ok(currentValidClaims);
+    assert.match(currentValidClaims.text, new RegExp(escapeRegExp(failureLinkClaim.claimId)));
+    assert.match(currentValidClaims.text, /candidate source\/test spans/i);
+    assert.equal(currentValidClaims.text.includes("AssertionError"), false);
+  });
+});
+
 test("cli compile renders package manifest dependency claims without raw manifest specifiers", () => {
   withGitRepo((repoPath) => {
     mkdirSync(path.join(repoPath, "packages", "api", "src"), { recursive: true });

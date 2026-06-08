@@ -29,6 +29,8 @@ export interface RecordLocalTestResultInput extends RecordLocalCommandResultInpu
 
 export interface RecordLocalGrapeObservedTestResultInput extends RecordLocalTestResultInput {
   readonly observedRunId: string;
+  /** Ephemeral combined stdout/stderr text for in-memory failure parsing only. Never persisted. */
+  readonly failureOutputText?: string;
 }
 
 export interface RecordLocalObservationResult {
