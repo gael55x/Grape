@@ -5,6 +5,7 @@ export async function runDiffContext(parsed: ParsedArgs): Promise<number> {
   return runCompileLike(parsed, {
     commandLabel: "diff-context",
     missingTaskMessage: "grape diff-context requires --task <text>",
-    successTitle: "Grape context diff generated."
+    successTitle: "Grape context diff generated.",
+    explain: parsed.flags.has("--explain")
   });
 }

@@ -1,5 +1,7 @@
+import type { CompileLocalContextResult } from "../../app/local-project/types.js";
 import { recoveryGuidanceForErrorMessage } from "../../app/local-project/setup/recovery.js";
 import { compileSuccessTitle } from "../../shared/trust-wording.js";
+import type { ContextPackItemShape } from "../../shared/index.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
 import { errorMessage, renderProblems, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
@@ -18,11 +20,13 @@ export async function runCompileLike(
     readonly commandLabel: string;
     readonly missingTaskMessage: string;
     readonly successTitle: string;
+    readonly explain?: boolean;
   }
 ): Promise<number> {
   const flag = unsupportedFlag(
     parsed,
     new Set([
+      "--explain",
       "--json",
       "--repo",
       "--task",
@@ -37,6 +41,11 @@ export async function runCompileLike(
   );
   if (flag) {
     writeError(`Unsupported option for grape ${output.commandLabel}: ${flag}`);
+    return exitCodes.usage;
+  }
+
+  if (parsed.flags.has("--explain") && !output.explain) {
+    writeError(`Unsupported option for grape ${output.commandLabel}: --explain`);
     return exitCodes.usage;
   }
 
@@ -62,8 +71,10 @@ export async function runCompileLike(
       resetSession: parsed.flags.has("--reset-session")
     });
 
+    const explainItems = output.explain ? buildPackExplainItems(result) : undefined;
+
     if (parsed.flags.has("--json")) {
-      writeJson(result, outputOptions);
+      writeJson(explainItems ? { ...result, packExplain: explainItems } : result, outputOptions);
       return result.unsafeReasons.length === 0 ? exitCodes.ok : exitCodes.unsafe;
     }
 
@@ -83,6 +94,7 @@ export async function runCompileLike(
       `Warnings: ${result.warnings.length === 0 ? "none" : result.warnings.join(", ")}`,
       result.databaseBackupPath ? `Database backup: ${result.databaseBackupPath}` : undefined,
       ...renderProblems("Recovery", result.recoveryGuidance),
+      ...(explainItems ? renderPackExplain(explainItems) : []),
       "",
       "Files:",
       `  JSON: ${result.artifactJsonPath}`,
@@ -98,6 +110,70 @@ export async function runCompileLike(
     if (guidance.length > 0) writeError(renderProblems("Recovery", guidance).join("\n"), outputOptions);
     return compileErrorExitCode(error);
   }
+}
+
+export interface PackExplainItem {
+  readonly itemId: string;
+  readonly diffState: ContextPackItemShape["state"];
+  readonly sessionId: string;
+  readonly sectionId?: string;
+  readonly contentHash: string;
+  readonly itemKind: ContextPackItemShape["itemKind"];
+  readonly reason: string;
+  readonly restoreAvailable: boolean;
+  readonly restoreToken?: string;
+  readonly invalidatesSentItemId?: string;
+  readonly warnings: readonly string[];
+}
+
+export function buildPackExplainItems(result: CompileLocalContextResult): PackExplainItem[] {
+  return result.contextPackItems.map((item) => ({
+    itemId: item.id,
+    diffState: item.state,
+    sessionId: result.sessionId,
+    sectionId: item.sectionId,
+    contentHash: item.contentHash,
+    itemKind: item.itemKind,
+    reason: explainDiffState(item),
+    restoreAvailable: item.state === "RESTORE_AVAILABLE",
+    restoreToken: item.restoreId,
+    invalidatesSentItemId: item.invalidatesSentItemId,
+    warnings: item.warnings
+  }));
+}
+
+function explainDiffState(item: ContextPackItemShape): string {
+  switch (item.state) {
+    case "NEW":
+      return "First send to this session.";
+    case "CHANGED":
+      return "Content hash changed since last send; resending updated body.";
+    case "PINNED":
+      return "Safety-critical or pinned section; resent every turn.";
+    case "OMIT_UNCHANGED":
+      return "Already sent unchanged to this session; omitted for token savings.";
+    case "RESTORE_AVAILABLE":
+      return "Omitted but restorable within this session via restore token.";
+    case "INVALIDATE_PREVIOUS":
+      return item.invalidatesSentItemId
+        ? `Prior sent item invalidated (stale branch, dependency, or reset).`
+        : "Prior sent context invalidated.";
+  }
+}
+
+export function renderPackExplain(items: readonly PackExplainItem[]): string[] {
+  if (items.length === 0) return ["", "Pack explain: none"];
+  return [
+    "",
+    "Pack explain:",
+    ...items.map(
+      (item) =>
+        `  - ${item.itemId} [${item.diffState}] ${item.reason}` +
+        (item.restoreToken ? ` restore=${item.restoreToken}` : "") +
+        (item.invalidatesSentItemId ? ` invalidates=${item.invalidatesSentItemId}` : "") +
+        (item.warnings.length > 0 ? ` warnings=${item.warnings.join(",")}` : "")
+    )
+  ];
 }
 
 function compileErrorExitCode(error: unknown): number {

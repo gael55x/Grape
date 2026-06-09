@@ -37,6 +37,7 @@ export function helpText(): string {
     "  grape sync                  Refresh local snapshot, evidence, and file index",
     "  grape compile --task <text> Compile a task context pack",
     "  grape diff-context --task <text> Compile and diff a task context pack",
+    "  grape diff-context --explain   Show per-item diff reasons for the pack",
     "  grape run --session <id> -- <cmd...> Record a Grape-observed command run",
     "  grape test --session <id> -- <cmd...> Record a Grape-observed test run",
     "  grape artifacts             Inspect compiled context artifacts",
