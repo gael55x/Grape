@@ -29,13 +29,13 @@
 
 
 
-Grape is the build system for AI coding-agent context.
+Grape is a local-first context transport layer for AI coding agents.
 
-It automatically tracks what context an agent has seen, invalidates stale context when repo state changes, and sends only the safe delta needed for the next turn. Install Grape in two commands. Keep using your coding agent normally. Grape handles context diffs, stale invalidation, pinned safety context, and restorable omissions in the background.
+After MCP setup, the agent calls `grape_get_context` each turn with stable session identity. Grape tracks what that session has already seen, invalidates stale context when repo state changes, and ships only the safe delta (`NEW`, `CHANGED`, `PINNED`, `RESTORE_AVAILABLE`, `INVALIDATE_PREVIOUS`) without manual compile/diff commands. Install Grape once, configure your agent through MCP, and keep using your coding agent normally.
 
 Instead of making agents reread the same files, rediscover the same rules, and repeat the same mistakes, Grape turns repository knowledge into dependency-tracked context artifacts that can be diffed, restored, and invalidated.
 
-Grape is not a coding assistant, chatbot, memory toy, or generic search layer. It is the missing context runtime for agentic software development: built to make coding agents cheaper to run, harder to mislead, and more consistent on real codebases.
+Grape is not a coding assistant, chatbot, broad agent memory platform, vector database, correctness prover, repo graph daemon, or generic search layer. It is session-scoped, proof-backed context transport: built to make coding agents cheaper to run, harder to mislead, and more consistent on real codebases.
 
 ## Quickstart
 
@@ -55,13 +55,15 @@ npm install -g grape-context
 grape init --connect
 ```
 
-`grape init --connect` creates `.grape/`, applies local SQLite migrations, captures the initial Git snapshot, reports scan diagnostics, and prints MCP connection guidance.
+`grape init --connect` creates `.grape/`, applies local SQLite migrations, captures the initial Git snapshot, reports scan diagnostics, and prints MCP integration guidance plus an agent instruction block you can paste into Cursor, Claude Code, or other MCP clients.
 
 An MCP-capable coding agent then requests context through:
 
 ```text
 grape_get_context
 ```
+
+Grape only omits context already sent to the **same session**. If the MCP client changes session ID, Grape resends rather than unsafe-omit. Restore is session-bound. Branch, source, and dependency changes may invalidate prior sent context.
 
 For continued turns, keep the same task/query and session identity. The alpha.3 session contract is strict by design: different task wording with the same explicit session is a mismatch, and derived MCP sessions change when the query changes. See [Agent Sessions](docs/v1/interfaces/agent-sessions.md) for examples and recovery paths.
 

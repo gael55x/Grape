@@ -45,7 +45,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 
 ## Now
 
-- Keep the seamless beta path explicit: install Grape, initialize once, keep using the coding agent normally, and let MCP `grape_get_context` handle context diffs in the background.
+- Keep the seamless beta path explicit: install Grape, initialize once, keep using the coding agent normally, and let MCP `grape_get_context` drive MCP session tracking on each agent turn.
 - Prove the published alpha.3 workflow across clean consumer repos with real MCP clients, not only scripted smoke.
 - Keep release mutations such as version bumps, tags, GitHub releases, and npm dist-tag changes approval-gated.
 

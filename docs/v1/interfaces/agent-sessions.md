@@ -6,6 +6,16 @@ Define how an AI agent, CLI user, or MCP client must identify a Grape context se
 
 Grape only saves tokens when it can prove that the current request belongs to the same repository, task, branch/worktree scope, and session ledger as earlier turns. Session identity is therefore part of the safety contract, not a convenience label.
 
+## MCP-driven session tracking (what “background” means)
+
+Grape does **not** run as a daemon that observes every agent turn automatically. After MCP setup, **agent-called** session tracking is real: when the agent calls `grape_get_context` each turn with **stable session identity**, Grape maintains durable sent/omitted/restore/invalidation ledgers without manual `grape compile` or `grape diff-context` commands.
+
+- Grape only omits context already sent to the **same session**.
+- If the MCP client rotates `sessionId`, Grape must resend rather than `OMIT_UNCHANGED` unsafely.
+- Restore is session-bound; restore tokens from one session must not work in another.
+- Branch switches, source edits, and dependency manifest changes may emit `INVALIDATE_PREVIOUS` for prior sends.
+- Grape does not claim guaranteed background execution or agent enforcement; stale/unknown status from `grape_get_status` is advisory.
+
 ## Alpha.3 Install Baseline
 
 The alpha.3 package requires Node.js 22.13 or newer:
