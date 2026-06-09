@@ -1,4 +1,4 @@
-# ADR-0004: Node 22.5 SQLite Runtime
+# ADR-0004: Node 22.13+ SQLite Runtime
 
 ## Status
 

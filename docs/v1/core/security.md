@@ -24,6 +24,15 @@ Before editing security-sensitive code, agents must verify:
 - proof hashes remain tied to canonical source spans
 - artifacts are scanned before storage and return
 
+## Implementation status (alpha.3)
+
+| Workflow | Status |
+|---|---|
+| Git/local ignore filtering, snapshot rejection, artifact secret scan, `.grape/` exclusion | **Implemented** |
+| Ignored/private read approval workflow (`audit_events`, scoped approval) | **Partial** (doctor/status diagnostics; full approval UX deferred) |
+| `grape export` / `grape purge` privacy workflows | **Deferred** (specified in CLI contract; no runnable command yet) |
+| Complete redaction engine beyond baseline artifact scan | **Partial** |
+
 ## Non-Negotiable Rules
 
 - No cloud sync in V1.

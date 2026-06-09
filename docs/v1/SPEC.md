@@ -1,8 +1,22 @@
-# Grape V1.0 Final Framework Specification
+# Grape V1 Framework Specification
 
-**Status:** Canonical final V1.0 framework contract  
+**Status:** Canonical V1 framework contract (not a claim that every section is shipped)  
 **Canonical source of truth:** This file, `grape_v1_final_framework_spec.md`, is the final V1 implementation contract. If another V1 spec conflicts with this file, this file wins.  
 **Product:** Grape — local-first context transport layer for AI coding agents on git repositories  
+
+**Implementation status (alpha.3 transport slice):**
+
+| Area | Status |
+|---|---|
+| CLI + MCP `grape_get_context`, session diff transport, restore, branch/dependency invalidation | **Implemented** |
+| TS/JS AST indexing; other languages via safe exact/path/lexical fallback | **Partial** |
+| Narrow durable claims (source excerpts, symbol declarations, parsed rules, observed runs) | **Implemented** |
+| Deterministic compression cache (`symbol_outline`, `rule_digest`, `context_pack_summary`) | **Implemented** |
+| Runtime FSM enforcement in compile path | **Deferred** (state names are documentary vocabulary; see `architecture/state-machine.md`) |
+| Privacy export/purge CLI (`grape export`, `grape purge`) | **Deferred** |
+| Incremental sync, cloud/team sync, embeddings/semantic ranking | **Deferred** |
+| Broad polyglot graph / complete call graphs | **Deferred** |
+| Daemon or autonomous background observation without MCP calls | **Not implemented** |
 **Primary goal:** save tokens by compiling safe repository context once per task/session and shipping only the next session-safe context pack diff  
 **Safety model:** proof-backed, branch-aware, task-specific context artifacts with explicit uncertainty  
 **Runtime:** TypeScript on Node.js 22.13+ for the published alpha package  

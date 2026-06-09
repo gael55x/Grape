@@ -6,7 +6,7 @@ Track the work required to move from the alpha transport proof to serious human 
 
 This checklist does not expand V1 scope. It makes the current transport slice easier to install, connect, verify, and recover from.
 
-The beta product promise is: install Grape, keep using the coding agent normally, and let Grape track seen context, send safe deltas, resend pinned safety context, invalidate stale prior sends, and restore omitted context in the background.
+The beta product promise is: install Grape, keep using the coding agent normally, and let MCP `grape_get_context` drive agent-called session tracking—safe deltas, pinned safety context, stale invalidation, and restorable omissions—when the agent calls Grape with stable session identity each turn.
 
 Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client trials and pass/fail criteria.
 
@@ -158,6 +158,16 @@ If npm resolves stale alpha.1:
 npm cache clean --force
 npm install -g grape-context@0.1.0-alpha.3
 ```
+
+## Remaining blockers after transport-wedge cleanup
+
+- Real MCP client trials (Cursor, Claude Code, or equivalent) against the published package are not yet recorded in-repo.
+- Cross-platform CI beyond current Linux-focused gates is not complete.
+- Public transport JSON/schema contract freeze is pending.
+- Turn-1 retrieval quality for non-TS/JS repos remains fallback-heavy.
+- Dirty-worktree hardening: dependency-hash drift covers many uncommitted edits; explicit worktree-hash ledger invalidation may still be partial.
+
+See [`transport-wedge-cleanup.md`](transport-wedge-cleanup.md) for the alignment summary.
 
 ## Do Not Treat As Beta Complete
 

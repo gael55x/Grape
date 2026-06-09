@@ -7,9 +7,9 @@ Define the system layers, module boundaries, and dependency direction for Grape 
 V1 has two cooperating layers (ADR-0010):
 
 1. **Compile layer** — evidence, git snapshot, indexing, trust, compiler, compression → `ContextArtifact`.
-2. **Transport layer** — sessions, diff engine → `ContextPack` / `ContextPackItem` ledger.
+2. **Transport layer** — session-scoped diff engine → `ContextPack` / `ContextPackItem` ledger.
 
-Adapters (`src/cli/`, `src/mcp/`) expose transport. Most product differentiation lives in `src/core/diff/` and `src/core/sessions/`, not in turning Grape into a standalone graph database.
+Adapters (`src/cli/`, `src/mcp/`) expose transport. Session transport policy vocabulary lives in `src/core/sessions/`; durable ledgers and locks live in `src/core/storage/session/` and `src/core/storage/context-ledger/`; orchestration lives in `src/app/local-project/context/compile-session.ts` and `src/app/durable-context-build.ts`; the diff algorithm lives in `src/core/diff/`. Grape is not a standalone graph database.
 
 ## Source Of Truth
 
@@ -29,7 +29,7 @@ This document explains how to implement the architecture in `docs/v1/SPEC.md`. I
 flowchart LR
   Agent[AI Agent / CLI] --> Adapter[CLI or MCP Adapter]
   Adapter --> App[Application Services]
-  App --> State[State Machine]
+  App --> State[State Vocabulary]
   App --> Repo[Repo Snapshot]
   Repo --> Evidence[Evidence Store]
   Evidence --> Trust[Trust Kernel]
@@ -56,13 +56,13 @@ flowchart LR
 | CLI adapter | Argument parsing, terminal output, exit codes, local debug workflows. | Trust decisions, state transitions, storage SQL, compiler policy. |
 | MCP adapter | Tool schemas, transport, request/response mapping, contract validation. | Durable truth promotion, direct SQLite writes, secret scanning logic. |
 | Application services | End-to-end orchestration, transaction boundaries, state transition calls. | Low-level SQL, proof validation details, compression algorithms. |
-| Core state | Explicit state/event definitions and transition validation. | Storage schema, adapter behavior, relevance ranking. |
+| Core state | Explicit state/event names and transition vocabulary (documentary unless a path enforces them). | Storage schema, adapter behavior, relevance ranking, runtime FSM unless explicitly wired. |
 | Core evidence | Source ingestion, source classification, evidence records. | Claim promotion, current-valid filtering, artifact rendering. |
 | Core trust/proofs/claims | Proof validation, claim candidate evaluation, durable claim promotion. | MCP authority, compression, context omission. |
 | Core scope/retrieval | Scope matching, current-valid filtering, safe retrieval sets. | Ranking stale facts, source ingestion, artifact rendering. |
 | Core compiler | Task policy application, artifact sections, dependency manifests. | Proof promotion, storage SQL, session ledger ownership. |
 | Core compression | Deterministic derived cache and invalidation. | Proof generation, claim promotion, authoritative summaries. |
-| Core diff/sessions | Session locks, sent-item ledger, omitted-item restore, context pack deltas. | Trust decisions, source classification, compression truth. |
+| Core diff/sessions | Diff states, session transport policy types, restore/invalidation vocabulary. Durable ledgers: `storage/session/`, `storage/context-ledger/`. | Trust decisions, source classification, compression truth, direct SQLite in sessions module. |
 | Core security | Ignore policy, redaction, secret scan contracts, path privacy rules. | Product workflow orchestration. |
 | Storage repositories | SQLite access, migrations, transactions, indexes. | Business policy, trust promotion, compiler decisions. |
 | Shared | Types, schemas, constants, errors, path utilities. | Behavior that belongs to a domain module. |
@@ -86,7 +86,7 @@ flowchart LR
 | `src/core/compiler/` | Context artifact assembly and task policies. Public exports stay in `index.ts`; internal ownership is split into `artifact/` for artifact output mapping and guards, `pack/` for context-pack item and budget mapping, and `repository/` for repository-derived compilation with focused ownership folders. | `retrieval`, `compression`, `security`, shared types. | proof validation bypasses, direct SQL. | `../contracts/context-artifact.md` |
 | `src/core/compression/` | Compression artifact creation and invalidation. | `security`, storage interfaces, shared types. | trust, proofs, claim promotion. | `../core/compression.md` |
 | `src/core/diff/` | Diff states and context pack item generation. | `sessions`, `compiler`, shared types. | retrieval mutation. | `../contracts/context-diff.md` |
-| `src/core/sessions/` | Session identity, locks, sent ledgers. | storage interfaces, shared types. | compiler policy. | `../contracts/context-diff.md` |
+| `src/core/sessions/` | Session transport policy vocabulary (identity rules, diff-state policy, invalidation/restore reason enums). Durable locks and ledgers: `storage/session/`, `storage/context-ledger/`. | storage interfaces, shared types. | compiler policy, direct SQL. | `../contracts/context-diff.md`, `../interfaces/agent-sessions.md` |
 | `src/core/storage/` | Repositories, migrations, SQLite connection policy. | `src/shared/`. | CLI/MCP, compiler policy, trust decisions. | `../core/storage.md` |
 | `src/core/git/` | Git state, branch, commit, dirty tree, ignore inputs. | `security`, shared types. | storage SQL. | `../core/storage.md`, `../core/security.md` |
 | `src/core/indexing/` | File/symbol/lexical indexing. | `git`, `security`, storage interfaces. | trust promotion. | `../core/storage.md` |

@@ -4,7 +4,11 @@
 
 Define how Grape stays language-agnostic without pretending V1 has a complete parser for every language.
 
-Grape's transport protocol is language-agnostic. The compile layer can snapshot, hash, redact, diff, omit, restore, and invalidate context for any allowed Git-visible text file. Internally this is graph-shaped: source refs, symbols, package manifests, proofs, dependency refs, pack items, omissions, restore handles, and invalidations form connected context. Language-specific indexing is primarily an orientation layer that helps choose exact source spans. Provider output is not proof, durable truth, or a complete impact graph unless a separate Trust Kernel policy promotes a narrow provider-backed claim with exact source hashes and current-valid scope.
+Grape's transport protocol is language-agnostic. The compile layer can snapshot, hash, redact, diff, omit, restore, and invalidate context for any allowed Git-visible text file. Internally this is graph-shaped: source refs, symbols, package manifests, proofs, dependency refs, pack items, omissions, restore handles, and invalidations form connected context. Language-specific indexing is primarily an orientation layer that helps choose exact source spans.
+
+**Alpha.3 indexing strength:** TypeScript/JavaScript AST extraction is the strongest current signal (`symbols_ast`, `module_edges`, `test_edges`). Kotlin, Java, Python, Go, Rust, and other allowed text files are handled safely through exact/path/lexical fallback (`lexical_path`, `symbols_basic`) until dedicated providers and fixtures prove stronger graph coverage. Grape must not claim full polyglot graph extraction from fallback paths.
+
+Provider output is not proof, durable truth, or a complete impact graph unless a separate Trust Kernel policy promotes a narrow provider-backed claim with exact source hashes and current-valid scope.
 
 ## Core Rule
 
