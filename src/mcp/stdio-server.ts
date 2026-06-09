@@ -1,5 +1,6 @@
 import type { Readable, Writable } from "node:stream";
 
+import { PACKAGE_VERSION } from "../shared/package-version.js";
 import {
   McpMessageBuffer,
   asJsonRpcRequest,
@@ -81,7 +82,7 @@ async function dispatchRequest(request: JsonRpcRequest, rootPath: string): Promi
         return respondIfNeeded(id, {
           protocolVersion: requestedProtocolVersion(request.params),
           capabilities: { tools: {} },
-          serverInfo: { name: "grape", version: "0.0.0" }
+          serverInfo: { name: "grape", version: PACKAGE_VERSION }
         });
       case "notifications/initialized":
       case "$/cancelRequest":

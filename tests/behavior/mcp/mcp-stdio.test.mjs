@@ -4,9 +4,15 @@ import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 const cliPath = path.join(process.cwd(), ".tmp/build/src/cli/index.js");
+const packageJsonPath = fileURLToPath(new URL("../../../package.json", import.meta.url));
+
+function readPackageVersion() {
+  return JSON.parse(readFileSync(packageJsonPath, "utf8")).version;
+}
 
 function withGitRepo(fn) {
   const dir = mkdtempSync(path.join(tmpdir(), "grape-mcp-stdio-"));
@@ -125,6 +131,8 @@ test("mcp stdio lists implemented Grape tools", () => {
 
     assert.equal(responses.length, 2);
     assert.equal(responses[0].result.serverInfo.name, "grape");
+    assert.notEqual(responses[0].result.serverInfo.version, "0.0.0");
+    assert.equal(responses[0].result.serverInfo.version, readPackageVersion());
     assert.deepEqual(
       responses[1].result.tools.map((tool) => tool.name),
       [
