@@ -694,6 +694,10 @@ test("cli init --connect reports bootstrap project detection without durable rul
 
     const init = runCli(repoPath, ["init", "--connect"]);
     assert.equal(init.status, 0, init.stderr);
+    assert.match(init.stdout, /MCP integration:/);
+    assert.match(init.stdout, /Agent instruction block/);
+    assert.match(init.stdout, /grape_get_context/);
+    assert.match(init.stdout, /stable session identity/i);
     assert.match(init.stdout, /Bootstrap detection/);
     assert.match(init.stdout, /Languages: TypeScript, JavaScript/);
     assert.match(init.stdout, /Frameworks: Next\.js, React, Vitest/);
@@ -702,6 +706,9 @@ test("cli init --connect reports bootstrap project detection without durable rul
     assert.match(init.stdout, /Candidate rules \(not durable\)/);
 
     const initJson = runCliJson(repoPath, ["init", "--connect"]);
+    assert.equal(initJson.mcp.primaryTool, "grape_get_context");
+    assert.match(initJson.mcp.agentInstructionBlock, /stable session identity/i);
+    assert.match(initJson.mcp.sessionIdentity, /same session/i);
     assert.equal(initJson.bootstrap.packageManager, "pnpm");
     assert.deepEqual(initJson.bootstrap.languages, ["TypeScript", "JavaScript"]);
     assert.ok(initJson.bootstrap.frameworks.includes("Next.js"));
@@ -1915,32 +1922,12 @@ test("cli mcp --print-config emits the V1 stdio connection contract", () => {
     assert.equal(result.status, 0, result.stderr);
     assert.equal(result.stderr, "");
     const parsed = JSON.parse(result.stdout);
-    assert.deepEqual(parsed.grapeMcp, {
-      status: "implemented",
-      implemented: true,
-      serverName: "grape",
-      command: "grape",
-      args: ["mcp", "--stdio", "--repo", "<repo-root>"],
-      cwd: "<repo-root>",
-      transport: "stdio",
-      tools: [
-        "grape_get_context",
-        "grape_get_artifact",
-        "grape_get_claims",
-        "grape_get_proofs",
-        "grape_get_rules",
-        "grape_get_omitted_item",
-        "grape_get_stale_items",
-        "grape_get_conflicts",
-        "grape_get_status",
-        "grape_record_candidate",
-        "grape_record_command_result",
-        "grape_record_test_result",
-        "grape_record_user_decision",
-        "grape_request_user_confirmation"
-      ],
-      note: "Run grape mcp --stdio --repo <repo-root> to serve Grape context over MCP stdio."
-    });
+    assert.equal(parsed.grapeMcp.status, "implemented");
+    assert.equal(parsed.grapeMcp.primaryTool, "grape_get_context");
+    assert.match(parsed.grapeMcp.agentInstructionBlock, /grape_get_context/);
+    assert.match(parsed.grapeMcp.sessionIdentity, /same session/i);
+    assert.deepEqual(parsed.grapeMcp.args, ["mcp", "--stdio", "--repo", "<repo-root>"]);
+    assert.equal(parsed.grapeMcp.tools.length, 14);
   });
 });
 

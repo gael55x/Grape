@@ -157,15 +157,35 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
       `  Rejected files: ${result.scan.rejectedFileCount}`,
       `  Rejection reasons: ${renderReasonCounts(result.scan.rejectionReasonCounts)}`,
       "",
-      "MCP connection contract:",
-      `  command: ${result.mcp.command}`,
-      `  args: ${result.mcp.args.join(" ")}`,
-      `  status: ${result.mcp.status}`,
-      "",
-      "Next:",
-      "  grape status",
-      "  grape doctor",
-      "  grape mcp --print-config"
+      ...(parsed.flags.has("--connect")
+        ? [
+            "MCP integration:",
+            `  command: ${result.mcp.command}`,
+            `  args: ${result.mcp.args.join(" ")}`,
+            `  primary tool: ${result.mcp.primaryTool}`,
+            `  status: ${result.mcp.status}`,
+            "",
+            "Agent instruction block (paste into your MCP client):",
+            ...result.mcp.agentInstructionBlock.split("\n").map((line) => (line === "" ? "" : `  ${line}`)),
+            "",
+            "Session transport notes:",
+            `  - ${result.mcp.sessionIdentity}`,
+            "  - Restore is session-bound; use restore tokens only within the same session.",
+            "  - Branch, source, and dependency changes may invalidate prior sent context.",
+            "",
+            "Next:",
+            "  grape mcp --print-config",
+            "  grape status",
+            "  grape doctor"
+          ]
+        : [
+            "MCP:",
+            "  Run grape init --connect for MCP integration guidance and an agent instruction block.",
+            "",
+            "Next:",
+            "  grape status",
+            "  grape doctor"
+          ])
     ].filter((line): line is string => line !== undefined).join("\n"), outputOptions);
 
     return exitCodes.ok;

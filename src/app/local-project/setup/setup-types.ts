@@ -156,4 +156,7 @@ export interface McpConnectionGuide {
     "grape_request_user_confirmation"
   ];
   readonly note: string;
+  readonly sessionIdentity: string;
+  readonly primaryTool: "grape_get_context";
+  readonly agentInstructionBlock: string;
 }
