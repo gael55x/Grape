@@ -260,7 +260,7 @@ test("task source retrieval expands selected sources through graph relationships
     lexicalMatches: []
   });
 
-  assert.deepEqual(result.selectedSourceRefs, ["src/checkout.ts", "src/pricing.ts", "tests/pricing.test.ts"]);
+  assert.deepEqual(result.selectedSourceRefs, ["src/checkout.ts", "tests/pricing.test.ts", "src/pricing.ts"]);
   assert.deepEqual(result.symbolSourceRefs, ["src/checkout.ts"]);
   assert.deepEqual(result.graphSourceRefs, ["src/pricing.ts"]);
   assert.deepEqual(result.relatedTestSourceRefs, ["tests/pricing.test.ts"]);
@@ -284,7 +284,7 @@ test("task source retrieval includes related tests for lexical source matches", 
     lexicalMatches: [{ sourceId: "source-invoice", sourceRef: "src/invoice.ts", matchedTerm: "invoice" }]
   });
 
-  assert.deepEqual(result.selectedSourceRefs, ["src/invoice.ts", "src/invoice.spec.ts"]);
+  assert.deepEqual(result.selectedSourceRefs, ["src/invoice.spec.ts", "src/invoice.ts"]);
   assert.deepEqual(result.lexicalSourceRefs, ["src/invoice.ts"]);
   assert.deepEqual(result.graphSourceRefs, []);
   assert.deepEqual(result.relatedTestSourceRefs, ["src/invoice.spec.ts"]);
@@ -300,6 +300,165 @@ test("task source retrieval warns when query terms find no source matches", () =
 
   assert.deepEqual(result.selectedSourceRefs, []);
   assert.ok(result.warnings.includes("task_retrieval_no_source_matches"));
+});
+
+test("task source retrieval retains high-relevance tier-2 evidence over tier-3 graph noise when capped", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix refund reconciliation",
+    maxSelectedSources: 2,
+    sources: [
+      source("source-anchor", "src/anchor.ts"),
+      source("source-graph-1", "src/graph-1.ts"),
+      source("source-graph-2", "src/graph-2.ts"),
+      source("source-graph-3", "src/graph-3.ts"),
+      source("source-graph-4", "src/graph-4.ts"),
+      source("source-refund", "src/refund.ts")
+    ],
+    symbols: [symbol("source-refund", "src/refund.ts", "reconcileRefund")],
+    relationships: [
+      { sourceRef: "src/anchor.ts", targetSourceRef: "src/graph-1.ts", relationship: "imports" },
+      { sourceRef: "src/anchor.ts", targetSourceRef: "src/graph-2.ts", relationship: "imports" },
+      { sourceRef: "src/anchor.ts", targetSourceRef: "src/graph-3.ts", relationship: "imports" }
+    ],
+    lexicalMatches: [{ sourceId: "source-anchor", sourceRef: "src/anchor.ts", matchedTerm: "reconciliation" }]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, ["src/refund.ts", "src/anchor.ts"]);
+  assert.equal(result.selectedSourceRefs.includes("src/graph-3.ts"), false);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.some((warning) => warning.startsWith("task_retrieval_omitted_over_cap:")));
+});
+
+test("task source retrieval retains explicit source refs ahead of graph expansion when capped", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix billing total",
+    maxSelectedSources: 3,
+    sources: [
+      source("source-explicit", "src/explicit.ts"),
+      source("source-impl", "src/impl.ts"),
+      source("source-graph-1", "src/graph-1.ts"),
+      source("source-graph-2", "src/graph-2.ts"),
+      source("source-graph-3", "src/graph-3.ts"),
+      source("source-graph-4", "src/graph-4.ts")
+    ],
+    symbols: [symbol("source-impl", "src/impl.ts", "billingTotal")],
+    relationships: [
+      { sourceRef: "src/explicit.ts", targetSourceRef: "src/graph-1.ts", relationship: "imports" },
+      { sourceRef: "src/graph-1.ts", targetSourceRef: "src/graph-2.ts", relationship: "imports" },
+      { sourceRef: "src/graph-2.ts", targetSourceRef: "src/graph-3.ts", relationship: "imports" },
+      { sourceRef: "src/graph-3.ts", targetSourceRef: "src/graph-4.ts", relationship: "imports" }
+    ],
+    lexicalMatches: [],
+    seedFiles: ["src/explicit.ts"]
+  });
+
+  assert.equal(result.selectedSourceRefs.includes("src/explicit.ts"), true);
+  assert.equal(result.selectedSourceRefs.includes("src/impl.ts"), true);
+  assert.equal(result.selectedSourceRefs.includes("src/graph-4.ts"), false);
+});
+
+test("task source retrieval ranks explicit refs within tier when explicit refs exceed cap", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix calculateDiscount in src/billing.ts",
+    maxSelectedSources: 2,
+    sources: [
+      source("source-alpha", "src/alpha.ts"),
+      source("source-billing", "src/billing.ts"),
+      source("source-gamma", "src/gamma.ts")
+    ],
+    symbols: [],
+    lexicalMatches: [],
+    seedFiles: ["src/alpha.ts", "src/billing.ts", "src/gamma.ts"]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, ["src/billing.ts", "src/alpha.ts"]);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+});
+
+test("task source retrieval bounds test seed reservation on default tasks", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix billing total",
+    maxSelectedSources: 4,
+    sources: [
+      source("source-impl", "src/impl.ts"),
+      source("source-test-1", "tests/a.test.ts"),
+      source("source-test-2", "tests/b.test.ts"),
+      source("source-test-3", "tests/c.test.ts"),
+      source("source-test-4", "tests/d.test.ts")
+    ],
+    symbols: [symbol("source-impl", "src/impl.ts", "billingTotal")],
+    relationships: [],
+    lexicalMatches: [],
+    seedFiles: ["src/impl.ts"],
+    seedTests: [
+      "tests/a.test.ts",
+      "tests/b.test.ts",
+      "tests/c.test.ts",
+      "tests/d.test.ts"
+    ]
+  });
+
+  assert.equal(result.selectedSourceRefs.includes("src/impl.ts"), true);
+  assert.equal(result.testSourceRefs.length, 1);
+  assert.equal(result.selectedSourceRefs.filter((sourceRef) => sourceRef.startsWith("tests/")).length, 1);
+});
+
+test("task source retrieval emits compact omitted-over-cap warnings", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix refund flow",
+    maxSelectedSources: 2,
+    sources: [
+      source("source-a", "src/a.ts"),
+      source("source-b", "src/b.ts"),
+      source("source-c", "src/c.ts"),
+      source("source-d", "src/d.ts")
+    ],
+    symbols: [],
+    lexicalMatches: [
+      { sourceId: "source-a", sourceRef: "src/a.ts", matchedTerm: "refund" },
+      { sourceId: "source-b", sourceRef: "src/b.ts", matchedTerm: "refund" },
+      { sourceId: "source-c", sourceRef: "src/c.ts", matchedTerm: "refund" },
+      { sourceId: "source-d", sourceRef: "src/d.ts", matchedTerm: "refund" }
+    ]
+  });
+
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:2"));
+  assert.equal(
+    result.warnings.filter((warning) => warning.startsWith("task_retrieval_omitted_over_cap:") && !warning.includes("sample")).length,
+    1
+  );
+  const sampleWarning = result.warnings.find((warning) => warning.startsWith("task_retrieval_omitted_over_cap_sample:"));
+  assert.ok(sampleWarning);
+  assert.ok(sampleWarning.split(":")[1].split(",").length <= 5);
+});
+
+test("task source retrieval keeps ranked refs and semantic candidates aligned with selected refs", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix calculateDiscount refund flow",
+    maxSelectedSources: 2,
+    sources: [
+      source("source-auth", "src/auth.ts"),
+      source("source-billing", "src/billing.ts"),
+      source("source-readme", "README.md")
+    ],
+    symbols: [
+      symbol("source-auth", "src/auth.ts", "createSession"),
+      symbol("source-billing", "src/billing.ts", "calculateDiscount")
+    ],
+    lexicalMatches: [
+      { sourceId: "source-readme", sourceRef: "README.md", matchedTerm: "refund" },
+      { sourceId: "source-billing", sourceRef: "src/billing.ts", matchedTerm: "refund" }
+    ],
+    seedFiles: ["./src/auth.ts"]
+  });
+
+  assert.deepEqual(result.rankedSourceRefs, result.selectedSourceRefs);
+  assert.equal(
+    result.semanticCandidates.every((candidate) => result.selectedSourceRefs.includes(candidate.sourceRef)),
+    true
+  );
 });
 
 test("task source retrieval does not use module path matches as exact anchors", () => {

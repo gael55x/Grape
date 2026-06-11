@@ -38,7 +38,7 @@ test("semantic candidates are generated for relevant task and symbol input", () 
   assert.ok(candidates[0]?.matchedSignals.some((signal) => signal.startsWith("symbol:")));
 });
 
-test("semantic candidates reorder ranked refs without changing selected membership", () => {
+test("semantic candidates keep tier-priority selection under cap", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix calculateDiscount refund flow",
     sources: [
@@ -59,10 +59,14 @@ test("semantic candidates reorder ranked refs without changing selected membersh
   });
 
   assert.deepEqual(result.selectedSourceRefs, ["src/auth.ts", "src/billing.ts", "README.md"]);
-  assert.deepEqual(result.rankedSourceRefs, ["src/billing.ts", "README.md", "src/auth.ts"]);
-  assert.equal(result.rankedSourceRefs[0], "src/billing.ts");
+  assert.deepEqual(result.rankedSourceRefs, result.selectedSourceRefs);
+  assert.equal(result.rankedSourceRefs[0], "src/auth.ts");
   assert.equal(new Set(result.rankedSourceRefs).size, result.selectedSourceRefs.length);
   assert.ok(result.semanticCandidates.length > 0);
+  assert.equal(
+    result.semanticCandidates.every((candidate) => result.selectedSourceRefs.includes(candidate.sourceRef)),
+    true
+  );
 });
 
 test("orderSourceRefsBySemanticCandidates preserves stable order on score ties", () => {
