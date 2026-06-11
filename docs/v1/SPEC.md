@@ -2408,6 +2408,22 @@ type ContextPackItem = {
   restoreId?: string;
   inputRefs: ContextInput[];
 };
+
+type CurrentScopeShape = {
+  branch: string;
+  commit: string;
+  worktreeHash: string;
+  dirtyWorktree: boolean;
+  taskId: string | null;
+  sessionId: string;
+  environment: "local" | "test" | "ci" | "staging" | "production" | "unknown";
+  featureFlagCount: number;
+  featureFlagScopeHash?: string | null;
+  packageRoot?: string | null;
+  serviceRoot?: string | null;
+  sourceRefs: string[];
+  warnings: string[];
+};
 ```
 
 Dependency manifest rules:
@@ -2447,6 +2463,8 @@ type ContextArtifact = {
   untrackedRelevantFilesHash?: string;
 
   environmentScope: "local" | "test" | "ci" | "staging" | "production" | "unknown";
+
+  currentScope: CurrentScopeShape; // routing scope for current-valid filtering and diff keying
 
   inputRefs: ContextInput[];
   compressionArtifactRefs: string[];
@@ -2801,6 +2819,8 @@ type GrapeGetContextInput = {
   sessionId?: string;
   agentName?: string;
   agentSessionId?: string;
+  resetSession?: boolean;
+  outputMode?: "agent_pack" | "full";
 };
 ```
 
@@ -2826,22 +2846,85 @@ or treat them as correctness evidence.
 
 ### 28.6 `grape_get_context` output
 
-```ts
-type GrapeGetContextOutput = {
-  artifactId: string;
-  sessionId: string;
+The full field classification is in `docs/v1/contracts/transport-stability.md`. The type below reflects the current implementation. Fields marked experimental may refine before 1.0.
 
+```ts
+type AgentContextArtifactRef = {
+  artifactId: string;
+  artifactHash: string;
+  dependencyManifestHash: string;
+  artifactFiles: { json: string; markdown: string };
+  fullArtifactTool: {
+    name: "grape_get_artifact";
+    arguments: { artifactId: string; outputMode: "full" };
+  };
+};
+
+type AgentContextPackItem = Omit<ContextPackItem, "content"> & {
+  contentPreview: string;
+  contentOmitted: true;
+};
+
+type ContextPackBudgetResult = {
+  status: "not_requested" | "within_budget" | "over_budget" | "required_context_exceeds_budget";
+  tokenBudget?: number;
+  estimatedPackTokens?: number;
+  requiredContextTokens?: number;
+  omittedDueToBudget: OmittedContextItem[];
+  warnings: string[];
+  unsafeReasons: string[];
+};
+
+type AgentContextGraphCut = {
+  graphFormat: "grape.agent-context-graph.v1";
+  artifactId: string;
+  artifactHash: string;
+  dependencyManifestHash: string;
+  nodeCounts: {
+    packItems: number;
+    sections: number;
+    inputRefs: number;
+    sentItems: number;
+    restoreHandles: number;
+  };
+  nodes: Array<
+    | { id: string; kind: "section"; sectionId: string }
+    | { id: string; kind: "sent_item"; sentItemId: string }
+    | { id: string; kind: "restore_handle"; restoreId: string }
+  >;
+  edges: Array<{
+    from: string;
+    to: string;
+    kind: "renders_section" | "depends_on" | "invalidates" | "restores";
+  }>;
+};
+
+type GrapeGetContextOutput = {
+  // Core identifiers — stable
+  artifactId: string;
+  artifactHash: string;
+  dependencyManifestHash: string;
+  sessionId: string;
+  sessionResetId?: string; // present only when reset occurred
+
+  // VCS state — stable
   branch: string;
   headCommit: string;
   dirtyWorktree: boolean;
 
+  // Task and compile state — stable
   taskType: TaskType;
   riskOverlays: RiskOverlay[];
-  compileMode: CompileMode;
+  compileMode: CompileMode; // "broad_context_required" reserved, not currently emitted
+  outputMode: "agent_pack" | "full"; // defaults to "agent_pack"
 
-  contextPackItems: ContextPackItem[];
-  contextPackMarkdown: string;
+  // Current scope — stable
+  currentScope: CurrentScopeShape;
 
+  // Compact agent surface — stable
+  artifactRef: AgentContextArtifactRef;
+  contextPackItems: AgentContextPackItem[]; // compact preview shape in agent_pack mode
+  contextPackMarkdown?: string; // inspection-oriented navigation summary; optional for agent use
   diffSummary: {
     newItems: number;
     changedItems: number;
@@ -2850,11 +2933,24 @@ type GrapeGetContextOutput = {
     invalidatedItems: number;
     restoreAvailableItems: number;
   };
+  artifactFiles: { json: string; markdown: string };
 
+  // Safety — stable (arrays may be empty)
   warnings: string[];
+  unsafeReasons: string[];
+  budget: ContextPackBudgetResult;
   restoreAvailable: boolean;
+
+  // Experimental — do not require for beta agent operation
+  agentGraph?: AgentContextGraphCut;
+  recoveryGuidance?: string[];
+
+  // Inspection only — not present in agent_pack mode
+  contextArtifact?: ContextArtifact;
 };
 ```
+
+See `docs/v1/interfaces/mcp-tools.md` for adapter-level tool details and `docs/v1/contracts/transport-stability.md` for field-level stability classifications.
 
 ### 28.7 CLI command status
 

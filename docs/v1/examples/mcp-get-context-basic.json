@@ -33,7 +33,8 @@
     "fullArtifactTool": {
       "name": "grape_get_artifact",
       "arguments": {
-        "artifactId": "artifact:example"
+        "artifactId": "artifact:example",
+        "outputMode": "full"
       }
     }
   },
@@ -64,6 +65,21 @@
       }
     ]
   },
+  "currentScope": {
+    "branch": "main",
+    "commit": "cccccccccccccccccccccccccccccccccccccccc",
+    "worktreeHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "dirtyWorktree": false,
+    "taskId": null,
+    "sessionId": "mcp-session",
+    "environment": "local",
+    "featureFlagCount": 0,
+    "featureFlagScopeHash": null,
+    "packageRoot": null,
+    "serviceRoot": null,
+    "sourceRefs": [],
+    "warnings": []
+  },
   "contextPackItems": [
     {
       "id": "item:example-new",
@@ -72,7 +88,8 @@
       "itemRef": "repo-state",
       "sectionId": "repo-state",
       "title": "Repository State",
-      "content": "Branch: main",
+      "contentPreview": "Branch: main",
+      "contentOmitted": true,
       "contentHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
       "tokenCount": 12,
       "pinned": false,
@@ -90,7 +107,9 @@
     "invalidatedItems": 0,
     "restoreAvailableItems": 0
   },
-  "warnings": [],
+  "warnings": [
+    "repository_artifact_uses_lightweight_index"
+  ],
   "unsafeReasons": [],
   "recoveryGuidance": [],
   "budget": {
