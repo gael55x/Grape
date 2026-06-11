@@ -2,9 +2,17 @@ import type { SourceType } from "../../shared/index.js";
 import { packagePrefixForSourceRef } from "../scope/package-root.js";
 import {
   buildTaskSemanticCandidates,
-  orderSourceRefsBySemanticCandidates,
   type TaskSemanticCandidate
 } from "./semantic-candidates.js";
+import { computeReservedSeedSlots, inferRetrievalTaskKind } from "./seed-slots.js";
+import { compareStableStrings } from "./stable-compare.js";
+import {
+  countTier1aRefs,
+  countTier1bRefs,
+  filterSemanticCandidatesToSelected,
+  selectTieredSourceRefs,
+  type SelectionReason
+} from "./tier-selection.js";
 
 export interface TaskRetrievalSource {
   readonly sourceId: string;
@@ -82,14 +90,6 @@ export interface TaskSourceRetrievalAnchor {
   readonly startLine: number;
   readonly endLine: number;
 }
-
-type SelectionReason =
-  | "explicit_seed"
-  | "test_seed"
-  | "related_test"
-  | "graph_related"
-  | "symbol_match"
-  | "lexical_match";
 
 const defaultMaxTerms = 12;
 const defaultMaxSelectedSources = 8;
@@ -215,16 +215,34 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     addRelatedTests(selectedReasons, sourceByRef, relationships, new Set([sourceRef]), relatedTestRelationships);
   }
 
-  const selectedSourceRefs = [...selectedReasons.keys()].slice(0, maxSelectedSources);
-  const semanticCandidates = buildTaskSemanticCandidates({
-    sourceRefs: selectedSourceRefs,
+  const allCandidateRefs = [...selectedReasons.keys()];
+  const semanticCandidatesAll = buildTaskSemanticCandidates({
+    sourceRefs: allCandidateRefs,
     symbols: input.symbols,
     queryTerms,
     lexicalMatches: input.lexicalMatches
   });
-  const rankedSourceRefs = orderSourceRefsBySemanticCandidates(selectedSourceRefs, semanticCandidates);
+  const reservedSlots = computeReservedSeedSlots({
+    maxSelectedSources,
+    explicitSourceCount: countTier1aRefs(selectedReasons),
+    testSeedCount: countTier1bRefs(selectedReasons),
+    taskKind: inferRetrievalTaskKind({
+      seedTests: input.seedTests,
+      seedFiles: input.seedFiles,
+      task: input.task
+    })
+  });
+  const tieredSelection = selectTieredSourceRefs({
+    selectedReasons,
+    maxSelectedSources,
+    semanticCandidates: semanticCandidatesAll,
+    reservedSlots
+  });
+  const selectedSourceRefs = tieredSelection.selectedSourceRefs;
+  const rankedSourceRefs = selectedSourceRefs;
+  const semanticCandidates = filterSemanticCandidatesToSelected(semanticCandidatesAll, selectedSourceRefs);
   const selectedSourceRefSet = new Set(selectedSourceRefs);
-  if (selectedReasons.size > maxSelectedSources) warnings.push("task_retrieval_truncated");
+  warnings.push(...tieredSelection.omittedWarnings);
   if (queryTerms.length > 0 && selectedSourceRefs.length === 0) warnings.push("task_retrieval_no_source_matches");
   if (
     selectedSourceRefs.some((sourceRef) => isImplementationSourceRef(sourceRef, sourceByRef)) &&
@@ -322,13 +340,13 @@ function sortedRelatedTestRelationships(
   relationships: readonly TaskRetrievalRelatedTestRelationship[]
 ): readonly TaskRetrievalRelatedTestRelationship[] {
   return [...relationships].sort((left, right) => {
-    const testRefOrder = left.testSourceRef.localeCompare(right.testSourceRef);
+    const testRefOrder = compareStableStrings(left.testSourceRef, right.testSourceRef);
     if (testRefOrder !== 0) return testRefOrder;
-    const targetRefOrder = left.targetSourceRef.localeCompare(right.targetSourceRef);
+    const targetRefOrder = compareStableStrings(left.targetSourceRef, right.targetSourceRef);
     if (targetRefOrder !== 0) return targetRefOrder;
     const relationshipKindOrder = relationshipOrder(left.relationship) - relationshipOrder(right.relationship);
     if (relationshipKindOrder !== 0) return relationshipKindOrder;
-    return (left.relationshipRef ?? "").localeCompare(right.relationshipRef ?? "");
+    return compareStableStrings(left.relationshipRef ?? "", right.relationshipRef ?? "");
   });
 }
 

@@ -1,5 +1,6 @@
 import type { TaskRetrievalLexicalMatch, TaskRetrievalSymbol } from "./task-source-retrieval.js";
 import { assertConservativeTrustWording, TRUST_WORDING_DISCLAIMERS } from "../../shared/trust-wording.js";
+import { compareStableStrings } from "./stable-compare.js";
 
 export const SEMANTIC_CANDIDATE_TYPE = "semantic_candidate" as const;
 
@@ -52,7 +53,7 @@ export function buildTaskSemanticCandidates(
     .filter((candidate) => candidate.score > 0)
     .sort((left, right) => {
       if (right.score !== left.score) return right.score - left.score;
-      return left.sourceRef.localeCompare(right.sourceRef);
+      return compareStableStrings(left.sourceRef, right.sourceRef);
     });
 }
 
@@ -134,7 +135,7 @@ function collectMatchedSignals(
     }
   }
 
-  return [...new Set(signals)].sort((left, right) => left.localeCompare(right));
+  return [...new Set(signals)].sort(compareStableStrings);
 }
 
 function scoreMatchedSignals(matchedSignals: readonly string[]): number {
