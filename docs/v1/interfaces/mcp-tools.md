@@ -12,6 +12,8 @@ Define MCP tool contracts and safety boundaries.
 
 Tool schemas and safety rules are derived from `docs/v1/SPEC.md`.
 
+For the beta transport/schema stability boundary — stable vs experimental vs debug fields, warning taxonomy, and compatibility rules — see [`docs/v1/contracts/transport-stability.md`](../contracts/transport-stability.md).
+
 For stable agent session identity, task mismatch recovery, JSON-RPC framing examples, and alpha.3 install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
 
 ## Update Triggers
@@ -105,7 +107,7 @@ The current implementation includes the first stdio MCP server:
 
 `grape_get_context` calls the same local-project compile service used by `grape compile --task <text>`. It auto-bootstraps local `.grape/` state when needed, captures the current repo snapshot, persists source/index inputs, resolves task source hints from lexical task terms plus `files`, `symbols`, and `tests` seed refs, persists deterministic `symbol_outline` and `rule_digest` compression cache records before compilation, rebuilds and renders a deterministic prior-turn `context_pack_summary` only after filtering prior sent rows through current artifact staleness, compiles a repository-derived context artifact with pinned active project rules, non-proof compression orientation, and bounded exact-source evidence prioritized toward selected allowed sources. When retrieval selects source refs, exact-source proof rows and rendered current-valid claim sections stay scoped to those refs plus current project rules, covered symbol-declaration claims, and current-session observed-run results instead of filling the artifact with unrelated active claims from the same commit; if retrieval selects no refs, the compiler may fall back to bounded generic exact-source evidence. Path-like `tests` seed refs select matching allowed test source files and are shown as test seed refs in the task-retrieval section; non-path test names remain retrieval terms. When the AST relationship index records a test file importing or calling a selected source file, that test file is included as a related test ref. Exact-source proof windows prefer task-selected symbol anchors and can include up to two non-overlapping windows per selected source; query-term windows are used only when no symbol anchors exist for that source. The tool emits the public V1 `ContextArtifact` shape, persists section-scoped session diff rows, persists the next deterministic `context_pack_summary` from the current sent ledger, writes JSON/Markdown artifacts under `.grape/artifacts/`, and returns a compact agent-facing pack by default.
 
-The default MCP `outputMode` is `agent_pack`. It returns compact preview `contextPackItems`, an `artifactRef` pointing at the stored full artifact, a compact `contextPackMarkdown` summary, and an `agentGraph` adjacency cut over the returned pack items. This graph cut is a transport aid: `contextPackItems` are compact nodes, `agentGraph.edges` express section/input/restore/invalidation relationships, and full dependency metadata stays in the stored artifact. It is not a new durable graph-memory product.
+The default MCP `outputMode` is `agent_pack`. It returns compact preview `contextPackItems` and an `artifactRef` pointing at the stored full artifact. The current implementation may also include a compact `contextPackMarkdown` summary and an `agentGraph` adjacency cut over the returned pack items. This graph cut is a transport aid: `contextPackItems` are compact nodes, `agentGraph.edges` express section/input/restore/invalidation relationships, and full dependency metadata stays in the stored artifact. It is not a new durable graph-memory product.
 
 To reduce duplicated agent-facing transport tokens, default `agent_pack` omits full item bodies from `contextPackItems` and returns `contentPreview`, `contentOmitted: true`, `contentHash`, and `tokenCount` instead. `contextPackItems[].inputRefs[].scope` is compacted to local routing keys such as branch, commit, worktree hash, dirty-worktree status, environment, package/service root, feature-flag count/hash, source scope, path, symbol, route, and test. It still omits repo, task, and session identifiers from compact refs. The full item bodies and full dependency scope remain in the stored public artifact JSON written under `artifactFiles.json`; callers can use `artifactRef.fullArtifactTool` (`grape_get_artifact` with `outputMode: "full"`) or request `grape_get_context` with `outputMode: "full"` when exact bodies are needed inline. `contextPackMarkdown` is only a compact navigation summary. Full artifact Markdown remains available at `artifactFiles.markdown`. `INVALIDATE_PREVIOUS` rows may be grouped in this Markdown summary, but every structured pack item still carries its own `invalidatesSentItemId`.
 
@@ -195,7 +197,7 @@ interface GrapeGetContextOutput {
       };
     };
   };
-  agentGraph: {
+  agentGraph?: {
     graphFormat: "grape.agent-context-graph.v1";
     artifactId: string;
     artifactHash: string;
@@ -220,7 +222,7 @@ interface GrapeGetContextOutput {
   };
   contextArtifact?: ContextArtifact; // present only when outputMode === "full"
   contextPackItems: Array<AgentContextPackItem | ContextPackItem>;
-  contextPackMarkdown: string;
+  contextPackMarkdown?: string;
   diffSummary: {
     newItems: number;
     changedItems: number;
@@ -231,7 +233,7 @@ interface GrapeGetContextOutput {
   };
   warnings: string[];
   unsafeReasons: string[];
-  recoveryGuidance: string[];
+  recoveryGuidance?: string[];
   budget: {
     status: "not_requested" | "within_budget" | "over_budget" | "required_context_exceeds_budget";
     tokenBudget?: number;

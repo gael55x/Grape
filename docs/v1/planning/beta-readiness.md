@@ -163,9 +163,13 @@ npm install -g grape-context@0.1.0-alpha.3
 
 - Real MCP client trials (Cursor, Claude Code, or equivalent) against the published package are not yet recorded in-repo.
 - Cross-platform CI beyond current Linux-focused gates is not complete.
-- Public transport JSON/schema contract freeze is pending.
 - Turn-1 retrieval quality for non-TS/JS repos remains fallback-heavy.
 - Dirty-worktree hardening: dependency-hash drift covers many uncommitted edits; explicit worktree-hash ledger invalidation may still be partial.
+- MCP warning noise (`repository_artifact_uses_lightweight_index`, `mcp_agent_identity_not_persisted_in_context_compile`) — documented as debug/human-only in the warning taxonomy; code-level downgrade is deferred.
+- Ledger bounds, FTS fallback scan performance — deferred until architecture is stable.
+- Benchmarks — deferred until beta architecture, schema, dirty/package, and compact output are confirmed.
+
+The public beta transport/schema stability boundary is documented in [`docs/v1/contracts/transport-stability.md`](../contracts/transport-stability.md) and enforced through TypeScript types and `tests/behavior/contracts/beta-transport-contract.test.mjs`. A standalone output JSON Schema artifact is not required for the controlled 1.0 beta.
 
 See [`transport-wedge-cleanup.md`](transport-wedge-cleanup.md) for the alignment summary.
 

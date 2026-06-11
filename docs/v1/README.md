@@ -26,6 +26,7 @@ docs/v1/
     storage.md
     security.md
   contracts/
+    transport-stability.md
     context-artifact.md
     context-diff.md
   interfaces/
@@ -62,6 +63,7 @@ docs/v1/
 | Core | `core/compression.md` | Derived compression cache, input hashes, invalidation, high-risk restrictions. | Compression behavior changes. | Summaries remain non-authoritative. |
 | Core | `core/storage.md` | SQLite schema, repositories, migrations, WAL/concurrency, path rules. | Schema or persistence changes. | No direct SQLite writes outside repositories. |
 | Core | `core/security.md` | Local-first privacy, ignored files, redaction, secret handling. | Security-sensitive behavior changes. | No raw secrets or silent ignored-file reads. |
+| Contracts | `contracts/transport-stability.md` | Beta transport/schema stability boundary, warning taxonomy, and compatibility rules. | MCP request/response fields are added, reclassified, or removed. | Stable vs experimental fields remain clear. |
 | Contracts | `contracts/context-artifact.md` | Context artifact schema, sections, dependency manifest, output rules. | Artifact schema or sections change. | Artifact changes include manifest and tests. |
 | Contracts | `contracts/context-diff.md` | Session-scoped diff protocol, sent ledger, omitted restore, invalidation. | Diff/session behavior changes. | The change remains session-scoped. |
 | Interfaces | `interfaces/agent-sessions.md` | Agent-facing session/task identity contract, recovery paths, and alpha install notes. | Session identity guidance, setup handoff, or mismatch recovery changes. | Continued turns keep stable task/session identity. |
