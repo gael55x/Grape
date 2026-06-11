@@ -40,12 +40,16 @@ behavior, root cause, or fix validity.
 
 Current implementation exposes advisory `semantic_candidate` rows from a local
 deterministic scorer over task query terms, symbol names, path segments, and
-lexical matches. These candidates reorder `rankedSourceRefs` for compiler
-preference ordering only. Impact selection membership remains in
-`selectedSourceRefs`. Semantic candidates are not proofs, not durable claims, and
-not accepted by `proof_policy_accepted`. This slice is pre-beta technical review
-territory and does not use embeddings, external APIs, or semantic authority
-claims.
+lexical matches. Selection is tier-aware and rank-before-cap:
+
+- **Tier 1A** explicit user source refs (`explicit_seed`) — highest priority after validation; may use the full cap but are not immune beyond it. When explicit refs exceed the cap, Grape ranks within Tier 1A and omits extras.
+- **Tier 1B** path-like test/failure seeds (`test_seed`) — bounded reservation via named ratio policy so tests do not crowd out all source evidence on default tasks.
+- **Tier 2** exact task/symbol/test-relationship evidence (`symbol_match`, `related_test`).
+- **Tier 3** expansion candidates (`graph_related`, `lexical_match`).
+
+Grape ranks semantically within each tier, then fills `selectedSourceRefs` in tier-priority order until `maxSelectedSources`. `rankedSourceRefs` matches the final capped selected set. Semantic candidates in artifacts are filtered to selected refs only. Ordering uses byte-stable string comparison for cross-environment determinism.
+
+Truncation emits compact warnings: `task_retrieval_truncated`, `task_retrieval_omitted_over_cap:<count>`, and an optional capped sample (`task_retrieval_omitted_over_cap_sample:` with at most five refs). Semantic candidates are not proofs, not durable claims, and are not accepted by `proof_policy_accepted`. This is a correctness fix for retrieval selection, not a benchmark claim.
 
 ## Current Inputs
 
@@ -67,7 +71,7 @@ Private, ignored, unreadable, oversized, binary, stale-hash, and secret-looking 
 
 Task source retrieval is an impact candidate selector, not relevance ranking over durable truth.
 
-- Explicit seed files are selected first when they exist in the current snapshot.
+- Explicit seed files receive Tier 1A priority when they exist in the current snapshot, but may still be omitted when they exceed the source cap after within-tier ranking.
 - Source file paths mentioned directly in the task are treated as explicit source anchors when they match current snapshot files.
 - When an explicit task, seed file, or path-like test seed is inside a common workspace directory such as `packages/<name>/`, broad symbol and lexical expansion is scoped to that package before global caps are applied.
 - Path-like test seeds may select matching test files as exact source context.
@@ -88,7 +92,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 - Current-valid `repository_symbol_declaration_exists` claims may render only for task-selected source refs covered by accepted exact source excerpt windows. They prove declaration-span existence only and do not prove import/export behavior, call graph completeness, runtime behavior, correctness, root cause, ownership, or architecture conclusions.
 - Current-valid `package_manifest_dependency_exists` claims may render for task-selected refs in the same current package root, or when the manifest itself is selected. They prove only that the npm manifest declares the dependency entry. They do not prove the dependency is installed, imported, used, required by runtime, safe, valid, lockfile-resolved, or correctly configured.
 - Current-valid filtering rejects claims blocked by active claim edges after shared scope compatibility is resolved. Unresolved `contradicts` edges block both claims when scopes overlap or overlap is unknown; disjoint scopes do not deactivate either claim. Unresolved `violates` edges block the violating source claim when scopes overlap or overlap is unknown. Compatible `supersedes` edges block the superseded target claim until an applicable manual resolution edge says the claims may coexist or are variants. A `supersedes` edge is compatible only when the linked claims have matching claim type, resolved subject, exact source ref, and compatible branch/commit/environment/feature/package/dirty scope; otherwise it is warning metadata and does not suppress context.
-- Selection is capped; truncation is reported as a warning.
+- Selection is capped after tier-aware ranking; truncation is reported with compact capped warnings, not unbounded per-ref lists in default agent-facing output.
 - If query terms exist but no source matches, retrieval reports a warning instead of inventing context.
 - Generic repo-shape terms such as `src`, `packages`, `workspace`, and `tests` are ignored as standalone search terms because they cause unrelated context bleed.
 

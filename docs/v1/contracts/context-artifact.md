@@ -183,7 +183,7 @@ Local compile now persists deterministic `symbol_outline`, `rule_digest`, and `c
 
 When `--token-budget` or MCP `tokenBudget` is supplied, the durable pack builder applies budget policy before context pack rows are persisted. Required context means the task summary, pinned rules, exact/safety-critical sections, unchanged omission/restore metadata, and invalidation items. Required context is never pruned. If required context is larger than the requested budget, output is marked unsafe with `token_budget_below_required_context`. If required context fits but optional context does not, Grape prunes optional non-safety sections from the public `contextPackItems` and public `contextArtifact.outputSections`, records them in `contextArtifact.omittedDueToBudget` and `budget.omittedDueToBudget`, and returns `token_budget_pruned_optional_context`. Budget-pruned items are not treated as sent or restoreable; callers should rerun with a larger budget if they need those optional bodies.
 
-Risk overlays now require task-selected exact source/config/rule evidence. If task retrieval selects at least one allowed source and the compiler can validate a proof-backed exact excerpt for that source, the high-risk compile may proceed as `partial_with_risk` or `safe_minimum` depending on other warnings. If no task-selected exact excerpt exists, the artifact is unsafe with `risk_overlay_missing_exact_context`.
+Risk overlays now require task-selected exact source/config/rule evidence with **excerpt-local body matches** for overlay terms. Path or filename matches alone do not satisfy high-risk exact-span policy. If task retrieval selects at least one allowed source and the compiler can validate a proof-backed exact excerpt whose body contains relevant overlay-term evidence, the high-risk compile may proceed as `partial_with_risk` or `safe_minimum` depending on other warnings. If no task-selected excerpt-local match exists, the artifact is unsafe with `risk_overlay_missing_exact_context`. This is a correctness fix, not a benchmark claim.
 
 `grape artifacts --artifact <id>` and MCP `grape_get_artifact` expose stored artifact metadata, dependency rows, and repo-relative public artifact file refs for inspection. They do not return internal repository backing files and do not promote summaries to proof.
 
@@ -194,7 +194,7 @@ This is still narrower than the final broad durable-claim retrieval system. It u
 ## Section Rules
 
 - `pinned_rule`, `risk_warning`, `stale_warning`, `contradiction`, and high-risk exact sections must not be replaced by compression.
-- High-risk overlays require exact code/config/rule spans for required context. Bounded repository excerpts satisfy the current high-risk policy only when they are selected by task retrieval or explicit seed refs and have proof dependencies.
+- High-risk overlays require exact code/config/rule spans for required context. Bounded repository excerpts satisfy the current high-risk policy only when they are selected by task retrieval or explicit seed refs, have proof dependencies, and the excerpt body contains overlay-relevant evidence (not path/filename alone).
 - A section with `redactionStatus: "blocked"` cannot be returned or persisted as a context pack item.
 - A section with `exactRequired: true` must include at least one source ref and, for durable claims, at least one proof ref.
 - `compression_orientation` may help navigation only. It cannot satisfy required proof, exact code, warning, or pinned context.
