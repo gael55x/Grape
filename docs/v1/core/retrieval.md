@@ -47,9 +47,9 @@ lexical matches. Selection is tier-aware and rank-before-cap:
 - **Tier 2** exact task/symbol/test-relationship evidence (`symbol_match`, `related_test`).
 - **Tier 3** expansion candidates (`graph_related`, `lexical_match`).
 
-Grape ranks semantically within each tier, then fills `selectedSourceRefs` in tier-priority order until `maxSelectedSources`. `rankedSourceRefs` matches the final capped selected set. Semantic candidates in artifacts are filtered to selected refs only. Ordering uses byte-stable string comparison for cross-environment determinism.
+Grape ranks semantically within each tier, then fills `selectedSourceRefs` in tier-priority order until `maxSelectedSources`. `rankedSourceRefs` contains the final selected source refs in deterministic retrieval-priority order — same membership and order as `selectedSourceRefs`. Retrieval priority is tier-aware; it is not a pure global semantic-score ordering and user seed order is not a ranking signal. Equal-score refs within a tier are broken by stable byte-string comparison for cross-environment determinism. Semantic candidates in artifacts are filtered to selected refs only.
 
-Truncation emits compact warnings: `task_retrieval_truncated`, `task_retrieval_omitted_over_cap:<count>`, and an optional capped sample (`task_retrieval_omitted_over_cap_sample:` with at most five refs). Semantic candidates are not proofs, not durable claims, and are not accepted by `proof_policy_accepted`. This is a correctness fix for retrieval selection, not a benchmark claim.
+Truncation emits compact warnings: `task_retrieval_truncated` and `task_retrieval_omitted_over_cap:<count>` (the numeric count only). Missing explicit seed refs emit at most five per seed kind, then a count-only omitted warning. Semantic candidates are not proofs, not durable claims, and are not accepted by `proof_policy_accepted`. This is a correctness fix for retrieval selection, not a benchmark claim.
 
 ## Current Inputs
 

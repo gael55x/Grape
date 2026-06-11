@@ -71,7 +71,7 @@ test("semantic candidates keep tier-priority selection under cap", () => {
 
 test("orderSourceRefsBySemanticCandidates preserves stable order on score ties", () => {
   const ordered = orderSourceRefsBySemanticCandidates(
-    ["src/a.ts", "src/b.ts"],
+    ["src/b.ts", "src/a.ts"],
     [
       {
         candidateType: SEMANTIC_CANDIDATE_TYPE,
@@ -148,7 +148,7 @@ test("repository artifact task retrieval section labels semantic candidates as a
   const retrieval = artifact.sections.find((section) => section.id === "task-retrieval");
   assert.match(retrieval?.body ?? "", /Advisory semantic candidates \(ranking only; non-authoritative; not proof; not a durable claim\):/);
   assert.match(retrieval?.body ?? "", /advisory ranking signal \(non-authoritative; not proof; not a durable claim\)/);
-  assert.match(retrieval?.body ?? "", /Semantic-ranked source refs \(advisory ordering only; not proof\):/);
+  assert.match(retrieval?.body ?? "", /Retrieval-priority source refs \(same as selected; advisory only; not proof\):/);
 });
 
 test("semantic candidates are not represented as durable active claims in artifacts", () => {

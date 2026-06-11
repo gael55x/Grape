@@ -52,7 +52,7 @@ function taskRetrievalBody(
     `Query terms: ${retrieval.queryTerms.length > 0 ? retrieval.queryTerms.join(", ") : "none"}`,
     "Selected source refs:",
     ...listOrNone(retrieval.selectedSourceRefs),
-    "Semantic-ranked source refs (advisory ordering only; not proof):",
+    "Retrieval-priority source refs (same as selected; advisory only; not proof):",
     ...listOrNone(retrieval.rankedSourceRefs),
     TRUST_WORDING_DISCLAIMERS.semanticCandidateSectionHeader,
     ...semanticCandidateListOrNone(retrieval.semanticCandidates),
