@@ -52,10 +52,10 @@ export interface GrapeGetContextToolOutput {
   readonly compileMode: "safe_minimum" | "partial_with_risk" | "broad_context_required" | "cannot_compile_safely";
   readonly outputMode: GrapeGetContextOutputMode;
   readonly artifactRef: AgentContextArtifactRef;
-  readonly agentGraph: AgentContextGraphCut;
+  readonly agentGraph?: AgentContextGraphCut;
   readonly contextArtifact?: CompileLocalContextResult["contextArtifact"];
   readonly contextPackItems: readonly (AgentContextPackItemShape | ContextPackItemShape)[];
-  readonly contextPackMarkdown: string;
+  readonly contextPackMarkdown?: string;
   readonly diffSummary: {
     readonly newItems: number;
     readonly changedItems: number;
@@ -66,7 +66,7 @@ export interface GrapeGetContextToolOutput {
   };
   readonly warnings: readonly string[];
   readonly unsafeReasons: readonly string[];
-  readonly recoveryGuidance: readonly string[];
+  readonly recoveryGuidance?: readonly string[];
   readonly budget: CompileLocalContextResult["budget"];
   readonly sessionResetId?: string;
   readonly restoreAvailable: boolean;
