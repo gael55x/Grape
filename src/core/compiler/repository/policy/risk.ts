@@ -46,9 +46,7 @@ function selectedRiskRelevantExactSourceExcerpts(
 ): readonly RepositoryArtifactSourceExcerptInput[] {
   const riskTerms = new Set(input.riskOverlays.flatMap(riskOverlayTerms));
   return selectedPolicyExactSourceExcerpts(input).filter((excerpt) =>
-    riskTerms.size === 0 ||
-    textMatchesRiskTerms(excerpt.sourceRef, riskTerms) ||
-    textMatchesRiskTerms(excerpt.excerpt, riskTerms)
+    riskTerms.size === 0 || excerptBodyMatchesRiskTerms(excerpt.excerpt, riskTerms)
   );
 }
 
@@ -75,7 +73,7 @@ function riskOverlayTerms(overlay: CompileRepositoryContextArtifactInput["riskOv
   }
 }
 
-function textMatchesRiskTerms(text: string, terms: ReadonlySet<string>): boolean {
+function excerptBodyMatchesRiskTerms(text: string, terms: ReadonlySet<string>): boolean {
   const normalized = text.toLowerCase().replace(/[^a-z0-9]+/g, " ");
   for (const term of terms) {
     if (normalized.includes(term)) return true;

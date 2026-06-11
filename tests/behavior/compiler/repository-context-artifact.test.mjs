@@ -667,6 +667,65 @@ test("repository risk policy accepts task-selected exact source spans", () => {
   });
 });
 
+test("repository risk policy rejects path-only auth matches for high-risk overlays", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "src", "auth"), { recursive: true });
+    writeFileSync(
+      path.join(repoPath, "src", "auth", "unrelated.ts"),
+      [
+        "export function add(left: number, right: number) {",
+        "  return left + right;",
+        "}",
+        ""
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "src/auth/unrelated.ts"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add auth path unrelated fixture"
+    ]);
+
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
+        riskOverlays: ["auth"],
+        taskRetrieval: {
+          selectedSourceRefs: ["src/auth/unrelated.ts"],
+          rankedSourceRefs: ["src/auth/unrelated.ts"],
+          semanticCandidates: [],
+          explicitSourceRefs: [],
+          testSourceRefs: [],
+          relatedTestSourceRefs: [],
+          relatedTestRelationships: [],
+          graphSourceRefs: [],
+          symbolSourceRefs: ["src/auth/unrelated.ts"],
+          lexicalSourceRefs: [],
+          queryTerms: ["add"],
+          warnings: []
+        }
+      });
+
+      assert.equal(artifact.warnings.includes("risk_overlay_requires_exact_context"), true);
+      assert.deepEqual(artifact.unsafeReasons, ["risk_overlay_missing_exact_context"]);
+    });
+  });
+});
+
 test("repository risk policy rejects irrelevant exact source spans for high-risk overlays", () => {
   withGitRepo((repoPath) => {
     withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
