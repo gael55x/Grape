@@ -667,6 +667,55 @@ test("repository risk policy accepts task-selected exact source spans", () => {
   });
 });
 
+test("repository risk policy accepts task-selected exact rule-file spans", () => {
+  withGitRepo((repoPath) => {
+    writeFileSync(
+      path.join(repoPath, "AGENTS.md"),
+      [
+        "Auth changes require exact review of session token handling.",
+        "Do not treat summaries as proof.",
+        ""
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "AGENTS.md"]);
+    execGit(repoPath, [
+      "-c", "user.name=Grape Test", "-c", "user.email=grape@example.test",
+      "commit", "-m", "update auth rule fixture"
+    ]);
+
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database, repositories, evidenceRepositories, indexingRepositories,
+        rootPath: repoPath, projectId: "project-1", repoId: "repo-1", now
+      });
+
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
+        riskOverlays: ["auth"],
+        taskRetrieval: {
+          selectedSourceRefs: ["AGENTS.md"],
+          rankedSourceRefs: ["AGENTS.md"],
+          semanticCandidates: [],
+          explicitSourceRefs: ["AGENTS.md"],
+          testSourceRefs: [],
+          relatedTestSourceRefs: [],
+          relatedTestRelationships: [],
+          graphSourceRefs: [],
+          symbolSourceRefs: [],
+          lexicalSourceRefs: [],
+          queryTerms: ["auth"],
+          warnings: []
+        }
+      });
+      const exactEvidence = artifact.sections.find((section) => section.id === "exact-source-evidence");
+
+      assert.equal(artifact.warnings.includes("risk_overlay_requires_exact_context"), true);
+      assert.deepEqual(artifact.unsafeReasons, []);
+      assert.deepEqual(exactEvidence?.sourceRefs, ["AGENTS.md"]);
+      assert.match(exactEvidence?.body ?? "", /Type: rule_file/);
+    });
+  });
+});
+
 test("repository risk policy rejects path-only auth matches for high-risk overlays", () => {
   withGitRepo((repoPath) => {
     mkdirSync(path.join(repoPath, "src", "auth"), { recursive: true });
@@ -760,6 +809,107 @@ test("repository risk policy rejects irrelevant exact source spans for high-risk
 
       assert.equal(artifact.warnings.includes("risk_overlay_requires_exact_context"), true);
       assert.deepEqual(artifact.unsafeReasons, ["risk_overlay_missing_exact_context"]);
+    });
+  });
+});
+
+test("repository risk policy rejects auth overlay when excerpt body contains only author substring", () => {
+  withGitRepo((repoPath) => {
+    writeFileSync(
+      path.join(repoPath, "src", "author.ts"),
+      [
+        "export function getAuthor(id: string) {",
+        "  return { author: id };",
+        "}",
+        ""
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "src/author.ts"]);
+    execGit(repoPath, [
+      "-c", "user.name=Grape Test", "-c", "user.email=grape@example.test",
+      "commit", "-m", "add author fixture"
+    ]);
+
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database, repositories, evidenceRepositories, indexingRepositories,
+        rootPath: repoPath, projectId: "project-1", repoId: "repo-1", now
+      });
+
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
+        riskOverlays: ["auth"],
+        taskRetrieval: {
+          selectedSourceRefs: ["src/author.ts"],
+          rankedSourceRefs: ["src/author.ts"],
+          semanticCandidates: [],
+          explicitSourceRefs: [],
+          testSourceRefs: [],
+          relatedTestSourceRefs: [],
+          relatedTestRelationships: [],
+          graphSourceRefs: [],
+          symbolSourceRefs: ["src/author.ts"],
+          lexicalSourceRefs: [],
+          queryTerms: ["author"],
+          warnings: []
+        }
+      });
+
+      assert.equal(artifact.warnings.includes("risk_overlay_requires_exact_context"), true);
+      assert.deepEqual(
+        artifact.unsafeReasons, ["risk_overlay_missing_exact_context"],
+        "body containing only 'author' must not satisfy the auth overlay"
+      );
+    });
+  });
+});
+
+test("repository risk policy accepts auth overlay when excerpt body contains session token via camelCase", () => {
+  withGitRepo((repoPath) => {
+    writeFileSync(
+      path.join(repoPath, "src", "session.ts"),
+      [
+        "export function requireSession(sessionId: string | undefined) {",
+        "  if (!sessionId) return { status: 401 };",
+        "  return { status: 200 };",
+        "}",
+        ""
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "src/session.ts"]);
+    execGit(repoPath, [
+      "-c", "user.name=Grape Test", "-c", "user.email=grape@example.test",
+      "commit", "-m", "add session fixture"
+    ]);
+
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database, repositories, evidenceRepositories, indexingRepositories,
+        rootPath: repoPath, projectId: "project-1", repoId: "repo-1", now
+      });
+
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
+        riskOverlays: ["auth"],
+        taskRetrieval: {
+          selectedSourceRefs: ["src/session.ts"],
+          rankedSourceRefs: ["src/session.ts"],
+          semanticCandidates: [],
+          explicitSourceRefs: [],
+          testSourceRefs: [],
+          relatedTestSourceRefs: [],
+          relatedTestRelationships: [],
+          graphSourceRefs: [],
+          symbolSourceRefs: ["src/session.ts"],
+          lexicalSourceRefs: [],
+          queryTerms: ["session"],
+          warnings: []
+        }
+      });
+
+      assert.equal(artifact.warnings.includes("risk_overlay_requires_exact_context"), true);
+      assert.deepEqual(
+        artifact.unsafeReasons, [],
+        "body containing requireSession (camelCase) must satisfy the auth overlay via shared tokenizer"
+      );
     });
   });
 });
