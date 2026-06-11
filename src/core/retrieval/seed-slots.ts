@@ -6,7 +6,6 @@ export type RetrievalTaskKind = "default" | "test_focused";
 
 export interface ComputeReservedSeedSlotsInput {
   readonly maxSelectedSources: number;
-  readonly explicitSourceCount: number;
   readonly testSeedCount: number;
   readonly taskKind: RetrievalTaskKind;
 }
@@ -65,7 +64,7 @@ export function inferRetrievalTaskKind(input: {
   return "default";
 }
 
-function isPathLikeTestSeed(value: string): boolean {
+export function isPathLikeTestSeed(value: string): boolean {
   const trimmed = value.trim();
   if (trimmed.includes("/") || trimmed.includes("\\")) return true;
   return /\.(test|spec|e2e)\.[A-Za-z0-9]+$/.test(trimmed);

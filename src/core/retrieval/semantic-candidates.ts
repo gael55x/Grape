@@ -61,16 +61,15 @@ export function orderSourceRefsBySemanticCandidates(
   sourceRefs: readonly string[],
   candidates: readonly TaskSemanticCandidate[]
 ): readonly string[] {
-  if (sourceRefs.length <= 1 || candidates.length === 0) return [...sourceRefs];
+  if (sourceRefs.length <= 1) return [...sourceRefs];
 
   const scoreByRef = new Map(candidates.map((candidate) => [candidate.sourceRef, candidate.score]));
-  const originalIndex = new Map(sourceRefs.map((sourceRef, index) => [sourceRef, index]));
 
   return [...sourceRefs].sort((left, right) => {
     const leftScore = scoreByRef.get(left) ?? 0;
     const rightScore = scoreByRef.get(right) ?? 0;
     if (rightScore !== leftScore) return rightScore - leftScore;
-    return (originalIndex.get(left) ?? 0) - (originalIndex.get(right) ?? 0);
+    return compareStableStrings(left, right);
   });
 }
 

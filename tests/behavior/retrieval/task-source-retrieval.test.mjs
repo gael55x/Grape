@@ -426,12 +426,14 @@ test("task source retrieval emits compact omitted-over-cap warnings", () => {
   assert.ok(result.warnings.includes("task_retrieval_truncated"));
   assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:2"));
   assert.equal(
-    result.warnings.filter((warning) => warning.startsWith("task_retrieval_omitted_over_cap:") && !warning.includes("sample")).length,
+    result.warnings.filter((w) => w.startsWith("task_retrieval_omitted_over_cap:")).length,
     1
   );
-  const sampleWarning = result.warnings.find((warning) => warning.startsWith("task_retrieval_omitted_over_cap_sample:"));
-  assert.ok(sampleWarning);
-  assert.ok(sampleWarning.split(":")[1].split(",").length <= 5);
+  assert.equal(
+    result.warnings.some((w) => w.startsWith("task_retrieval_omitted_over_cap_sample:")),
+    false,
+    "sample warning must not appear in default compact output"
+  );
 });
 
 test("task source retrieval keeps ranked refs and semantic candidates aligned with selected refs", () => {
@@ -491,6 +493,178 @@ function source(sourceId, sourceRef) {
     sourceType: "repository_file"
   };
 }
+
+test("task source retrieval selectedSourceRefs never exceeds maxSelectedSources", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix refund checkout billing invoice",
+    maxSelectedSources: 3,
+    sources: [
+      source("s-a", "src/a.ts"),
+      source("s-b", "src/b.ts"),
+      source("s-c", "src/c.ts"),
+      source("s-d", "src/d.ts"),
+      source("s-e", "src/e.ts")
+    ],
+    symbols: [],
+    lexicalMatches: [
+      { sourceId: "s-a", sourceRef: "src/a.ts", matchedTerm: "refund" },
+      { sourceId: "s-b", sourceRef: "src/b.ts", matchedTerm: "checkout" },
+      { sourceId: "s-c", sourceRef: "src/c.ts", matchedTerm: "billing" },
+      { sourceId: "s-d", sourceRef: "src/d.ts", matchedTerm: "invoice" },
+      { sourceId: "s-e", sourceRef: "src/e.ts", matchedTerm: "refund" }
+    ]
+  });
+
+  assert.ok(
+    result.selectedSourceRefs.length <= 3,
+    "selectedSourceRefs must not exceed maxSelectedSources"
+  );
+});
+
+test("task source retrieval test_focused kind bounds test seeds to ratio and absolute max", () => {
+  const testSeedSources = Array.from({ length: 8 }, (_, i) =>
+    source(`test-${i}`, `tests/feature-${i}.test.ts`)
+  );
+  const implSources = Array.from({ length: 4 }, (_, i) =>
+    source(`impl-${i}`, `src/feature-${i}.ts`)
+  );
+
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix failing regression tests",
+    maxSelectedSources: 8,
+    sources: [...testSeedSources, ...implSources],
+    symbols: [],
+    lexicalMatches: implSources.map((s) => ({
+      sourceId: s.sourceId,
+      sourceRef: s.sourceRef,
+      matchedTerm: "feature"
+    })),
+    seedTests: testSeedSources.map((s) => s.sourceRef)
+  });
+
+  const testRefsSelected = result.selectedSourceRefs.filter((ref) => ref.startsWith("tests/"));
+  assert.ok(
+    testRefsSelected.length <= 4,
+    `test_focused seeds bounded to TEST_SEED_ABSOLUTE_MAX (4), got ${testRefsSelected.length}`
+  );
+  assert.ok(
+    result.selectedSourceRefs.length <= 8,
+    "global cap must hold"
+  );
+});
+
+test("task source retrieval equal-score tie-break uses stable string order not insertion order", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix bug",
+    maxSelectedSources: 10,
+    sources: [
+      source("s-z", "src/z.ts"),
+      source("s-a", "src/a.ts"),
+      source("s-m", "src/m.ts")
+    ],
+    symbols: [],
+    lexicalMatches: [
+      { sourceId: "s-z", sourceRef: "src/z.ts", matchedTerm: "bug" },
+      { sourceId: "s-a", sourceRef: "src/a.ts", matchedTerm: "bug" },
+      { sourceId: "s-m", sourceRef: "src/m.ts", matchedTerm: "bug" }
+    ]
+  });
+
+  assert.deepEqual(
+    result.selectedSourceRefs,
+    ["src/a.ts", "src/m.ts", "src/z.ts"],
+    "equal-score refs must appear in stable byte-string order, not insertion order"
+  );
+});
+
+test("task source retrieval no-candidate tie-break uses stable string order not seed order", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix",
+    maxSelectedSources: 10,
+    sources: [
+      source("s-z", "src/z.ts"),
+      source("s-a", "src/a.ts"),
+      source("s-m", "src/m.ts")
+    ],
+    symbols: [],
+    lexicalMatches: [],
+    seedFiles: ["src/z.ts", "src/a.ts", "src/m.ts"]
+  });
+
+  assert.deepEqual(
+    result.selectedSourceRefs,
+    ["src/a.ts", "src/m.ts", "src/z.ts"],
+    "refs without semantic candidates must use stable byte-string order, not seed order"
+  );
+});
+
+test("task source retrieval warns when reserved test seed caps omit seed refs", () => {
+  const testSeedSources = Array.from({ length: 8 }, (_, i) =>
+    source(`test-${i}`, `tests/feature-${i}.test.ts`)
+  );
+
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix failing regression tests",
+    maxSelectedSources: 8,
+    sources: testSeedSources,
+    symbols: [],
+    lexicalMatches: [],
+    seedTests: testSeedSources.map((s) => s.sourceRef)
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "tests/feature-0.test.ts",
+    "tests/feature-1.test.ts",
+    "tests/feature-2.test.ts",
+    "tests/feature-3.test.ts"
+  ]);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:4"));
+});
+
+test("task source retrieval bounds missing seed ref warnings", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix seeded paths",
+    sources: [],
+    symbols: [],
+    lexicalMatches: [],
+    seedFiles: Array.from({ length: 7 }, (_, i) => `src/missing-${i}.ts`),
+    seedTests: Array.from({ length: 7 }, (_, i) => `tests/missing-${i}.test.ts`)
+  });
+
+  assert.equal(
+    result.warnings.filter((warning) => warning.startsWith("task_seed_file_not_found:")).length,
+    5
+  );
+  assert.equal(
+    result.warnings.filter((warning) => warning.startsWith("task_seed_test_not_found:")).length,
+    5
+  );
+  assert.ok(result.warnings.includes("task_seed_file_not_found_omitted:2"));
+  assert.ok(result.warnings.includes("task_seed_test_not_found_omitted:2"));
+});
+
+test("task source retrieval rankedSourceRefs equals selectedSourceRefs (beta contract)", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix calculateDiscount billing",
+    sources: [
+      source("s-auth", "src/auth.ts"),
+      source("s-billing", "src/billing.ts")
+    ],
+    symbols: [symbol("s-billing", "src/billing.ts", "calculateDiscount")],
+    lexicalMatches: [
+      { sourceId: "s-billing", sourceRef: "src/billing.ts", matchedTerm: "billing" }
+    ],
+    seedFiles: ["./src/auth.ts"]
+  });
+
+  assert.deepEqual(
+    result.rankedSourceRefs,
+    result.selectedSourceRefs,
+    "rankedSourceRefs must have the same membership and order as selectedSourceRefs"
+  );
+  assert.ok(result.selectedSourceRefs.length > 0);
+});
 
 function symbol(sourceId, path, name, symbolKind = "function", startLine, endLine) {
   const resolvedStartLine = startLine ?? (name === "calculateDiscount" ? 42 : 3);

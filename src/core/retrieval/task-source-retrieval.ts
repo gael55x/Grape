@@ -4,10 +4,9 @@ import {
   buildTaskSemanticCandidates,
   type TaskSemanticCandidate
 } from "./semantic-candidates.js";
-import { computeReservedSeedSlots, inferRetrievalTaskKind } from "./seed-slots.js";
+import { computeReservedSeedSlots, inferRetrievalTaskKind, isPathLikeTestSeed } from "./seed-slots.js";
 import { compareStableStrings } from "./stable-compare.js";
 import {
-  countTier1aRefs,
   countTier1bRefs,
   filterSemanticCandidatesToSelected,
   selectTieredSourceRefs,
@@ -93,6 +92,7 @@ export interface TaskSourceRetrievalAnchor {
 
 const defaultMaxTerms = 12;
 const defaultMaxSelectedSources = 8;
+const maxMissingSeedRefWarnings = 5;
 const stopWords = new Set([
   "about",
   "after",
@@ -154,12 +154,13 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   const relatedTestRelationships: TaskRetrievalRelatedTestRelationship[] = [];
   const sourceAnchors: TaskSourceRetrievalAnchor[] = [];
   const warnings: string[] = [];
+  const missingSeedWarnings = newMissingSeedWarningCounts();
   const explicitPathRefs = new Set<string>();
 
   for (const seedFile of input.seedFiles ?? []) {
     const normalized = normalizeSeedFile(seedFile);
     if (!normalized || !sourceByRef.has(normalized)) {
-      warnings.push(`task_seed_file_not_found:${normalized ?? "invalid"}`);
+      addMissingSeedWarning(warnings, "file", normalized ?? "invalid", missingSeedWarnings);
       continue;
     }
     addReason(selectedReasons, normalized, "explicit_seed");
@@ -175,12 +176,13 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     if (!isPathLikeTestSeed(seedTest)) continue;
     const normalized = normalizeSeedFile(seedTest);
     if (!normalized || !sourceByRef.has(normalized)) {
-      warnings.push(`task_seed_test_not_found:${normalized ?? "invalid"}`);
+      addMissingSeedWarning(warnings, "test", normalized ?? "invalid", missingSeedWarnings);
       continue;
     }
     addReason(selectedReasons, normalized, "test_seed");
     explicitPathRefs.add(normalized);
   }
+  appendMissingSeedOmittedWarnings(warnings, missingSeedWarnings);
 
   const scopedCandidate = scopedCandidatePredicate(explicitPathRefs);
   const normalizedTerms = new Set(queryTerms);
@@ -224,7 +226,6 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   });
   const reservedSlots = computeReservedSeedSlots({
     maxSelectedSources,
-    explicitSourceCount: countTier1aRefs(selectedReasons),
     testSeedCount: countTier1bRefs(selectedReasons),
     taskKind: inferRetrievalTaskKind({
       seedTests: input.seedTests,
@@ -448,12 +449,6 @@ function scopedCandidatePredicate(explicitPathRefs: ReadonlySet<string>): (sourc
   );
 }
 
-function isPathLikeTestSeed(value: string): boolean {
-  const trimmed = value.trim();
-  if (trimmed.includes("/") || trimmed.includes("\\")) return true;
-  return /\.(test|spec|e2e)\.[A-Za-z0-9]+$/.test(trimmed);
-}
-
 function isTestSourceRef(value: string): boolean {
   const normalized = value.replace(/\\/g, "/").toLowerCase();
   return (
@@ -472,4 +467,48 @@ function isImplementationSourceRef(
 ): boolean {
   const source = sourceByRef.get(sourceRef);
   return source?.sourceType === "repository_file" && !isTestSourceRef(sourceRef);
+}
+
+interface MissingSeedWarningBucket {
+  emitted: number;
+  omitted: number;
+}
+
+interface MissingSeedWarningCounts {
+  file: MissingSeedWarningBucket;
+  test: MissingSeedWarningBucket;
+}
+
+function newMissingSeedWarningCounts(): MissingSeedWarningCounts {
+  return {
+    file: { emitted: 0, omitted: 0 },
+    test: { emitted: 0, omitted: 0 }
+  };
+}
+
+function addMissingSeedWarning(
+  warnings: string[],
+  kind: keyof MissingSeedWarningCounts,
+  ref: string,
+  counts: MissingSeedWarningCounts
+): void {
+  const bucket = counts[kind];
+  if (bucket.emitted < maxMissingSeedRefWarnings) {
+    warnings.push(`task_seed_${kind}_not_found:${ref}`);
+    bucket.emitted += 1;
+    return;
+  }
+  bucket.omitted += 1;
+}
+
+function appendMissingSeedOmittedWarnings(
+  warnings: string[],
+  counts: MissingSeedWarningCounts
+): void {
+  if (counts.file.omitted > 0) {
+    warnings.push(`task_seed_file_not_found_omitted:${counts.file.omitted}`);
+  }
+  if (counts.test.omitted > 0) {
+    warnings.push(`task_seed_test_not_found_omitted:${counts.test.omitted}`);
+  }
 }

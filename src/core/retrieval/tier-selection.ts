@@ -1,7 +1,6 @@
 import type { TaskSemanticCandidate } from "./semantic-candidates.js";
 import { orderSourceRefsBySemanticCandidates } from "./semantic-candidates.js";
 import type { ReservedSeedSlots } from "./seed-slots.js";
-import { compareStableStrings } from "./stable-compare.js";
 
 export type SelectionReason =
   | "explicit_seed"
@@ -12,8 +11,6 @@ export type SelectionReason =
   | "lexical_match";
 
 type SelectionTier = "1a" | "1b" | "2" | "3";
-
-const omittedSampleLimit = 5;
 
 export interface SelectTieredSourceRefsInput {
   readonly selectedReasons: ReadonlyMap<string, ReadonlySet<SelectionReason>>;
@@ -67,10 +64,7 @@ export function selectTieredSourceRefs(input: SelectTieredSourceRefsInput): Tier
     remainingSlots(selected, input.maxSelectedSources)
   );
 
-  const omittedWarnings =
-    allCandidateRefs.length > input.maxSelectedSources
-      ? buildOmittedWarnings(allCandidateRefs, selectedSet)
-      : [];
+  const omittedWarnings = buildOmittedWarnings(allCandidateRefs, selectedSet);
 
   return {
     selectedSourceRefs: selected,
@@ -84,12 +78,6 @@ export function filterSemanticCandidatesToSelected(
 ): readonly TaskSemanticCandidate[] {
   const selected = new Set(selectedSourceRefs);
   return candidates.filter((candidate) => selected.has(candidate.sourceRef));
-}
-
-export function countTier1aRefs(
-  selectedReasons: ReadonlyMap<string, ReadonlySet<SelectionReason>>
-): number {
-  return [...selectedReasons.entries()].filter(([, reasons]) => reasons.has("explicit_seed")).length;
 }
 
 export function countTier1bRefs(
@@ -174,11 +162,5 @@ function buildOmittedWarnings(
 ): string[] {
   const omitted = allCandidateRefs.filter((sourceRef) => !selectedSet.has(sourceRef));
   if (omitted.length === 0) return [];
-
-  const warnings = ["task_retrieval_truncated", `task_retrieval_omitted_over_cap:${omitted.length}`];
-  const sample = [...omitted].sort(compareStableStrings).slice(0, omittedSampleLimit);
-  if (sample.length > 0) {
-    warnings.push(`task_retrieval_omitted_over_cap_sample:${sample.join(",")}`);
-  }
-  return warnings;
+  return ["task_retrieval_truncated", `task_retrieval_omitted_over_cap:${omitted.length}`];
 }
