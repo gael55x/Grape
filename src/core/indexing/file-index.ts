@@ -48,7 +48,7 @@ export function buildFileIndex(input: FileIndexInput): FileIndexResult {
       : detectRegexSymbols(input, file, readResult.text, provider, packageRoot);
 
     nodes.push(moduleNode, ...symbols);
-    parsedFiles.push({ file, moduleNode, symbols, provider, packageRoot, ast, text: readResult.text });
+    parsedFiles.push({ file, moduleNode, symbols, provider, packageRoot, ast });
   }
 
   return {

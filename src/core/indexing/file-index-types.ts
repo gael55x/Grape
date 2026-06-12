@@ -76,5 +76,4 @@ export interface ParsedFileIndex {
   readonly provider: LanguageProviderMetadata;
   readonly packageRoot: PackageRootMetadata;
   readonly ast?: TypeScriptAstIndexResult;
-  readonly text: string;
 }
