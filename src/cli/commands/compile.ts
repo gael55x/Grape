@@ -57,7 +57,6 @@ export async function runCompileLike(
 
   try {
     const rootPath = repoPath(parsed);
-    const outputOptions = repoOutputOptions(rootPath);
     const { compileLocalContext } = await import("../../app/local-project/context/compile.js");
     const result = compileLocalContext({
       rootPath,
@@ -70,6 +69,7 @@ export async function runCompileLike(
       tokenBudget: parseTokenBudget(parsed.values.get("--token-budget")),
       resetSession: parsed.flags.has("--reset-session")
     });
+    const outputOptions = repoOutputOptions(rootPath, [result.rootPath]);
 
     const explainItems = output.explain ? buildPackExplainItems(result) : undefined;
 

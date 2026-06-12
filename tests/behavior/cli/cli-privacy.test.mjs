@@ -90,7 +90,7 @@ test("public output sanitizer redacts repo paths, local paths, and secret-lookin
   );
 
   const serialized = JSON.stringify(output);
-  assert.equal(output.artifactJsonPath, "<repo-root>/.grape/artifacts/ctx.json");
+  assert.equal(output.artifactJsonPath, publicRepoPath(".grape", "artifacts", "ctx.json"));
   assert.equal(output.headers.authorization, "<redacted-secret>");
   assert.equal(serialized.includes(repoRoot), false);
   assert.equal(serialized.includes(outsidePath), false);
@@ -123,8 +123,8 @@ test("cli status JSON redacts local repository paths by default", () => {
     assert.equal(result.stdout.includes(repoPath), false);
     const status = JSON.parse(result.stdout);
     assert.equal(status.rootPath, "<repo-root>");
-    assert.equal(status.configPath, "<repo-root>/.grape/config.json");
-    assert.equal(status.databasePath, "<repo-root>/.grape/grape.db");
+    assert.equal(status.configPath, publicRepoPath(".grape", "config.json"));
+    assert.equal(status.databasePath, publicRepoPath(".grape", "grape.db"));
     assert.equal(Object.hasOwn(status, "config"), false);
   });
 });
@@ -140,14 +140,18 @@ test("cli --repo JSON redacts the target repository path when launched elsewhere
       assert.equal(result.stdout.includes(repoPath), false);
       const status = JSON.parse(result.stdout);
       assert.equal(status.rootPath, "<repo-root>");
-      assert.equal(status.configPath, "<repo-root>/.grape/config.json");
-      assert.equal(status.databasePath, "<repo-root>/.grape/grape.db");
+      assert.equal(status.configPath, publicRepoPath(".grape", "config.json"));
+      assert.equal(status.databasePath, publicRepoPath(".grape", "grape.db"));
       assert.equal(Object.hasOwn(status, "config"), false);
     } finally {
       rmSync(outsideCwd, { recursive: true, force: true });
     }
   });
 });
+
+function publicRepoPath(...segments) {
+  return path.join("<repo-root>", ...segments);
+}
 
 test("cli status JSON does not expose internal feature flag allowlists", () => {
   withGitRepo((repoPath) => {

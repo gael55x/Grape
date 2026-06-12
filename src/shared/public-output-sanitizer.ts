@@ -2,6 +2,7 @@ import path from "node:path";
 
 export interface PublicOutputSanitizerOptions {
   readonly rootPath?: string;
+  readonly rootPathAliases?: readonly string[];
   readonly rootLabel?: string;
 }
 
@@ -64,12 +65,18 @@ function sanitizeString(
 function replaceKnownRootPath(value: string, options: PublicOutputSanitizerOptions): string {
   const rootPath = options.rootPath ?? process.cwd();
   const rootLabel = options.rootLabel ?? defaultRootLabel;
-  const resolvedRoot = isWindowsAbsolutePath(rootPath) ? rootPath : path.resolve(rootPath);
-  const candidates = rootPathCandidates(resolvedRoot).sort((left, right) => right.length - left.length);
+  const roots = uniqueStrings([rootPath, ...(options.rootPathAliases ?? [])]);
+  const candidates = uniqueStrings(
+    roots.flatMap((root) => rootPathCandidates(normalizedRootPath(root)))
+  ).sort((left, right) => right.length - left.length);
 
   return candidates.reduce((current, candidate) => {
     return replaceKnownRootCandidate(current, candidate, rootLabel);
   }, value);
+}
+
+function normalizedRootPath(rootPath: string): string {
+  return isWindowsAbsolutePath(rootPath) ? rootPath : path.resolve(rootPath);
 }
 
 function rootPathCandidates(resolvedRoot: string): string[] {

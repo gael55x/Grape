@@ -110,12 +110,12 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
 
   try {
     const rootPath = repoPath(parsed);
-    const outputOptions = repoOutputOptions(rootPath);
     const { initializeLocalProject } = await import("../app/local-project/setup/initialize.js");
     const result = initializeLocalProject({
       rootPath,
       connect: parsed.flags.has("--connect")
     });
+    const outputOptions = repoOutputOptions(rootPath, [result.rootPath]);
 
     if (parsed.flags.has("--json")) {
       writeJson(result, outputOptions);
@@ -201,9 +201,9 @@ async function runStatus(parsed: ParsedArgs): Promise<number> {
 
   try {
     const rootPath = repoPath(parsed);
-    const outputOptions = repoOutputOptions(rootPath);
     const { readPublicLocalProjectStatus } = await import("../app/local-project/setup/status.js");
     const status = readPublicLocalProjectStatus(rootPath);
+    const outputOptions = repoOutputOptions(rootPath, [status.rootPath]);
     if (parsed.flags.has("--json")) {
       writeJson(status, outputOptions);
       return exitCodes.ok;
@@ -242,9 +242,9 @@ async function runDoctor(parsed: ParsedArgs): Promise<number> {
 
   try {
     const rootPath = repoPath(parsed);
-    const outputOptions = repoOutputOptions(rootPath);
     const { doctorLocalProject } = await import("../app/local-project/setup/doctor.js");
     const doctor = doctorLocalProject(rootPath, { privacyOnly: parsed.flags.has("--privacy") });
+    const outputOptions = repoOutputOptions(rootPath, [doctor.rootPath]);
     if (parsed.flags.has("--json")) {
       writeJson(doctor, outputOptions);
       return doctor.overallStatus === "fail" ? exitCodes.stale : exitCodes.ok;

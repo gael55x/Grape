@@ -356,5 +356,6 @@ function assertAllowedFields(value: Record<string, unknown>, allowed: readonly s
 
 function relativeArtifactPath(rootPath: string, artifactPath: string): string {
   const relative = path.relative(rootPath, artifactPath);
-  return relative.startsWith("..") || path.isAbsolute(relative) ? path.basename(artifactPath) : relative;
+  const safeRelative = relative.startsWith("..") || path.isAbsolute(relative) ? path.basename(artifactPath) : relative;
+  return safeRelative.split(path.sep).join("/");
 }

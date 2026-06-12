@@ -95,7 +95,8 @@ export function write(message: string, options?: PublicOutputSanitizerOptions): 
 }
 
 export function writeJson(value: unknown, options?: PublicOutputSanitizerOptions): void {
-  write(JSON.stringify(sanitizePublicOutput(value, options), null, 2), options);
+  const outputOptions = optionsWithValueRootAlias(value, options);
+  write(JSON.stringify(sanitizePublicOutput(value, outputOptions), null, 2), outputOptions);
 }
 
 export function writeError(message: string, options?: PublicOutputSanitizerOptions): void {
@@ -106,6 +107,24 @@ export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-export function repoOutputOptions(rootPath: string): PublicOutputSanitizerOptions {
-  return { rootPath };
+export function repoOutputOptions(
+  rootPath: string,
+  rootPathAliases: readonly string[] = []
+): PublicOutputSanitizerOptions {
+  return { rootPath, rootPathAliases };
+}
+
+function optionsWithValueRootAlias(
+  value: unknown,
+  options: PublicOutputSanitizerOptions = {}
+): PublicOutputSanitizerOptions {
+  if (!isRecord(value) || typeof value.rootPath !== "string") return options;
+  return {
+    ...options,
+    rootPathAliases: [...(options.rootPathAliases ?? []), value.rootPath]
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
