@@ -4,7 +4,7 @@ import type {
 } from "../../../../../shared/index.js";
 import { TRUST_WORDING_DISCLAIMERS } from "../../../../../shared/trust-wording.js";
 import { repositoryContextSection } from "../factory.js";
-import { dependencyIdForRef, sectionDependencyRefs, sourceDependencyRefForSourceRef } from "../dependencies.js";
+import { dependencyIdForRef, sectionDependencyRefs, sourceAndPackageContextDependencyRefs } from "../dependencies.js";
 import type { CompileRepositoryContextArtifactInput } from "../../types.js";
 
 export function taskRetrievalSection(
@@ -32,8 +32,7 @@ export function taskRetrievalSection(
     dependencyRefs: sectionDependencyRefs(
       ["repo-snapshot", "worktree-state"],
       [
-        ...retrieval.selectedSourceRefs
-          .map((sourceRef) => sourceDependencyRefForSourceRef(sourceRef, dependencies)),
+        ...sourceAndPackageContextDependencyRefs(retrieval.selectedSourceRefs, dependencies),
         ...retrieval.relatedTestRelationships
           .map((relationship) => relationship.relationshipRef)
           .filter((ref): ref is string => Boolean(ref))

@@ -153,6 +153,60 @@ test("transport: dependency manifest change triggers invalidation", () => {
   });
 });
 
+test("transport: package-local manifest change invalidates package-scoped context", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "packages", "api", "src"), { recursive: true });
+    mkdirSync(path.join(repoPath, "packages", "web", "src"), { recursive: true });
+    writeFileSync(
+      path.join(repoPath, "packages", "api", "package.json"),
+      JSON.stringify({ name: "api-fixture", dependencies: { express: "4.18.3" } }, null, 2)
+    );
+    writeFileSync(path.join(repoPath, "packages", "api", "src", "app.js"), "export function api() { return 'api'; }\n");
+    writeFileSync(
+      path.join(repoPath, "packages", "web", "package.json"),
+      JSON.stringify({ name: "web-fixture", dependencies: { react: "19.0.0" } }, null, 2)
+    );
+    writeFileSync(path.join(repoPath, "packages", "web", "src", "app.js"), "export function web() { return 'web'; }\n");
+    execGit(repoPath, ["add", "packages"]);
+    gitCommit(repoPath, "add package manifest transport fixture");
+
+    const sessionId = "transport-package-manifest";
+    const first = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Review packages/api/src/app.js package context",
+      "--session",
+      sessionId
+    ]);
+    const firstArtifact = JSON.parse(readFileSync(localPublicPath(repoPath, first.artifactJsonPath), "utf8"));
+    const exactEvidence = firstArtifact.contextArtifact.outputSections.find(
+      (section) => section.id === "exact-source-evidence"
+    );
+    const apiManifestInputRef = firstArtifact.contextArtifact.inputRefs.find(
+      (ref) => ref.ref === "packages/api/package.json"
+    );
+
+    assert.equal(first.currentScope.packageRoot, "packages/api");
+    assert.ok(apiManifestInputRef);
+    assert.ok(exactEvidence?.itemRefs.some((ref) => ref.kind === "config" && ref.ref === "packages/api/package.json"));
+
+    const packagePath = path.join(repoPath, "packages", "api", "package.json");
+    const pkg = JSON.parse(readFileSync(packagePath, "utf8"));
+    pkg.dependencies.lodash = "4.17.21";
+    writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
+
+    const second = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Review packages/api/src/app.js package context",
+      "--session",
+      sessionId
+    ]);
+    assertInvalidationProtocol(second.contextPackItems);
+    assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), false);
+  });
+});
+
 test("transport: diff-context --explain returns per-item reasons without bodies", () => {
   withGitRepo((repoPath) => {
     const sessionId = "transport-explain";

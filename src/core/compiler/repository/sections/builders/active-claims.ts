@@ -8,7 +8,7 @@ import type {
 } from "../../../../../shared/index.js";
 import { claimDependencyId } from "../../manifest/dependencies.js";
 import { repositoryContextSection as section } from "../factory.js";
-import { sectionDependencyRefs } from "../dependencies.js";
+import { sectionDependencyRefs, sourceAndPackageContextDependencyRefs } from "../dependencies.js";
 import type { CompileRepositoryContextArtifactInput } from "../../types.js";
 import { sourceProofDependencyId } from "../../proofs/source-proofs.js";
 
@@ -42,12 +42,16 @@ function activeClaimDependencyRefs(
   const dependencyIds = new Set(dependencies.map((dependency) => dependency.id));
   return [
     ...new Set(
-      claims
-        .flatMap((claim) => [
+      [
+        ...claims.flatMap((claim) => [
           claimDependencyId(claim.claimId),
           ...claim.proofRefs.map((proofRef) => sourceProofDependencyId(proofRef))
-        ])
-        .filter((dependencyRef) => dependencyIds.has(dependencyRef))
+        ]),
+        ...sourceAndPackageContextDependencyRefs(
+          claims.flatMap((claim) => claim.sourceRefs),
+          dependencies
+        )
+      ].filter((dependencyRef) => dependencyIds.has(dependencyRef))
     )
   ];
 }

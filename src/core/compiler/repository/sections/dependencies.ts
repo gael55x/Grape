@@ -1,4 +1,5 @@
 import type { InMemoryContextDependencyShape } from "../../../../shared/index.js";
+import { packageContextDependencyRefsForSourceRefs } from "../package-context.js";
 
 export function sectionDependencyRefs(
   requiredRefs: readonly string[],
@@ -19,4 +20,14 @@ export function dependencyIdForRef(
   dependencies: readonly InMemoryContextDependencyShape[]
 ): string | undefined {
   return dependencies.find((dependency) => dependency.ref === ref)?.id;
+}
+
+export function sourceAndPackageContextDependencyRefs(
+  sourceRefs: readonly string[],
+  dependencies: readonly InMemoryContextDependencyShape[]
+): string[] {
+  return [
+    ...sourceRefs.map((sourceRef) => sourceDependencyRefForSourceRef(sourceRef, dependencies)),
+    ...packageContextDependencyRefsForSourceRefs(sourceRefs, dependencies)
+  ].filter((ref): ref is string => Boolean(ref));
 }

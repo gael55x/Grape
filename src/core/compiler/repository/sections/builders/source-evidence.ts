@@ -5,7 +5,7 @@ import type {
 import { selectedPolicyExactSourceExcerpts } from "../../policy/risk.js";
 import { sourceProofDependencyId, sourceProofRefs } from "../../proofs/source-proofs.js";
 import { repositoryContextSection as section } from "../factory.js";
-import { sectionDependencyRefs, sourceDependencyRefForSourceRef } from "../dependencies.js";
+import { sectionDependencyRefs, sourceAndPackageContextDependencyRefs } from "../dependencies.js";
 import type { CompileRepositoryContextArtifactInput } from "../../types.js";
 import { fencedUntrustedEvidence } from "../untrusted-evidence.js";
 
@@ -24,7 +24,7 @@ export function exactSourceEvidenceSection(
     dependencyRefs: sectionDependencyRefs(
       ["repo-snapshot", "worktree-state"],
       [
-        ...excerpts.map((excerpt) => sourceDependencyRefForSourceRef(excerpt.sourceRef, dependencies)),
+        ...sourceAndPackageContextDependencyRefs(excerpts.map((excerpt) => excerpt.sourceRef), dependencies),
         ...excerpts.map((excerpt) => sourceProofDependencyId(excerpt.proofId))
       ].filter((ref): ref is string => Boolean(ref))
     ),

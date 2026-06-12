@@ -6,6 +6,7 @@ import {
   selectedSymbolEdges,
   selectedSymbolNodes
 } from "../selection/index.js";
+import { packageContextSourceScope, packageContextSources } from "../package-context.js";
 import { sourceProofDependencyId } from "../proofs/source-proofs.js";
 import type {
   CompileRepositoryContextArtifactInput,
@@ -20,38 +21,53 @@ export function dependencyManifest(
     input.taskRetrieval?.rankedSourceRefs ?? input.taskRetrieval?.selectedSourceRefs ?? [];
   const baseScope = currentScope(input);
   const selectedSymbols = selectedSymbolNodes(input.symbolNodes, preferredSourceRefs);
-  const dependencies: InMemoryContextDependencyShape[] = [
-    {
-      id: "repo-snapshot",
-      kind: "repo_snapshot",
-      ref: input.snapshot.snapshotId,
-      hash: input.snapshot.snapshotHash,
-      scope: baseScope
-    },
-    {
-      id: "worktree-state",
-      kind: "worktree_state",
-      ref: input.worktreeStateId,
-      hash: input.snapshot.worktreeHash,
-      scope: baseScope
+  const dependencies: InMemoryContextDependencyShape[] = [];
+  const dependencyIndexes = new Map<string, number>();
+  const pushDependency = (dependency: InMemoryContextDependencyShape): void => {
+    const existingIndex = dependencyIndexes.get(dependency.id);
+    if (existingIndex === undefined) {
+      dependencyIndexes.set(dependency.id, dependencies.length);
+      dependencies.push(dependency);
+      return;
     }
-  ];
+
+    const existing = dependencies[existingIndex];
+    dependencies[existingIndex] = {
+      ...existing,
+      scope: {
+        ...existing.scope,
+        ...dependency.scope
+      }
+    };
+  };
+
+  pushDependency({
+    id: "repo-snapshot",
+    kind: "repo_snapshot",
+    ref: input.snapshot.snapshotId,
+    hash: input.snapshot.snapshotHash,
+    scope: baseScope
+  });
+  pushDependency({
+    id: "worktree-state",
+    kind: "worktree_state",
+    ref: input.worktreeStateId,
+    hash: input.snapshot.worktreeHash,
+    scope: baseScope
+  });
 
   for (const source of selectedSources(input.sources, preferredSourceRefs)) {
-    dependencies.push({
-      id: sourceDependencyId(source),
-      kind: sourceDependencyKind(source),
-      ref: source.sourceRef,
-      hash: source.sourceHash,
-      scope: {
-        ...baseScope,
-        sourceScope: source.sourceScope
-      }
-    });
+    pushDependency(sourceDependency(source, baseScope));
+  }
+
+  for (const contextSource of packageContextSources(input)) {
+    pushDependency(
+      sourceDependency(contextSource.source, baseScope, packageContextSourceScope(contextSource.packageRoot))
+    );
   }
 
   for (const excerpt of selectedProofSourceExcerpts(input.sourceExcerpts, preferredSourceRefs)) {
-    dependencies.push({
+    pushDependency({
       id: sourceProofDependencyId(excerpt.proofId),
       kind: "proof",
       ref: excerpt.proofId,
@@ -69,7 +85,7 @@ export function dependencyManifest(
   }
 
   for (const claim of input.activeClaims ?? []) {
-    dependencies.push({
+    pushDependency({
       id: claimDependencyId(claim.claimId),
       kind: "claim",
       ref: claim.claimId,
@@ -83,8 +99,8 @@ export function dependencyManifest(
     });
     claim.proofRefs.forEach((proofRef, index) => {
       const dependencyId = sourceProofDependencyId(proofRef);
-      if (dependencies.some((dependency) => dependency.id === dependencyId)) return;
-      dependencies.push({
+      if (dependencyIndexes.has(dependencyId)) return;
+      pushDependency({
         id: dependencyId,
         kind: "proof",
         ref: proofRef,
@@ -100,7 +116,7 @@ export function dependencyManifest(
   }
 
   for (const artifact of input.compressionArtifacts ?? []) {
-    dependencies.push({
+    pushDependency({
       id: compressionDependencyId(artifact.compressionId),
       kind: "compression_artifact",
       ref: artifact.compressionId,
@@ -118,7 +134,7 @@ export function dependencyManifest(
   }
 
   for (const node of selectedSymbols) {
-    dependencies.push({
+    pushDependency({
       id: symbolDependencyId(node.symbolId),
       kind: "symbol",
       ref: node.symbolId,
@@ -128,7 +144,7 @@ export function dependencyManifest(
   }
 
   for (const edge of selectedSymbolEdgesForDependencies(input, selectedSymbols)) {
-    dependencies.push({
+    pushDependency({
       id: symbolDependencyId(edge.edgeId),
       kind: "symbol",
       ref: edge.edgeId,
@@ -143,6 +159,24 @@ export function dependencyManifest(
   }
 
   return dependencies;
+}
+
+function sourceDependency(
+  source: RepositoryArtifactSourceInput,
+  baseScope: Record<string, unknown>,
+  extraScope: Record<string, unknown> = {}
+): InMemoryContextDependencyShape {
+  return {
+    id: sourceDependencyId(source),
+    kind: sourceDependencyKind(source),
+    ref: source.sourceRef,
+    hash: source.sourceHash,
+    scope: {
+      ...baseScope,
+      sourceScope: source.sourceScope,
+      ...extraScope
+    }
+  };
 }
 
 function currentScope(input: CompileRepositoryContextArtifactInput): Record<string, unknown> {

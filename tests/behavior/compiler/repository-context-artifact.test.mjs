@@ -153,6 +153,8 @@ function compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, ind
     activeClaims: overrides.activeClaims,
     compressionArtifacts: overrides.compressionArtifacts,
     taskRetrieval,
+    currentScope: overrides.currentScope,
+    currentScopeWarnings: overrides.currentScopeWarnings,
     createdAt: overrides.createdAt ?? now
   });
 }
@@ -243,6 +245,81 @@ test("repository artifact compiler derives a dependency-backed context artifact 
       assert.equal(blindSpots?.pinned, false);
       assert.equal(artifact.warnings.includes("repository_artifact_uses_lightweight_index"), true);
       assert.equal(JSON.stringify(artifact).includes("PRIVATE=value"), false);
+    });
+  });
+});
+
+test("repository artifact compiler dependency-backs selected package context with package manifests", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "packages", "api", "src"), { recursive: true });
+    writeFileSync(
+      path.join(repoPath, "packages", "api", "package.json"),
+      JSON.stringify({ name: "api-fixture", dependencies: { express: "4.18.3" } }, null, 2)
+    );
+    writeFileSync(path.join(repoPath, "packages", "api", "package-lock.json"), "{\"lockfileVersion\":3}\n");
+    writeFileSync(
+      path.join(repoPath, "packages", "api", "src", "app.js"),
+      "export function runApiApp() {\n  return 'api';\n}\n"
+    );
+    execGit(repoPath, ["add", "packages"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add package context fixture"
+    ]);
+
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+      const taskRetrieval = {
+        selectedSourceRefs: ["packages/api/src/app.js"],
+        rankedSourceRefs: ["packages/api/src/app.js"],
+        semanticCandidates: [],
+        explicitSourceRefs: ["packages/api/src/app.js"],
+        testSourceRefs: [],
+        relatedTestSourceRefs: [],
+        relatedTestRelationships: [],
+        graphSourceRefs: [],
+        symbolSourceRefs: [],
+        lexicalSourceRefs: [],
+        queryTerms: ["api"],
+        warnings: []
+      };
+
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
+        taskRetrieval,
+        currentScope: { packageRoot: "packages/api" }
+      });
+      const apiManifestDependency = artifact.dependencyManifest.dependencies.find(
+        (dependency) => dependency.ref === "packages/api/package.json"
+      );
+      const apiLockfileDependency = artifact.dependencyManifest.dependencies.find(
+        (dependency) => dependency.ref === "packages/api/package-lock.json"
+      );
+      const exactEvidence = artifact.sections.find((section) => section.id === "exact-source-evidence");
+      const taskInputs = artifact.sections.find((section) => section.id === "task-retrieval");
+
+      assert.equal(apiManifestDependency?.kind, "config");
+      assert.equal(apiManifestDependency?.scope.packageRoot, "packages/api");
+      assert.equal(apiManifestDependency?.scope.packageContextSource, true);
+      assert.equal(apiLockfileDependency?.kind, "lockfile");
+      assert.equal(apiLockfileDependency?.scope.packageContextSource, true);
+      assert.ok(exactEvidence?.dependencyRefs.includes(apiManifestDependency.id));
+      assert.ok(exactEvidence?.dependencyRefs.includes(apiLockfileDependency.id));
+      assert.ok(taskInputs?.dependencyRefs.includes(apiManifestDependency.id));
+      assert.ok(taskInputs?.dependencyRefs.includes(apiLockfileDependency.id));
     });
   });
 });
