@@ -358,6 +358,20 @@ test("beta transport: documented stable warning patterns match when emitted", ()
           `task_retrieval_seed_packages_omitted_over_cap suffix must be a numeric count, got: ${warning}`
         );
       }
+      if (warning.startsWith("task_retrieval_package_groups_omitted_over_cap:")) {
+        const countPart = warning.slice("task_retrieval_package_groups_omitted_over_cap:".length);
+        assert.ok(
+          /^\d+$/.test(countPart),
+          `task_retrieval_package_groups_omitted_over_cap suffix must be a numeric count, got: ${warning}`
+        );
+      }
+      if (warning.startsWith("task_retrieval_language_groups_omitted_over_cap:")) {
+        const countPart = warning.slice("task_retrieval_language_groups_omitted_over_cap:".length);
+        assert.ok(
+          /^\d+$/.test(countPart),
+          `task_retrieval_language_groups_omitted_over_cap suffix must be a numeric count, got: ${warning}`
+        );
+      }
     }
   });
 });

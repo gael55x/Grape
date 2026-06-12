@@ -90,7 +90,8 @@ export function selectTieredSourceRefs(input: SelectTieredSourceRefsInput): Tier
     allCandidateRefs,
     selectedSet,
     input.selectedReasons,
-    packageRootBySourceRef
+    packageRootBySourceRef,
+    languageBySourceRef
   );
 
   return {
@@ -278,12 +279,25 @@ function buildOmittedWarnings(
   allCandidateRefs: readonly string[],
   selectedSet: ReadonlySet<string>,
   selectedReasons: ReadonlyMap<string, ReadonlySet<SelectionReason>>,
-  packageRootBySourceRef: ReadonlyMap<string, string>
+  packageRootBySourceRef: ReadonlyMap<string, string>,
+  languageBySourceRef: ReadonlyMap<string, string>
 ): string[] {
   const omitted = allCandidateRefs.filter((sourceRef) => !selectedSet.has(sourceRef));
   if (omitted.length === 0) return [];
 
   const warnings = ["task_retrieval_truncated", `task_retrieval_omitted_over_cap:${omitted.length}`];
+  const omittedPackageGroupCount = omittedUnselectedGroupCount(omitted, selectedSet, (sourceRef) =>
+    packageRootForRankedRef(sourceRef, packageRootBySourceRef)
+  );
+  if (omittedPackageGroupCount > 0) {
+    warnings.push(`task_retrieval_package_groups_omitted_over_cap:${omittedPackageGroupCount}`);
+  }
+  const omittedLanguageGroupCount = omittedUnselectedGroupCount(omitted, selectedSet, (sourceRef) =>
+    languageBySourceRef.get(sourceRef)
+  );
+  if (omittedLanguageGroupCount > 0) {
+    warnings.push(`task_retrieval_language_groups_omitted_over_cap:${omittedLanguageGroupCount}`);
+  }
   const omittedSeedPackageCount = omittedSeedPackageRoots(
     omitted,
     selectedSet,
@@ -294,6 +308,25 @@ function buildOmittedWarnings(
     warnings.push(`task_retrieval_seed_packages_omitted_over_cap:${omittedSeedPackageCount}`);
   }
   return warnings;
+}
+
+function omittedUnselectedGroupCount(
+  omittedRefs: readonly string[],
+  selectedSet: ReadonlySet<string>,
+  groupForSourceRef: (sourceRef: string) => string | undefined
+): number {
+  const selectedGroups = new Set(
+    [...selectedSet]
+      .map((sourceRef) => groupForSourceRef(sourceRef))
+      .filter((group): group is string => Boolean(group))
+  );
+  const omittedGroups = new Set<string>();
+  for (const sourceRef of omittedRefs) {
+    const group = groupForSourceRef(sourceRef);
+    if (!group || selectedGroups.has(group)) continue;
+    omittedGroups.add(group);
+  }
+  return omittedGroups.size;
 }
 
 function omittedSeedPackageRoots(

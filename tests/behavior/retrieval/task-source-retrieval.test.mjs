@@ -510,7 +510,39 @@ test("task source retrieval warns when caps omit whole seeded package roots", ()
   ]);
   assert.ok(result.warnings.includes("task_retrieval_truncated"));
   assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+  assert.ok(result.warnings.includes("task_retrieval_package_groups_omitted_over_cap:1"));
   assert.ok(result.warnings.includes("task_retrieval_seed_packages_omitted_over_cap:1"));
+});
+
+test("task source retrieval warns when caps omit unseeded package groups", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix checkout total",
+    maxSelectedSources: 2,
+    sources: [
+      source("admin-a", "packages/admin/src/checkout-a.ts"),
+      source("api-a", "packages/api/src/checkout-a.ts"),
+      source("web-a", "packages/web/src/checkout-a.ts")
+    ],
+    symbols: [],
+    lexicalMatches: [
+      { sourceId: "admin-a", sourceRef: "packages/admin/src/checkout-a.ts", matchedTerm: "total" },
+      { sourceId: "api-a", sourceRef: "packages/api/src/checkout-a.ts", matchedTerm: "total" },
+      { sourceId: "web-a", sourceRef: "packages/web/src/checkout-a.ts", matchedTerm: "total" }
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "packages/admin/src/checkout-a.ts",
+    "packages/api/src/checkout-a.ts"
+  ]);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+  assert.ok(result.warnings.includes("task_retrieval_package_groups_omitted_over_cap:1"));
+  assert.equal(
+    result.warnings.some((warning) => warning.includes("packages/web")),
+    false,
+    "package group warnings must stay count-only"
+  );
 });
 
 test("task source retrieval bounds test seed reservation on default tasks", () => {
@@ -568,6 +600,7 @@ test("task source retrieval spreads path-like test seeds across package roots be
   assert.deepEqual(result.testSourceRefs, result.selectedSourceRefs);
   assert.ok(result.warnings.includes("task_retrieval_truncated"));
   assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:2"));
+  assert.equal(result.warnings.includes("task_retrieval_package_groups_omitted_over_cap:1"), false);
 });
 
 test("task source retrieval emits compact omitted-over-cap warnings", () => {
@@ -881,6 +914,7 @@ test("task source retrieval spreads fallback language refs before global cap", (
   ]);
   assert.ok(result.warnings.includes("task_retrieval_truncated"));
   assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+  assert.equal(result.warnings.includes("task_retrieval_language_groups_omitted_over_cap:1"), false);
 });
 
 test("task source retrieval spreads fallback languages within an indexed package root", () => {
@@ -914,6 +948,39 @@ test("task source retrieval spreads fallback languages within an indexed package
   ]);
   assert.ok(result.warnings.includes("task_retrieval_truncated"));
   assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+  assert.equal(result.warnings.includes("task_retrieval_language_groups_omitted_over_cap:1"), false);
+});
+
+test("task source retrieval warns when caps omit fallback language groups", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix refund flow",
+    maxSelectedSources: 2,
+    sources: [
+      source("go-a", "src/a.go"),
+      source("py-a", "src/b.py"),
+      source("rb-a", "src/c.rb")
+    ],
+    symbols: [
+      symbol("go-a", "src/a.go", "a.go", "module", 1, 1, undefined, "go"),
+      symbol("py-a", "src/b.py", "b.py", "module", 1, 1, undefined, "python"),
+      symbol("rb-a", "src/c.rb", "c.rb", "module", 1, 1, undefined, "ruby")
+    ],
+    lexicalMatches: [
+      { sourceId: "go-a", sourceRef: "src/a.go", matchedTerm: "refund" },
+      { sourceId: "py-a", sourceRef: "src/b.py", matchedTerm: "refund" },
+      { sourceId: "rb-a", sourceRef: "src/c.rb", matchedTerm: "refund" }
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, ["src/a.go", "src/b.py"]);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+  assert.ok(result.warnings.includes("task_retrieval_language_groups_omitted_over_cap:1"));
+  assert.equal(
+    result.warnings.some((warning) => warning.includes("ruby")),
+    false,
+    "language group warnings must stay count-only"
+  );
 });
 
 test("task source retrieval no-candidate tie-break uses stable string order not seed order", () => {
