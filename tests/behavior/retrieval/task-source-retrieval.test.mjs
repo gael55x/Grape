@@ -408,6 +408,45 @@ test("task source retrieval retains high-relevance tier-2 evidence over tier-3 g
   assert.ok(result.warnings.some((warning) => warning.startsWith("task_retrieval_omitted_over_cap:")));
 });
 
+test("task source retrieval spreads tier-2 source and related-test evidence before cap", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix checkout total",
+    maxSelectedSources: 2,
+    sources: [
+      source("source-checkout-a", "src/checkout-a.ts"),
+      source("source-checkout-b", "src/checkout-b.ts"),
+      source("source-checkout-test", "tests/checkout-a.test.ts")
+    ],
+    symbols: [
+      symbol("source-checkout-a", "src/checkout-a.ts", "checkoutTotal"),
+      symbol("source-checkout-b", "src/checkout-b.ts", "checkoutTotal")
+    ],
+    relationships: [
+      {
+        relationshipRef: "symbol_edge:checkout-test-import",
+        sourceRef: "tests/checkout-a.test.ts",
+        targetSourceRef: "src/checkout-a.ts",
+        relationship: "imports"
+      }
+    ],
+    lexicalMatches: []
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, ["src/checkout-a.ts", "tests/checkout-a.test.ts"]);
+  assert.deepEqual(result.symbolSourceRefs, ["src/checkout-a.ts"]);
+  assert.deepEqual(result.relatedTestSourceRefs, ["tests/checkout-a.test.ts"]);
+  assert.deepEqual(result.relatedTestRelationships, [
+    {
+      relationshipRef: "symbol_edge:checkout-test-import",
+      testSourceRef: "tests/checkout-a.test.ts",
+      targetSourceRef: "src/checkout-a.ts",
+      relationship: "imports"
+    }
+  ]);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+});
+
 test("task source retrieval retains explicit source refs ahead of graph expansion when capped", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix billing total",

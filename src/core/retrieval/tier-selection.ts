@@ -47,10 +47,12 @@ export function selectTieredSourceRefs(input: SelectTieredSourceRefsInput): Tier
     packageRootBySourceRef,
     languageBySourceRef
   );
+  const tier2EvidenceRoleBySourceRef = evidenceRolesBySourceRef(tiers.tier2, input.selectedReasons);
   const rankedTier2 = spreadRankedContextRefs(
     rankTierRefs(tiers.tier2, input.semanticCandidates),
     packageRootBySourceRef,
-    languageBySourceRef
+    languageBySourceRef,
+    tier2EvidenceRoleBySourceRef
   );
   const rankedTier3 = spreadRankedContextRefs(
     rankTierRefs(tiers.tier3, input.semanticCandidates),
@@ -154,6 +156,25 @@ function strongestTier(reasons: ReadonlySet<SelectionReason>): SelectionTier {
   return "3";
 }
 
+function evidenceRolesBySourceRef(
+  sourceRefs: readonly string[],
+  selectedReasons: ReadonlyMap<string, ReadonlySet<SelectionReason>>
+): ReadonlyMap<string, string> {
+  const evidenceRoles = new Map<string, string>();
+  for (const sourceRef of sourceRefs) {
+    const role = exactEvidenceRole(selectedReasons.get(sourceRef));
+    if (role) evidenceRoles.set(sourceRef, role);
+  }
+  return evidenceRoles;
+}
+
+function exactEvidenceRole(reasons: ReadonlySet<SelectionReason> | undefined): string | undefined {
+  if (!reasons) return undefined;
+  if (reasons.has("related_test")) return "related_test";
+  if (reasons.has("symbol_match")) return "symbol_match";
+  return undefined;
+}
+
 function rankTierRefs(
   tierRefs: readonly string[],
   semanticCandidates: readonly TaskSemanticCandidate[]
@@ -189,7 +210,8 @@ interface RankedContextGroup {
 function spreadRankedContextRefs(
   rankedRefs: readonly string[],
   packageRootBySourceRef: ReadonlyMap<string, string>,
-  languageBySourceRef: ReadonlyMap<string, string>
+  languageBySourceRef: ReadonlyMap<string, string>,
+  evidenceRoleByRef?: ReadonlyMap<string, string>
 ): readonly string[] {
   if (rankedRefs.length <= 1) return [...rankedRefs];
   const packageRoots = new Set(
@@ -197,7 +219,9 @@ function spreadRankedContextRefs(
       .map((sourceRef) => packageRootForRankedRef(sourceRef, packageRootBySourceRef))
       .filter((root): root is string => Boolean(root))
   );
-  if (packageRoots.size < 2) return spreadRankedLanguageRefs(rankedRefs, languageBySourceRef);
+  if (packageRoots.size < 2) {
+    return spreadRankedLanguageRefs(rankedRefs, languageBySourceRef, evidenceRoleByRef);
+  }
 
   const groups = new Map<string, { firstIndex: number; refs: string[] }>();
   for (const [index, sourceRef] of rankedRefs.entries()) {
@@ -211,14 +235,15 @@ function spreadRankedContextRefs(
     [...groups.entries()].map(([key, group]) => ({
       key,
       firstIndex: group.firstIndex,
-      refs: spreadRankedLanguageRefs(group.refs, languageBySourceRef)
+      refs: spreadRankedLanguageRefs(group.refs, languageBySourceRef, evidenceRoleByRef)
     }))
   );
 }
 
 function spreadRankedLanguageRefs(
   rankedRefs: readonly string[],
-  languageBySourceRef: ReadonlyMap<string, string>
+  languageBySourceRef: ReadonlyMap<string, string>,
+  evidenceRoleByRef?: ReadonlyMap<string, string>
 ): readonly string[] {
   if (rankedRefs.length <= 1) return [...rankedRefs];
   const languages = new Set(
@@ -226,11 +251,40 @@ function spreadRankedLanguageRefs(
       .map((sourceRef) => languageBySourceRef.get(sourceRef))
       .filter((language): language is string => Boolean(language))
   );
-  if (languages.size < 2) return [...rankedRefs];
+  if (languages.size < 2) return spreadRankedEvidenceRoleRefs(rankedRefs, evidenceRoleByRef);
 
   const groups = new Map<string, { firstIndex: number; refs: string[] }>();
   for (const [index, sourceRef] of rankedRefs.entries()) {
     const key = languageBySourceRef.get(sourceRef) ?? "";
+    const group = groups.get(key) ?? { firstIndex: index, refs: [] };
+    group.refs.push(sourceRef);
+    groups.set(key, group);
+  }
+
+  return spreadRankedGroups(
+    [...groups.entries()].map(([key, group]) => ({
+      key,
+      firstIndex: group.firstIndex,
+      refs: spreadRankedEvidenceRoleRefs(group.refs, evidenceRoleByRef)
+    }))
+  );
+}
+
+function spreadRankedEvidenceRoleRefs(
+  rankedRefs: readonly string[],
+  evidenceRoleByRef?: ReadonlyMap<string, string>
+): readonly string[] {
+  if (rankedRefs.length <= 1 || !evidenceRoleByRef) return [...rankedRefs];
+  const evidenceRoles = new Set(
+    rankedRefs
+      .map((sourceRef) => evidenceRoleByRef.get(sourceRef))
+      .filter((role): role is string => Boolean(role))
+  );
+  if (evidenceRoles.size < 2) return [...rankedRefs];
+
+  const groups = new Map<string, { firstIndex: number; refs: string[] }>();
+  for (const [index, sourceRef] of rankedRefs.entries()) {
+    const key = evidenceRoleByRef.get(sourceRef) ?? "";
     const group = groups.get(key) ?? { firstIndex: index, refs: [] };
     group.refs.push(sourceRef);
     groups.set(key, group);
