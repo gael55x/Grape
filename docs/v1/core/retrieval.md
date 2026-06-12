@@ -60,7 +60,7 @@ The current retrieval path may use:
 - safe portable lexical search rows built from allowed source records
 - AST-backed TypeScript/JavaScript symbol nodes for modules, functions, classes, methods, interfaces, types, constants, and variables
 - local import/export/call relationships discovered from AST traversal where supported
-- file-level module nodes and lexical rows for unsupported languages where source text is safe to index
+- file-level module nodes, lexical rows, and conservative declaration anchors for fallback languages where source text is safe to index
 - current-valid narrow source-excerpt claims after proof validation
 - current-valid narrow symbol declaration claims after high-confidence AST extraction and provider proof validation
 - current-valid narrow observed-run result claims after trusted local `grape run` / `grape test` promotion
@@ -75,7 +75,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 - Source file paths mentioned directly in the task are treated as explicit source anchors when they match current snapshot files.
 - When a task or seed names exact source refs, broad lexical expansion stays on those refs unless the refs identify one common workspace root. If refs identify a common workspace root under `packages/<name>/`, `apps/<name>/`, `services/<name>/`, or `libs/<name>/`, symbol and lexical expansion can stay inside that package before global caps apply. Direct graph relationships and explicit seed symbol or test-name matches can still add sources.
 - Path-like test seeds may select matching test files as exact source context.
-- Symbol matches may select source files and line anchors for exact excerpt windows.
+- Symbol matches may select source files and line anchors for exact excerpt windows. For TS/JS, symbols come from AST extraction. For common fallback source languages, symbols come from conservative declaration-line detection and remain best-effort anchors only.
 - Graph expansion may select directly related source files through supported import and call edges.
 - Related tests may be selected when a test imports or calls a selected source file.
 - When a related test is selected through an import/call edge, the task-retrieval section should render the test/source relationship as selection evidence only. When the relationship came from the indexed symbol graph, the section should include the stable relationship ref and dependency ref for traceability. This relationship does not prove the test was run, that the test covers the behavior, or that the implementation is correct.
@@ -107,8 +107,8 @@ The current TypeScript/JavaScript signal includes function declarations, class d
 Current implementation can fail or become inefficient in these cases:
 
 - nested `package.json`, `pyproject.toml`, `go.mod`, or `Cargo.toml` files are not modeled as package/workspace boundaries
-- unsupported language files receive lexical/path fallback, but no language-aware symbols or imports
-- Python, Java, Kotlin, Go, Rust, YAML, C#, Ruby, PHP, and shell relationships are not extracted as language-aware graph edges today
+- unsupported language files receive lexical/path fallback, and common fallback source languages can receive conservative declaration anchors, but non-TS/JS files still do not receive language-aware imports or test relationships
+- Python, Java, Kotlin, Go, Rust, YAML, C#, Ruby, PHP, Swift, C, C++, and shell relationships are not extracted as language-aware graph edges today
 - JS/TS import resolution can miss aliases, package exports, generated code, framework routing, dynamic imports, and non-relative imports
 - global source caps can select too much from one package in a monorepo
 - checked-in polyglot and monorepo fixtures prove only safe fallback, explicit package-path scoping, and package-scoped current-valid filtering, not package-aware invalidation or full semantic graph coverage

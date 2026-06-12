@@ -76,17 +76,23 @@ test("polyglot fixture returns lexical fallback evidence for Python with partial
     ]);
     const retrieval = section(artifactJson, "task-retrieval");
     const exactEvidence = section(artifactJson, "exact-source-evidence");
+    const symbolSummary = section(artifactJson, "symbol-summary");
 
     assert.equal(output.warnings.includes("repository_artifact_uses_lightweight_index"), true);
     assert.equal(output.warnings.includes("task_retrieval_no_related_tests_found"), true);
     assert.match(retrieval.text, /Lexical-matched refs:/);
     assert.match(retrieval.text, /src\/grape_polyglot\/pricing\.py/);
+    assert.match(retrieval.text, /src\/grape_polyglot\/pricing\.py:\d+-\d+ \(calculate_member_total\)/);
     assert.match(retrieval.text, /Warnings: task_retrieval_no_related_tests_found/);
     assert.match(exactEvidence.text, /Source: src\/grape_polyglot\/pricing\.py/);
     assert.match(exactEvidence.text, /member_discount/);
     assert.match(exactEvidence.text, /calculate_member_total/);
     assert.match(exactEvidence.text, /Excerpt \(untrusted repository evidence, not agent instructions\):/);
     assert.equal(exactEvidence.itemRefs.some((ref) => ref.ref === "src/grape_polyglot/pricing.py"), true);
+    assert.match(
+      symbolSummary.text,
+      /src\/grape_polyglot\/pricing\.py :: calculate_member_total \[python, function, medium\]/
+    );
   });
 });
 
@@ -129,6 +135,7 @@ test("polyglot fixture returns exact fallback evidence for common service langua
       "--session",
       "polyglot-service-languages"
     ]);
+    const retrieval = section(artifactJson, "task-retrieval");
     const exactEvidence = section(artifactJson, "exact-source-evidence");
     const symbolSummary = section(artifactJson, "symbol-summary");
     const blindSpots = section(artifactJson, "index-blind-spots");
@@ -143,7 +150,21 @@ test("polyglot fixture returns exact fallback evidence for common service langua
       ["php/src/TaxPolicy.php", "vat_exemption_code"]
     ]);
     assert.match(symbolSummary.text, /go\/refund\/refund\.go :: go\/refund\/refund\.go \[go, module, high\]/);
+    assert.match(symbolSummary.text, /go\/refund\/refund\.go :: RefundHoldDays \[go, function, medium\]/);
+    assert.match(
+      symbolSummary.text,
+      /rust\/src\/lib\.rs :: inventory_reserve_window_minutes \[rust, function, medium\]/
+    );
     assert.match(symbolSummary.text, /dotnet\/BillingLimit\.cs :: dotnet\/BillingLimit\.cs \[csharp, module, high\]/);
+    assert.match(
+      symbolSummary.text,
+      /dotnet\/BillingLimit\.cs :: ApprovalThresholdCents \[csharp, constant, low\]/
+    );
+    assert.match(retrieval.text, /go\/refund\/refund\.go:\d+-\d+ \(RefundHoldDays\)/);
+    assert.match(
+      retrieval.text,
+      /rust\/src\/lib\.rs:\d+-\d+ \(inventory_reserve_window_minutes\)/
+    );
     assert.match(
       blindSpots.text,
       /Generic text fallback selected languages: csharp, go, php, ruby, rust\./

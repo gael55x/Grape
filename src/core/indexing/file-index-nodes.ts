@@ -53,7 +53,7 @@ export function detectRegexSymbols(
 
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
-    const symbol = detectSymbolOnLine(line);
+    const symbol = detectSymbolOnLine(line, provider.language);
     if (!symbol) continue;
 
     symbols.push({

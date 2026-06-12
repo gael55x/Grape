@@ -198,6 +198,7 @@ Storage and security:
 - `session_lock_survives_process_boundary`
 - `ignored_file_not_indexed_without_approval`
 - `unsupported_language_gets_safe_lexical_fallback_with_warning`
+- `generic_text_fallback_detects_common_language_symbols`
 - `polyglot_repo_reports_provider_capability_gaps`
 - `monorepo_retrieval_preserves_package_boundaries`
 - `task_source_retrieval_reports_related_test_relationships`
