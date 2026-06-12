@@ -21,6 +21,10 @@ Each fixture must document:
 
 Agents must not add benchmarks against undocumented fixtures.
 
+Fixture files under `tests/fixtures/` are checked out with LF line endings through `.gitattributes`.
+Their `grape-fixture.json` metadata stores byte hashes for those LF fixture bytes so `npm run fixtures:check` stays deterministic on Linux, macOS, and Windows.
+Do not change runtime source hashing to compensate for fixture checkout differences.
+
 ## Documented Fixtures
 
 - [clean-typescript-app](clean-typescript-app.md): baseline token-reduction benchmark
