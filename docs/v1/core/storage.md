@@ -132,6 +132,8 @@ Migration `0005_context_performance_indexes.sql` adds performance indexes only:
 
 These indexes do not change persisted data shape or safety policy. App services still decide staleness, omission, restore, and invalidation behavior.
 
+Compile-time ledger reads must use latest active sent rows, not every historical row in the session. The storage repository defines active as a sent row with no matching `INVALIDATE_PREVIOUS` pack row, then keeps only the latest active row per section. Explicit inspection commands may still read complete session history.
+
 Migration `0006_claim_edge_authority.sql` adds the sidecar `claim_edge_authority` table:
 
 - `claim_edge_authority` stores one optional authority row per `claim_edges` row.
@@ -260,5 +262,6 @@ Local bootstrap-capable flows (`init`, `sync`, and `compile`) may repair an unus
 - `compression_artifact_requires_input_hashes`
 - `compression_dependency_is_in_artifact_manifest`
 - `session_ledger_scoped_query_helpers_are_session_bound`
+- `context_ledger_active_queries_return_latest_non_invalidated_rows`
 - `claim_edge_authority_migration_applies_from_previous_schema`
 - `claim_edge_repository_persists_authority_metadata`

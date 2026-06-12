@@ -137,6 +137,7 @@ The current persisted build proof adds a narrow app-level build service:
 - it renews or acquires the session lock
 - it persists the artifact dependency manifest
 - it compares against the same-session sent ledger
+- it reads only the latest active sent row per section for compile-time diffing
 - it can ignore the same-session sent ledger after an explicit reset and invalidate active prior sent items
 - it persists structured context pack items
 - it persists sent and omitted ledger rows
@@ -177,6 +178,7 @@ Before artifact compilation, local compile can build and render a deterministic 
 - `branch_switch_invalidates_sent_items`
 - `compression_invalidation_invalidates_sent_items`
 - `section_dependency_drift_does_not_invalidate_unrelated_context`
+- `context_ledger_active_queries_return_latest_non_invalidated_rows`
 - `durable_context_build_persists_first_turn_pack`
 - `durable_context_build_omits_second_turn_unchanged_context`
 - `durable_context_build_invalidates_stale_manifest`

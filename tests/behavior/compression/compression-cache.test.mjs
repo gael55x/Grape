@@ -292,11 +292,11 @@ test("context_pack_summary_is_deterministic", () => {
   assert.match(first.summaryText, /sent:task NEW context_summary:task/);
 });
 
-test("context pack summary inputs exclude invalidated and compression sent items", () => {
+test("context pack summary inputs use active scoped sent items", () => {
   const inputs = listContextPackSummarySentItems({
     repositories: {
       contextSentItems: {
-        listBySessionScope({ branchName, commitSha, excludedKind }) {
+        listActiveBySessionScope({ branchName, commitSha, excludedKind }) {
           return [
             sentItem(),
             sentItem({
@@ -321,13 +321,9 @@ test("context pack summary inputs exclude invalidated and compression sent items
           ].filter((item) =>
             item.branchName === branchName &&
             item.commitSha === commitSha &&
-            item.itemKind !== excludedKind
+            item.itemKind !== excludedKind &&
+            item.sentItemId !== "sent:stale"
           );
-        }
-      },
-      contextPackItems: {
-        listInvalidatedSentItemIdsBySession() {
-          return ["sent:stale"];
         }
       }
     },

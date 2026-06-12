@@ -122,16 +122,10 @@ export function buildDurableContext(input: DurableContextBuildInput): DurableCon
       createdAt: input.now
     });
 
-    const priorSentItems = input.repositories.contextSentItems.listBySession(input.sessionId);
-    const sentPackItems = input.repositories.contextPackItems.listSentPayloadsBySession(input.sessionId);
-    const alreadyInvalidatedSentItemIds = new Set(
-      input.repositories.contextPackItems.listInvalidatedSentItemIdsBySession(input.sessionId)
-    );
-    const activePriorItems = priorSentItems.filter(
-      (item) => !alreadyInvalidatedSentItemIds.has(item.sentItemId)
-    );
+    const priorSentItems = input.repositories.contextSentItems.listActiveBySession(input.sessionId);
+    const sentPackItems = input.repositories.contextPackItems.listActiveSentPayloadsBySession(input.sessionId);
     const { currentPriorItems, stalePriorItems } = partitionPriorContextByStaleness({
-      activePriorItems,
+      activePriorItems: priorSentItems,
       packItems: sentPackItems,
       artifact: input.artifact,
       listDependenciesByArtifact: (artifactId) =>

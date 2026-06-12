@@ -58,6 +58,9 @@ export function createContextLedgerStorageRepositories(
             .all(sessionId) as Array<Record<string, unknown>>
         ).map(mapContextSentItem);
       },
+      listActiveBySession(sessionId) {
+        return listLatestActiveSentItems(database, { sessionId });
+      },
       listBySessionWithoutKind(sessionId, excludedKind) {
         return (
           database
@@ -88,6 +91,9 @@ export function createContextLedgerStorageRepositories(
             )
             .all(...args) as Array<Record<string, unknown>>
         ).map(mapContextSentItem);
+      },
+      listActiveBySessionScope(input) {
+        return listLatestActiveSentItems(database, input);
       }
     },
     omittedContextItems: {
@@ -200,6 +206,9 @@ export function createContextLedgerStorageRepositories(
             .all(sessionId) as Array<Record<string, unknown>>
         ).map(mapContextPackItem);
       },
+      listActiveSentPayloadsBySession(sessionId) {
+        return listLatestActiveSentPayloads(database, sessionId);
+      },
       listInvalidatedSentItemIdsBySession(sessionId) {
         return (
           database
@@ -218,6 +227,105 @@ export function createContextLedgerStorageRepositories(
       }
     }
   };
+}
+
+interface LatestActiveSentInput {
+  readonly sessionId: string;
+  readonly branchName?: string;
+  readonly commitSha?: string;
+  readonly excludedKind?: ContextPackItemKind;
+}
+
+function listLatestActiveSentItems(
+  database: DatabaseSync,
+  input: LatestActiveSentInput
+): readonly ContextSentItemRecord[] {
+  const where = ["sent.session_id = ?"];
+  const args: string[] = [input.sessionId];
+  if (input.branchName) {
+    where.push("sent.branch_name = ?");
+    args.push(input.branchName);
+  }
+  if (input.commitSha) {
+    where.push("sent.commit_sha = ?");
+    args.push(input.commitSha);
+  }
+  if (input.excludedKind) {
+    where.push("sent.item_kind != ?");
+    args.push(input.excludedKind);
+  }
+
+  return (
+    database
+      .prepare(
+        [
+          "WITH active_sent AS (",
+          "SELECT sent.* FROM context_sent_items sent",
+          "WHERE",
+          where.join(" AND "),
+          "AND",
+          notInvalidatedSql("sent"),
+          "),",
+          latestActiveSentCte(),
+          "SELECT * FROM latest_active_sent",
+          "ORDER BY section_id ASC, last_sent_at ASC, sent_item_id ASC"
+        ].join(" ")
+      )
+      .all(...args) as Array<Record<string, unknown>>
+  ).map(mapContextSentItem);
+}
+
+function listLatestActiveSentPayloads(
+  database: DatabaseSync,
+  sessionId: string
+): readonly ContextPackItemRecord[] {
+  return (
+    database
+      .prepare(
+        [
+          "WITH active_sent AS (",
+          "SELECT sent.* FROM context_sent_items sent",
+          "WHERE sent.session_id = ?",
+          "AND",
+          notInvalidatedSql("sent"),
+          "),",
+          latestActiveSentCte(),
+          "SELECT pack.* FROM context_pack_items pack",
+          "JOIN latest_active_sent sent",
+          "ON sent.session_id = pack.session_id AND sent.sent_item_id = pack.pack_item_id",
+          "WHERE pack.diff_state IN ('NEW', 'CHANGED', 'PINNED')",
+          "ORDER BY pack.created_at ASC, pack.pack_item_id ASC"
+        ].join(" ")
+      )
+      .all(sessionId) as Array<Record<string, unknown>>
+  ).map(mapContextPackItem);
+}
+
+function latestActiveSentCte(): string {
+  return [
+    "latest_active_sent AS (",
+    "SELECT sent.* FROM active_sent sent",
+    "WHERE NOT EXISTS (",
+    "SELECT 1 FROM active_sent newer",
+    "WHERE newer.section_id = sent.section_id",
+    "AND (",
+    "newer.last_sent_at > sent.last_sent_at",
+    "OR (newer.last_sent_at = sent.last_sent_at AND newer.sent_item_id > sent.sent_item_id)",
+    ")",
+    ")",
+    ")"
+  ].join(" ");
+}
+
+function notInvalidatedSql(alias: string): string {
+  return [
+    "NOT EXISTS (",
+    "SELECT 1 FROM context_pack_items invalidations",
+    `WHERE invalidations.session_id = ${alias}.session_id`,
+    "AND invalidations.diff_state = 'INVALIDATE_PREVIOUS'",
+    `AND invalidations.invalidates_sent_item_id = ${alias}.sent_item_id`,
+    ")"
+  ].join(" ");
 }
 
 function mapContextSentItem(row: Record<string, unknown>): ContextSentItemRecord {

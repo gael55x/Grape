@@ -21,37 +21,22 @@ export interface ListCurrentContextPackSummarySentItemsInput
 export function listContextPackSummarySentItems(
   input: ListContextPackSummarySentItemsInput
 ): readonly ContextPackSummarySentItemInput[] {
-  const invalidated = new Set(
-    input.repositories.contextPackItems.listInvalidatedSentItemIdsBySession(input.sessionId)
-  );
-
   return latestContextPackSummarySentItems(
-    input.repositories.contextSentItems.listBySessionScope({
+    input.repositories.contextSentItems.listActiveBySessionScope({
       sessionId: input.sessionId,
       branchName: input.branch,
       commitSha: input.commit,
       excludedKind: "compression_artifact"
-    }).filter((item) =>
-      !invalidated.has(item.sentItemId) &&
-      item.branchName === input.branch &&
-      item.commitSha === input.commit
-    )
+    })
   );
 }
 
 export function listCurrentContextPackSummarySentItems(
   input: ListCurrentContextPackSummarySentItemsInput
 ): readonly ContextPackSummarySentItemInput[] {
-  const sentPackItems = input.repositories.contextPackItems.listSentPayloadsBySession(input.sessionId);
-  const invalidated = new Set(
-    input.repositories.contextPackItems.listInvalidatedSentItemIdsBySession(input.sessionId)
-  );
-  const activePriorItems = input.repositories.contextSentItems.listBySessionWithoutKind(
-    input.sessionId,
-    "compression_artifact"
-  ).filter((item) =>
-    !invalidated.has(item.sentItemId)
-  );
+  const sentPackItems = input.repositories.contextPackItems.listActiveSentPayloadsBySession(input.sessionId);
+  const activePriorItems = input.repositories.contextSentItems.listActiveBySession(input.sessionId)
+    .filter((item) => item.itemKind !== "compression_artifact");
   const { currentPriorItems } = partitionPriorContextByStaleness({
     activePriorItems,
     packItems: sentPackItems,
