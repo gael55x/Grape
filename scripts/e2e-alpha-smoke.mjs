@@ -6,7 +6,7 @@ import path from "node:path";
 import { encodeMcpFrame, parseMcpFrames } from "./mcp-smoke-session.mjs";
 import {
   commandForPlatform,
-  installedBinForPlatform,
+  installedPackageBinTarget,
   spawnFailureMessage,
   spawnOptionsForPlatform
 } from "./platform-command.mjs";
@@ -97,16 +97,17 @@ runStep("pack install smoke", () => {
     );
     if (install.status !== 0) throw new Error(spawnFailureMessage(install));
 
-    const grapeBin = installedBinForPlatform(path.join(consumerRepo, "node_modules", ".bin", "grape"));
-    if (!existsSync(grapeBin)) throw new Error("missing node_modules/.bin/grape");
     assertInstalledPackageMetadata(consumerRepo);
+    const grapeCli = installedPackageBinTarget(consumerRepo, sourcePackage.name, sourcePackage.bin.grape);
+    if (!existsSync(grapeCli)) throw new Error(`missing ${sourcePackage.bin.grape}`);
 
     const spawnGrape = (args) =>
-      spawnSync(grapeBin, args, spawnOptionsForPlatform({
+      spawnSync(process.execPath, [grapeCli, ...args], spawnOptionsForPlatform({
         cwd: consumerRepo,
         encoding: "utf8",
         maxBuffer: 16 * 1024 * 1024,
-        env: envWithSqliteNodeOptions(npmEnv())
+        env: envWithSqliteNodeOptions(npmEnv()),
+        shell: false
       }));
 
     const help = spawnGrape(["help"]);
@@ -130,7 +131,7 @@ runStep("pack install smoke", () => {
       throw new Error("second compile missing RESTORE_AVAILABLE");
     }
 
-    runMcpInstalledSmoke(grapeBin, consumerRepo);
+    runMcpInstalledSmoke(grapeCli, consumerRepo);
   } finally {
     rmSync(consumerRepo, { recursive: true, force: true });
   }
@@ -173,7 +174,7 @@ function assertInstalledPackageMetadata(consumerRepo) {
   }
 }
 
-function runMcpInstalledSmoke(grapeBin, repoPath) {
+function runMcpInstalledSmoke(grapeCli, repoPath) {
   const input = Buffer.concat([
     encodeMcpFrame({
       jsonrpc: "2.0",
@@ -211,12 +212,13 @@ function runMcpInstalledSmoke(grapeBin, repoPath) {
     })
   ]);
 
-  const result = spawnSync(grapeBin, ["mcp", "--stdio", "--repo", repoPath], spawnOptionsForPlatform({
+  const result = spawnSync(process.execPath, [grapeCli, "mcp", "--stdio", "--repo", repoPath], spawnOptionsForPlatform({
     cwd: repoPath,
     input,
     encoding: "buffer",
     maxBuffer: 16 * 1024 * 1024,
-    env: envWithSqliteNodeOptions(npmEnv())
+    env: envWithSqliteNodeOptions(npmEnv()),
+    shell: false
   }));
   if (result.status !== 0) throw new Error(result.stderr.toString("utf8").trim() || "installed grape mcp failed");
 

@@ -1,13 +1,15 @@
+import path from "node:path";
+
 export function commandForPlatform(command, platform = process.platform) {
   return platform === "win32" ? `${command}.cmd` : command;
 }
 
-export function installedBinForPlatform(binPath, platform = process.platform) {
-  return platform === "win32" ? `${binPath}.cmd` : binPath;
+export function installedPackageBinTarget(installRoot, packageName, binTarget) {
+  return path.join(installRoot, "node_modules", ...packageName.split("/"), binTarget);
 }
 
 export function spawnOptionsForPlatform(options = {}, platform = process.platform) {
-  return platform === "win32" ? { ...options, shell: true } : options;
+  return platform === "win32" && options.shell === undefined ? { ...options, shell: true } : options;
 }
 
 export function spawnFailureMessage(result, fallback = "command failed") {

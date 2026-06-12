@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -11,6 +11,7 @@ const sourcePackage = JSON.parse(readFileSync(path.join(process.cwd(), "package.
 const expectedPackage = sourcePackage.name;
 const expectedVersion = sourcePackage.version;
 const repoPath = mkdtempSync(path.join(tmpdir(), "grape-global-smoke-"));
+let grapeCli;
 
 try {
   const npmList = spawnSync(
@@ -22,6 +23,7 @@ try {
     })
   );
   assert(npmList.status === 0, `global npm package ${expectedPackage}@${expectedVersion} is not installed`);
+  grapeCli = resolveGlobalGrapeCli();
 
   bootstrapGitRepo(repoPath);
 
@@ -73,13 +75,14 @@ try {
   assert(resetJson.contextPackItems.some((item) => item.state === "NEW"), "reset compile must resend current context");
 
   const mcp = await runMcpContextRestoreSession({
-    command: commandForPlatform("grape"),
-    args: ["mcp", "--stdio", "--repo", repoPath],
+    command: process.execPath,
+    args: [grapeCli, "mcp", "--stdio", "--repo", repoPath],
     cwd: repoPath,
     env: envWithSqliteNodeOptions(smokeEnv()),
     clientInfo: { name: "grape-global-smoke", version: expectedVersion },
     query: "global mcp smoke",
-    sessionId: "global-smoke-mcp"
+    sessionId: "global-smoke-mcp",
+    usePlatformShell: false
   });
   assert(mcp.turn1.structuredContent.contextPackItems.some((item) => item.state === "NEW"), "MCP turn 1 must send NEW items");
   assert(
@@ -104,13 +107,31 @@ function bootstrapGitRepo(targetPath) {
 }
 
 function runGrape(args, options = {}) {
-  return spawnSync(commandForPlatform("grape"), args, spawnOptionsForPlatform({
+  return spawnSync(process.execPath, [grapeCli, ...args], spawnOptionsForPlatform({
     cwd: repoPath,
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
     env: envWithSqliteNodeOptions(smokeEnv()),
-    ...options
+    ...options,
+    shell: false
   }));
+}
+
+function resolveGlobalGrapeCli() {
+  const root = spawnSync(
+    commandForPlatform("npm"),
+    ["root", "-g"],
+    spawnOptionsForPlatform({
+      encoding: "utf8",
+      env: smokeEnv()
+    })
+  );
+  assert(root.status === 0, `npm root -g failed: ${root.stderr.trim() || root.error?.message}`);
+  const globalRoot = root.stdout.trim();
+  assert(globalRoot.length > 0, "npm root -g returned an empty path");
+  const cliPath = path.join(globalRoot, ...expectedPackage.split("/"), sourcePackage.bin.grape);
+  assert(existsSync(cliPath), `global package is missing ${sourcePackage.bin.grape}`);
+  return cliPath;
 }
 
 function run(command, args, options = {}) {

@@ -5,7 +5,7 @@ import path from "node:path";
 import { runMcpContextRestoreSession } from "./mcp-smoke-session.mjs";
 import {
   commandForPlatform,
-  installedBinForPlatform,
+  installedPackageBinTarget,
   spawnFailureMessage,
   spawnOptionsForPlatform
 } from "./platform-command.mjs";
@@ -57,16 +57,17 @@ try {
   );
   assert(install.status === 0, `npm install failed: ${spawnFailureMessage(install)}`);
 
-  const grapeBin = installedBinForPlatform(path.join(consumerRepo, "node_modules", ".bin", "grape"));
-  assert(existsSync(grapeBin), "installed package is missing node_modules/.bin/grape");
   assertInstalledPackageMetadata(consumerRepo);
+  const grapeCli = installedPackageBinTarget(consumerRepo, sourcePackage.name, sourcePackage.bin.grape);
+  assert(existsSync(grapeCli), `installed package is missing ${sourcePackage.bin.grape}`);
 
   const spawnGrape = (args) =>
-    spawnSync(grapeBin, args, spawnOptionsForPlatform({
+    spawnSync(process.execPath, [grapeCli, ...args], spawnOptionsForPlatform({
       cwd: consumerRepo,
       encoding: "utf8",
       maxBuffer: 16 * 1024 * 1024,
-      env: envWithSqliteNodeOptions(npmEnv())
+      env: envWithSqliteNodeOptions(npmEnv()),
+      shell: false
     }));
 
   const help = spawnGrape(["help"]);
@@ -138,13 +139,14 @@ try {
   );
 
   const mcp = await runMcpContextRestoreSession({
-    command: grapeBin,
-    args: ["mcp", "--stdio", "--repo", consumerRepo],
+    command: process.execPath,
+    args: [grapeCli, "mcp", "--stdio", "--repo", consumerRepo],
     cwd: consumerRepo,
     env: envWithSqliteNodeOptions(npmEnv()),
     clientInfo: { name: "grape-install-smoke", version: sourcePackage.version },
     query: "install smoke",
-    sessionId: "install-smoke-mcp"
+    sessionId: "install-smoke-mcp",
+    usePlatformShell: false
   });
   assert(mcp.turn1.structuredContent.contextPackItems.some((item) => item.state === "NEW"), "mcp turn 1 must send NEW items");
   assert(mcp.turn2.structuredContent.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), "mcp turn 2 must include OMIT_UNCHANGED");

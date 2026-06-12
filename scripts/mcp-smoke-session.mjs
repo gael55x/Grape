@@ -18,12 +18,14 @@ export async function runMcpContextRestoreSession({
   clientInfo,
   query,
   sessionId,
+  usePlatformShell = true,
   timeoutMs = 15000
 }) {
   const child = spawn(command, args, spawnOptionsForPlatform({
     cwd,
     stdio: ["pipe", "pipe", "pipe"],
-    env
+    env,
+    ...(usePlatformShell ? {} : { shell: false })
   }));
 
   let nextId = 1;
