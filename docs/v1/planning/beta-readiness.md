@@ -10,6 +10,13 @@ The beta product promise is: install Grape, keep using the coding agent normally
 
 Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client trials and pass/fail criteria.
 
+## Product Engineering Ledger
+
+| Learned fact | Repo evidence | Beta impact | Decision made | Next action | Open risk |
+|---|---|---|---|---|---|
+| The package dry-run check used a fixed migration list and missed the latest storage migration. | `src/core/storage/migrations/0006_claim_edge_authority.sql`; commit `80f73cc` updates `scripts/check-package.mjs`. | A tarball could pass the package gate while missing a migration needed by a beta user's local database. | Make the package check derive required migration files from source. | Keep package checks green while closing higher-risk gates. | Future generated files may need the same source-to-dist coverage check. |
+| Language fallback is documented more broadly than tests currently prove. | `docs/v1/core/language-indexing.md`; `tests/behavior/retrieval/polyglot-monorepo-fallback.test.mjs`. | A beta user on a mixed-language repo needs clear fallback evidence, not silent confidence. | Treat broad fallback proof as the next product risk to close. | Add representative fallback fixtures or strengthen artifact warnings for common languages. | Real parsing beyond TS/JS remains planned and should not be implied. |
+
 ## Current Alpha.3 Hardening Baseline
 
 - `grape-context@0.1.0-alpha.3` is published on npm and currently tagged as both `latest` and `alpha`.
