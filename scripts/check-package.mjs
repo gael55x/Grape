@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { commandForPlatform, spawnFailureMessage } from "./platform-command.mjs";
 
 const root = process.cwd();
 const packageJson = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
@@ -34,7 +35,7 @@ for (const file of requiredFiles) {
 const npmCacheDir = path.join(root, ".tmp", "npm-cache");
 mkdirSync(npmCacheDir, { recursive: true });
 
-const dryRun = spawnSync("npm", ["pack", "--dry-run", "--json", "--ignore-scripts"], {
+const dryRun = spawnSync(commandForPlatform("npm"), ["pack", "--dry-run", "--json", "--ignore-scripts"], {
   cwd: root,
   encoding: "utf8",
   env: {
@@ -46,7 +47,7 @@ const dryRun = spawnSync("npm", ["pack", "--dry-run", "--json", "--ignore-script
   },
   stdio: ["ignore", "pipe", "pipe"]
 });
-assert(dryRun.status === 0, `npm pack dry-run failed: ${dryRun.stderr.trim()}`);
+assert(dryRun.status === 0, `npm pack dry-run failed: ${spawnFailureMessage(dryRun)}`);
 
 const packResult = JSON.parse(dryRun.stdout)[0];
 const packedFiles = new Set(packResult.files.map((file) => file.path));

@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { commandForPlatform } from "./platform-command.mjs";
 
 const root = process.cwd();
 const cliPath = path.join(root, ".tmp/build/src/cli/index.js");
@@ -20,7 +21,7 @@ if (clean.status !== 0) {
   process.exit(clean.status ?? 1);
 }
 
-const build = spawnSync("npm", ["run", "build:test"], {
+const build = spawnSync(commandForPlatform("npm"), ["run", "build:test"], {
   cwd: root,
   encoding: "utf8",
   stdio: ["ignore", "pipe", "pipe"]

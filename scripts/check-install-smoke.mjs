@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { runMcpContextRestoreSession } from "./mcp-smoke-session.mjs";
+import { commandForPlatform, installedBinForPlatform, spawnFailureMessage } from "./platform-command.mjs";
 import { assertNodeSqliteAvailable, envWithSqliteNodeOptions } from "./sqlite-node-env.mjs";
 
 const root = process.cwd();
@@ -15,13 +16,13 @@ rmSync(packDir, { recursive: true, force: true });
 mkdirSync(packDir, { recursive: true });
 mkdirSync(npmCacheDir, { recursive: true });
 
-const pack = spawnSync("npm", ["pack", "--pack-destination", packDir, "--ignore-scripts"], {
+const pack = spawnSync(commandForPlatform("npm"), ["pack", "--pack-destination", packDir, "--ignore-scripts"], {
   cwd: root,
   encoding: "utf8",
   env: npmEnv(),
   stdio: ["ignore", "pipe", "pipe"]
 });
-assert(pack.status === 0, `npm pack failed: ${pack.stderr.trim()}`);
+assert(pack.status === 0, `npm pack failed: ${spawnFailureMessage(pack)}`);
 
 const packedTarball = pack.stdout.trim().split(/\r?\n/).filter(Boolean).at(-1);
 const tarballs = readdirSync(packDir).filter((name) => name.endsWith(".tgz"));
@@ -35,15 +36,15 @@ const tarballPath = path.join(packDir, tarball);
 try {
   bootstrapGitRepo(consumerRepo);
 
-  const install = spawnSync("npm", ["install", tarballPath], {
+  const install = spawnSync(commandForPlatform("npm"), ["install", tarballPath], {
     cwd: consumerRepo,
     encoding: "utf8",
     env: npmEnv(),
     stdio: ["ignore", "pipe", "pipe"]
   });
-  assert(install.status === 0, `npm install failed: ${install.stderr.trim()}`);
+  assert(install.status === 0, `npm install failed: ${spawnFailureMessage(install)}`);
 
-  const grapeBin = path.join(consumerRepo, "node_modules", ".bin", "grape");
+  const grapeBin = installedBinForPlatform(path.join(consumerRepo, "node_modules", ".bin", "grape"));
   assert(existsSync(grapeBin), "installed package is missing node_modules/.bin/grape");
   assertInstalledPackageMetadata(consumerRepo);
 

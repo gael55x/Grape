@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { encodeMcpFrame, parseMcpFrames } from "./mcp-smoke-session.mjs";
+import { commandForPlatform, installedBinForPlatform, spawnFailureMessage } from "./platform-command.mjs";
 import { assertNodeSqliteAvailable, envWithSqliteNodeOptions } from "./sqlite-node-env.mjs";
 
 const root = process.cwd();
@@ -27,7 +28,7 @@ function runStep(name, fn) {
 }
 
 runStep("build dist", () => {
-  const build = spawnSync("npm", ["run", "build"], { cwd: root, encoding: "utf8" });
+  const build = spawnSync(commandForPlatform("npm"), ["run", "build"], { cwd: root, encoding: "utf8" });
   if (build.status !== 0) throw new Error(build.stderr.trim() || "npm run build failed");
 });
 
@@ -46,12 +47,12 @@ runStep("pack install smoke", () => {
   const packDir = path.join(root, ".tmp", "e2e-pack");
   rmSync(packDir, { recursive: true, force: true });
   mkdirSync(packDir, { recursive: true });
-  const pack = spawnSync("npm", ["pack", "--pack-destination", packDir, "--ignore-scripts"], {
+  const pack = spawnSync(commandForPlatform("npm"), ["pack", "--pack-destination", packDir, "--ignore-scripts"], {
     cwd: root,
     encoding: "utf8",
     env: npmEnv()
   });
-  if (pack.status !== 0) throw new Error(pack.stderr.trim());
+  if (pack.status !== 0) throw new Error(spawnFailureMessage(pack));
   const packedTarball = pack.stdout.trim().split(/\r?\n/).filter(Boolean).at(-1);
   const tarballs = readdirSync(packDir).filter((name) => name.endsWith(".tgz"));
   if (tarballs.length !== 1) throw new Error(`npm pack must produce exactly one tarball, found ${tarballs.length}`);
@@ -72,14 +73,14 @@ runStep("pack install smoke", () => {
       { cwd: consumerRepo, stdio: "ignore" }
     );
 
-    const install = spawnSync("npm", ["install", path.join(packDir, tarball)], {
+    const install = spawnSync(commandForPlatform("npm"), ["install", path.join(packDir, tarball)], {
       cwd: consumerRepo,
       encoding: "utf8",
       env: npmEnv()
     });
-    if (install.status !== 0) throw new Error(install.stderr.trim());
+    if (install.status !== 0) throw new Error(spawnFailureMessage(install));
 
-    const grapeBin = path.join(consumerRepo, "node_modules", ".bin", "grape");
+    const grapeBin = installedBinForPlatform(path.join(consumerRepo, "node_modules", ".bin", "grape"));
     if (!existsSync(grapeBin)) throw new Error("missing node_modules/.bin/grape");
     assertInstalledPackageMetadata(consumerRepo);
 

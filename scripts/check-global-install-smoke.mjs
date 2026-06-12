@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { runMcpContextRestoreSession } from "./mcp-smoke-session.mjs";
+import { commandForPlatform } from "./platform-command.mjs";
 import { envWithSqliteNodeOptions } from "./sqlite-node-env.mjs";
 
 const sourcePackage = JSON.parse(readFileSync(path.join(process.cwd(), "package.json"), "utf8"));
@@ -12,7 +13,7 @@ const expectedVersion = sourcePackage.version;
 const repoPath = mkdtempSync(path.join(tmpdir(), "grape-global-smoke-"));
 
 try {
-  const npmList = spawnSync("npm", ["list", "-g", `${expectedPackage}@${expectedVersion}`, "--depth=0", "--json"], {
+  const npmList = spawnSync(commandForPlatform("npm"), ["list", "-g", `${expectedPackage}@${expectedVersion}`, "--depth=0", "--json"], {
     encoding: "utf8",
     env: smokeEnv()
   });
@@ -68,7 +69,7 @@ try {
   assert(resetJson.contextPackItems.some((item) => item.state === "NEW"), "reset compile must resend current context");
 
   const mcp = await runMcpContextRestoreSession({
-    command: "grape",
+    command: commandForPlatform("grape"),
     args: ["mcp", "--stdio", "--repo", repoPath],
     cwd: repoPath,
     env: envWithSqliteNodeOptions(smokeEnv()),
@@ -99,7 +100,7 @@ function bootstrapGitRepo(targetPath) {
 }
 
 function runGrape(args, options = {}) {
-  return spawnSync("grape", args, {
+  return spawnSync(commandForPlatform("grape"), args, {
     cwd: repoPath,
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
