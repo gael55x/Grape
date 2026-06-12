@@ -351,6 +351,13 @@ test("beta transport: documented stable warning patterns match when emitted", ()
           "sample refs must not appear in the stable default omitted warning"
         );
       }
+      if (warning.startsWith("task_retrieval_seed_packages_omitted_over_cap:")) {
+        const countPart = warning.slice("task_retrieval_seed_packages_omitted_over_cap:".length);
+        assert.ok(
+          /^\d+$/.test(countPart),
+          `task_retrieval_seed_packages_omitted_over_cap suffix must be a numeric count, got: ${warning}`
+        );
+      }
     }
   });
 });

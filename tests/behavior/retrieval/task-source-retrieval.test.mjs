@@ -486,6 +486,33 @@ test("task source retrieval spreads explicit seeds across package roots before c
   assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
 });
 
+test("task source retrieval warns when caps omit whole seeded package roots", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix api checkout total",
+    maxSelectedSources: 2,
+    sources: [
+      source("api-a", "packages/api/src/checkout-a.ts"),
+      source("admin-a", "packages/admin/src/checkout-a.ts"),
+      source("web-a", "packages/web/src/checkout-a.ts")
+    ],
+    symbols: [],
+    lexicalMatches: [],
+    seedFiles: [
+      "packages/api/src/checkout-a.ts",
+      "packages/admin/src/checkout-a.ts",
+      "packages/web/src/checkout-a.ts"
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "packages/api/src/checkout-a.ts",
+    "packages/admin/src/checkout-a.ts"
+  ]);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+  assert.ok(result.warnings.includes("task_retrieval_seed_packages_omitted_over_cap:1"));
+});
+
 test("task source retrieval bounds test seed reservation on default tasks", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix billing total",

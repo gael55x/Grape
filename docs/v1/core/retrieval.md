@@ -51,7 +51,7 @@ Grape ranks semantically within each tier, then fills `selectedSourceRefs` in ti
 
 When any tier includes two or more workspace package roots, Grape spreads the already-ranked refs across package roots before that tier fills its source slots. Explicit seeds and path-like test seeds still keep their tier priority and reservation caps, but they no longer spend every in-tier slot in one known package while another seeded package has equal-priority evidence.
 
-Truncation emits compact warnings: `task_retrieval_truncated` and `task_retrieval_omitted_over_cap:<count>` (the numeric count only). Missing explicit seed refs emit at most five per seed kind, then a count-only omitted warning. Semantic candidates are not proofs, not durable claims, and are not accepted by `proof_policy_accepted`. This is a correctness fix for retrieval selection, not a benchmark claim.
+Truncation emits compact warnings: `task_retrieval_truncated` and `task_retrieval_omitted_over_cap:<count>` (the numeric count only). If truncation leaves one or more seeded package roots with no selected source, Grape also emits `task_retrieval_seed_packages_omitted_over_cap:<count>` without listing package names or file paths. Missing explicit seed refs emit at most five per seed kind, then a count-only omitted warning. Semantic candidates are not proofs, not durable claims, and are not accepted by `proof_policy_accepted`. This is a correctness fix for retrieval selection, not a benchmark claim.
 
 ## Current Inputs
 

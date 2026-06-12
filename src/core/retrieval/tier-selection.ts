@@ -79,7 +79,12 @@ export function selectTieredSourceRefs(input: SelectTieredSourceRefsInput): Tier
     remainingSlots(selected, input.maxSelectedSources)
   );
 
-  const omittedWarnings = buildOmittedWarnings(allCandidateRefs, selectedSet);
+  const omittedWarnings = buildOmittedWarnings(
+    allCandidateRefs,
+    selectedSet,
+    input.selectedReasons,
+    input.packageRootBySourceRef ?? new Map()
+  );
 
   return {
     selectedSourceRefs: selected,
@@ -230,9 +235,44 @@ function remainingSlots(selected: readonly string[], maxSelectedSources: number)
 
 function buildOmittedWarnings(
   allCandidateRefs: readonly string[],
-  selectedSet: ReadonlySet<string>
+  selectedSet: ReadonlySet<string>,
+  selectedReasons: ReadonlyMap<string, ReadonlySet<SelectionReason>>,
+  packageRootBySourceRef: ReadonlyMap<string, string>
 ): string[] {
   const omitted = allCandidateRefs.filter((sourceRef) => !selectedSet.has(sourceRef));
   if (omitted.length === 0) return [];
-  return ["task_retrieval_truncated", `task_retrieval_omitted_over_cap:${omitted.length}`];
+
+  const warnings = ["task_retrieval_truncated", `task_retrieval_omitted_over_cap:${omitted.length}`];
+  const omittedSeedPackageCount = omittedSeedPackageRoots(
+    omitted,
+    selectedSet,
+    selectedReasons,
+    packageRootBySourceRef
+  ).size;
+  if (omittedSeedPackageCount > 0) {
+    warnings.push(`task_retrieval_seed_packages_omitted_over_cap:${omittedSeedPackageCount}`);
+  }
+  return warnings;
+}
+
+function omittedSeedPackageRoots(
+  omittedRefs: readonly string[],
+  selectedSet: ReadonlySet<string>,
+  selectedReasons: ReadonlyMap<string, ReadonlySet<SelectionReason>>,
+  packageRootBySourceRef: ReadonlyMap<string, string>
+): Set<string> {
+  const selectedPackageRoots = new Set(
+    [...selectedSet]
+      .map((sourceRef) => packageRootForRankedRef(sourceRef, packageRootBySourceRef))
+      .filter((packageRoot): packageRoot is string => Boolean(packageRoot))
+  );
+  const omittedPackageRoots = new Set<string>();
+  for (const sourceRef of omittedRefs) {
+    const reasons = selectedReasons.get(sourceRef);
+    if (!reasons?.has("explicit_seed") && !reasons?.has("test_seed")) continue;
+    const packageRoot = packageRootForRankedRef(sourceRef, packageRootBySourceRef);
+    if (!packageRoot || selectedPackageRoots.has(packageRoot)) continue;
+    omittedPackageRoots.add(packageRoot);
+  }
+  return omittedPackageRoots;
 }

@@ -222,6 +222,7 @@ These warning codes and patterns are part of the stable beta contract. Beta clie
 |------|---------|
 | `task_retrieval_truncated` | More source candidates than the cap; selection was limited. |
 | `task_retrieval_omitted_over_cap:<count>` | Parameterized: `<count>` is a numeric integer. This is the number of candidates omitted beyond the cap. |
+| `task_retrieval_seed_packages_omitted_over_cap:<count>` | Parameterized: `<count>` is a numeric integer. This is the number of seeded package roots that received no selected source because the cap was exhausted. |
 | `task_retrieval_no_source_matches` | No source refs matched the query after retrieval. |
 | `task_retrieval_no_related_tests_found` | No related test files were found for the selected implementation sources. |
 | `task_seed_file_not_found:<ref>` | An explicit seed file was not found in the current snapshot. |
