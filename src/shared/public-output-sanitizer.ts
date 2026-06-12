@@ -64,18 +64,18 @@ function sanitizeString(
 function replaceKnownRootPath(value: string, options: PublicOutputSanitizerOptions): string {
   const rootPath = options.rootPath ?? process.cwd();
   const rootLabel = options.rootLabel ?? defaultRootLabel;
-  const resolvedRoot = path.resolve(rootPath);
+  const resolvedRoot = isWindowsAbsolutePath(rootPath) ? rootPath : path.resolve(rootPath);
   const candidates = rootPathCandidates(resolvedRoot).sort((left, right) => right.length - left.length);
 
   return candidates.reduce((current, candidate) => {
-    if (!candidate) return current;
-    return current.split(candidate).join(rootLabel);
+    return replaceKnownRootCandidate(current, candidate, rootLabel);
   }, value);
 }
 
 function rootPathCandidates(resolvedRoot: string): string[] {
-  const slashPath = resolvedRoot.split(path.sep).join("/");
-  const aliases = [resolvedRoot, slashPath];
+  const slashPath = resolvedRoot.replace(/\\/g, "/");
+  const backslashPath = resolvedRoot.replace(/\//g, "\\");
+  const aliases = [resolvedRoot, slashPath, backslashPath];
   if (slashPath.startsWith("/var/")) aliases.push(`/private${slashPath}`);
   if (slashPath.startsWith("/private/var/")) aliases.push(slashPath.slice("/private".length));
 
@@ -83,6 +83,22 @@ function rootPathCandidates(resolvedRoot: string): string[] {
     ...aliases,
     ...aliases.map((candidate) => candidate.split("/").join("\\"))
   ]);
+}
+
+function replaceKnownRootCandidate(value: string, candidate: string, rootLabel: string): string {
+  if (!candidate) return value;
+  if (isWindowsAbsolutePath(candidate)) {
+    return value.replace(new RegExp(escapeRegExp(candidate), "gi"), rootLabel);
+  }
+  return value.split(candidate).join(rootLabel);
+}
+
+function isWindowsAbsolutePath(value: string): boolean {
+  return /^[A-Za-z]:[\\/]/.test(value);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&");
 }
 
 function isSensitiveValueKey(key: string): boolean {

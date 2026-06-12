@@ -102,6 +102,16 @@ test("public output sanitizer redacts repo paths, local paths, and secret-lookin
     { rootPath: "/var/folders/grape-private-workspace/repo" }
   );
   assert.equal(aliased.rootPath, "<repo-root>");
+
+  const windowsCaseVariant = sanitizePublicOutput(
+    {
+      configBackupPath: "c:\\users\\runneradmin\\appdata\\local\\temp\\repo\\.grape\\config.invalid.json",
+      artifactJsonPath: "c:/users/runneradmin/appdata/local/temp/repo/.grape/artifacts/context.json"
+    },
+    { rootPath: "C:\\Users\\RunnerAdmin\\AppData\\Local\\Temp\\Repo" }
+  );
+  assert.equal(windowsCaseVariant.configBackupPath, "<repo-root>\\.grape\\config.invalid.json");
+  assert.equal(windowsCaseVariant.artifactJsonPath, "<repo-root>/.grape/artifacts/context.json");
 });
 
 test("cli status JSON redacts local repository paths by default", () => {
