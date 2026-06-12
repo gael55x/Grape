@@ -64,7 +64,7 @@ export function persistObservedTestFailureRelations(
     sources,
     symbolNodes: input.indexingRepositories.symbolNodes
       .listBySnapshot(input.material.metadata.snapshotId)
-      .map((node) => ({ symbolId: node.symbolId, path: node.path })),
+      .map((node) => ({ symbolId: node.symbolId, path: node.path, metadataJson: node.metadataJson })),
     symbolEdges: input.indexingRepositories.symbolEdges
       .listBySnapshot(input.material.metadata.snapshotId)
       .map((edge) => ({

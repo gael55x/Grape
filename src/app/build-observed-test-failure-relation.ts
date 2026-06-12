@@ -13,11 +13,12 @@ import type {
   ObservedTestFailureSpanRef
 } from "../core/proofs/observed-test-failure-relation-types.js";
 import { observedTestFailureRelationHash } from "../core/proofs/observed-test-failure-relation-hash.js";
-import { packageRootForSourceRef } from "../core/scope/package-root.js";
+import { packageRootForSourceRefWithMetadata } from "../core/scope/package-root.js";
 
 export interface BuildObservedTestFailureRelationSymbolNode {
   readonly symbolId: string;
   readonly path: string;
+  readonly metadataJson?: string;
 }
 
 export interface BuildObservedTestFailureRelationSymbolEdge {
@@ -80,6 +81,7 @@ export function buildObservedTestFailureRelation(
   const spanExcerpts: RepositoryArtifactSourceExcerptInput[] = [];
   const candidateLinks: ObservedTestFailureCandidateLink[] = [];
   const linkedSourceRefs = new Set<string>();
+  const sourceMetadataByRef = sourceMetadataByRefFromSymbolNodes(input.symbolNodes);
 
   for (const testRef of testRefs) {
     if (candidateLinks.length >= maxCandidateLinks) break;
@@ -124,7 +126,7 @@ export function buildObservedTestFailureRelation(
       if (!candidateSourceSpan) continue;
       linkedSourceRefs.add(candidateSourceSpan.sourceRef);
 
-      const packageRoot = packageRootForSourceRef(candidateRef);
+      const packageRoot = packageRootForSourceRefWithMetadata(candidateRef, sourceMetadataByRef.get(candidateRef));
       if (packageRoot) {
         packageBoundaryEvidence = { packageRoot, sourceRef: candidateRef };
         manifestPackageRootEvidence = input.manifestPackageRoots.find(
@@ -230,6 +232,17 @@ function findImportEvidence(
     };
   }
   return undefined;
+}
+
+function sourceMetadataByRefFromSymbolNodes(
+  symbolNodes: readonly BuildObservedTestFailureRelationSymbolNode[]
+): ReadonlyMap<string, string> {
+  const metadataByRef = new Map<string, string>();
+  for (const node of symbolNodes) {
+    if (metadataByRef.has(node.path) || !node.metadataJson) continue;
+    metadataByRef.set(node.path, node.metadataJson);
+  }
+  return metadataByRef;
 }
 
 function candidateSourceRefFromTestRef(

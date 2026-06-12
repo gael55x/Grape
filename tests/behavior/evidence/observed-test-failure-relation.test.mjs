@@ -101,6 +101,40 @@ function mkdirFixtures(repoPath) {
   );
 }
 
+function addNestedPackageFailureFixture(repoPath) {
+  mkdirSync(path.join(repoPath, "components", "backend", "src"), { recursive: true });
+  mkdirSync(path.join(repoPath, "components", "backend", "tests"), { recursive: true });
+  writeFileSync(
+    path.join(repoPath, "components", "backend", "package.json"),
+    JSON.stringify({ name: "backend-fixture", type: "module" }, null, 2) + "\n"
+  );
+  writeFileSync(
+    path.join(repoPath, "components", "backend", "src", "counter.js"),
+    "export function increment(value) {\n  return value;\n}\n"
+  );
+  writeFileSync(
+    path.join(repoPath, "components", "backend", "tests", "counter.test.js"),
+    [
+      "import test from 'node:test';",
+      "import assert from 'node:assert/strict';",
+      "import { increment } from '../src/counter.js';",
+      "test('increments', () => {",
+      "  assert.equal(increment(1), 2);",
+      "});"
+    ].join("\n")
+  );
+  execGit(repoPath, ["add", "components/backend"]);
+  execGit(repoPath, [
+    "-c",
+    "user.name=Grape Test",
+    "-c",
+    "user.email=grape@example.test",
+    "commit",
+    "-m",
+    "nested package failure relation fixture"
+  ]);
+}
+
 function execGit(repoPath, args) {
   return execFileSync("git", ["-C", repoPath, ...args], {
     encoding: "utf8",
@@ -225,6 +259,75 @@ test("failed Grape-observed test runs promote candidate span link claims with ha
   });
 });
 
+test("failed nested package test runs keep manifest-backed package boundary evidence", () => {
+  withGitRepo((repoPath) => {
+    addNestedPackageFailureFixture(repoPath);
+    withMigratedDatabase((ctx) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database: ctx.database,
+        repositories: ctx.repositories,
+        evidenceRepositories: ctx.evidenceRepositories,
+        indexingRepositories: ctx.indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+      const failureOutputText = [
+        "✖ increments",
+        "  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+        "  at increment (components/backend/src/counter.js:2:10)",
+        "  at TestContext.<anonymous> (components/backend/tests/counter.test.js:5:10)"
+      ].join("\n");
+      const observation = buildFailedTestObservation(repoPath, snapshotResult, {
+        command: "node --test components/backend/tests/counter.test.js",
+        failureOutputText,
+        testFiles: ["components/backend/tests/counter.test.js"]
+      });
+      ctx.evidenceRepositories.sources.insertOrIgnore(observation.source);
+
+      const runPromotion = persistObservedRunResultClaim({
+        repositories: ctx.claimRepositories,
+        proofRepositories: ctx.proofRepositories,
+        source: observation.source,
+        now
+      });
+      assert.equal(runPromotion.claimsInserted, 1);
+
+      const material = extractObservedRunProofMaterial(observation.source);
+      assert.equal(material.accepted, true);
+
+      const relationPromotion = persistObservedTestFailureRelations({
+        repositories: ctx.claimRepositories,
+        proofRepositories: ctx.proofRepositories,
+        evidenceRepositories: ctx.evidenceRepositories,
+        indexingRepositories: ctx.indexingRepositories,
+        rootPath: repoPath,
+        source: observation.source,
+        material: material.material,
+        observedRunClaimId: runPromotion.claimId,
+        observedRunProofId: runPromotion.proofId,
+        failureOutputText: observation.failureOutputText,
+        now
+      });
+
+      assert.equal(relationPromotion.claimsInserted, 1);
+      const claim = ctx.claimRepositories.claims.get(relationPromotion.claimId);
+      assert.ok(claim);
+      const scope = JSON.parse(claim.scopeJson);
+      const nestedLink = scope.candidateLinks.find(
+        (link) => link.candidateSourceSpan?.sourceRef === "components/backend/src/counter.js"
+      );
+
+      assert.ok(nestedLink);
+      assert.equal(nestedLink.packageBoundaryEvidence?.packageRoot, "components/backend");
+      assert.equal(nestedLink.packageBoundaryEvidence?.sourceRef, "components/backend/src/counter.js");
+      assert.equal(nestedLink.missingEvidenceWarnings.includes("missing_package_boundary_evidence"), false);
+      assert.equal(nestedLink.missingEvidenceWarnings.includes("missing_manifest_package_root_evidence"), true);
+    });
+  });
+});
+
 test("buildObservedTestFailureRelation stays conservative when no test refs are available", () => {
   const built = buildObservedTestFailureRelation({
     material: {
@@ -272,9 +375,10 @@ test("buildObservedTestFailureRelation stays conservative when no test refs are 
   assert.equal(built.rejectionReason, "no_candidate_links");
 });
 
-function buildFailedTestObservation(repoPath, snapshotResult) {
-  const commandHash = sha256("node --test tests/counter.test.js");
-  const failureOutputText = [
+function buildFailedTestObservation(repoPath, snapshotResult, options = {}) {
+  const testFiles = options.testFiles ?? ["tests/counter.test.js"];
+  const commandHash = sha256(options.command ?? "node --test tests/counter.test.js");
+  const failureOutputText = options.failureOutputText ?? [
     "✖ increments",
     "  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
     "  at TestContext.<anonymous> (tests/counter.test.js:5:10)"
@@ -300,7 +404,7 @@ function buildFailedTestObservation(repoPath, snapshotResult) {
     observedRunId: "run:abcdef1234567890abcdef12",
     passed: false,
     testFramework: "node",
-    testFiles: ["tests/counter.test.js"]
+    testFiles
   });
 
   return {
