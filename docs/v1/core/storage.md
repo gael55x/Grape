@@ -114,6 +114,8 @@ Migration `0003_fts_entries.sql` adds the first portable lexical index foundatio
 
 Lexical persistence reads only existing allowed source records, reuses the same path/hash/binary/symlink guards as file indexing, skips secret-looking text before inserting search rows, and stores search results through repository methods rather than direct SQL outside storage. The local compile service now uses these rows, explicit seed file refs, path-like test seed refs, import-related test refs, and symbol/path matches to prioritize source evidence and to satisfy the first high-risk exact-context policy only when a proof-backed exact excerpt is selected for the task. This remains a source-selection foundation; current-valid rendering is limited to enabled narrow claim policies, and broader durable retrieval remains pending.
 
+Lexical search must bound both phases. The storage repository first asks SQLite for a limited set of normalized path/body candidates, then scans only a bounded fallback window with the stricter deterministic normalizer that strips punctuation. This keeps punctuation-insensitive matches stable without letting broad fallback queries scan every safe text row in a serious repo.
+
 Migration `0004_compression_cache.sql` adds the first deterministic compression cache tables:
 
 - `compression_artifacts` stores cache metadata for V1 deterministic `symbol_outline`, `rule_digest`, and `context_pack_summary` records.
@@ -248,6 +250,7 @@ Local bootstrap-capable flows (`init`, `sync`, and `compile`) may repair an unus
 - `package_manifest_change_invalidates_package_scoped_context`
 - `path_normalization_handles_windows_separators`
 - `fts_entries_do_not_store_raw_secrets`
+- `fts_search_bounds_normalized_fallback_scan`
 - `validated_source_proof_rows_persist_idempotently`
 - `invalid_source_proof_hash_is_rejected`
 - `validated_source_claims_persist_after_proofs`

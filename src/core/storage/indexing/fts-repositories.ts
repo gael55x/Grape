@@ -28,6 +28,11 @@ export interface FtsEntriesRepository {
   searchSnapshot(snapshotId: string, query: string, limit?: number): readonly FtsEntryRecord[];
 }
 
+const defaultSearchLimit = 20;
+const maxSearchLimit = 100;
+const prefilterMultiplier = 8;
+const fallbackScanMultiplier = 32;
+
 export function createFtsEntriesRepository(database: DatabaseSync): FtsEntriesRepository {
   return {
     insertOrIgnore(record) {
@@ -87,12 +92,14 @@ export function createFtsEntriesRepository(database: DatabaseSync): FtsEntriesRe
           .all(snapshotId) as Array<Record<string, unknown>>
       ).map(mapRequiredFtsEntry);
     },
-    searchSnapshot(snapshotId, query, limit = 20) {
+    searchSnapshot(snapshotId, query, limit = defaultSearchLimit) {
+      const safeLimit = normalizeSearchLimit(limit);
+      if (safeLimit === 0) return [];
       const trimmedQuery = query.trim();
       if (!trimmedQuery) return [];
       const normalizedQuery = normalizeSearchText(trimmedQuery);
       if (!normalizedQuery) return [];
-      const candidateLimit = Math.max(limit * 8, limit);
+      const candidateLimit = safeLimit * prefilterMultiplier;
       const candidates = (
         database
           .prepare(
@@ -114,28 +121,54 @@ export function createFtsEntriesRepository(database: DatabaseSync): FtsEntriesRe
           .all(snapshotId, `%${normalizedQuery}%`, `%${normalizedQuery}%`, candidateLimit) as Array<Record<string, unknown>>
       );
       const matches = candidates.filter((row) => bodyMatchesQuery(stringField(row, "body"), trimmedQuery));
-      if (matches.length >= limit) return matches.slice(0, limit).map(mapRequiredFtsEntry);
+      if (matches.length >= safeLimit) return matches.slice(0, safeLimit).map(mapRequiredFtsEntry);
 
       const seen = new Set(candidates.map((row) => stringField(row, "fts_entry_id")));
-      const fallbackMatches = (
-        database
-          .prepare(
-            [
-              "SELECT e.*, t.body FROM fts_entries e",
-              "JOIN fts_entry_text t ON t.fts_entry_id = e.fts_entry_id",
-              "WHERE e.snapshot_id = ?",
-              "ORDER BY e.source_ref ASC, e.fts_entry_id ASC"
-            ].join(" ")
-          )
-          .all(snapshotId) as Array<Record<string, unknown>>
-      ).filter((row) =>
+      const fallbackRows = listFallbackCandidates(
+        database,
+        snapshotId,
+        Array.from(seen),
+        safeLimit * fallbackScanMultiplier
+      );
+      const fallbackMatches = fallbackRows.filter((row) =>
         !seen.has(stringField(row, "fts_entry_id")) &&
         bodyMatchesQuery(stringField(row, "body"), trimmedQuery)
       );
 
-      return [...matches, ...fallbackMatches].slice(0, limit).map(mapRequiredFtsEntry);
+      return [...matches, ...fallbackMatches].slice(0, safeLimit).map(mapRequiredFtsEntry);
     }
   };
+}
+
+function normalizeSearchLimit(limit: number): number {
+  if (!Number.isFinite(limit)) return defaultSearchLimit;
+  const integerLimit = Math.floor(limit);
+  if (integerLimit <= 0) return 0;
+  return Math.min(integerLimit, maxSearchLimit);
+}
+
+function listFallbackCandidates(
+  database: DatabaseSync,
+  snapshotId: string,
+  excludedFtsEntryIds: readonly string[],
+  limit: number
+): Array<Record<string, unknown>> {
+  if (limit <= 0) return [];
+  const excludedPlaceholders = excludedFtsEntryIds.map(() => "?").join(", ");
+  const exclusionClause = excludedPlaceholders ? `AND e.fts_entry_id NOT IN (${excludedPlaceholders})` : "";
+
+  return database
+    .prepare(
+      [
+        "SELECT e.*, t.body FROM fts_entries e",
+        "JOIN fts_entry_text t ON t.fts_entry_id = e.fts_entry_id",
+        "WHERE e.snapshot_id = ?",
+        exclusionClause,
+        "ORDER BY e.source_ref ASC, e.fts_entry_id ASC",
+        "LIMIT ?"
+      ].join(" ")
+    )
+    .all(snapshotId, ...excludedFtsEntryIds, limit) as Array<Record<string, unknown>>;
 }
 
 function normalizedSqlExpression(column: string): string {
