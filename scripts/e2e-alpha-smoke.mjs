@@ -4,7 +4,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { encodeMcpFrame, parseMcpFrames } from "./mcp-smoke-session.mjs";
-import { commandForPlatform, installedBinForPlatform, spawnFailureMessage } from "./platform-command.mjs";
+import {
+  commandForPlatform,
+  installedBinForPlatform,
+  spawnFailureMessage,
+  spawnOptionsForPlatform
+} from "./platform-command.mjs";
 import { assertNodeSqliteAvailable, envWithSqliteNodeOptions } from "./sqlite-node-env.mjs";
 
 const root = process.cwd();
@@ -28,7 +33,11 @@ function runStep(name, fn) {
 }
 
 runStep("build dist", () => {
-  const build = spawnSync(commandForPlatform("npm"), ["run", "build"], { cwd: root, encoding: "utf8" });
+  const build = spawnSync(
+    commandForPlatform("npm"),
+    ["run", "build"],
+    spawnOptionsForPlatform({ cwd: root, encoding: "utf8" })
+  );
   if (build.status !== 0) throw new Error(build.stderr.trim() || "npm run build failed");
 });
 
@@ -47,11 +56,15 @@ runStep("pack install smoke", () => {
   const packDir = path.join(root, ".tmp", "e2e-pack");
   rmSync(packDir, { recursive: true, force: true });
   mkdirSync(packDir, { recursive: true });
-  const pack = spawnSync(commandForPlatform("npm"), ["pack", "--pack-destination", packDir, "--ignore-scripts"], {
-    cwd: root,
-    encoding: "utf8",
-    env: npmEnv()
-  });
+  const pack = spawnSync(
+    commandForPlatform("npm"),
+    ["pack", "--pack-destination", packDir, "--ignore-scripts"],
+    spawnOptionsForPlatform({
+      cwd: root,
+      encoding: "utf8",
+      env: npmEnv()
+    })
+  );
   if (pack.status !== 0) throw new Error(spawnFailureMessage(pack));
   const packedTarball = pack.stdout.trim().split(/\r?\n/).filter(Boolean).at(-1);
   const tarballs = readdirSync(packDir).filter((name) => name.endsWith(".tgz"));
@@ -73,11 +86,15 @@ runStep("pack install smoke", () => {
       { cwd: consumerRepo, stdio: "ignore" }
     );
 
-    const install = spawnSync(commandForPlatform("npm"), ["install", path.join(packDir, tarball)], {
-      cwd: consumerRepo,
-      encoding: "utf8",
-      env: npmEnv()
-    });
+    const install = spawnSync(
+      commandForPlatform("npm"),
+      ["install", path.join(packDir, tarball)],
+      spawnOptionsForPlatform({
+        cwd: consumerRepo,
+        encoding: "utf8",
+        env: npmEnv()
+      })
+    );
     if (install.status !== 0) throw new Error(spawnFailureMessage(install));
 
     const grapeBin = installedBinForPlatform(path.join(consumerRepo, "node_modules", ".bin", "grape"));
@@ -85,12 +102,12 @@ runStep("pack install smoke", () => {
     assertInstalledPackageMetadata(consumerRepo);
 
     const spawnGrape = (args) =>
-      spawnSync(grapeBin, args, {
+      spawnSync(grapeBin, args, spawnOptionsForPlatform({
         cwd: consumerRepo,
         encoding: "utf8",
         maxBuffer: 16 * 1024 * 1024,
         env: envWithSqliteNodeOptions(npmEnv())
-      });
+      }));
 
     const help = spawnGrape(["help"]);
     if (help.status !== 0 || !help.stdout.includes("grape")) throw new Error("installed grape help failed");
@@ -194,13 +211,13 @@ function runMcpInstalledSmoke(grapeBin, repoPath) {
     })
   ]);
 
-  const result = spawnSync(grapeBin, ["mcp", "--stdio", "--repo", repoPath], {
+  const result = spawnSync(grapeBin, ["mcp", "--stdio", "--repo", repoPath], spawnOptionsForPlatform({
     cwd: repoPath,
     input,
     encoding: "buffer",
     maxBuffer: 16 * 1024 * 1024,
     env: envWithSqliteNodeOptions(npmEnv())
-  });
+  }));
   if (result.status !== 0) throw new Error(result.stderr.toString("utf8").trim() || "installed grape mcp failed");
 
   const messages = parseMcpFrames(result.stdout);

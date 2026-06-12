@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { spawnOptionsForPlatform } from "./platform-command.mjs";
 
 export function encodeMcpFrame(message) {
   const body = Buffer.from(JSON.stringify(message), "utf8");
@@ -19,11 +20,11 @@ export async function runMcpContextRestoreSession({
   sessionId,
   timeoutMs = 15000
 }) {
-  const child = spawn(command, args, {
+  const child = spawn(command, args, spawnOptionsForPlatform({
     cwd,
     stdio: ["pipe", "pipe", "pipe"],
     env
-  });
+  }));
 
   let nextId = 1;
   let stdoutBuffer = Buffer.alloc(0);

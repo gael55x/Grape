@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { runMcpContextRestoreSession } from "./mcp-smoke-session.mjs";
-import { commandForPlatform } from "./platform-command.mjs";
+import { commandForPlatform, spawnOptionsForPlatform } from "./platform-command.mjs";
 import { envWithSqliteNodeOptions } from "./sqlite-node-env.mjs";
 
 const sourcePackage = JSON.parse(readFileSync(path.join(process.cwd(), "package.json"), "utf8"));
@@ -13,10 +13,14 @@ const expectedVersion = sourcePackage.version;
 const repoPath = mkdtempSync(path.join(tmpdir(), "grape-global-smoke-"));
 
 try {
-  const npmList = spawnSync(commandForPlatform("npm"), ["list", "-g", `${expectedPackage}@${expectedVersion}`, "--depth=0", "--json"], {
-    encoding: "utf8",
-    env: smokeEnv()
-  });
+  const npmList = spawnSync(
+    commandForPlatform("npm"),
+    ["list", "-g", `${expectedPackage}@${expectedVersion}`, "--depth=0", "--json"],
+    spawnOptionsForPlatform({
+      encoding: "utf8",
+      env: smokeEnv()
+    })
+  );
   assert(npmList.status === 0, `global npm package ${expectedPackage}@${expectedVersion} is not installed`);
 
   bootstrapGitRepo(repoPath);
@@ -100,13 +104,13 @@ function bootstrapGitRepo(targetPath) {
 }
 
 function runGrape(args, options = {}) {
-  return spawnSync(commandForPlatform("grape"), args, {
+  return spawnSync(commandForPlatform("grape"), args, spawnOptionsForPlatform({
     cwd: repoPath,
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
     env: envWithSqliteNodeOptions(smokeEnv()),
     ...options
-  });
+  }));
 }
 
 function run(command, args, options = {}) {

@@ -3,7 +3,12 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { runMcpContextRestoreSession } from "./mcp-smoke-session.mjs";
-import { commandForPlatform, installedBinForPlatform, spawnFailureMessage } from "./platform-command.mjs";
+import {
+  commandForPlatform,
+  installedBinForPlatform,
+  spawnFailureMessage,
+  spawnOptionsForPlatform
+} from "./platform-command.mjs";
 import { assertNodeSqliteAvailable, envWithSqliteNodeOptions } from "./sqlite-node-env.mjs";
 
 const root = process.cwd();
@@ -16,12 +21,16 @@ rmSync(packDir, { recursive: true, force: true });
 mkdirSync(packDir, { recursive: true });
 mkdirSync(npmCacheDir, { recursive: true });
 
-const pack = spawnSync(commandForPlatform("npm"), ["pack", "--pack-destination", packDir, "--ignore-scripts"], {
-  cwd: root,
-  encoding: "utf8",
-  env: npmEnv(),
-  stdio: ["ignore", "pipe", "pipe"]
-});
+const pack = spawnSync(
+  commandForPlatform("npm"),
+  ["pack", "--pack-destination", packDir, "--ignore-scripts"],
+  spawnOptionsForPlatform({
+    cwd: root,
+    encoding: "utf8",
+    env: npmEnv(),
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+);
 assert(pack.status === 0, `npm pack failed: ${spawnFailureMessage(pack)}`);
 
 const packedTarball = pack.stdout.trim().split(/\r?\n/).filter(Boolean).at(-1);
@@ -36,12 +45,16 @@ const tarballPath = path.join(packDir, tarball);
 try {
   bootstrapGitRepo(consumerRepo);
 
-  const install = spawnSync(commandForPlatform("npm"), ["install", tarballPath], {
-    cwd: consumerRepo,
-    encoding: "utf8",
-    env: npmEnv(),
-    stdio: ["ignore", "pipe", "pipe"]
-  });
+  const install = spawnSync(
+    commandForPlatform("npm"),
+    ["install", tarballPath],
+    spawnOptionsForPlatform({
+      cwd: consumerRepo,
+      encoding: "utf8",
+      env: npmEnv(),
+      stdio: ["ignore", "pipe", "pipe"]
+    })
+  );
   assert(install.status === 0, `npm install failed: ${spawnFailureMessage(install)}`);
 
   const grapeBin = installedBinForPlatform(path.join(consumerRepo, "node_modules", ".bin", "grape"));
@@ -49,12 +62,12 @@ try {
   assertInstalledPackageMetadata(consumerRepo);
 
   const spawnGrape = (args) =>
-    spawnSync(grapeBin, args, {
+    spawnSync(grapeBin, args, spawnOptionsForPlatform({
       cwd: consumerRepo,
       encoding: "utf8",
       maxBuffer: 16 * 1024 * 1024,
       env: envWithSqliteNodeOptions(npmEnv())
-    });
+    }));
 
   const help = spawnGrape(["help"]);
   assert(help.status === 0, `grape help failed: ${help.stderr.trim()}`);

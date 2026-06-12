@@ -6,6 +6,10 @@ export function installedBinForPlatform(binPath, platform = process.platform) {
   return platform === "win32" ? `${binPath}.cmd` : binPath;
 }
 
+export function spawnOptionsForPlatform(options = {}, platform = process.platform) {
+  return platform === "win32" ? { ...options, shell: true } : options;
+}
+
 export function spawnFailureMessage(result, fallback = "command failed") {
   return cleanOutput(result.stderr) || cleanOutput(result.stdout) || result.error?.message || fallback;
 }

@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
-import { commandForPlatform, spawnFailureMessage } from "./platform-command.mjs";
+import { commandForPlatform, spawnFailureMessage, spawnOptionsForPlatform } from "./platform-command.mjs";
 
 const root = process.cwd();
 const packageJson = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
@@ -35,18 +35,22 @@ for (const file of requiredFiles) {
 const npmCacheDir = path.join(root, ".tmp", "npm-cache");
 mkdirSync(npmCacheDir, { recursive: true });
 
-const dryRun = spawnSync(commandForPlatform("npm"), ["pack", "--dry-run", "--json", "--ignore-scripts"], {
-  cwd: root,
-  encoding: "utf8",
-  env: {
-    ...process.env,
-    npm_config_audit: "false",
-    npm_config_cache: npmCacheDir,
-    npm_config_fund: "false",
-    npm_config_update_notifier: "false"
-  },
-  stdio: ["ignore", "pipe", "pipe"]
-});
+const dryRun = spawnSync(
+  commandForPlatform("npm"),
+  ["pack", "--dry-run", "--json", "--ignore-scripts"],
+  spawnOptionsForPlatform({
+    cwd: root,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      npm_config_audit: "false",
+      npm_config_cache: npmCacheDir,
+      npm_config_fund: "false",
+      npm_config_update_notifier: "false"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+);
 assert(dryRun.status === 0, `npm pack dry-run failed: ${spawnFailureMessage(dryRun)}`);
 
 const packResult = JSON.parse(dryRun.stdout)[0];
