@@ -49,7 +49,7 @@ lexical matches. Selection is tier-aware and rank-before-cap:
 
 Grape ranks semantically within each tier, then fills `selectedSourceRefs` in tier-priority order until `maxSelectedSources`. `rankedSourceRefs` contains the final selected source refs in deterministic retrieval-priority order with the same membership and order as `selectedSourceRefs`. Retrieval priority is tier-aware; it is not a pure global semantic-score ordering and user seed order is not a ranking signal. Equal-score refs within a tier are broken by stable byte-string comparison for cross-environment determinism. Semantic candidates in artifacts are filtered to selected refs only.
 
-When Tier 2 direct-evidence candidates or Tier 3 expansion candidates include two or more workspace package roots, Grape spreads the already-ranked refs across package roots before it fills the remaining global source slots for that tier. Explicit seeds and path-like test seeds keep their own tier priority and reservation caps.
+When any tier includes two or more workspace package roots, Grape spreads the already-ranked refs across package roots before that tier fills its source slots. Explicit seeds and path-like test seeds still keep their tier priority and reservation caps, but they no longer spend every in-tier slot in one known package while another seeded package has equal-priority evidence.
 
 Truncation emits compact warnings: `task_retrieval_truncated` and `task_retrieval_omitted_over_cap:<count>` (the numeric count only). Missing explicit seed refs emit at most five per seed kind, then a count-only omitted warning. Semantic candidates are not proofs, not durable claims, and are not accepted by `proof_policy_accepted`. This is a correctness fix for retrieval selection, not a benchmark claim.
 
@@ -112,7 +112,7 @@ Current implementation can fail or become inefficient in these cases:
 - unsupported language files receive lexical/path fallback, and common fallback source languages can receive conservative declaration anchors, but non-TS/JS files still do not receive language-aware imports or test relationships
 - Python, Java, Kotlin, Go, Rust, YAML, C#, Ruby, PHP, Swift, C, C++, and shell relationships are not extracted as language-aware graph edges today
 - JS/TS import resolution can miss aliases, package exports, generated code, framework routing, dynamic imports, and non-relative imports
-- global source caps can still select too much from one package through explicit and test-seed tiers; Tier 2 and Tier 3 spreading use common-prefix and manifest-derived package roots, not full per-package budgets
+- global source caps can still omit seeded packages when explicit or test seeds outnumber available source slots, or when package boundaries are unknown; tier spreading uses common-prefix and manifest-derived package roots, not full per-package budgets
 - checked-in polyglot and monorepo fixtures prove safe fallback, explicit package-path scoping, manifest-derived nested package scoping, package-scoped current-valid filtering, and selected package manifest dependency refs, not full workspace graph coverage
 
 Retrieval should surface these cases as blind spots or `partial_with_risk` rather than silently acting as a complete graph.

@@ -456,6 +456,36 @@ test("task source retrieval ranks explicit refs within tier when explicit refs e
   assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
 });
 
+test("task source retrieval spreads explicit seeds across package roots before cap", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix api checkout total",
+    maxSelectedSources: 3,
+    sources: [
+      source("api-a", "packages/api/src/checkout-a.ts"),
+      source("api-b", "packages/api/src/checkout-b.ts"),
+      source("api-c", "packages/api/src/checkout-c.ts"),
+      source("web-a", "packages/web/src/checkout-a.ts")
+    ],
+    symbols: [],
+    lexicalMatches: [],
+    seedFiles: [
+      "packages/api/src/checkout-a.ts",
+      "packages/api/src/checkout-b.ts",
+      "packages/api/src/checkout-c.ts",
+      "packages/web/src/checkout-a.ts"
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "packages/api/src/checkout-a.ts",
+    "packages/web/src/checkout-a.ts",
+    "packages/api/src/checkout-b.ts"
+  ]);
+  assert.deepEqual(result.explicitSourceRefs, result.selectedSourceRefs);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+});
+
 test("task source retrieval bounds test seed reservation on default tasks", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix billing total",
@@ -482,6 +512,35 @@ test("task source retrieval bounds test seed reservation on default tasks", () =
   assert.equal(result.selectedSourceRefs.includes("src/impl.ts"), true);
   assert.equal(result.testSourceRefs.length, 1);
   assert.equal(result.selectedSourceRefs.filter((sourceRef) => sourceRef.startsWith("tests/")).length, 1);
+});
+
+test("task source retrieval spreads path-like test seeds across package roots before reserved cap", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix failing api regression tests",
+    maxSelectedSources: 4,
+    sources: [
+      source("api-test-a", "packages/api/tests/checkout-a.test.ts"),
+      source("api-test-b", "packages/api/tests/checkout-b.test.ts"),
+      source("api-test-c", "packages/api/tests/checkout-c.test.ts"),
+      source("web-test-a", "packages/web/tests/checkout-a.test.ts")
+    ],
+    symbols: [],
+    lexicalMatches: [],
+    seedTests: [
+      "packages/api/tests/checkout-a.test.ts",
+      "packages/api/tests/checkout-b.test.ts",
+      "packages/api/tests/checkout-c.test.ts",
+      "packages/web/tests/checkout-a.test.ts"
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "packages/api/tests/checkout-a.test.ts",
+    "packages/web/tests/checkout-a.test.ts"
+  ]);
+  assert.deepEqual(result.testSourceRefs, result.selectedSourceRefs);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:2"));
 });
 
 test("task source retrieval emits compact omitted-over-cap warnings", () => {
