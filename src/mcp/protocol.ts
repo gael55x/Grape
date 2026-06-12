@@ -90,6 +90,10 @@ export class McpMessageBuffer {
         this.reset();
         throw new Error("MCP message is missing Content-Length header");
       }
+      if (contentLength === null) {
+        this.reset();
+        throw new Error("MCP message has invalid Content-Length header");
+      }
       if (contentLength > this.#maxFrameBytes) {
         this.reset();
         throw new Error("MCP message exceeds maximum frame size");
@@ -120,14 +124,16 @@ function findHeader(buffer: Buffer): { readonly end: number; readonly separatorL
   return undefined;
 }
 
-function readContentLength(headerText: string): number | undefined {
+function readContentLength(headerText: string): number | null | undefined {
   for (const line of headerText.split(/\r?\n/)) {
     const separator = line.indexOf(":");
     if (separator < 0) continue;
     const name = line.slice(0, separator).trim().toLowerCase();
     if (name !== "content-length") continue;
-    const parsed = Number.parseInt(line.slice(separator + 1).trim(), 10);
-    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+    const rawValue = line.slice(separator + 1).trim();
+    if (!/^\d+$/.test(rawValue)) return null;
+    const parsed = Number.parseInt(rawValue, 10);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
   }
   return undefined;
 }

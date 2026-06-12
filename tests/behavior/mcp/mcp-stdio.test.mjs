@@ -1403,6 +1403,23 @@ test("mcp stdio rejects oversized frames", () => {
   }
 });
 
+test("mcp stdio rejects malformed Content-Length headers", () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), "grape-mcp-malformed-frame-"));
+  try {
+    const result = spawnSync(process.execPath, [cliPath, "mcp", "--stdio", "--repo", cwd], {
+      cwd,
+      input: Buffer.from("Content-Length: 2abc\r\n\r\n{}", "utf8")
+    });
+
+    assert.equal(result.status, 0, result.stderr.toString("utf8"));
+    const responses = parseFrames(result.stdout);
+    assert.equal(responses[0].error.code, -32700);
+    assert.match(responses[0].error.message, /invalid Content-Length/);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
 test("mcp grape_get_context rejects unsupported arguments", () => {
   withGitRepo((repoPath) => {
     const responses = runMcp(repoPath, [
