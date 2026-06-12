@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 import type { SourceScope } from "../../shared/index.js";
-import { packageRootForSourceRef } from "../scope/package-root.js";
+import { packageRootForSourceRefWithMetadata } from "../scope/package-root.js";
 import { assertConservativeTrustWording, TRUST_WORDING_DISCLAIMERS } from "../../shared/trust-wording.js";
 import { evaluateDurableClaimPolicy } from "./claim-policy.js";
 
@@ -118,9 +118,10 @@ export function createProjectRuleClaimDraft(input: {
   readonly environment?: string;
   readonly worktreeHash: string;
   readonly rule: ProjectRuleLine;
+  readonly sourceMetadataJson?: string;
 }): ProjectRuleClaimDraft {
   const proofId = projectRuleProofId(input.rule);
-  const packageRoot = packageRootForSourceRef(input.rule.sourceRef);
+  const packageRoot = packageRootForSourceRefWithMetadata(input.rule.sourceRef, input.sourceMetadataJson);
   const scope: ProjectRuleClaimScope = {
     branch: input.branch,
     commit: input.commit,

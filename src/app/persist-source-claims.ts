@@ -5,6 +5,7 @@ import {
   evaluateSourceExcerptClaimGate
 } from "../core/claims/index.js";
 import type { RepositoryArtifactSourceExcerptInput } from "../core/compiler/index.js";
+import { packageRootsBySourceRefFromMetadata } from "../core/scope/index.js";
 import type {
   ClaimStorageRepositories,
   ProofRecord,
@@ -16,6 +17,7 @@ export interface PersistSourceClaimsInput {
   readonly repositories: ClaimStorageRepositories;
   readonly proofRepositories: ProofStorageRepositories;
   readonly sources: readonly SourceRecord[];
+  readonly sourceMetadata?: readonly { readonly sourceRef: string; readonly metadataJson: string | undefined }[];
   readonly sourceExcerpts: readonly RepositoryArtifactSourceExcerptInput[];
   readonly branch: string;
   readonly commit: string;
@@ -33,6 +35,7 @@ export interface PersistSourceClaimsResult {
 
 export function persistSourceExcerptClaims(input: PersistSourceClaimsInput): PersistSourceClaimsResult {
   const sourcesById = new Map(input.sources.map((source) => [source.sourceId, source]));
+  const sourceMetadataByRef = sourceMetadataBySourceRef(input.sourceMetadata ?? []);
   const rejectedCandidates: { candidateId: string; reason: string }[] = [];
   let candidatesInserted = 0;
   let claimsInserted = 0;
@@ -43,7 +46,8 @@ export function persistSourceExcerptClaims(input: PersistSourceClaimsInput): Per
       commit: input.commit,
       environment: input.environment,
       worktreeHash: input.worktreeHash,
-      excerpt
+      excerpt,
+      sourceMetadataJson: sourceMetadataByRef.get(excerpt.sourceRef)
     });
     const proof = input.proofRepositories.proofs.get(excerpt.proofId);
     const source = sourcesById.get(excerpt.sourceId);
@@ -109,4 +113,17 @@ function attachProofToClaim(
 
 function sha256(text: string): string {
   return createHash("sha256").update(text).digest("hex");
+}
+
+function sourceMetadataBySourceRef(
+  metadata: readonly { readonly sourceRef: string; readonly metadataJson: string | undefined }[]
+): ReadonlyMap<string, string> {
+  const packageRoots = packageRootsBySourceRefFromMetadata(metadata);
+  const result = new Map<string, string>();
+  for (const source of metadata) {
+    if (packageRoots.has(source.sourceRef) && source.metadataJson) {
+      result.set(source.sourceRef, source.metadataJson);
+    }
+  }
+  return result;
 }

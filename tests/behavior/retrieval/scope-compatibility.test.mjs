@@ -170,6 +170,35 @@ test("package root helper derives only one explicit workspace root", () => {
   assert.equal(currentPackageRootFromSourceRefs(["src/index.ts"]), undefined);
 });
 
+test("current scope collector derives manifest-backed nested package roots from explicit refs", () => {
+  const collected = collectCurrentScope({
+    repoId: "repo-a",
+    branch: "main",
+    commit: "commit-a",
+    worktreeHash: "worktree-a",
+    dirtyWorktree: false,
+    taskId: "task-a",
+    sessionId: "session-a",
+    sourceRefs: ["components/backend/src/app.py"],
+    sourceMetadata: [{
+      sourceRef: "components/backend/src/app.py",
+      metadataJson: JSON.stringify({
+        packageRoot: "components/backend",
+        packageRootManifestRef: "components/backend/pyproject.toml",
+        packageRootManifestKind: "python_pyproject",
+        packageRootManifestSourceId: "source:pyproject",
+        packageRootManifestHash: "hash-a",
+        packageRootProviderId: "generic_manifest",
+        packageRootProviderCapabilities: ["package_roots"]
+      })
+    }]
+  });
+
+  assert.equal(collected.publicScope.packageRoot, "components/backend");
+  assert.equal(collected.currentClaimScope.packageRoot, "components/backend");
+  assert.deepEqual(collected.warnings, []);
+});
+
 test("current package root rejects package-scoped claims from another package", () => {
   const apiClaim = resolveCurrentClaimScope({
     branch: "main",

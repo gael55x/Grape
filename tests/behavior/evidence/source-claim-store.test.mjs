@@ -345,6 +345,97 @@ test("npm package manifest dependency claims persist with proof-backed package s
   });
 });
 
+test("npm package manifest dependency claims use manifest-backed nested package roots", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "components", "backend"), { recursive: true });
+    writeFileSync(
+      path.join(repoPath, "components", "backend", "package.json"),
+      [
+        "{",
+        "  \"name\": \"backend-fixture\",",
+        "  \"dependencies\": {",
+        "    \"grape-worker\": \"^7.8.9\"",
+        "  }",
+        "}",
+        ""
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "components/backend/package.json"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add nested package manifest fixture"
+    ]);
+
+    withMigratedDatabase((ctx) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database: ctx.database,
+        repositories: ctx.repositories,
+        evidenceRepositories: ctx.evidenceRepositories,
+        indexingRepositories: ctx.indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+      const sources = ctx.evidenceRepositories.sources.listBySnapshot(snapshotResult.snapshotId);
+      persistPackageManifestDependencyClaims({
+        repositories: ctx.claimRepositories,
+        proofRepositories: ctx.proofRepositories,
+        rootPath: repoPath,
+        sources,
+        branch: snapshotResult.snapshot.branch,
+        commit: snapshotResult.snapshot.commit,
+        worktreeHash: snapshotResult.snapshot.worktreeHash,
+        now
+      });
+
+      const nestedClaim = ctx.claimRepositories.claims
+        .list()
+        .find((claim) => claim.subject === "components/backend/package.json#dependencies:grape-worker");
+      assert.ok(nestedClaim);
+      const scope = JSON.parse(nestedClaim.scopeJson);
+      assert.equal(scope.packageRoot, "components/backend");
+      assert.equal(scope.packageRootRef, "components/backend");
+      assert.equal(scope.manifestRef, "components/backend/package.json");
+
+      const nestedActive = resolveLocalCurrentValidClaims({
+        claims: ctx.claimRepositories.claims,
+        claimEdges: ctx.claimRepositories.claimEdges,
+        proofs: ctx.proofRepositories.proofs,
+        sources: ctx.evidenceRepositories.sources,
+        snapshot: snapshotResult.snapshot,
+        packageRoot: "components/backend"
+      });
+      assert.equal(
+        nestedActive.activeClaims.some((claim) =>
+          claim.subject === "components/backend/package.json#dependencies:grape-worker"
+        ),
+        true
+      );
+
+      const apiActive = resolveLocalCurrentValidClaims({
+        claims: ctx.claimRepositories.claims,
+        claimEdges: ctx.claimRepositories.claimEdges,
+        proofs: ctx.proofRepositories.proofs,
+        sources: ctx.evidenceRepositories.sources,
+        snapshot: snapshotResult.snapshot,
+        packageRoot: "packages/api"
+      });
+      assert.equal(
+        apiActive.activeClaims.some((claim) =>
+          claim.subject === "components/backend/package.json#dependencies:grape-worker"
+        ),
+        false
+      );
+    });
+  });
+});
+
 test("package manifest dependency claims require current manifest hash and matching package root", () => {
   withGitRepo((repoPath) => {
     withMigratedDatabase((ctx) => {

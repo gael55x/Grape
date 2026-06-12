@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { packageRootForSourceRef } from "../scope/package-root.js";
+import { packageRootForSourceRefWithMetadata } from "../scope/package-root.js";
 import { assertConservativeTrustWording, TRUST_WORDING_DISCLAIMERS } from "../../shared/trust-wording.js";
 import { evaluateDurableClaimPolicy } from "./claim-policy.js";
 
@@ -94,7 +94,7 @@ export function createSymbolDeclarationClaimDraft(input: {
   readonly symbol: SymbolDeclarationClaimSymbol;
 }): SymbolDeclarationClaimDraft {
   const proofId = symbolDeclarationProofId(input.symbol);
-  const packageRoot = packageRootForSourceRef(input.source.sourceRef);
+  const packageRoot = packageRootForSourceRefWithMetadata(input.source.sourceRef, input.symbol.metadataJson);
   const bodyHash = input.symbol.bodyHash ?? "";
   const scope: SymbolDeclarationClaimScope = {
     branch: input.branch,

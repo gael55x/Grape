@@ -576,6 +576,75 @@ test("cli compile renders package manifest dependency claims without raw manifes
   });
 });
 
+test("cli compile uses manifest-backed nested package roots for current-valid claims", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "components", "backend", "src"), { recursive: true });
+    mkdirSync(path.join(repoPath, "components", "frontend", "src"), { recursive: true });
+    writeFileSync(
+      path.join(repoPath, "components", "backend", "package.json"),
+      [
+        "{",
+        "  \"name\": \"backend-fixture\",",
+        "  \"dependencies\": {",
+        "    \"grape-worker\": \"^7.8.9\"",
+        "  }",
+        "}",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(
+      path.join(repoPath, "components", "backend", "src", "worker.js"),
+      "export function runWorker() { return 'backend'; }\n"
+    );
+    writeFileSync(
+      path.join(repoPath, "components", "frontend", "package.json"),
+      [
+        "{",
+        "  \"name\": \"frontend-fixture\",",
+        "  \"dependencies\": {",
+        "    \"grape-ui\": \"^1.0.0\"",
+        "  }",
+        "}",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(
+      path.join(repoPath, "components", "frontend", "src", "app.js"),
+      "export function runFrontend() { return 'frontend'; }\n"
+    );
+    execGit(repoPath, ["add", "components"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add nested package manifest fixture"
+    ]);
+
+    const output = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Review components/backend/src/worker.js package dependency context",
+      "--session",
+      "nested-manifest-dependency-session"
+    ]);
+    const artifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, output.artifactJsonPath), "utf8"));
+    const currentValidClaims = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "current-valid-claims"
+    );
+
+    assert.equal(output.currentScope.packageRoot, "components/backend");
+    assert.ok(currentValidClaims);
+    assert.match(currentValidClaims.text, /Manifest declares dependency grape-worker\./);
+    assert.match(currentValidClaims.text, /Sources: components\/backend\/package\.json/);
+    assert.doesNotMatch(currentValidClaims.text, /grape-ui/);
+    assert.equal(JSON.stringify(currentValidClaims).includes("^7.8.9"), false);
+    assert.equal(JSON.stringify(artifactJson).includes(repoPath), false);
+  });
+});
+
 test("cli observed runner rejects secret-looking commands before execution", () => {
   withGitRepo((repoPath) => {
     runCliJson(repoPath, ["compile", "--task", "Observe local commands", "--session", "observed-session"]);

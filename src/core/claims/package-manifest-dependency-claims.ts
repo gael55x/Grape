@@ -114,7 +114,7 @@ export function extractPackageManifestDependencyEntries(input: {
   if (!root || !ts.isObjectLiteralExpression(root)) return [];
 
   const packageRootRef = packageRootRefForManifest(input.source.sourceRef);
-  const packageRoot = packageRootForSourceRef(input.source.sourceRef);
+  const packageRoot = packageRootForSourceRef(input.source.sourceRef) ?? packageRootForManifestScope(packageRootRef);
   const entries: PackageManifestDependencyEntry[] = [];
 
   for (const property of root.properties) {
@@ -307,6 +307,10 @@ function sourceKind(source: PackageManifestDependencyClaimSource): string {
 function packageRootRefForManifest(sourceRef: string): string {
   const dirname = path.posix.dirname(sourceRef);
   return dirname === "." ? "." : dirname;
+}
+
+function packageRootForManifestScope(packageRootRef: string): string | undefined {
+  return packageRootRef === "." ? undefined : packageRootRef;
 }
 
 function parseMetadata(metadataJson: string): Record<string, unknown> {

@@ -1,7 +1,10 @@
 import { createHash } from "node:crypto";
 
 import type { ContextScopeShape, EnvironmentScope } from "../../shared/index.js";
-import { currentPackageRootFromSourceRefs, packageRootForSourceRef } from "./package-root.js";
+import {
+  currentPackageRootFromSourceRefs,
+  packageRootsBySourceRefFromMetadata
+} from "./package-root.js";
 import type { CurrentScopeInput } from "./scope-types.js";
 
 export const defaultAllowedFeatureFlags = ["betaCheckout"] as const;
@@ -19,6 +22,7 @@ export interface CollectCurrentScopeInput {
   readonly featureFlags?: Readonly<Record<string, string | boolean>>;
   readonly allowedFeatureFlags?: readonly string[];
   readonly sourceRefs?: readonly string[];
+  readonly sourceMetadata?: readonly { readonly sourceRef: string; readonly metadataJson: string | undefined }[];
 }
 
 export interface PublicCurrentScopeShape extends ContextScopeShape {
@@ -51,7 +55,8 @@ export interface CollectedCurrentScope {
 
 export function collectCurrentScope(input: CollectCurrentScopeInput): CollectedCurrentScope {
   const sourceRefs = [...new Set((input.sourceRefs ?? []).filter((ref) => ref.trim().length > 0))].sort();
-  const packageRoot = currentPackageRootFromSourceRefs(sourceRefs);
+  const packageRootBySourceRef = packageRootsBySourceRefFromMetadata(input.sourceMetadata ?? []);
+  const packageRoot = currentPackageRootFromSourceRefs(sourceRefs, packageRootBySourceRef);
   const serviceRoot = packageRoot;
   const normalizedFeatureFlags = normalizeFeatureFlags(
     input.featureFlags,
@@ -64,7 +69,8 @@ export function collectCurrentScope(input: CollectCurrentScopeInput): CollectedC
   const warnings = currentScopeWarnings({
     environmentScope: input.environmentScope,
     sourceRefs,
-    packageRoot
+    packageRoot,
+    packageRootBySourceRef
   });
   const featureFlagCount = normalizedFeatureFlags?.count ?? 0;
   const featureFlagScopeHash = normalizedFeatureFlags?.scopeHash;
@@ -151,17 +157,26 @@ function currentScopeWarnings(input: {
   readonly environmentScope?: EnvironmentScope;
   readonly sourceRefs: readonly string[];
   readonly packageRoot?: string;
+  readonly packageRootBySourceRef: ReadonlyMap<string, string>;
 }): string[] {
   const warnings: string[] = [];
   if (input.environmentScope === "unknown") warnings.push("current_scope_environment_unknown");
-  if (input.sourceRefs.length > 0 && !input.packageRoot && uniquePackageRoots(input.sourceRefs).length > 1) {
+  if (input.sourceRefs.length > 0 && !input.packageRoot && uniquePackageRoots(
+    input.sourceRefs,
+    input.packageRootBySourceRef
+  ).length > 1) {
     warnings.push("current_scope_package_root_ambiguous");
   }
   return warnings;
 }
 
-function uniquePackageRoots(sourceRefs: readonly string[]): string[] {
-  return [...new Set(sourceRefs.map(packageRootForSourceRef).filter((root): root is string => Boolean(root)))].sort();
+function uniquePackageRoots(
+  sourceRefs: readonly string[],
+  packageRootBySourceRef: ReadonlyMap<string, string>
+): string[] {
+  return [...new Set(sourceRefs.map((sourceRef) =>
+    currentPackageRootFromSourceRefs([sourceRef], packageRootBySourceRef)
+  ).filter((root): root is string => Boolean(root)))].sort();
 }
 
 function safeFeatureFlagName(value: string): boolean {

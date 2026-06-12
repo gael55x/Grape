@@ -10,6 +10,7 @@ import {
 } from "../core/claims/index.js";
 import { assertArtifactTextHasNoSecrets } from "../core/security/index.js";
 import type { RepositoryArtifactSourceExcerptInput } from "../core/compiler/index.js";
+import { packageRootsBySourceRefFromMetadata } from "../core/scope/index.js";
 import type {
   ClaimStorageRepositories,
   ProofRecord,
@@ -21,6 +22,7 @@ export interface PersistProjectRuleClaimsInput {
   readonly repositories: ClaimStorageRepositories;
   readonly proofRepositories: ProofStorageRepositories;
   readonly sources: readonly SourceRecord[];
+  readonly sourceMetadata?: readonly { readonly sourceRef: string; readonly metadataJson: string | undefined }[];
   readonly sourceExcerpts: readonly RepositoryArtifactSourceExcerptInput[];
   readonly branch: string;
   readonly commit: string;
@@ -40,6 +42,7 @@ export interface PersistProjectRuleClaimsResult {
 
 export function persistProjectRuleClaims(input: PersistProjectRuleClaimsInput): PersistProjectRuleClaimsResult {
   const sourcesById = new Map(input.sources.map((source) => [source.sourceId, source]));
+  const sourceMetadataByRef = sourceMetadataBySourceRef(input.sourceMetadata ?? []);
   const rejectedCandidates: { candidateId: string; reason: string }[] = [];
   let rulesSeen = 0;
   let proofsInserted = 0;
@@ -51,15 +54,16 @@ export function persistProjectRuleClaims(input: PersistProjectRuleClaimsInput): 
     for (const rule of parseProjectRuleLines(excerpt)) {
       rulesSeen += 1;
       assertArtifactTextHasNoSecrets(rule.ruleText, "project rule claim");
+      const source = sourcesById.get(rule.sourceId);
       const draft = createProjectRuleClaimDraft({
         branch: input.branch,
         commit: input.commit,
         environment: input.environment,
         worktreeHash: input.worktreeHash,
-        rule
+        rule,
+        sourceMetadataJson: sourceMetadataByRef.get(rule.sourceRef)
       });
       const proof = toProjectRuleProofRecord(rule, input.now);
-      const source = sourcesById.get(rule.sourceId);
       const gate = evaluateProjectRuleClaimGate({ source, proof, rule });
       const rejectionReason = gate.accepted ? undefined : gate.reason;
 
@@ -175,4 +179,17 @@ function assertField(label: string, existing: string | undefined, next: string |
 
 function sha256(text: string): string {
   return createHash("sha256").update(text).digest("hex");
+}
+
+function sourceMetadataBySourceRef(
+  metadata: readonly { readonly sourceRef: string; readonly metadataJson: string | undefined }[]
+): ReadonlyMap<string, string> {
+  const packageRoots = packageRootsBySourceRefFromMetadata(metadata);
+  const result = new Map<string, string>();
+  for (const source of metadata) {
+    if (packageRoots.has(source.sourceRef) && source.metadataJson) {
+      result.set(source.sourceRef, source.metadataJson);
+    }
+  }
+  return result;
 }

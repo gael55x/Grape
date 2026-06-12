@@ -113,6 +113,10 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
       const sources = evidenceRepositories.sources.listBySnapshot(snapshotResult.snapshotId);
       const symbolNodes = indexingRepositories.symbolNodes.listBySnapshot(snapshotResult.snapshotId);
       const symbolEdges = indexingRepositories.symbolEdges.listBySnapshot(snapshotResult.snapshotId);
+      const sourceIndexMetadata = symbolNodes.map((node) => ({
+        sourceRef: node.path,
+        metadataJson: node.metadataJson
+      }));
       const taskRetrieval = resolveLocalTaskRetrieval({
         task: input.task,
         snapshotId: snapshotResult.snapshotId,
@@ -139,7 +143,8 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sourceRefs: [
           ...taskRetrieval.explicitSourceRefs,
           ...taskRetrieval.testSourceRefs
-        ]
+        ],
+        sourceMetadata: sourceIndexMetadata
       });
       const proofs = prepareLocalCompileProofs({
         database,
@@ -153,6 +158,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         repositories: claimRepositories,
         proofRepositories,
         sources,
+        sourceMetadata: sourceIndexMetadata,
         sourceExcerpts: proofs.sourceExcerpts,
         branch: snapshotResult.snapshot.branch,
         commit: snapshotResult.snapshot.commit,
@@ -164,6 +170,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         repositories: claimRepositories,
         proofRepositories,
         sources,
+        sourceMetadata: sourceIndexMetadata,
         sourceExcerpts: proofs.sourceExcerpts,
         branch: snapshotResult.snapshot.branch,
         commit: snapshotResult.snapshot.commit,

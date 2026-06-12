@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 import type { SourceType } from "../../shared/index.js";
-import { packageRootForSourceRef } from "../scope/package-root.js";
+import { packageRootForSourceRefWithMetadata } from "../scope/package-root.js";
 import { assertConservativeTrustWording, TRUST_WORDING_DISCLAIMERS } from "../../shared/trust-wording.js";
 import { evaluateDurableClaimPolicy } from "./claim-policy.js";
 
@@ -71,9 +71,10 @@ export function createSourceExcerptClaimDraft(input: {
   readonly environment?: string;
   readonly worktreeHash: string;
   readonly excerpt: SourceExcerptClaimExcerpt;
+  readonly sourceMetadataJson?: string;
 }): SourceExcerptClaimDraft {
   const claimId = sourceExcerptClaimId(input.excerpt.proofId);
-  const packageRoot = packageRootForSourceRef(input.excerpt.sourceRef);
+  const packageRoot = packageRootForSourceRefWithMetadata(input.excerpt.sourceRef, input.sourceMetadataJson);
   const scope: SourceExcerptClaimScope = {
     branch: input.branch,
     commit: input.commit,
