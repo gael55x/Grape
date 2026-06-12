@@ -41,11 +41,11 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - Package dry-run and install smoke are part of the local gate.
 - `npm run beta:check` runs the full local beta-readiness gate.
 - Local `grape run` / `grape test` can promote narrow `grape_observed_run_result` proofs/claims from trusted observed run metadata.
-- The language-provider boundary is documented: non-TS/JS files such as Kotlin, Java, Python, Go, and Rust must get safe exact/path/lexical fallback, while stronger graph extraction requires providers and fixtures.
+- The language-provider boundary is documented: common non-TS/JS source, shell, config, and explicit Markdown paths get safe exact/path/lexical fallback, while stronger graph extraction requires providers and fixtures.
 
 ## Now
 
-- Keep the seamless beta path explicit: install Grape, initialize once, keep using the coding agent normally, and let MCP `grape_get_context` drive MCP session tracking on each agent turn.
+- Keep the beta path explicit: install Grape, initialize once, keep using the coding agent normally, and let MCP `grape_get_context` drive MCP session tracking on each agent turn.
 - Prove the published alpha.3 workflow across clean consumer repos with real MCP clients, not only scripted smoke.
 - Keep release mutations such as version bumps, tags, GitHub releases, and npm dist-tag changes approval-gated.
 
@@ -58,8 +58,8 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - Better TypeScript compiler retrieval and exact-span ranking.
 - Stronger trust/proof depth beyond the narrow observed-run result claim.
 - Broader durable claim types.
-- Broader fixtures and labeled benchmark expectations.
-- Provider capability diagnostics plus polyglot and monorepo fixtures.
+- Broader benchmark fixtures and labeled benchmark expectations.
+- Provider capability diagnostics plus deeper polyglot and monorepo scenarios.
 - Better dirty-worktree, branch, and session handling for normal agent workflows.
 - Parsed durable project rules and richer conflict creation/resolution.
 

@@ -146,9 +146,7 @@ Before Grape claims broad polyglot or monorepo retrieval, it needs:
 - capability metadata surfaced in artifacts or diagnostics
 - package/workspace boundary metadata consumed by retrieval, current-valid scope, and invalidation policy
 - per-package/per-language retrieval caps beyond the current explicit-path guard
-- checked-in polyglot fixture coverage for safe lexical/path fallback
-- checked-in monorepo fixture coverage for explicit package-path scoping
-- tests that prove unsupported languages still produce safe lexical/path context and explicit warnings
+- benchmark baselines for polyglot and monorepo scenarios, not only behavior fixtures
 - tests that prove package-local manifest changes do not over-invalidate unrelated package context when dependency refs are scoped
 
 This is a beta hardening path, not a request to build a universal parser in V1.

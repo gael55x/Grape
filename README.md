@@ -88,7 +88,7 @@ Search, embeddings, repo maps, and graph retrieval can find related information.
 
 The goal is not just smaller prompts. The goal is trustworthy incremental context: token savings without hiding uncertainty, stale evidence, or safety-critical constraints.
 
-Internally, Grape context is graph-shaped: source refs, symbols, package manifests, proofs, dependency refs, pack items, omissions, restore handles, and invalidations are connected. Language-specific parsers only add optional orientation edges. TypeScript/JavaScript graph extraction is the strongest current signal; Kotlin, Java, Python, Go, Rust, and other allowed text files must still be handled safely through exact/path/lexical fallback until providers and fixtures prove stronger graph coverage.
+Internally, Grape context is graph-shaped: source refs, symbols, package manifests, proofs, dependency refs, pack items, omissions, restore handles, and invalidations are connected. Language-specific parsers only add optional orientation edges. TypeScript/JavaScript graph extraction is the strongest current signal. Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, shell, JSON, YAML, TOML, Markdown, and other allowed text files must still be handled safely through exact source, path, and lexical fallback until providers prove stronger graph coverage.
 
 ## What Grape Does
 
@@ -153,7 +153,7 @@ Implemented in the alpha transport slice:
 - omitted-context restore through CLI and MCP
 - exact source/rule proof rows, narrow current-valid claims, parsed project rules, and conservative conflict inspection
 - deterministic TypeScript/JavaScript AST graph indexing for common imports, exports, symbols, calls, and related test hints
-- safe exact/path/lexical fallback for other allowed text files, with broad language-aware graph providers still pending
+- safe exact/path/lexical fallback for Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, shell, JSON, YAML, TOML, and explicit Markdown paths, with broad language-aware graph providers still pending
 - Grape-observed `grape run` / `grape test` evidence and narrow observed-run result claims
 - local checks for docs, architecture boundaries, storage, typechecking, package contents, install smoke, behavior tests, benchmarks, and alpha e2e smoke
 
@@ -162,7 +162,7 @@ Still alpha / not a full beta promise:
 - this is a local context transport slice, not a full memory platform
 - stable task/session identity is required for reliable second-turn omission
 - broader runtime truth from Grape-observed command/test runs is not promoted beyond the narrow observed-run result claim
-- retrieval has AST-backed TypeScript/JavaScript graph expansion, while Kotlin/Java/Python/etc. currently rely on safe fallback unless a provider and fixture prove stronger support
+- retrieval has AST-backed TypeScript/JavaScript graph expansion, while Python/Java/Kotlin/Go/Rust/C#/Ruby/PHP/Swift/C/C++/shell/config/docs paths currently rely on safe fallback unless a provider and fixture prove stronger support
 - no full semantic ranking, embeddings, complete call graphs, broad language parsing, or broad polyglot/monorepo graph claim yet
 - broader durable claim types, nested rule scope resolution, and automatic conflict resolution remain outside the beta transport promise
 - real clean-repo MCP client trials beyond scripted smoke before beta sign-off
