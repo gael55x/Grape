@@ -850,6 +850,72 @@ test("task source retrieval spreads lower-priority refs using indexed nested pac
   assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:2"));
 });
 
+test("task source retrieval spreads fallback language refs before global cap", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix refund flow",
+    maxSelectedSources: 3,
+    sources: [
+      source("py-a", "src/a.py"),
+      source("py-b", "src/b.py"),
+      source("go-a", "src/c.go"),
+      source("go-b", "src/d.go")
+    ],
+    symbols: [
+      symbol("py-a", "src/a.py", "src/a.py", "module", 1, 1, undefined, "python"),
+      symbol("py-b", "src/b.py", "src/b.py", "module", 1, 1, undefined, "python"),
+      symbol("go-a", "src/c.go", "src/c.go", "module", 1, 1, undefined, "go"),
+      symbol("go-b", "src/d.go", "src/d.go", "module", 1, 1, undefined, "go")
+    ],
+    lexicalMatches: [
+      { sourceId: "py-a", sourceRef: "src/a.py", matchedTerm: "refund" },
+      { sourceId: "py-b", sourceRef: "src/b.py", matchedTerm: "refund" },
+      { sourceId: "go-a", sourceRef: "src/c.go", matchedTerm: "refund" },
+      { sourceId: "go-b", sourceRef: "src/d.go", matchedTerm: "refund" }
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "src/a.py",
+    "src/c.go",
+    "src/b.py"
+  ]);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+});
+
+test("task source retrieval spreads fallback languages within an indexed package root", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix refund flow",
+    maxSelectedSources: 3,
+    sources: [
+      source("py-a", "components/billing/python/a.py"),
+      source("py-b", "components/billing/python/b.py"),
+      source("go-a", "components/billing/go/c.go"),
+      source("go-b", "components/billing/go/d.go")
+    ],
+    symbols: [
+      symbol("py-a", "components/billing/python/a.py", "a.py", "module", 1, 1, "components/billing", "python"),
+      symbol("py-b", "components/billing/python/b.py", "b.py", "module", 1, 1, "components/billing", "python"),
+      symbol("go-a", "components/billing/go/c.go", "c.go", "module", 1, 1, "components/billing", "go"),
+      symbol("go-b", "components/billing/go/d.go", "d.go", "module", 1, 1, "components/billing", "go")
+    ],
+    lexicalMatches: [
+      { sourceId: "py-a", sourceRef: "components/billing/python/a.py", matchedTerm: "refund" },
+      { sourceId: "py-b", sourceRef: "components/billing/python/b.py", matchedTerm: "refund" },
+      { sourceId: "go-a", sourceRef: "components/billing/go/c.go", matchedTerm: "refund" },
+      { sourceId: "go-b", sourceRef: "components/billing/go/d.go", matchedTerm: "refund" }
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "components/billing/go/c.go",
+    "components/billing/python/a.py",
+    "components/billing/go/d.go"
+  ]);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+});
+
 test("task source retrieval no-candidate tie-break uses stable string order not seed order", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix",
@@ -939,7 +1005,7 @@ test("task source retrieval rankedSourceRefs equals selectedSourceRefs (beta con
   assert.ok(result.selectedSourceRefs.length > 0);
 });
 
-function symbol(sourceId, path, name, symbolKind = "function", startLine, endLine, packageRoot) {
+function symbol(sourceId, path, name, symbolKind = "function", startLine, endLine, packageRoot, language) {
   const resolvedStartLine = startLine ?? (name === "calculateDiscount" ? 42 : 3);
   const resolvedEndLine = endLine ?? (name === "calculateDiscount" ? 44 : 3);
   return {
@@ -949,6 +1015,7 @@ function symbol(sourceId, path, name, symbolKind = "function", startLine, endLin
     symbolKind,
     startLine: resolvedStartLine,
     endLine: resolvedEndLine,
-    packageRoot
+    packageRoot,
+    language
   };
 }

@@ -20,6 +20,7 @@ export interface SelectTieredSourceRefsInput {
   readonly semanticCandidates: readonly TaskSemanticCandidate[];
   readonly reservedSlots: ReservedSeedSlots;
   readonly packageRootBySourceRef?: ReadonlyMap<string, string>;
+  readonly languageBySourceRef?: ReadonlyMap<string, string>;
 }
 
 export interface TieredSourceSelectionResult {
@@ -33,22 +34,28 @@ export function selectTieredSourceRefs(input: SelectTieredSourceRefsInput): Tier
     return { selectedSourceRefs: [], omittedWarnings: [] };
   }
 
+  const packageRootBySourceRef = input.packageRootBySourceRef ?? new Map();
+  const languageBySourceRef = input.languageBySourceRef ?? new Map();
   const tiers = partitionByTier(input.selectedReasons);
-  const rankedTier1a = spreadRankedPackageRefs(
+  const rankedTier1a = spreadRankedContextRefs(
     rankTierRefs(tiers.tier1a, input.semanticCandidates),
-    input.packageRootBySourceRef ?? new Map()
+    packageRootBySourceRef,
+    languageBySourceRef
   );
-  const rankedTier1b = spreadRankedPackageRefs(
+  const rankedTier1b = spreadRankedContextRefs(
     rankTierRefs(tiers.tier1b, input.semanticCandidates),
-    input.packageRootBySourceRef ?? new Map()
+    packageRootBySourceRef,
+    languageBySourceRef
   );
-  const rankedTier2 = spreadRankedPackageRefs(
+  const rankedTier2 = spreadRankedContextRefs(
     rankTierRefs(tiers.tier2, input.semanticCandidates),
-    input.packageRootBySourceRef ?? new Map()
+    packageRootBySourceRef,
+    languageBySourceRef
   );
-  const rankedTier3 = spreadRankedPackageRefs(
+  const rankedTier3 = spreadRankedContextRefs(
     rankTierRefs(tiers.tier3, input.semanticCandidates),
-    input.packageRootBySourceRef ?? new Map()
+    packageRootBySourceRef,
+    languageBySourceRef
   );
 
   const selected: string[] = [];
@@ -83,7 +90,7 @@ export function selectTieredSourceRefs(input: SelectTieredSourceRefsInput): Tier
     allCandidateRefs,
     selectedSet,
     input.selectedReasons,
-    input.packageRootBySourceRef ?? new Map()
+    packageRootBySourceRef
   );
 
   return {
@@ -172,15 +179,16 @@ function takeFromTier(
   }
 }
 
-interface RankedPackageGroup {
+interface RankedContextGroup {
   readonly key: string;
   readonly firstIndex: number;
   readonly refs: readonly string[];
 }
 
-function spreadRankedPackageRefs(
+function spreadRankedContextRefs(
   rankedRefs: readonly string[],
-  packageRootBySourceRef: ReadonlyMap<string, string>
+  packageRootBySourceRef: ReadonlyMap<string, string>,
+  languageBySourceRef: ReadonlyMap<string, string>
 ): readonly string[] {
   if (rankedRefs.length <= 1) return [...rankedRefs];
   const packageRoots = new Set(
@@ -188,7 +196,7 @@ function spreadRankedPackageRefs(
       .map((sourceRef) => packageRootForRankedRef(sourceRef, packageRootBySourceRef))
       .filter((root): root is string => Boolean(root))
   );
-  if (packageRoots.size < 2) return [...rankedRefs];
+  if (packageRoots.size < 2) return spreadRankedLanguageRefs(rankedRefs, languageBySourceRef);
 
   const groups = new Map<string, { firstIndex: number; refs: string[] }>();
   for (const [index, sourceRef] of rankedRefs.entries()) {
@@ -198,16 +206,49 @@ function spreadRankedPackageRefs(
     groups.set(key, group);
   }
 
-  const orderedGroups: readonly RankedPackageGroup[] = [...groups.entries()]
-    .map(([key, group]) => ({ key, firstIndex: group.firstIndex, refs: group.refs }))
-    .sort((left, right) => {
-      if (left.firstIndex !== right.firstIndex) return left.firstIndex - right.firstIndex;
-      return compareStableStrings(left.key, right.key);
-    });
+  return spreadRankedGroups(
+    [...groups.entries()].map(([key, group]) => ({
+      key,
+      firstIndex: group.firstIndex,
+      refs: spreadRankedLanguageRefs(group.refs, languageBySourceRef)
+    }))
+  );
+}
 
+function spreadRankedLanguageRefs(
+  rankedRefs: readonly string[],
+  languageBySourceRef: ReadonlyMap<string, string>
+): readonly string[] {
+  if (rankedRefs.length <= 1) return [...rankedRefs];
+  const languages = new Set(
+    rankedRefs
+      .map((sourceRef) => languageBySourceRef.get(sourceRef))
+      .filter((language): language is string => Boolean(language))
+  );
+  if (languages.size < 2) return [...rankedRefs];
+
+  const groups = new Map<string, { firstIndex: number; refs: string[] }>();
+  for (const [index, sourceRef] of rankedRefs.entries()) {
+    const key = languageBySourceRef.get(sourceRef) ?? "";
+    const group = groups.get(key) ?? { firstIndex: index, refs: [] };
+    group.refs.push(sourceRef);
+    groups.set(key, group);
+  }
+
+  return spreadRankedGroups(
+    [...groups.entries()].map(([key, group]) => ({ key, firstIndex: group.firstIndex, refs: group.refs }))
+  );
+}
+
+function spreadRankedGroups(groups: readonly RankedContextGroup[]): readonly string[] {
+  const orderedGroups: readonly RankedContextGroup[] = [...groups].sort((left, right) => {
+    if (left.firstIndex !== right.firstIndex) return left.firstIndex - right.firstIndex;
+    return compareStableStrings(left.key, right.key);
+  });
+  const totalRefs = orderedGroups.reduce((sum, group) => sum + group.refs.length, 0);
   const spread: string[] = [];
   let offset = 0;
-  while (spread.length < rankedRefs.length) {
+  while (spread.length < totalRefs) {
     let added = false;
     for (const group of orderedGroups) {
       const sourceRef = group.refs[offset];

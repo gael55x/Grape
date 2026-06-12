@@ -27,6 +27,7 @@ export interface TaskRetrievalSymbol {
   readonly startLine?: number;
   readonly endLine?: number;
   readonly packageRoot?: string;
+  readonly language?: string;
 }
 
 export interface TaskRetrievalLexicalMatch {
@@ -186,6 +187,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   appendMissingSeedOmittedWarnings(warnings, missingSeedWarnings);
 
   const packageRootBySourceRef = packageRootsBySourceRef(input.symbols);
+  const languageBySourceRef = languagesBySourceRef(input.symbols);
   const scopedCandidate = scopedCandidatePredicate(explicitPathRefs, packageRootBySourceRef);
   const normalizedTerms = new Set(queryTerms);
   const seedSymbolTerms = new Set(
@@ -244,7 +246,8 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     maxSelectedSources,
     semanticCandidates: semanticCandidatesAll,
     reservedSlots,
-    packageRootBySourceRef
+    packageRootBySourceRef,
+    languageBySourceRef
   });
   const selectedSourceRefs = tieredSelection.selectedSourceRefs;
   const rankedSourceRefs = selectedSourceRefs;
@@ -454,6 +457,23 @@ function packageRootsBySourceRef(symbols: readonly TaskRetrievalSymbol[]): Reado
     if (!roots.has(sourceRef)) roots.set(sourceRef, packageRoot);
   }
   return roots;
+}
+
+function languagesBySourceRef(symbols: readonly TaskRetrievalSymbol[]): ReadonlyMap<string, string> {
+  const languages = new Map<string, string>();
+  for (const symbol of symbols) {
+    const sourceRef = normalizeSeedFile(symbol.path);
+    const language = normalizeLanguage(symbol.language);
+    if (!sourceRef || !language) continue;
+    if (!languages.has(sourceRef)) languages.set(sourceRef, language);
+  }
+  return languages;
+}
+
+function normalizeLanguage(language: string | undefined): string | undefined {
+  const normalized = language?.trim().toLowerCase();
+  if (!normalized || /[\0\r\n\t]/.test(normalized)) return undefined;
+  return normalized;
 }
 
 function normalizePackageRoot(packageRoot: string | undefined): string | undefined {

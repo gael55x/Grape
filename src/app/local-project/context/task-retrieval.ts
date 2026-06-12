@@ -47,7 +47,8 @@ export function resolveLocalTaskRetrieval(
       symbolKind: node.symbolKind,
       startLine: node.startLine,
       endLine: node.endLine,
-      packageRoot: packageRootFromSymbolMetadata(node.metadataJson)
+      packageRoot: packageRootFromSymbolMetadata(node.metadataJson),
+      language: node.language
     })),
     lexicalMatches,
     relationships: importRelationships(input.symbolNodes, input.symbolEdges),
