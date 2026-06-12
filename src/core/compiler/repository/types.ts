@@ -48,6 +48,7 @@ export interface RepositoryArtifactSymbolNodeInput {
   readonly bodyHash?: string;
   readonly signatureHash?: string;
   readonly confidence: "high" | "medium" | "low";
+  readonly metadataJson?: string;
 }
 
 export interface RepositoryArtifactSymbolEdgeInput {

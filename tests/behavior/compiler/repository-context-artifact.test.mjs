@@ -324,6 +324,82 @@ test("repository artifact compiler dependency-backs selected package context wit
   });
 });
 
+test("repository artifact compiler uses indexed package-root metadata for nested manifest context", () => {
+  withGitRepo((repoPath) => {
+    mkdirSync(path.join(repoPath, "components", "backend", "src"), { recursive: true });
+    writeFileSync(
+      path.join(repoPath, "components", "backend", "pyproject.toml"),
+      [
+        "[project]",
+        "name = \"backend-fixture\"",
+        "dependencies = [\"fastapi\"]",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(
+      path.join(repoPath, "components", "backend", "src", "service.py"),
+      [
+        "def run_backend_service():",
+        "    return \"backend\"",
+        ""
+      ].join("\n")
+    );
+    execGit(repoPath, ["add", "components"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add nested package context fixture"
+    ]);
+
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+      const taskRetrieval = {
+        selectedSourceRefs: ["components/backend/src/service.py"],
+        rankedSourceRefs: ["components/backend/src/service.py"],
+        semanticCandidates: [],
+        explicitSourceRefs: ["components/backend/src/service.py"],
+        testSourceRefs: [],
+        relatedTestSourceRefs: [],
+        relatedTestRelationships: [],
+        graphSourceRefs: [],
+        symbolSourceRefs: [],
+        lexicalSourceRefs: [],
+        queryTerms: ["backend"],
+        warnings: []
+      };
+
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
+        taskRetrieval
+      });
+      const pyprojectDependency = artifact.dependencyManifest.dependencies.find(
+        (dependency) => dependency.ref === "components/backend/pyproject.toml"
+      );
+      const exactEvidence = artifact.sections.find((section) => section.id === "exact-source-evidence");
+      const taskInputs = artifact.sections.find((section) => section.id === "task-retrieval");
+
+      assert.equal(artifact.input.packageRoot, undefined);
+      assert.equal(pyprojectDependency?.kind, "config");
+      assert.equal(pyprojectDependency?.scope.packageRoot, "components/backend");
+      assert.equal(pyprojectDependency?.scope.packageContextSource, true);
+      assert.ok(exactEvidence?.dependencyRefs.includes(pyprojectDependency.id));
+      assert.ok(taskInputs?.dependencyRefs.includes(pyprojectDependency.id));
+    });
+  });
+});
+
 test("repository artifact compiler maps repository output to the V1 ContextArtifact shape", () => {
   withGitRepo((repoPath) => {
     withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {

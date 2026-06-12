@@ -50,20 +50,16 @@ export function packageContextDependencyRefsForSourceRefs(
   sourceRefs: readonly string[],
   dependencies: readonly InMemoryContextDependencyShape[]
 ): string[] {
-  const packageRoots = new Set(
-    sourceRefs
-      .map(packageRootForSourceRef)
-      .filter((packageRoot): packageRoot is string => Boolean(packageRoot))
-  );
-  if (packageRoots.size === 0) return [];
-
   return [
     ...new Set(
       dependencies
         .filter((dependency) => dependency.scope[packageContextSourceScopeKey] === true)
         .filter((dependency) => {
           const packageRoot = dependency.scope.packageRoot;
-          return typeof packageRoot === "string" && packageRoots.has(packageRoot);
+          return (
+            typeof packageRoot === "string" &&
+            sourceRefs.some((sourceRef) => sourceRefIsInPackageRoot(sourceRef, packageRoot))
+          );
         })
         .map((dependency) => dependency.id)
     )
@@ -81,7 +77,32 @@ function knownPackageContextRoots(input: CompileRepositoryContextArtifactInput):
   ]);
   if (seedPackageRoot) roots.add(seedPackageRoot);
 
+  for (const packageRoot of indexedPackageRootsForSourceRefs(input, input.taskRetrieval?.selectedSourceRefs ?? [])) {
+    roots.add(packageRoot);
+  }
+
   return [...roots].filter((root) => root !== ".").sort((left, right) => left.localeCompare(right));
+}
+
+function indexedPackageRootsForSourceRefs(
+  input: CompileRepositoryContextArtifactInput,
+  sourceRefs: readonly string[]
+): readonly string[] {
+  const selectedRefs = normalizedSourceRefs(sourceRefs);
+  if (selectedRefs.size === 0) return [];
+
+  const roots = new Set<string>();
+  for (const node of input.symbolNodes) {
+    const normalizedNodePath = normalizeSourceRef(node.path);
+    if (!normalizedNodePath || !selectedRefs.has(normalizedNodePath)) continue;
+    const metadata = parseObjectJson(node.metadataJson);
+    const packageRoot = stringField(metadata, "packageRoot") ?? stringField(metadata, "manifestPackageRoot");
+    if (!packageRoot || packageRoot === ".") continue;
+    if (![...selectedRefs].some((sourceRef) => sourceRefIsInPackageRoot(sourceRef, packageRoot))) continue;
+    roots.add(packageRoot);
+  }
+
+  return [...roots].sort((left, right) => left.localeCompare(right));
 }
 
 function currentPackageRootFromSourceRefs(sourceRefs: readonly string[]): string | undefined {
@@ -114,6 +135,13 @@ function isPackageContextSource(source: RepositoryArtifactSourceInput, packageRo
   return source.sourceType === "config_file" && packageManifestBasenames.has(basename(normalized));
 }
 
+function sourceRefIsInPackageRoot(sourceRef: string, packageRoot: string): boolean {
+  const normalizedSourceRef = normalizeSourceRef(sourceRef);
+  const normalizedPackageRoot = normalizeSourceRef(packageRoot);
+  if (!normalizedSourceRef || !normalizedPackageRoot) return false;
+  return normalizedSourceRef === normalizedPackageRoot || normalizedSourceRef.startsWith(`${normalizedPackageRoot}/`);
+}
+
 function normalizeSourceRef(sourceRef: string): string | undefined {
   const normalized = sourceRef.replace(/\\/g, "/").replace(/^\.\/+/, "");
   if (
@@ -130,6 +158,15 @@ function normalizeSourceRef(sourceRef: string): string | undefined {
   return normalized;
 }
 
+function normalizedSourceRefs(sourceRefs: readonly string[]): Set<string> {
+  const normalizedRefs = new Set<string>();
+  for (const sourceRef of sourceRefs) {
+    const normalized = normalizeSourceRef(sourceRef);
+    if (normalized) normalizedRefs.add(normalized);
+  }
+  return normalizedRefs;
+}
+
 function basename(sourceRef: string): string {
   const index = sourceRef.lastIndexOf("/");
   return (index === -1 ? sourceRef : sourceRef.slice(index + 1)).toLowerCase();
@@ -137,4 +174,22 @@ function basename(sourceRef: string): string {
 
 function isWorkspaceRootDir(value: string): boolean {
   return value === "packages" || value === "apps" || value === "services" || value === "libs";
+}
+
+function parseObjectJson(value: string | undefined): Record<string, unknown> | undefined {
+  if (!value) return undefined;
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function stringField(metadata: Record<string, unknown> | undefined, key: string): string | undefined {
+  const value = metadata?.[key];
+  if (typeof value !== "string") return undefined;
+  return normalizeSourceRef(value);
 }
