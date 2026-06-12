@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 
@@ -9,13 +9,13 @@ assert(packageJson.private !== true, "package.json must not be private for the d
 assert(packageJson.bin?.grape === "dist/cli/index.js", "package.json bin.grape must point at dist/cli/index.js");
 assert(packageJson.engines?.node === ">=22.13.0", "package.json must keep the documented Node runtime floor");
 
+const migrationFiles = readdirSync(path.join(root, "src", "core", "storage", "migrations"))
+  .filter((file) => /^\d{4}_.+\.sql$/.test(file))
+  .sort();
+
 const requiredFiles = [
   "dist/cli/index.js",
-  "dist/core/storage/migrations/0001_initial_storage.sql",
-  "dist/core/storage/migrations/0002_indexing_foundation.sql",
-  "dist/core/storage/migrations/0003_fts_entries.sql",
-  "dist/core/storage/migrations/0004_compression_cache.sql",
-  "dist/core/storage/migrations/0005_context_performance_indexes.sql"
+  ...migrationFiles.map((file) => `dist/core/storage/migrations/${file}`)
 ];
 
 const forbiddenStaleBuildFiles = [
