@@ -19,6 +19,7 @@ export interface SelectTieredSourceRefsInput {
   readonly maxSelectedSources: number;
   readonly semanticCandidates: readonly TaskSemanticCandidate[];
   readonly reservedSlots: ReservedSeedSlots;
+  readonly packageRootBySourceRef?: ReadonlyMap<string, string>;
 }
 
 export interface TieredSourceSelectionResult {
@@ -36,7 +37,10 @@ export function selectTieredSourceRefs(input: SelectTieredSourceRefsInput): Tier
   const rankedTier1a = rankTierRefs(tiers.tier1a, input.semanticCandidates);
   const rankedTier1b = rankTierRefs(tiers.tier1b, input.semanticCandidates);
   const rankedTier2 = rankTierRefs(tiers.tier2, input.semanticCandidates);
-  const rankedTier3 = spreadRankedPackageRefs(rankTierRefs(tiers.tier3, input.semanticCandidates));
+  const rankedTier3 = spreadRankedPackageRefs(
+    rankTierRefs(tiers.tier3, input.semanticCandidates),
+    input.packageRootBySourceRef ?? new Map()
+  );
 
   const selected: string[] = [];
   const selectedSet = new Set<string>();
@@ -160,18 +164,21 @@ interface RankedPackageGroup {
   readonly refs: readonly string[];
 }
 
-function spreadRankedPackageRefs(rankedRefs: readonly string[]): readonly string[] {
+function spreadRankedPackageRefs(
+  rankedRefs: readonly string[],
+  packageRootBySourceRef: ReadonlyMap<string, string>
+): readonly string[] {
   if (rankedRefs.length <= 1) return [...rankedRefs];
   const packageRoots = new Set(
     rankedRefs
-      .map(packageRootForSourceRef)
+      .map((sourceRef) => packageRootForRankedRef(sourceRef, packageRootBySourceRef))
       .filter((root): root is string => Boolean(root))
   );
   if (packageRoots.size < 2) return [...rankedRefs];
 
   const groups = new Map<string, { firstIndex: number; refs: string[] }>();
   for (const [index, sourceRef] of rankedRefs.entries()) {
-    const key = packageRootForSourceRef(sourceRef) ?? "";
+    const key = packageRootForRankedRef(sourceRef, packageRootBySourceRef) ?? "";
     const group = groups.get(key) ?? { firstIndex: index, refs: [] };
     group.refs.push(sourceRef);
     groups.set(key, group);
@@ -199,6 +206,13 @@ function spreadRankedPackageRefs(rankedRefs: readonly string[]): readonly string
   }
 
   return spread;
+}
+
+function packageRootForRankedRef(
+  sourceRef: string,
+  packageRootBySourceRef: ReadonlyMap<string, string>
+): string | undefined {
+  return packageRootForSourceRef(sourceRef) ?? packageRootBySourceRef.get(sourceRef);
 }
 
 function remainingSlots(selected: readonly string[], maxSelectedSources: number): number {

@@ -46,7 +46,8 @@ export function resolveLocalTaskRetrieval(
       name: node.name,
       symbolKind: node.symbolKind,
       startLine: node.startLine,
-      endLine: node.endLine
+      endLine: node.endLine,
+      packageRoot: packageRootFromSymbolMetadata(node.metadataJson)
     })),
     lexicalMatches,
     relationships: importRelationships(input.symbolNodes, input.symbolEdges),
@@ -82,6 +83,29 @@ function importRelationships(
   }
 
   return relationships;
+}
+
+function packageRootFromSymbolMetadata(metadataJson: string | undefined): string | undefined {
+  const metadata = parseObjectJson(metadataJson);
+  const packageRoot = stringField(metadata, "packageRoot") ?? stringField(metadata, "manifestPackageRoot");
+  return packageRoot && packageRoot !== "." ? packageRoot : undefined;
+}
+
+function parseObjectJson(value: string | undefined): Record<string, unknown> | undefined {
+  if (!value) return undefined;
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function stringField(metadata: Record<string, unknown> | undefined, key: string): string | undefined {
+  const value = metadata?.[key];
+  return typeof value === "string" ? value : undefined;
 }
 
 function searchLexicalTerm(

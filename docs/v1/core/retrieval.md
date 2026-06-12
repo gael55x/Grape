@@ -75,7 +75,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 
 - Explicit seed files receive Tier 1A priority when they exist in the current snapshot, but may still be omitted when they exceed the source cap after within-tier ranking.
 - Source file paths mentioned directly in the task are treated as explicit source anchors when they match current snapshot files.
-- When a task or seed names exact source refs, broad lexical expansion stays on those refs unless the refs identify one common workspace root. If refs identify a common workspace root under `packages/<name>/`, `apps/<name>/`, `services/<name>/`, or `libs/<name>/`, symbol and lexical expansion can stay inside that package before global caps apply. Direct graph relationships and explicit seed symbol or test-name matches can still add sources.
+- When a task or seed names exact source refs, broad lexical expansion stays on those refs unless the refs identify one common workspace root or indexed package-root metadata names one nested package root. If refs identify a common workspace root under `packages/<name>/`, `apps/<name>/`, `services/<name>/`, or `libs/<name>/`, or a selected ref carries manifest-derived package-root metadata, symbol and lexical expansion can stay inside that package before global caps apply. Direct graph relationships and explicit seed symbol or test-name matches can still add sources.
 - Path-like test seeds may select matching test files as exact source context.
 - Symbol matches may select source files and line anchors for exact excerpt windows. For TS/JS, symbols come from AST extraction. For common fallback source languages, symbols come from conservative declaration-line detection and remain best-effort anchors only.
 - Graph expansion may select directly related source files through supported import and call edges.
@@ -108,12 +108,12 @@ The current TypeScript/JavaScript signal includes function declarations, class d
 
 Current implementation can fail or become inefficient in these cases:
 
-- nested `package.json`, `pyproject.toml`, `go.mod`, or `Cargo.toml` files can dependency-back selected package context through index metadata, but they do not create full workspace budgets, current-valid claim scope, or dependency closure
+- nested `package.json`, `pyproject.toml`, `go.mod`, or `Cargo.toml` files can scope selected source retrieval and dependency-back selected package context through index metadata, but they do not create full workspace budgets, current-valid claim scope, or dependency closure
 - unsupported language files receive lexical/path fallback, and common fallback source languages can receive conservative declaration anchors, but non-TS/JS files still do not receive language-aware imports or test relationships
 - Python, Java, Kotlin, Go, Rust, YAML, C#, Ruby, PHP, Swift, C, C++, and shell relationships are not extracted as language-aware graph edges today
 - JS/TS import resolution can miss aliases, package exports, generated code, framework routing, dynamic imports, and non-relative imports
-- global source caps can still select too much from one package through explicit, test-seed, or direct-symbol tiers; Tier 3 expansion has package-root spread, not full per-package budgets
-- checked-in polyglot and monorepo fixtures prove safe fallback, explicit package-path scoping, package-scoped current-valid filtering, and selected package manifest dependency refs, not full workspace graph coverage
+- global source caps can still select too much from one package through explicit, test-seed, or direct-symbol tiers; Tier 3 expansion spreads common-prefix and manifest-derived package roots, not full per-package budgets
+- checked-in polyglot and monorepo fixtures prove safe fallback, explicit package-path scoping, manifest-derived nested package scoping, package-scoped current-valid filtering, and selected package manifest dependency refs, not full workspace graph coverage
 
 Retrieval should surface these cases as blind spots or `partial_with_risk` rather than silently acting as a complete graph.
 

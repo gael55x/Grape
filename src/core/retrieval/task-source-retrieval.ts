@@ -1,5 +1,5 @@
 import type { SourceType } from "../../shared/index.js";
-import { packagePrefixForSourceRef } from "../scope/package-root.js";
+import { packageRootForSourceRef } from "../scope/package-root.js";
 import {
   buildTaskSemanticCandidates,
   type TaskSemanticCandidate
@@ -26,6 +26,7 @@ export interface TaskRetrievalSymbol {
   readonly symbolKind?: string;
   readonly startLine?: number;
   readonly endLine?: number;
+  readonly packageRoot?: string;
 }
 
 export interface TaskRetrievalLexicalMatch {
@@ -184,7 +185,8 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   }
   appendMissingSeedOmittedWarnings(warnings, missingSeedWarnings);
 
-  const scopedCandidate = scopedCandidatePredicate(explicitPathRefs);
+  const packageRootBySourceRef = packageRootsBySourceRef(input.symbols);
+  const scopedCandidate = scopedCandidatePredicate(explicitPathRefs, packageRootBySourceRef);
   const normalizedTerms = new Set(queryTerms);
   const seedSymbolTerms = new Set(
     [...(input.seedSymbols ?? []), ...(input.seedTests ?? [])].flatMap((symbolName) => tokenize(symbolName))
@@ -241,7 +243,8 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     selectedReasons,
     maxSelectedSources,
     semanticCandidates: semanticCandidatesAll,
-    reservedSlots
+    reservedSlots,
+    packageRootBySourceRef
   });
   const selectedSourceRefs = tieredSelection.selectedSourceRefs;
   const rankedSourceRefs = selectedSourceRefs;
@@ -441,10 +444,42 @@ function normalizeSeedFile(value: string): string | undefined {
   return normalized;
 }
 
-function scopedCandidatePredicate(explicitPathRefs: ReadonlySet<string>): (sourceRef: string) => boolean {
+function packageRootsBySourceRef(symbols: readonly TaskRetrievalSymbol[]): ReadonlyMap<string, string> {
+  const roots = new Map<string, string>();
+  for (const symbol of symbols) {
+    const sourceRef = normalizeSeedFile(symbol.path);
+    const packageRoot = normalizePackageRoot(symbol.packageRoot);
+    if (!sourceRef || !packageRoot) continue;
+    if (!sourceRefIsInPackageRoot(sourceRef, packageRoot)) continue;
+    if (!roots.has(sourceRef)) roots.set(sourceRef, packageRoot);
+  }
+  return roots;
+}
+
+function normalizePackageRoot(packageRoot: string | undefined): string | undefined {
+  const normalized = packageRoot ? normalizeSeedFile(packageRoot) : undefined;
+  return normalized && normalized !== "." ? normalized : undefined;
+}
+
+function sourceRefIsInPackageRoot(sourceRef: string, packageRoot: string): boolean {
+  return sourceRef === packageRoot || sourceRef.startsWith(`${packageRoot}/`);
+}
+
+function candidatePackageRoot(
+  sourceRef: string,
+  packageRootBySourceRef: ReadonlyMap<string, string>
+): string | undefined {
+  return packageRootForSourceRef(sourceRef) ?? packageRootBySourceRef.get(sourceRef);
+}
+
+function scopedCandidatePredicate(
+  explicitPathRefs: ReadonlySet<string>,
+  packageRootBySourceRef: ReadonlyMap<string, string>
+): (sourceRef: string) => boolean {
   const scopePrefixes = [...explicitPathRefs]
-    .map(packagePrefixForSourceRef)
-    .filter((prefix): prefix is string => Boolean(prefix));
+    .map((sourceRef) => candidatePackageRoot(sourceRef, packageRootBySourceRef))
+    .filter((packageRoot): packageRoot is string => Boolean(packageRoot))
+    .map((packageRoot) => `${packageRoot}/`);
   if (explicitPathRefs.size > 0 && scopePrefixes.length === 0) {
     return (sourceRef) => explicitPathRefs.has(sourceRef);
   }

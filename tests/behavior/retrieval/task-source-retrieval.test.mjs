@@ -222,6 +222,57 @@ test("task source retrieval scopes broad matches when a package test seed is exa
   assert.equal(result.selectedSourceRefs.includes("packages/web/src/cart.test.ts"), false);
 });
 
+test("task source retrieval scopes broad matches with indexed nested package roots", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix backend total in components/backend/src/service.py",
+    sources: [
+      source("backend-service", "components/backend/src/service.py"),
+      source("backend-config", "components/backend/src/config.py"),
+      source("web-service", "components/web/src/service.py")
+    ],
+    symbols: [
+      symbol(
+        "backend-service",
+        "components/backend/src/service.py",
+        "run_backend_service",
+        "function",
+        3,
+        3,
+        "components/backend"
+      ),
+      symbol(
+        "backend-config",
+        "components/backend/src/config.py",
+        "backend_total_config",
+        "function",
+        3,
+        3,
+        "components/backend"
+      ),
+      symbol(
+        "web-service",
+        "components/web/src/service.py",
+        "web_total",
+        "function",
+        3,
+        3,
+        "components/web"
+      )
+    ],
+    lexicalMatches: [
+      { sourceId: "backend-config", sourceRef: "components/backend/src/config.py", matchedTerm: "total" },
+      { sourceId: "web-service", sourceRef: "components/web/src/service.py", matchedTerm: "total" }
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "components/backend/src/service.py",
+    "components/backend/src/config.py"
+  ]);
+  assert.deepEqual(result.explicitSourceRefs, ["components/backend/src/service.py"]);
+  assert.equal(result.selectedSourceRefs.includes("components/web/src/service.py"), false);
+});
+
 test("task source retrieval warns when selected implementation sources have no related tests", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix calculateDiscount refund flow",
@@ -611,6 +662,46 @@ test("task source retrieval spreads lower-priority package refs before global ca
   assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:2"));
 });
 
+test("task source retrieval spreads lower-priority refs using indexed nested package roots", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix order total",
+    maxSelectedSources: 4,
+    sources: [
+      source("api-a", "components/api/src/a.py"),
+      source("api-b", "components/api/src/b.py"),
+      source("api-c", "components/api/src/c.py"),
+      source("api-d", "components/api/src/d.py"),
+      source("web-a", "components/web/src/a.py"),
+      source("web-b", "components/web/src/b.py")
+    ],
+    symbols: [
+      symbol("api-a", "components/api/src/a.py", "apiAlpha", "function", 1, 1, "components/api"),
+      symbol("api-b", "components/api/src/b.py", "apiBravo", "function", 1, 1, "components/api"),
+      symbol("api-c", "components/api/src/c.py", "apiCharlie", "function", 1, 1, "components/api"),
+      symbol("api-d", "components/api/src/d.py", "apiDelta", "function", 1, 1, "components/api"),
+      symbol("web-a", "components/web/src/a.py", "webAlpha", "function", 1, 1, "components/web"),
+      symbol("web-b", "components/web/src/b.py", "webBravo", "function", 1, 1, "components/web")
+    ],
+    lexicalMatches: [
+      { sourceId: "api-a", sourceRef: "components/api/src/a.py", matchedTerm: "total" },
+      { sourceId: "api-b", sourceRef: "components/api/src/b.py", matchedTerm: "total" },
+      { sourceId: "api-c", sourceRef: "components/api/src/c.py", matchedTerm: "total" },
+      { sourceId: "api-d", sourceRef: "components/api/src/d.py", matchedTerm: "total" },
+      { sourceId: "web-a", sourceRef: "components/web/src/a.py", matchedTerm: "total" },
+      { sourceId: "web-b", sourceRef: "components/web/src/b.py", matchedTerm: "total" }
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "components/api/src/a.py",
+    "components/web/src/a.py",
+    "components/api/src/b.py",
+    "components/web/src/b.py"
+  ]);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:2"));
+});
+
 test("task source retrieval no-candidate tie-break uses stable string order not seed order", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix",
@@ -700,7 +791,7 @@ test("task source retrieval rankedSourceRefs equals selectedSourceRefs (beta con
   assert.ok(result.selectedSourceRefs.length > 0);
 });
 
-function symbol(sourceId, path, name, symbolKind = "function", startLine, endLine) {
+function symbol(sourceId, path, name, symbolKind = "function", startLine, endLine, packageRoot) {
   const resolvedStartLine = startLine ?? (name === "calculateDiscount" ? 42 : 3);
   const resolvedEndLine = endLine ?? (name === "calculateDiscount" ? 44 : 3);
   return {
@@ -709,6 +800,7 @@ function symbol(sourceId, path, name, symbolKind = "function", startLine, endLin
     name,
     symbolKind,
     startLine: resolvedStartLine,
-    endLine: resolvedEndLine
+    endLine: resolvedEndLine,
+    packageRoot
   };
 }
