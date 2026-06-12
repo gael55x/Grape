@@ -76,6 +76,11 @@ export interface GrapeGetContextToolOutput {
   };
 }
 
+const debugOnlyWarningCodes = new Set([
+  "mcp_agent_identity_not_persisted_in_context_compile",
+  "repository_artifact_uses_lightweight_index"
+]);
+
 export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeGetContextToolOutput {
   const parsed = parseInput(input);
   const sessionId = resolveMcpSessionId(parsed);
@@ -94,9 +99,10 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     resetSession: parsed.resetSession
   });
 
-  const warningSet = new Set([...result.warnings, ...unsupportedInputWarnings(parsed)]);
-  const warnings = [...warningSet];
   const outputMode = parsed.outputMode ?? "agent_pack";
+  const allWarnings = uniqueWarnings([...result.warnings, ...unsupportedInputWarnings(parsed)]);
+  const warnings = outputMode === "full" ? allWarnings : agentFacingWarnings(allWarnings);
+  const riskWarnings = actionableWarnings(allWarnings);
   const compactContextPackItems = compactAgentContextPackItems(result.contextPackItems);
   const contextPackItems = outputMode === "full" ? result.contextPackItems : compactContextPackItems;
   const diffSummary = summarizeDiff(contextPackItems);
@@ -121,7 +127,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     currentScope: result.currentScope,
     taskType: taskTypeFromResult(parsed.taskType),
     riskOverlays: result.riskOverlays,
-    compileMode: compileModeFor(result, warnings),
+    compileMode: compileModeFor(result, riskWarnings),
     outputMode,
     artifactRef,
     agentGraph: buildAgentContextGraphCut({
@@ -290,10 +296,12 @@ function taskTypeFromResult(inputTaskType: GrapeGetContextToolInput["taskType"])
 
 function compileModeFor(
   result: CompileLocalContextResult,
-  warnings: readonly string[]
+  actionableWarningList: readonly string[]
 ): GrapeGetContextToolOutput["compileMode"] {
   if (result.unsafeReasons.length > 0) return "cannot_compile_safely";
-  if (warnings.length > 0) return "partial_with_risk";
+  if (result.budget.status === "required_context_exceeds_budget") return "cannot_compile_safely";
+  if (result.budget.status === "over_budget") return "partial_with_risk";
+  if (actionableWarningList.length > 0) return "partial_with_risk";
   return "safe_minimum";
 }
 
@@ -321,6 +329,18 @@ function unsupportedInputWarnings(input: GrapeGetContextToolInput): string[] {
   const warnings: string[] = [];
   if (input.agentName || input.agentSessionId) warnings.push("mcp_agent_identity_not_persisted_in_context_compile");
   return warnings;
+}
+
+function uniqueWarnings(warnings: readonly string[]): readonly string[] {
+  return [...new Set(warnings)];
+}
+
+function agentFacingWarnings(warnings: readonly string[]): readonly string[] {
+  return warnings.filter((warning) => !debugOnlyWarningCodes.has(warning));
+}
+
+function actionableWarnings(warnings: readonly string[]): readonly string[] {
+  return agentFacingWarnings(warnings);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -7,7 +7,7 @@ The stability boundary is enforced through TypeScript types, this document, and 
 ## Compatibility Rules
 
 - **Additive fields** are permitted when beta clients can safely ignore unknown response keys.
-- **Breaking changes** — field removals, renames, or type changes to stable fields — require a version bump before release.
+- **Breaking changes**: field removals, renames, or type changes to stable fields require a version bump before release.
 - **Machine-readable warnings** are only stable when listed in the warning taxonomy below. Undocumented warning strings are human-readable debug output; beta clients must not branch on them.
 - **Default output mode** is `agent_pack`. This is the agent-facing compact contract. `outputMode: "full"` is for inspection only.
 - **Beta clients** should key off versioned fields (`artifactFormatVersion`, `graphFormat`) rather than prose or comment strings.
@@ -35,20 +35,20 @@ The stability boundary is enforced through TypeScript types, this document, and 
 
 | Tool | Status |
 |------|--------|
-| `grape_get_context` | Stable — primary agent entry point |
-| `grape_get_artifact` | Stable — inspection and restore path |
-| `grape_get_omitted_item` | Stable — restore omitted context |
-| `grape_get_stale_items` | Stable — invalidation inspection |
-| `grape_get_claims` | Stable — durable claim inspection |
-| `grape_get_proofs` | Stable — proof inspection |
-| `grape_get_rules` | Stable — active rule inspection |
-| `grape_get_conflicts` | Stable — conflict inspection |
-| `grape_get_status` | Stable — health check |
-| `grape_record_candidate` | Stable — restricted write, records temporary evidence only |
-| `grape_record_test_result` | Stable — restricted write |
-| `grape_record_command_result` | Stable — restricted write |
-| `grape_record_user_decision` | Stable — restricted write |
-| `grape_request_user_confirmation` | Stable — restricted write |
+| `grape_get_context` | Stable: primary agent entry point |
+| `grape_get_artifact` | Stable: inspection and restore path |
+| `grape_get_omitted_item` | Stable: restore omitted context |
+| `grape_get_stale_items` | Stable: invalidation inspection |
+| `grape_get_claims` | Stable: durable claim inspection |
+| `grape_get_proofs` | Stable: proof inspection |
+| `grape_get_rules` | Stable: active rule inspection |
+| `grape_get_conflicts` | Stable: conflict inspection |
+| `grape_get_status` | Stable: health check |
+| `grape_record_candidate` | Stable: restricted write, records temporary evidence only |
+| `grape_record_test_result` | Stable: restricted write |
+| `grape_record_command_result` | Stable: restricted write |
+| `grape_record_user_decision` | Stable: restricted write |
+| `grape_request_user_confirmation` | Stable: restricted write |
 
 ### `grape_get_context` request fields
 
@@ -81,13 +81,13 @@ The stability boundary is enforced through TypeScript types, this document, and 
 | `dirtyWorktree` | **Stable** | Boolean. |
 | `taskType` | **Stable** | String. |
 | `riskOverlays` | **Stable** | Array of strings; may be empty. |
-| `compileMode` | **Stable** | One of `safe_minimum`, `partial_with_risk`, `cannot_compile_safely`. `broad_context_required` is reserved for forward compatibility but is not currently emitted; beta clients may ignore it. |
+| `compileMode` | **Stable** | One of `safe_minimum`, `partial_with_risk`, `cannot_compile_safely`. `broad_context_required` is reserved for forward compatibility but is not currently emitted; beta clients may ignore it. Debug-only warnings do not change this field. |
 | `outputMode` | **Stable** | `agent_pack` or `full`. Defaults to `agent_pack`. |
-| `artifactRef` | **Stable** | Object — see `AgentContextArtifactRef` below. |
+| `artifactRef` | **Stable** | Object. See `AgentContextArtifactRef` below. |
 | `contextPackItems` | **Stable** | Array of compact `AgentContextPackItem` objects in `agent_pack` mode. |
 | `contextPackMarkdown` | Inspection-oriented / optional | String when present. Compact navigation summary for CLI parity and human inspection. Agents should prefer `contextPackItems` and `artifactRef`. Not required for compact-agent operation. |
 | `diffSummary` | **Stable** | Object with counts for all diff states (`NEW`, `CHANGED`, `PINNED`, `OMIT_UNCHANGED`, `INVALIDATE_PREVIOUS`, `RESTORE_AVAILABLE`). |
-| `warnings` | **Stable (array shape)** | Array of strings; may be empty. Machine-readable only for codes listed in the warning taxonomy below. |
+| `warnings` | **Stable (array shape)** | Array of strings; may be empty. Machine-readable only for codes listed in the warning taxonomy below. Default `agent_pack` filters debug-only warning strings. Full inspection output may include them. |
 | `unsafeReasons` | **Stable** | Array of strings; may be empty on safe compile. See taxonomy below. |
 | `budget` | **Stable** | Object with `status` field and optional numeric fields; see budget shape below. |
 | `restoreAvailable` | **Stable** | Boolean. `false` on first turn is expected. |
@@ -107,9 +107,9 @@ The stability boundary is enforced through TypeScript types, this document, and 
 | `dependencyManifestHash` | **Stable** |
 | `artifactFiles.json` | **Stable** |
 | `artifactFiles.markdown` | **Stable** |
-| `fullArtifactTool.name` | **Stable** — always `grape_get_artifact` |
+| `fullArtifactTool.name` | **Stable**: always `grape_get_artifact` |
 | `fullArtifactTool.arguments.artifactId` | **Stable** |
-| `fullArtifactTool.arguments.outputMode` | **Stable** — `full` |
+| `fullArtifactTool.arguments.outputMode` | **Stable**: `full` |
 
 ### `AgentContextPackItem` (compact `agent_pack` shape)
 
@@ -154,12 +154,12 @@ The stability boundary is enforced through TypeScript types, this document, and 
 
 These six state values are stable:
 
-- `NEW` — context not previously sent this session.
-- `CHANGED` — previously sent, hash changed.
-- `PINNED` — always re-sent regardless of change.
-- `OMIT_UNCHANGED` — previously sent and unchanged; omitted this turn.
-- `INVALIDATE_PREVIOUS` — a prior sent item is now stale or contradicted.
-- `RESTORE_AVAILABLE` — a prior omitted item is available to restore on request.
+- `NEW`: context not previously sent this session.
+- `CHANGED`: previously sent, hash changed.
+- `PINNED`: always re-sent regardless of change.
+- `OMIT_UNCHANGED`: previously sent and unchanged; omitted this turn.
+- `INVALIDATE_PREVIOUS`: a prior sent item is now stale or contradicted.
+- `RESTORE_AVAILABLE`: a prior omitted item is available to restore on request.
 
 ### Stored artifact envelope
 
@@ -167,16 +167,16 @@ Fields stable in the stored `.grape/artifacts/*.json` file:
 
 | Field | Status |
 |-------|--------|
-| `artifactFormat` | **Stable** — `grape.context-pack.v1` |
-| `artifactFormatVersion` | **Stable** — `1` |
-| `contextPackItemShape` | **Stable** — `ContextPackItem` |
+| `artifactFormat` | **Stable**: `grape.context-pack.v1` |
+| `artifactFormatVersion` | **Stable**: `1` |
+| `contextPackItemShape` | **Stable**: `ContextPackItem` |
 | `contextPackItems` | **Stable** |
 | `contextArtifact` | **Stable** |
 | `omittedItems` | **Stable** |
 | `tokenMetric` | **Stable (optional)** |
 | `budget` | **Stable (optional)** |
 
-`agentGraph` transport shape: `graphFormat: "grape.agent-context-graph.v1"` — experimental; may refine before 1.0.
+`agentGraph` transport shape: `graphFormat: "grape.agent-context-graph.v1"` is experimental and may refine before 1.0.
 
 ### Restore tokens
 
@@ -190,26 +190,27 @@ Claims, proofs, and rules returned by `grape_get_claims`, `grape_get_proofs`, an
 
 These surfaces are implemented and tested but may change shape before stable 1.0:
 
-- `agentGraph` — adjacency graph over context-pack items. The `graphFormat` version string will bump if the node/edge schema changes. Beta clients must not require this field.
-- `recoveryGuidance` — human-readable array of recovery suggestions. Content is advisory; beta clients must not parse or branch on prose.
-- `contextPackMarkdown` — inspection-oriented Markdown navigation summary. Agents should prefer structured `contextPackItems` and `artifactRef` for reliable extraction.
+- `agentGraph`: adjacency graph over context-pack items. The `graphFormat` version string will bump if the node/edge schema changes. Beta clients must not require this field.
+- `recoveryGuidance`: human-readable array of recovery suggestions. Content is advisory; beta clients must not parse or branch on prose.
+- `contextPackMarkdown`: inspection-oriented Markdown navigation summary. Agents should prefer structured `contextPackItems` and `artifactRef` for reliable extraction.
 
 ## Accepted Advisory Surfaces
 
 These surfaces are accepted for caller metadata and session compatibility, but are not persisted as independent compiled artifact fields:
 
-- `agentName` — accepted in request; not persisted; not reflected in compile output.
-- `agentSessionId` — accepted as an alias for `sessionId` for session tracking; triggers an advisory warning; identity is not independently tracked in compile output.
+- `agentName`: accepted in request; not persisted; not reflected in compile output.
+- `agentSessionId`: accepted as an alias for `sessionId` for session tracking. Identity is not independently tracked in compile output. Full inspection output may include a debug-only advisory warning.
 
 ## Reserved / Legacy-Compatible
 
-- `compileMode: broad_context_required` — enum value retained for forward compatibility. Not currently emitted by any compile path. Beta clients may safely ignore it.
+- `compileMode: broad_context_required`: enum value retained for forward compatibility. Not currently emitted by any compile path. Beta clients may safely ignore it.
 
 ## Internal and Debug-Only
 
-- Undocumented warning strings — any warning code not listed in the taxonomy below is human-readable debug output. Beta clients must not depend on undocumented strings.
-- `outputMode: "full"` inline `contextArtifact` — for inspection only; not part of compact-agent contract.
-- Internal retrieval and compiler fields — `selectedReasons`, tier partition state, and similar fields never appear in public output.
+- Undocumented warning strings: any warning code not listed in the taxonomy below is human-readable debug output. Beta clients must not depend on undocumented strings.
+- Debug-only warnings are filtered from default `agent_pack` output and do not affect `compileMode`.
+- `outputMode: "full"` inline `contextArtifact`: for inspection only; not part of compact-agent contract.
+- Internal retrieval and compiler fields: `selectedReasons`, tier partition state, and similar fields never appear in public output.
 
 ## Warning Taxonomy
 
@@ -220,7 +221,7 @@ These warning codes and patterns are part of the stable beta contract. Beta clie
 | Code | Meaning |
 |------|---------|
 | `task_retrieval_truncated` | More source candidates than the cap; selection was limited. |
-| `task_retrieval_omitted_over_cap:<count>` | Parameterized: `<count>` is a numeric integer — the number of candidates omitted beyond the cap. |
+| `task_retrieval_omitted_over_cap:<count>` | Parameterized: `<count>` is a numeric integer. This is the number of candidates omitted beyond the cap. |
 | `task_retrieval_no_source_matches` | No source refs matched the query after retrieval. |
 | `task_retrieval_no_related_tests_found` | No related test files were found for the selected implementation sources. |
 | `task_seed_file_not_found:<ref>` | An explicit seed file was not found in the current snapshot. |
@@ -241,11 +242,11 @@ These warning codes and patterns are part of the stable beta contract. Beta clie
 
 The following prefixes are reserved. Beta clients must not depend on specific suffix values unless the full code is listed above:
 
-- `current_scope_*` — scope state diagnostics. Specific suffixes may change.
-- `repository_artifact_*` — repository index diagnostics. Currently advisory/noisy; classification may change.
+- `current_scope_*`: scope state diagnostics. Specific suffixes may change.
+- `repository_artifact_*`: repository index diagnostics. Currently advisory/noisy; classification may change.
 
 ### Debug/human-only (not stable)
 
-- `mcp_agent_identity_not_persisted_in_context_compile` — advisory notice for `agentName`/`agentSessionId` use.
-- `repository_artifact_uses_lightweight_index` — index quality notice; always emitted when lightweight index is active; may be downgraded or removed.
+- `mcp_agent_identity_not_persisted_in_context_compile`: advisory notice for `agentName`/`agentSessionId` use.
+- `repository_artifact_uses_lightweight_index`: index quality notice emitted in stored/full artifact warnings when lightweight index is active; filtered from default `agent_pack`.
 - Any warning code not listed in the stable table above.

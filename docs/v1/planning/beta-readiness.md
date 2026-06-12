@@ -19,6 +19,7 @@ Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client tri
 | The MCP frame parser accepted malformed `Content-Length` values through partial number parsing. | `src/mcp/protocol.ts`; `tests/behavior/mcp/mcp-stdio.test.mjs`. | A beta MCP client should get a clear parse error for malformed frames, not a misleading partial-body JSON error. | Require all-digit `Content-Length` values before reading a frame body. | Keep MCP stdio contract tests green while preparing real client trials. | Real Cursor or Claude Code client trials still need human-owned runs. |
 | Some status docs still named polyglot and monorepo fixtures as pending after behavior proof landed. | README, roadmap, CLI/MCP docs, implementation status, fixture docs, and language-indexing docs. | A beta reviewer could think Grape lacks fallback proof that tests now provide, or could expect graph support that still is not shipped. | Align docs around proven safe fallback and explicit package-path scoping only. | Keep remaining blocker language focused on real MCP client trials, package-aware invalidation, and benchmarks. | Historical logs still mention earlier fixture gaps as past work notes. |
 | The global package smoke script hardcoded the alpha.3 package version. | `scripts/check-global-install-smoke.mjs`; `package.json`. | A future beta version bump could leave the smoke checking the wrong global package. | Read package name and version from `package.json`, matching install and e2e smoke scripts. | Keep global smoke available for human-owned published-package checks. | The smoke still requires the expected package to be installed globally before it runs. |
+| Debug-only MCP warnings made safe compact packs look partially risky. | `src/mcp/get-context.ts`; `tests/behavior/mcp/mcp-stdio.test.mjs`; `docs/v1/contracts/transport-stability.md`. | A beta MCP agent could overreact to a normal lightweight-index notice and treat usable context as risky. | Filter debug-only warnings from default `agent_pack` and keep them from changing `compileMode`; keep full/artifact output inspectable. | Continue with real MCP client trials and package/token-quality blockers. | Stored artifacts still expose lightweight-index limits, which is correct until broader graph support ships. |
 
 ## Current Alpha.3 Hardening Baseline
 
@@ -175,7 +176,6 @@ npm install -g grape-context@0.1.0-alpha.3
 - Cross-platform CI beyond current Linux-focused gates is not complete.
 - Turn-1 retrieval quality for non-TS/JS repos remains fallback-heavy.
 - Dirty-worktree hardening: dependency-hash drift covers many uncommitted edits; explicit worktree-hash ledger invalidation may still be partial.
-- MCP warning noise (`repository_artifact_uses_lightweight_index`, `mcp_agent_identity_not_persisted_in_context_compile`): documented as debug/human-only in the warning taxonomy; code-level downgrade is deferred.
 - Ledger bounds and FTS fallback scan performance: deferred until architecture is stable.
 - Benchmarks: deferred until beta architecture, schema, dirty/package, and compact output are confirmed.
 

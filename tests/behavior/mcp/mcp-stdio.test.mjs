@@ -1237,7 +1237,7 @@ test("mcp seed files participate in retrieval while token budget is evaluated", 
             sessionId: "seed-warning-session",
             files: ["src/main.ts"],
             tests: ["tests/main.test.ts", "mainEntry regression"],
-            tokenBudget: 1200
+            tokenBudget: 5000
           }
         }
       }
@@ -1249,9 +1249,10 @@ test("mcp seed files participate in retrieval while token budget is evaluated", 
       (section) => section.id === "task-retrieval"
     );
 
-    assert.equal(output.compileMode, "partial_with_risk");
+    assert.equal(output.compileMode, "safe_minimum");
     assert.equal(output.warnings.includes("mcp_seed_files_not_used_in_context_compile"), false);
     assert.equal(output.warnings.includes("mcp_token_budget_not_enforced_in_context_compile"), false);
+    assert.equal(output.warnings.includes("repository_artifact_uses_lightweight_index"), false);
     assert.equal(output.budget.status, "within_budget");
     assert.equal(retrievalSection.itemRefs.some((ref) => ref.ref === "src/main.ts"), true);
     assert.equal(retrievalSection.itemRefs.some((ref) => ref.ref === "tests/main.test.ts"), true);
