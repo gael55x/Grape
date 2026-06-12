@@ -273,6 +273,34 @@ test("task source retrieval scopes broad matches with indexed nested package roo
   assert.equal(result.selectedSourceRefs.includes("components/web/src/service.py"), false);
 });
 
+test("task source retrieval does not broaden lexical matches across mixed explicit package roots", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix total logic",
+    sources: [
+      source("api-service", "packages/api/src/service.ts"),
+      source("api-config", "packages/api/src/config.ts"),
+      source("web-service", "packages/web/src/service.ts"),
+      source("web-config", "packages/web/src/config.ts")
+    ],
+    symbols: [],
+    lexicalMatches: [
+      { sourceId: "api-config", sourceRef: "packages/api/src/config.ts", matchedTerm: "total" },
+      { sourceId: "web-config", sourceRef: "packages/web/src/config.ts", matchedTerm: "total" }
+    ],
+    seedFiles: ["packages/api/src/service.ts", "packages/web/src/service.ts"]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "packages/api/src/service.ts",
+    "packages/web/src/service.ts"
+  ]);
+  assert.deepEqual(result.explicitSourceRefs, [
+    "packages/api/src/service.ts",
+    "packages/web/src/service.ts"
+  ]);
+  assert.deepEqual(result.lexicalSourceRefs, []);
+});
+
 test("task source retrieval warns when selected implementation sources have no related tests", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix calculateDiscount refund flow",

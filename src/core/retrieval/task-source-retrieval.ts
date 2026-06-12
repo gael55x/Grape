@@ -476,19 +476,21 @@ function scopedCandidatePredicate(
   explicitPathRefs: ReadonlySet<string>,
   packageRootBySourceRef: ReadonlyMap<string, string>
 ): (sourceRef: string) => boolean {
-  const scopePrefixes = [...explicitPathRefs]
-    .map((sourceRef) => candidatePackageRoot(sourceRef, packageRootBySourceRef))
-    .filter((packageRoot): packageRoot is string => Boolean(packageRoot))
-    .map((packageRoot) => `${packageRoot}/`);
-  if (explicitPathRefs.size > 0 && scopePrefixes.length === 0) {
+  if (explicitPathRefs.size === 0) return () => true;
+
+  const packageRoots = [
+    ...new Set(
+      [...explicitPathRefs]
+        .map((sourceRef) => candidatePackageRoot(sourceRef, packageRootBySourceRef))
+        .filter((packageRoot): packageRoot is string => Boolean(packageRoot))
+    )
+  ];
+  if (packageRoots.length !== 1) {
     return (sourceRef) => explicitPathRefs.has(sourceRef);
   }
-  if (scopePrefixes.length === 0) return () => true;
 
-  return (sourceRef: string) => (
-    explicitPathRefs.has(sourceRef) ||
-    scopePrefixes.some((prefix) => sourceRef.startsWith(prefix))
-  );
+  const packagePrefix = `${packageRoots[0]}/`;
+  return (sourceRef: string) => explicitPathRefs.has(sourceRef) || sourceRef.startsWith(packagePrefix);
 }
 
 function isTestSourceRef(value: string): boolean {
