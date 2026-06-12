@@ -186,10 +186,14 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
 
   const scopedCandidate = scopedCandidatePredicate(explicitPathRefs);
   const normalizedTerms = new Set(queryTerms);
+  const seedSymbolTerms = new Set(
+    [...(input.seedSymbols ?? []), ...(input.seedTests ?? [])].flatMap((symbolName) => tokenize(symbolName))
+  );
   for (const symbol of input.symbols) {
     const sourceRef = sourceRefById.get(symbol.sourceId);
     if (!sourceRef) continue;
-    if (!scopedCandidate(sourceRef)) continue;
+    const matchesSeedSymbol = matchesAnyTerm(symbol.name, seedSymbolTerms);
+    if (!scopedCandidate(sourceRef) && !matchesSeedSymbol) continue;
     if (matchesAnyTerm(symbol.name, normalizedTerms) || matchesAnyTerm(symbol.path, normalizedTerms)) {
       addReason(selectedReasons, sourceRef, "symbol_match");
       if (symbol.symbolKind !== "module" && symbol.startLine !== undefined && symbol.endLine !== undefined) {
@@ -441,6 +445,9 @@ function scopedCandidatePredicate(explicitPathRefs: ReadonlySet<string>): (sourc
   const scopePrefixes = [...explicitPathRefs]
     .map(packagePrefixForSourceRef)
     .filter((prefix): prefix is string => Boolean(prefix));
+  if (explicitPathRefs.size > 0 && scopePrefixes.length === 0) {
+    return (sourceRef) => explicitPathRefs.has(sourceRef);
+  }
   if (scopePrefixes.length === 0) return () => true;
 
   return (sourceRef: string) => (

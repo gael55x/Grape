@@ -34,6 +34,29 @@ export function languageForPath(repoPath: string): string {
       return "go";
     case ".rs":
       return "rust";
+    case ".cs":
+      return "csharp";
+    case ".rb":
+      return "ruby";
+    case ".php":
+      return "php";
+    case ".swift":
+      return "swift";
+    case ".c":
+      return "c";
+    case ".cc":
+    case ".cpp":
+    case ".cxx":
+    case ".hh":
+    case ".hpp":
+    case ".hxx":
+      return "cpp";
+    case ".h":
+      return "c_header";
+    case ".sh":
+    case ".bash":
+    case ".zsh":
+      return "shell";
     case ".yml":
     case ".yaml":
       return "yaml";

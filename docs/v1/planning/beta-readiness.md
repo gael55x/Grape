@@ -6,7 +6,7 @@ Track the work required to move from the alpha transport proof to serious human 
 
 This checklist does not expand V1 scope. It makes the current transport slice easier to install, connect, verify, and recover from.
 
-The beta product promise is: install Grape, keep using the coding agent normally, and let MCP `grape_get_context` drive agent-called session tracking—safe deltas, pinned safety context, stale invalidation, and restorable omissions—when the agent calls Grape with stable session identity each turn.
+The beta product promise is: install Grape, keep using the coding agent normally, and let MCP `grape_get_context` drive agent-called session tracking: safe deltas, pinned safety context, stale invalidation, and restorable omissions when the agent calls Grape with stable session identity each turn.
 
 Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client trials and pass/fail criteria.
 
@@ -15,7 +15,7 @@ Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client tri
 | Learned fact | Repo evidence | Beta impact | Decision made | Next action | Open risk |
 |---|---|---|---|---|---|
 | The package dry-run check used a fixed migration list and missed the latest storage migration. | `src/core/storage/migrations/0006_claim_edge_authority.sql`; commit `80f73cc` updates `scripts/check-package.mjs`. | A tarball could pass the package gate while missing a migration needed by a beta user's local database. | Make the package check derive required migration files from source. | Keep package checks green while closing higher-risk gates. | Future generated files may need the same source-to-dist coverage check. |
-| Language fallback is documented more broadly than tests currently prove. | `docs/v1/core/language-indexing.md`; `tests/behavior/retrieval/polyglot-monorepo-fallback.test.mjs`. | A beta user on a mixed-language repo needs clear fallback evidence, not silent confidence. | Treat broad fallback proof as the next product risk to close. | Add representative fallback fixtures or strengthen artifact warnings for common languages. | Real parsing beyond TS/JS remains planned and should not be implied. |
+| Common-language fallback proof now covers more realistic mixed-language files. | `src/core/indexing/index-paths.ts`; `tests/fixtures/polyglot-fallback-repo`; `tests/behavior/retrieval/polyglot-monorepo-fallback.test.mjs`. | A beta user on a mixed-language repo gets exact source evidence and visible fallback limits instead of silent confidence. | Label common fallback languages, keep exact-path tasks narrow, and render selected fallback languages in artifact warnings. | Reassess MCP client trial and token-quality blockers next. | Real parsing beyond TS/JS remains planned and should not be implied. |
 
 ## Current Alpha.3 Hardening Baseline
 
@@ -172,9 +172,9 @@ npm install -g grape-context@0.1.0-alpha.3
 - Cross-platform CI beyond current Linux-focused gates is not complete.
 - Turn-1 retrieval quality for non-TS/JS repos remains fallback-heavy.
 - Dirty-worktree hardening: dependency-hash drift covers many uncommitted edits; explicit worktree-hash ledger invalidation may still be partial.
-- MCP warning noise (`repository_artifact_uses_lightweight_index`, `mcp_agent_identity_not_persisted_in_context_compile`) — documented as debug/human-only in the warning taxonomy; code-level downgrade is deferred.
-- Ledger bounds, FTS fallback scan performance — deferred until architecture is stable.
-- Benchmarks — deferred until beta architecture, schema, dirty/package, and compact output are confirmed.
+- MCP warning noise (`repository_artifact_uses_lightweight_index`, `mcp_agent_identity_not_persisted_in_context_compile`): documented as debug/human-only in the warning taxonomy; code-level downgrade is deferred.
+- Ledger bounds and FTS fallback scan performance: deferred until architecture is stable.
+- Benchmarks: deferred until beta architecture, schema, dirty/package, and compact output are confirmed.
 
 The public beta transport/schema stability boundary is documented in [`docs/v1/contracts/transport-stability.md`](../contracts/transport-stability.md) and enforced through TypeScript types and `tests/behavior/contracts/beta-transport-contract.test.mjs`. A standalone output JSON Schema artifact is not required for the controlled 1.0 beta.
 

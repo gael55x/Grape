@@ -9,7 +9,7 @@
   "files": [
     {
       "path": "README.md",
-      "sha256": "afbded4de5eb8a5bb75368ed347e9c7656400fd08954e94ad55a8505960c7bb1",
+      "sha256": "6f7f079a3e3e9f3bdb1077ea4da9c17acc7160970ad18b93636101e97b666d21",
       "purpose": "fixture overview"
     },
     {
@@ -38,6 +38,71 @@
       "purpose": "Kotlin lexical fallback source"
     },
     {
+      "path": "go/refund/refund.go",
+      "sha256": "435f8ea1e23bdd36f35519390bdfb6c2d540de8a8328a68d3dc82b58f3410477",
+      "purpose": "Go lexical fallback source"
+    },
+    {
+      "path": "rust/src/lib.rs",
+      "sha256": "3656c90baa120b067bf6e423f1e3233c6dd98d30393f9ca1eff2c25787a7c14f",
+      "purpose": "Rust lexical fallback source"
+    },
+    {
+      "path": "dotnet/BillingLimit.cs",
+      "sha256": "b25320d51cf3a0bbe0b7eb771d7627b715107a14bceff6416d4ac3b3f1ae9a5c",
+      "purpose": "C# lexical fallback source"
+    },
+    {
+      "path": "ruby/lib/refund_policy.rb",
+      "sha256": "f79f0cc0800667c6929a0cbf9cd8b56ef28c863add204a0b816e246ad275a913",
+      "purpose": "Ruby lexical fallback source"
+    },
+    {
+      "path": "php/src/TaxPolicy.php",
+      "sha256": "08dc0a8b9c78eee1404ee61681c4d6628ad425c78afcb67a9cbd350ebc8523f4",
+      "purpose": "PHP lexical fallback source"
+    },
+    {
+      "path": "swift/Sources/Checkout/AccessWindow.swift",
+      "sha256": "ffdd9f112025ae5cd82acc733a4a1c18d06520679caa1d324dac68cd7705bd26",
+      "purpose": "Swift lexical fallback source"
+    },
+    {
+      "path": "native/src/retry_budget.c",
+      "sha256": "568fc5cb19d4614a5d9c17ea6fe25bdb35dcfdb605cd7c9440c4c1a6cd33d8a5",
+      "purpose": "C lexical fallback source"
+    },
+    {
+      "path": "native/src/audit_bridge.cpp",
+      "sha256": "0eea6cca389b60fe35d8e845f5bd4d83543c083dc81ee70df7c3ebde30ed8fdb",
+      "purpose": "C++ lexical fallback source"
+    },
+    {
+      "path": "scripts/deploy-check.sh",
+      "sha256": "67da3bde2360adab53bc010c01d6a0d88fbe0124103ce7640af591e96510024f",
+      "purpose": "shell lexical fallback source"
+    },
+    {
+      "path": "docs/operations.md",
+      "sha256": "79da3cefb68855b0c22077a2dd20d2fa7676b6aadca035d43d5575867b3affe0",
+      "purpose": "Markdown exact path fallback source"
+    },
+    {
+      "path": "config/service-config.json",
+      "sha256": "dabef27e6a773ecef7721af78b2887397628b182b89f1224f230d2047061f5a3",
+      "purpose": "JSON lexical fallback config"
+    },
+    {
+      "path": "config/routes.config.yaml",
+      "sha256": "acabd0516b20fc786412d34a348f15e2bca4255f3f4c11b097c12866118ea379",
+      "purpose": "YAML lexical fallback config"
+    },
+    {
+      "path": "config/limits.config.toml",
+      "sha256": "20b6e12c4c16b033c7342cfb17f73e35b62e0c25c344feb6ff494c242b2eb651",
+      "purpose": "TOML lexical fallback config"
+    },
+    {
       "path": ".grape/rules.md",
       "sha256": "38281527aff2d89f367a05a911c33da1337b5062d7c9a6b32fc7e98a38fddc7b",
       "purpose": "pinned project rule"
@@ -51,14 +116,27 @@
       "proofFiles": [
         "src/grape_polyglot/pricing.py",
         "java/src/main/java/example/BillingPolicy.java",
-        "kotlin/src/main/kotlin/example/AccessPolicy.kt"
+        "kotlin/src/main/kotlin/example/AccessPolicy.kt",
+        "go/refund/refund.go",
+        "rust/src/lib.rs",
+        "dotnet/BillingLimit.cs",
+        "ruby/lib/refund_policy.rb",
+        "php/src/TaxPolicy.php",
+        "swift/Sources/Checkout/AccessWindow.swift",
+        "native/src/retry_budget.c",
+        "native/src/audit_bridge.cpp",
+        "scripts/deploy-check.sh",
+        "docs/operations.md",
+        "config/service-config.json",
+        "config/routes.config.yaml",
+        "config/limits.config.toml"
       ]
     }
   ],
   "expectedScopeResults": {
     "branch:main": "match",
     "worktree:clean": "match",
-    "language_graph:python_java_kotlin": "partial"
+    "language_graph:common_fallback_languages": "partial"
   },
   "expectedArtifactSections": [
     "task",
@@ -70,7 +148,10 @@
   "expectedFirstTurnDiffStates": ["NEW", "PINNED"],
   "expectedSecondTurnDiffStates": ["OMIT_UNCHANGED", "PINNED", "RESTORE_AVAILABLE"],
   "relatedTests": [
-    "polyglot fixture returns lexical fallback evidence for Python Java and Kotlin"
+    "polyglot fixture returns lexical fallback evidence for Python Java and Kotlin",
+    "polyglot fixture returns exact fallback evidence for common service languages",
+    "polyglot fixture returns exact fallback evidence for Swift native shell and docs",
+    "polyglot fixture returns exact fallback evidence for common config formats"
   ],
   "relatedBenchmarks": [
     "composer_graphify_grape_polyglot_fallback_pending"

@@ -16,7 +16,7 @@ test("task retrieval terms split identifiers and ignore broad prompt words", () 
   );
 });
 
-test("task source retrieval merges explicit, symbol, and lexical source matches", () => {
+test("task source retrieval merges explicit file and symbol seeds without broad lexical bleed", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix calculateDiscount refund flow",
     sources: [
@@ -37,13 +37,13 @@ test("task source retrieval merges explicit, symbol, and lexical source matches"
     seedSymbols: ["calculateDiscount"]
   });
 
-  assert.deepEqual(result.selectedSourceRefs, ["src/auth.ts", "src/billing.ts", "README.md"]);
+  assert.deepEqual(result.selectedSourceRefs, ["src/auth.ts", "src/billing.ts"]);
   assert.deepEqual(result.explicitSourceRefs, ["src/auth.ts"]);
   assert.deepEqual(result.testSourceRefs, []);
   assert.deepEqual(result.relatedTestSourceRefs, []);
   assert.deepEqual(result.graphSourceRefs, []);
   assert.deepEqual(result.symbolSourceRefs, ["src/billing.ts"]);
-  assert.deepEqual(result.lexicalSourceRefs, ["src/billing.ts", "README.md"]);
+  assert.deepEqual(result.lexicalSourceRefs, []);
   assert.deepEqual(result.sourceAnchors, [
     {
       sourceRef: "src/billing.ts",
@@ -353,7 +353,8 @@ test("task source retrieval retains explicit source refs ahead of graph expansio
   });
 
   assert.equal(result.selectedSourceRefs.includes("src/explicit.ts"), true);
-  assert.equal(result.selectedSourceRefs.includes("src/impl.ts"), true);
+  assert.equal(result.selectedSourceRefs.includes("src/graph-1.ts"), true);
+  assert.equal(result.selectedSourceRefs.includes("src/impl.ts"), false);
   assert.equal(result.selectedSourceRefs.includes("src/graph-4.ts"), false);
 });
 

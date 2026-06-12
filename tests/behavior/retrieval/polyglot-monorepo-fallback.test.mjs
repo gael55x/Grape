@@ -113,6 +113,105 @@ test("polyglot fixture returns lexical fallback evidence for Java and Kotlin", (
   });
 });
 
+test("polyglot fixture returns exact fallback evidence for common service languages", () => {
+  withFixtureGitRepo("polyglot-fallback-repo", (repoPath) => {
+    const { output, artifactJson } = runCompile(repoPath, [
+      "compile",
+      "--task",
+      [
+        "Review fallback context in",
+        "go/refund/refund.go",
+        "rust/src/lib.rs",
+        "dotnet/BillingLimit.cs",
+        "ruby/lib/refund_policy.rb",
+        "php/src/TaxPolicy.php"
+      ].join(" "),
+      "--session",
+      "polyglot-service-languages"
+    ]);
+    const exactEvidence = section(artifactJson, "exact-source-evidence");
+    const symbolSummary = section(artifactJson, "symbol-summary");
+    const blindSpots = section(artifactJson, "index-blind-spots");
+
+    assert.equal(output.warnings.includes("repository_artifact_uses_lightweight_index"), true);
+    assert.equal(output.warnings.includes("task_retrieval_no_related_tests_found"), true);
+    assertExactEvidenceContains(exactEvidence, [
+      ["go/refund/refund.go", "RefundHoldDays"],
+      ["rust/src/lib.rs", "inventory_reserve_window_minutes"],
+      ["dotnet/BillingLimit.cs", "ApprovalThresholdCents"],
+      ["ruby/lib/refund_policy.rb", "expedited_refund?"],
+      ["php/src/TaxPolicy.php", "vat_exemption_code"]
+    ]);
+    assert.match(symbolSummary.text, /go\/refund\/refund\.go :: go\/refund\/refund\.go \[go, module, high\]/);
+    assert.match(symbolSummary.text, /dotnet\/BillingLimit\.cs :: dotnet\/BillingLimit\.cs \[csharp, module, high\]/);
+    assert.match(
+      blindSpots.text,
+      /Generic text fallback selected languages: csharp, go, php, ruby, rust\./
+    );
+    assert.match(blindSpots.text, /It does not prove module edges, test edges, framework routes, types, or runtime behavior\./);
+  });
+});
+
+test("polyglot fixture returns exact fallback evidence for Swift, native, shell, and docs", () => {
+  withFixtureGitRepo("polyglot-fallback-repo", (repoPath) => {
+    const { output, artifactJson } = runCompile(repoPath, [
+      "compile",
+      "--task",
+      [
+        "Review fallback context in",
+        "swift/Sources/Checkout/AccessWindow.swift",
+        "native/src/retry_budget.c",
+        "native/src/audit_bridge.cpp",
+        "scripts/deploy-check.sh",
+        "docs/operations.md"
+      ].join(" "),
+      "--session",
+      "polyglot-native-configs"
+    ]);
+    const exactEvidence = section(artifactJson, "exact-source-evidence");
+    const blindSpots = section(artifactJson, "index-blind-spots");
+
+    assert.equal(output.warnings.includes("repository_artifact_uses_lightweight_index"), true);
+    assert.equal(output.warnings.includes("task_retrieval_no_related_tests_found"), true);
+    assertExactEvidenceContains(exactEvidence, [
+      ["swift/Sources/Checkout/AccessWindow.swift", "staffOverrideHours"],
+      ["native/src/retry_budget.c", "retry_budget_seconds"],
+      ["native/src/audit_bridge.cpp", "audit_bridge_batch_size"],
+      ["scripts/deploy-check.sh", "deploy_guard_mode"],
+      ["docs/operations.md", "replay_window_hours"]
+    ]);
+    assert.match(blindSpots.text, /Generic text fallback selected languages: c, cpp, shell, swift\./);
+    assert.doesNotMatch(blindSpots.text, /markdown/);
+  });
+});
+
+test("polyglot fixture returns exact fallback evidence for common config formats", () => {
+  withFixtureGitRepo("polyglot-fallback-repo", (repoPath) => {
+    const { output, artifactJson } = runCompile(repoPath, [
+      "compile",
+      "--task",
+      [
+        "Review fallback context in",
+        "config/service-config.json",
+        "config/routes.config.yaml",
+        "config/limits.config.toml"
+      ].join(" "),
+      "--session",
+      "polyglot-configs"
+    ]);
+    const exactEvidence = section(artifactJson, "exact-source-evidence");
+    const blindSpots = section(artifactJson, "index-blind-spots");
+
+    assert.equal(output.warnings.includes("repository_artifact_uses_lightweight_index"), true);
+    assertExactEvidenceContains(exactEvidence, [
+      ["config/service-config.json", "invoice_batch_limit"],
+      ["config/routes.config.yaml", "checkout_route_slo_minutes"],
+      ["config/limits.config.toml", "support_escalation_minutes"]
+    ]);
+    assert.match(blindSpots.text, /Generic text fallback selected languages: json, toml, yaml\./);
+  });
+});
+
 test("monorepo fixture keeps task retrieval focused on package-local source and tests", () => {
   withFixtureGitRepo("monorepo-lite-repo", (repoPath) => {
     const { output, artifactJson } = runCompile(repoPath, [
@@ -139,3 +238,15 @@ test("monorepo fixture keeps task retrieval focused on package-local source and 
     assert.doesNotMatch(exactEvidence.text, /Source: packages\/web\/src\/cart\.ts/);
   });
 });
+
+function assertExactEvidenceContains(exactEvidence, expectedPairs) {
+  for (const [sourceRef, token] of expectedPairs) {
+    assert.match(exactEvidence.text, new RegExp(`Source: ${escapeRegex(sourceRef)}`));
+    assert.match(exactEvidence.text, new RegExp(escapeRegex(token)));
+    assert.equal(exactEvidence.itemRefs.some((ref) => ref.ref === sourceRef), true);
+  }
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}

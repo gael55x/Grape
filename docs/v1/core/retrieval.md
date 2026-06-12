@@ -42,12 +42,12 @@ Current implementation exposes advisory `semantic_candidate` rows from a local
 deterministic scorer over task query terms, symbol names, path segments, and
 lexical matches. Selection is tier-aware and rank-before-cap:
 
-- **Tier 1A** explicit user source refs (`explicit_seed`) — highest priority after validation; may use the full cap but are not immune beyond it. When explicit refs exceed the cap, Grape ranks within Tier 1A and omits extras.
-- **Tier 1B** path-like test/failure seeds (`test_seed`) — bounded reservation via named ratio policy so tests do not crowd out all source evidence on default tasks.
+- **Tier 1A** explicit user source refs (`explicit_seed`): highest priority after validation; may use the full cap but are not immune beyond it. When explicit refs exceed the cap, Grape ranks within Tier 1A and omits extras.
+- **Tier 1B** path-like test/failure seeds (`test_seed`): bounded reservation via named ratio policy so tests do not crowd out all source evidence on default tasks.
 - **Tier 2** exact task/symbol/test-relationship evidence (`symbol_match`, `related_test`).
 - **Tier 3** expansion candidates (`graph_related`, `lexical_match`).
 
-Grape ranks semantically within each tier, then fills `selectedSourceRefs` in tier-priority order until `maxSelectedSources`. `rankedSourceRefs` contains the final selected source refs in deterministic retrieval-priority order — same membership and order as `selectedSourceRefs`. Retrieval priority is tier-aware; it is not a pure global semantic-score ordering and user seed order is not a ranking signal. Equal-score refs within a tier are broken by stable byte-string comparison for cross-environment determinism. Semantic candidates in artifacts are filtered to selected refs only.
+Grape ranks semantically within each tier, then fills `selectedSourceRefs` in tier-priority order until `maxSelectedSources`. `rankedSourceRefs` contains the final selected source refs in deterministic retrieval-priority order with the same membership and order as `selectedSourceRefs`. Retrieval priority is tier-aware; it is not a pure global semantic-score ordering and user seed order is not a ranking signal. Equal-score refs within a tier are broken by stable byte-string comparison for cross-environment determinism. Semantic candidates in artifacts are filtered to selected refs only.
 
 Truncation emits compact warnings: `task_retrieval_truncated` and `task_retrieval_omitted_over_cap:<count>` (the numeric count only). Missing explicit seed refs emit at most five per seed kind, then a count-only omitted warning. Semantic candidates are not proofs, not durable claims, and are not accepted by `proof_policy_accepted`. This is a correctness fix for retrieval selection, not a benchmark claim.
 
@@ -73,7 +73,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 
 - Explicit seed files receive Tier 1A priority when they exist in the current snapshot, but may still be omitted when they exceed the source cap after within-tier ranking.
 - Source file paths mentioned directly in the task are treated as explicit source anchors when they match current snapshot files.
-- When an explicit task, seed file, or path-like test seed is inside a common workspace directory such as `packages/<name>/`, broad symbol and lexical expansion is scoped to that package before global caps are applied.
+- When a task or seed names exact source refs, broad lexical expansion stays on those refs unless the refs identify one common workspace root. If refs identify a common workspace root under `packages/<name>/`, `apps/<name>/`, `services/<name>/`, or `libs/<name>/`, symbol and lexical expansion can stay inside that package before global caps apply. Direct graph relationships and explicit seed symbol or test-name matches can still add sources.
 - Path-like test seeds may select matching test files as exact source context.
 - Symbol matches may select source files and line anchors for exact excerpt windows.
 - Graph expansion may select directly related source files through supported import and call edges.

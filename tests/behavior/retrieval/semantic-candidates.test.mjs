@@ -38,7 +38,7 @@ test("semantic candidates are generated for relevant task and symbol input", () 
   assert.ok(candidates[0]?.matchedSignals.some((signal) => signal.startsWith("symbol:")));
 });
 
-test("semantic candidates keep tier-priority selection under cap", () => {
+test("semantic candidates stay aligned with exact-seed selection under cap", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix calculateDiscount refund flow",
     sources: [
@@ -58,7 +58,7 @@ test("semantic candidates keep tier-priority selection under cap", () => {
     seedSymbols: ["calculateDiscount"]
   });
 
-  assert.deepEqual(result.selectedSourceRefs, ["src/auth.ts", "src/billing.ts", "README.md"]);
+  assert.deepEqual(result.selectedSourceRefs, ["src/auth.ts", "src/billing.ts"]);
   assert.deepEqual(result.rankedSourceRefs, result.selectedSourceRefs);
   assert.equal(result.rankedSourceRefs[0], "src/auth.ts");
   assert.equal(new Set(result.rankedSourceRefs).size, result.selectedSourceRefs.length);

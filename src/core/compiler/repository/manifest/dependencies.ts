@@ -19,6 +19,7 @@ export function dependencyManifest(
   const preferredSourceRefs =
     input.taskRetrieval?.rankedSourceRefs ?? input.taskRetrieval?.selectedSourceRefs ?? [];
   const baseScope = currentScope(input);
+  const selectedSymbols = selectedSymbolNodes(input.symbolNodes, preferredSourceRefs);
   const dependencies: InMemoryContextDependencyShape[] = [
     {
       id: "repo-snapshot",
@@ -116,7 +117,7 @@ export function dependencyManifest(
     });
   }
 
-  for (const node of selectedSymbolNodes(input.symbolNodes, preferredSourceRefs)) {
+  for (const node of selectedSymbols) {
     dependencies.push({
       id: symbolDependencyId(node.symbolId),
       kind: "symbol",
@@ -126,7 +127,7 @@ export function dependencyManifest(
     });
   }
 
-  for (const edge of selectedSymbolEdgesForDependencies(input)) {
+  for (const edge of selectedSymbolEdgesForDependencies(input, selectedSymbols)) {
     dependencies.push({
       id: symbolDependencyId(edge.edgeId),
       kind: "symbol",
@@ -155,9 +156,13 @@ function currentScope(input: CompileRepositoryContextArtifactInput): Record<stri
 }
 
 function selectedSymbolEdgesForDependencies(
-  input: CompileRepositoryContextArtifactInput
+  input: CompileRepositoryContextArtifactInput,
+  selectedSymbols: readonly { readonly symbolId: string }[]
 ): readonly RepositoryArtifactSymbolEdgeInput[] {
-  const selectedById = new Map(selectedSymbolEdges(input.symbolEdges).map((edge) => [edge.edgeId, edge]));
+  const selectedSymbolIds = new Set(selectedSymbols.map((node) => node.symbolId));
+  const selectedById = new Map(
+    selectedSymbolEdges(input.symbolEdges, selectedSymbolIds).map((edge) => [edge.edgeId, edge])
+  );
   const taskRelationshipRefs = new Set(
     (input.taskRetrieval?.relatedTestRelationships ?? [])
       .map((relationship) => relationship.relationshipRef)

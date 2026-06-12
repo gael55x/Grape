@@ -36,6 +36,20 @@ test("index path helpers normalize separators and reject unsafe paths", () => {
 
   try {
     assert.equal(languageForPath("src\\app.ts"), "typescript");
+    assert.equal(languageForPath("internal/refund.go"), "go");
+    assert.equal(languageForPath("rust/src/lib.rs"), "rust");
+    assert.equal(languageForPath("dotnet/BillingLimit.cs"), "csharp");
+    assert.equal(languageForPath("ruby/lib/refund_policy.rb"), "ruby");
+    assert.equal(languageForPath("php/src/TaxPolicy.php"), "php");
+    assert.equal(languageForPath("swift/Sources/Checkout/AccessWindow.swift"), "swift");
+    assert.equal(languageForPath("native/src/retry_budget.c"), "c");
+    assert.equal(languageForPath("native/src/audit_bridge.cpp"), "cpp");
+    assert.equal(languageForPath("native/include/audit_bridge.hpp"), "cpp");
+    assert.equal(languageForPath("scripts/deploy-check.sh"), "shell");
+    assert.equal(languageForPath("docs/operations.md"), "markdown");
+    assert.equal(languageForPath("config/service-config.json"), "json");
+    assert.equal(languageForPath("config/routes.config.yaml"), "yaml");
+    assert.equal(languageForPath("config/limits.config.toml"), "toml");
     assert.equal(safeAbsolutePath(rootPath, "src\\app.ts"), path.join(rootPath, "src", "app.ts"));
     assert.throws(() => safeAbsolutePath(rootPath, "..\\secret.ts"), /unsafe indexed path/);
     assert.throws(() => safeAbsolutePath(rootPath, "/tmp/secret.ts"), /unsafe indexed path/);

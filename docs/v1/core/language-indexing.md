@@ -6,7 +6,7 @@ Define how Grape stays language-agnostic without pretending V1 has a complete pa
 
 Grape's transport protocol is language-agnostic. The compile layer can snapshot, hash, redact, diff, omit, restore, and invalidate context for any allowed Git-visible text file. Internally this is graph-shaped: source refs, symbols, package manifests, proofs, dependency refs, pack items, omissions, restore handles, and invalidations form connected context. Language-specific indexing is primarily an orientation layer that helps choose exact source spans.
 
-**Alpha.3 indexing strength:** TypeScript/JavaScript AST extraction is the strongest current signal (`symbols_ast`, `module_edges`, `test_edges`). Kotlin, Java, Python, Go, Rust, and other allowed text files are handled safely through exact/path/lexical fallback (`lexical_path`, `symbols_basic`) until dedicated providers and fixtures prove stronger graph coverage. Grape must not claim full polyglot graph extraction from fallback paths.
+**Alpha.3 indexing strength:** TypeScript/JavaScript AST extraction is the strongest current signal (`symbols_ast`, `module_edges`, `test_edges`). Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, shell, JSON, YAML, TOML, Markdown, and other allowed text files use safe fallback until dedicated providers and fixtures prove stronger graph coverage. Safe fallback means exact source evidence and path selection for any allowed Git-visible text file, plus lexical search for files the indexer reads. Grape must not claim full polyglot graph extraction from fallback paths.
 
 Provider output is not proof, durable truth, or a complete impact graph unless a separate Trust Kernel policy promotes a narrow provider-backed claim with exact source hashes and current-valid scope.
 
@@ -17,7 +17,7 @@ Retrieval and compiler code consume normalized index facts, not parser-specific 
 Language-aware extraction must flow through provider capabilities:
 
 ```text
-allowed source file -> language/provider detection -> normalized nodes, edges, diagnostics -> current-valid retrieval -> exact source excerpts
+allowed source file, language/provider detection, normalized nodes, edges, diagnostics, current-valid retrieval, exact source excerpts
 ```
 
 Provider output can guide:
@@ -113,12 +113,13 @@ Current implementation is useful but not broad language-aware indexing:
 - Generic manifest detection tags package-root evidence for common manifests such as `package.json`, `pyproject.toml`, `requirements.txt`, `Cargo.toml`, `go.mod`, `pom.xml`, and Gradle build/settings files. Nested source files under those roots carry the manifest ref and manifest kind as index metadata.
 - High-confidence TypeScript/JavaScript AST declaration nodes can promote the narrow `repository_symbol_declaration_exists` claim only when covered by an accepted exact source excerpt window and `provider_symbol_declaration` proof; this proves declaration-span existence only.
 - Supported npm `package.json` dependency entries can promote the narrow `package_manifest_dependency_exists` claim only when the allowed manifest source hash matches, the exact dependency entry is hashed as a direct `package_manifest_dependency_entry` proof, and current-valid scope matches. This proves only that the manifest declares the dependency entry; it does not prove installation, import usage, runtime requirement, safety, validity, lockfile resolution, or package-aware invalidation.
-- JSON and Markdown are classified as known languages for indexing and lexical search, but they do not have AST graph extraction.
-- Python, Java, Kotlin, Go, Rust, YAML, and other languages mostly fall back to file path/text indexing today.
+- JSON, YAML, TOML, and common config files are indexed as known generic text, but they do not have AST graph extraction.
+- Markdown files are labelled as known by path and can be selected as exact source evidence. Ordinary docs are not part of lexical or symbol indexing today unless they are rule files.
+- Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, shell, JSON, YAML, TOML, and other source or config files mostly fall back to file path and text indexing today.
 - Bootstrap detection can report Python, Go, Rust, package managers, and common frameworks from root manifests, but those are setup hints only.
 - Current provider diagnostics live in index metadata, not a first-class storage family.
-- Current selection caps are mostly global. If a task names an exact source path inside `packages/<name>/`, `apps/<name>/`, `services/<name>/`, or `libs/<name>/`, broad symbol and lexical expansion is scoped to that workspace path before the global cap is applied. Current-valid claim filtering uses that same common-prefix root only when explicit source refs identify exactly one package root; claim scopes record the common-prefix package root from their own exact source refs. Manifest-derived package roots are index evidence today, not a complete package-aware retrieval or invalidation policy.
-- `tests/fixtures/polyglot-fallback-repo` proves Python, Java, and Kotlin files can be selected as exact lexical/path evidence with partial-context warnings. It does not prove language-aware import, call, or test edges for those languages.
+- Current selection caps are mostly global. If a task names exact source refs outside a recognized workspace path, broad lexical expansion stays on those refs. If exact refs identify one common workspace path under `packages/<name>/`, `apps/<name>/`, `services/<name>/`, or `libs/<name>/`, symbol and lexical expansion can stay inside that workspace before the global cap is applied. Direct graph relationships and explicit seed symbol or test-name matches can still add sources. Current-valid claim filtering uses that same common-prefix root only when explicit source refs identify exactly one package root; claim scopes record the common-prefix package root from their own exact source refs. Manifest-derived package roots are index evidence today, not a complete package-aware retrieval or invalidation policy.
+- `tests/fixtures/polyglot-fallback-repo` proves Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, shell, JSON, YAML, TOML, and explicit Markdown paths can be selected as exact fallback evidence with partial-context warnings. It does not prove language-aware import, call, or test edges for those languages or file types.
 - `tests/fixtures/monorepo-lite-repo` proves an explicit `packages/api/...` task can select package-local TS source plus related tests without pulling an unrelated `packages/web/...` source. It does not prove package-aware invalidation, nested manifest dependency scoping, or per-package budgets.
 - Current checked-in benchmark fixtures remain TypeScript-focused; the polyglot and monorepo fixtures are behavior proof fixtures, not token benchmark baselines.
 

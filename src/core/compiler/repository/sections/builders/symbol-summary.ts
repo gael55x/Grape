@@ -14,7 +14,8 @@ export function symbolSummarySection(
   dependencies: readonly InMemoryContextDependencyShape[]
 ): InMemoryContextSectionShape {
   const nodes = selectedSymbolNodes(input.symbolNodes, preferredSourceRefs(input));
-  const edges = selectedSymbolEdges(input.symbolEdges);
+  const selectedNodeIds = new Set(nodes.map((node) => node.symbolId));
+  const edges = selectedSymbolEdges(input.symbolEdges, selectedNodeIds);
   return section({
     id: "symbol-summary",
     type: "compression_orientation",
@@ -24,7 +25,7 @@ export function symbolSummarySection(
       `Indexed symbol nodes: ${input.symbolNodes.length}`,
       `Indexed symbol edges: ${input.symbolEdges.length}`,
       "Selected nodes:",
-      ...nodes.map((node) => `- ${node.path} :: ${node.name} [${node.symbolKind}, ${node.confidence}]`),
+      ...nodes.map((node) => `- ${node.path} :: ${node.name} [${node.language}, ${node.symbolKind}, ${node.confidence}]`),
       "Selected relationships:",
       ...edges.map((edge) => `- ${edge.edgeType}: ${edge.fromSymbolId} -> ${relationshipTarget(edge)}`)
     ].join("\n"),

@@ -1,0 +1,4 @@
+{
+  "serviceLimitName": "invoice_batch_limit",
+  "maxInvoices": 40
+}

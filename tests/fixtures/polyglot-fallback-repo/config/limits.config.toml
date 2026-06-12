@@ -1,0 +1,2 @@
+limit_name = "support_escalation_limit"
+support_escalation_minutes = 20

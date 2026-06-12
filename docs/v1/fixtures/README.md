@@ -23,28 +23,28 @@ Agents must not add benchmarks against undocumented fixtures.
 
 ## Documented Fixtures
 
-- [clean-typescript-app](clean-typescript-app.md) — baseline token-reduction benchmark
-- `branch-switch-typescript-app` — branch-switch invalidation benchmark (metadata under `tests/fixtures/`)
-- `stale-source-typescript-app` — dependency-stale invalidation benchmark (metadata under `tests/fixtures/`)
-- `session-reset-typescript-app` — explicit session-reset invalidation benchmark (metadata under `tests/fixtures/`)
-- `polyglot-fallback-repo` — behavior proof fixture for unsupported-language lexical/path fallback
-- `monorepo-lite-repo` — behavior proof fixture for explicit nested-package source/test scoping
+- [clean-typescript-app](clean-typescript-app.md): baseline token-reduction benchmark
+- `branch-switch-typescript-app`: branch-switch invalidation benchmark (metadata under `tests/fixtures/`)
+- `stale-source-typescript-app`: dependency-stale invalidation benchmark (metadata under `tests/fixtures/`)
+- `session-reset-typescript-app`: explicit session-reset invalidation benchmark (metadata under `tests/fixtures/`)
+- `polyglot-fallback-repo`: behavior proof fixture for unsupported-language lexical/path fallback
+- `monorepo-lite-repo`: behavior proof fixture for explicit nested-package source/test scoping
 
 ## Fixture Matrix
 
 | Fixture | Purpose | Status |
 |---|---|---|
-| `clean-typescript-app` | baseline clean repo; two-turn `OMIT_UNCHANGED` token reduction | **implemented** — `grape bench --fixture clean-typescript-app` |
-| `branch-switch-typescript-app` | `INVALIDATE_PREVIOUS` after explicit session reuses a feature branch | **implemented** — `grape bench --fixture branch-switch-typescript-app` |
-| `stale-source-typescript-app` | `INVALIDATE_PREVIOUS` after depended-on source bytes change | **implemented** — `grape bench --fixture stale-source-typescript-app` |
-| `session-reset-typescript-app` | `INVALIDATE_PREVIOUS` plus full resend after `--reset-session` / `resetSession: true` | **implemented** — `grape bench --fixture session-reset-typescript-app` |
+| `clean-typescript-app` | baseline clean repo; two-turn `OMIT_UNCHANGED` token reduction | **implemented**: `grape bench --fixture clean-typescript-app` |
+| `branch-switch-typescript-app` | `INVALIDATE_PREVIOUS` after explicit session reuses a feature branch | **implemented**: `grape bench --fixture branch-switch-typescript-app` |
+| `stale-source-typescript-app` | `INVALIDATE_PREVIOUS` after depended-on source bytes change | **implemented**: `grape bench --fixture stale-source-typescript-app` |
+| `session-reset-typescript-app` | `INVALIDATE_PREVIOUS` plus full resend after `--reset-session` / `resetSession: true` | **implemented**: `grape bench --fixture session-reset-typescript-app` |
 | `dirty-worktree-repo` | dirty facts are worktree-scoped | planned |
 | `stale-proof-repo` | proof hashes invalidate dependents | planned |
 | `ignored-files-secrets-repo` | privacy and redaction rules | planned (partial coverage in unit/behavior tests) |
 | `no-tests-repo` | missing verification surfaced honestly | planned |
 | `dynamic-imports-repo` | partial graph confidence | planned |
-| `monorepo-lite-repo` | explicit `packages/api/...` path scoping and package-local related TS test selection | **implemented behavior fixture** — not a `grape bench` scenario yet |
-| `polyglot-fallback-repo` | Python/Java/Kotlin safe exact/path/lexical fallback with partial-context warnings | **implemented behavior fixture** — not a `grape bench` scenario yet |
+| `monorepo-lite-repo` | explicit `packages/api/...` path scoping and package-local related TS test selection | **implemented behavior fixture**, not a `grape bench` scenario yet |
+| `polyglot-fallback-repo` | common-language safe exact/path/lexical fallback with explicit Markdown path evidence and partial-context warnings | **implemented behavior fixture**, not a `grape bench` scenario yet |
 | `auth-security-fixture` | high-risk exact context | planned (risk-overlay behavior is covered in behavior tests) |
 | `compression-invalidation-fixture` | compression invalidation | planned |
 | `session-reset-fixture` | full resend and restore | implemented as `session-reset-typescript-app`; restore remains covered in behavior tests and restore-path goldens |
