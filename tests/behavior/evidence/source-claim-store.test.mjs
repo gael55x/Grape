@@ -123,6 +123,36 @@ function execGit(repoPath, args) {
   }).trim();
 }
 
+function addNestedPackageFixture(repoPath) {
+  mkdirSync(path.join(repoPath, "components", "backend", "src"), { recursive: true });
+  writeFileSync(
+    path.join(repoPath, "components", "backend", "package.json"),
+    [
+      "{",
+      "  \"name\": \"backend-fixture\",",
+      "  \"dependencies\": {",
+      "    \"grape-worker\": \"^7.8.9\"",
+      "  }",
+      "}",
+      ""
+    ].join("\n")
+  );
+  writeFileSync(
+    path.join(repoPath, "components", "backend", "src", "app.ts"),
+    "export function runBackendApp() { return 'backend'; }\n"
+  );
+  execGit(repoPath, ["add", "components/backend"]);
+  execGit(repoPath, [
+    "-c",
+    "user.name=Grape Test",
+    "-c",
+    "user.email=grape@example.test",
+    "commit",
+    "-m",
+    "add nested package claim fixture"
+  ]);
+}
+
 test("validated source proofs promote narrow source excerpt claims", () => {
   withGitRepo((repoPath) => {
     withMigratedDatabase((ctx) => {
@@ -208,6 +238,43 @@ test("validated package-local source claims record package root scope", () => {
   });
 });
 
+test("validated source claims record manifest-backed nested package root scope", () => {
+  withGitRepo((repoPath) => {
+    addNestedPackageFixture(repoPath);
+    withMigratedDatabase((ctx) => {
+      const fixture = prepareClaimFixture(repoPath, ctx, ["components/backend/src/app.ts"]);
+      const sourceMetadata = ctx.indexingRepositories.symbolNodes
+        .listBySnapshot(fixture.snapshotResult.snapshotId)
+        .map((node) => ({ sourceRef: node.path, metadataJson: node.metadataJson }));
+      persistSourceProofs({
+        repositories: ctx.proofRepositories,
+        sources: fixture.sources,
+        sourceExcerpts: fixture.sourceExcerpts,
+        now
+      });
+
+      const result = persistSourceExcerptClaims({
+        repositories: ctx.claimRepositories,
+        proofRepositories: ctx.proofRepositories,
+        sources: fixture.sources,
+        sourceMetadata,
+        sourceExcerpts: fixture.sourceExcerpts,
+        branch: fixture.snapshotResult.snapshot.branch,
+        commit: fixture.snapshotResult.snapshot.commit,
+        worktreeHash: fixture.snapshotResult.snapshot.worktreeHash,
+        now
+      });
+
+      assert.deepEqual(result.rejectedCandidates, []);
+      assert.equal(result.claimsInserted, 1);
+      const [claim] = ctx.claimRepositories.claims.list();
+      const scope = JSON.parse(claim.scopeJson);
+      assert.equal(scope.sourceRef, "components/backend/src/app.ts");
+      assert.equal(scope.packageRoot, "components/backend");
+    });
+  });
+});
+
 test("validated symbol declaration claims record provider proof without raw body", () => {
   withGitRepo((repoPath) => {
     withMigratedDatabase((ctx) => {
@@ -250,6 +317,41 @@ test("validated symbol declaration claims record provider proof without raw body
       assert.equal("excerpt" in proof, false);
       assert.equal("body" in proof, false);
       assert.equal(JSON.stringify({ claim, proof }).includes("return 'ok'"), false);
+    });
+  });
+});
+
+test("validated symbol declaration claims record manifest-backed nested package root scope", () => {
+  withGitRepo((repoPath) => {
+    addNestedPackageFixture(repoPath);
+    withMigratedDatabase((ctx) => {
+      const fixture = prepareClaimFixture(repoPath, ctx, ["components/backend/src/app.ts"]);
+      persistSourceProofs({
+        repositories: ctx.proofRepositories,
+        sources: fixture.sources,
+        sourceExcerpts: fixture.sourceExcerpts,
+        now
+      });
+
+      const result = persistSymbolDeclarationClaims({
+        repositories: ctx.claimRepositories,
+        proofRepositories: ctx.proofRepositories,
+        sources: fixture.sources,
+        symbolNodes: ctx.indexingRepositories.symbolNodes.listBySnapshot(fixture.snapshotResult.snapshotId),
+        sourceExcerpts: fixture.sourceExcerpts,
+        branch: fixture.snapshotResult.snapshot.branch,
+        commit: fixture.snapshotResult.snapshot.commit,
+        worktreeHash: fixture.snapshotResult.snapshot.worktreeHash,
+        now
+      });
+
+      assert.deepEqual(result.rejectedCandidates, []);
+      assert.equal(result.claimsInserted, 1);
+      const [claim] = ctx.claimRepositories.claims.list();
+      const scope = JSON.parse(claim.scopeJson);
+      assert.equal(scope.sourceRef, "components/backend/src/app.ts");
+      assert.equal(scope.symbolName, "runBackendApp");
+      assert.equal(scope.packageRoot, "components/backend");
     });
   });
 });
