@@ -578,6 +578,39 @@ test("task source retrieval equal-score tie-break uses stable string order not i
   );
 });
 
+test("task source retrieval spreads lower-priority package refs before global cap", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix checkout total",
+    maxSelectedSources: 4,
+    sources: [
+      source("api-a", "packages/api/src/checkout-a.ts"),
+      source("api-b", "packages/api/src/checkout-b.ts"),
+      source("api-c", "packages/api/src/checkout-c.ts"),
+      source("api-d", "packages/api/src/checkout-d.ts"),
+      source("web-a", "packages/web/src/checkout-a.ts"),
+      source("web-b", "packages/web/src/checkout-b.ts")
+    ],
+    symbols: [],
+    lexicalMatches: [
+      { sourceId: "api-a", sourceRef: "packages/api/src/checkout-a.ts", matchedTerm: "total" },
+      { sourceId: "api-b", sourceRef: "packages/api/src/checkout-b.ts", matchedTerm: "total" },
+      { sourceId: "api-c", sourceRef: "packages/api/src/checkout-c.ts", matchedTerm: "total" },
+      { sourceId: "api-d", sourceRef: "packages/api/src/checkout-d.ts", matchedTerm: "total" },
+      { sourceId: "web-a", sourceRef: "packages/web/src/checkout-a.ts", matchedTerm: "total" },
+      { sourceId: "web-b", sourceRef: "packages/web/src/checkout-b.ts", matchedTerm: "total" }
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "packages/api/src/checkout-a.ts",
+    "packages/web/src/checkout-a.ts",
+    "packages/api/src/checkout-b.ts",
+    "packages/web/src/checkout-b.ts"
+  ]);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:2"));
+});
+
 test("task source retrieval no-candidate tie-break uses stable string order not seed order", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix",

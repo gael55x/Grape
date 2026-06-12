@@ -49,6 +49,8 @@ lexical matches. Selection is tier-aware and rank-before-cap:
 
 Grape ranks semantically within each tier, then fills `selectedSourceRefs` in tier-priority order until `maxSelectedSources`. `rankedSourceRefs` contains the final selected source refs in deterministic retrieval-priority order with the same membership and order as `selectedSourceRefs`. Retrieval priority is tier-aware; it is not a pure global semantic-score ordering and user seed order is not a ranking signal. Equal-score refs within a tier are broken by stable byte-string comparison for cross-environment determinism. Semantic candidates in artifacts are filtered to selected refs only.
 
+When Tier 3 expansion candidates include two or more workspace package roots, Grape spreads the already-ranked refs across package roots before it fills the remaining global source slots. This is a lower-priority expansion spread only. Explicit seeds, path-like test seeds, direct symbol matches, and related-test evidence keep their normal tier priority.
+
 Truncation emits compact warnings: `task_retrieval_truncated` and `task_retrieval_omitted_over_cap:<count>` (the numeric count only). Missing explicit seed refs emit at most five per seed kind, then a count-only omitted warning. Semantic candidates are not proofs, not durable claims, and are not accepted by `proof_policy_accepted`. This is a correctness fix for retrieval selection, not a benchmark claim.
 
 ## Current Inputs
@@ -110,7 +112,7 @@ Current implementation can fail or become inefficient in these cases:
 - unsupported language files receive lexical/path fallback, and common fallback source languages can receive conservative declaration anchors, but non-TS/JS files still do not receive language-aware imports or test relationships
 - Python, Java, Kotlin, Go, Rust, YAML, C#, Ruby, PHP, Swift, C, C++, and shell relationships are not extracted as language-aware graph edges today
 - JS/TS import resolution can miss aliases, package exports, generated code, framework routing, dynamic imports, and non-relative imports
-- global source caps can select too much from one package in a monorepo
+- global source caps can still select too much from one package through explicit, test-seed, or direct-symbol tiers; Tier 3 expansion has package-root spread, not full per-package budgets
 - checked-in polyglot and monorepo fixtures prove only safe fallback, explicit package-path scoping, and package-scoped current-valid filtering, not package-aware invalidation or full semantic graph coverage
 
 Retrieval should surface these cases as blind spots or `partial_with_risk` rather than silently acting as a complete graph.
@@ -119,7 +121,7 @@ Retrieval should surface these cases as blind spots or `partial_with_risk` rathe
 
 - provider dispatcher for normalized language index output
 - package/workspace boundary detection
-- per-package and per-language source budgets
+- full per-package and per-language source budgets
 - broader language extraction beyond TypeScript/JavaScript
 - stronger TypeScript checker-backed declaration resolution
 - richer exact-span ranking across tests and source files

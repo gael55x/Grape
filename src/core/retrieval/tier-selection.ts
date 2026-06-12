@@ -1,6 +1,8 @@
 import type { TaskSemanticCandidate } from "./semantic-candidates.js";
 import { orderSourceRefsBySemanticCandidates } from "./semantic-candidates.js";
 import type { ReservedSeedSlots } from "./seed-slots.js";
+import { packageRootForSourceRef } from "../scope/package-root.js";
+import { compareStableStrings } from "./stable-compare.js";
 
 export type SelectionReason =
   | "explicit_seed"
@@ -34,7 +36,7 @@ export function selectTieredSourceRefs(input: SelectTieredSourceRefsInput): Tier
   const rankedTier1a = rankTierRefs(tiers.tier1a, input.semanticCandidates);
   const rankedTier1b = rankTierRefs(tiers.tier1b, input.semanticCandidates);
   const rankedTier2 = rankTierRefs(tiers.tier2, input.semanticCandidates);
-  const rankedTier3 = rankTierRefs(tiers.tier3, input.semanticCandidates);
+  const rankedTier3 = spreadRankedPackageRefs(rankTierRefs(tiers.tier3, input.semanticCandidates));
 
   const selected: string[] = [];
   const selectedSet = new Set<string>();
@@ -150,6 +152,53 @@ function takeFromTier(
     selectedSet.add(sourceRef);
     taken += 1;
   }
+}
+
+interface RankedPackageGroup {
+  readonly key: string;
+  readonly firstIndex: number;
+  readonly refs: readonly string[];
+}
+
+function spreadRankedPackageRefs(rankedRefs: readonly string[]): readonly string[] {
+  if (rankedRefs.length <= 1) return [...rankedRefs];
+  const packageRoots = new Set(
+    rankedRefs
+      .map(packageRootForSourceRef)
+      .filter((root): root is string => Boolean(root))
+  );
+  if (packageRoots.size < 2) return [...rankedRefs];
+
+  const groups = new Map<string, { firstIndex: number; refs: string[] }>();
+  for (const [index, sourceRef] of rankedRefs.entries()) {
+    const key = packageRootForSourceRef(sourceRef) ?? "";
+    const group = groups.get(key) ?? { firstIndex: index, refs: [] };
+    group.refs.push(sourceRef);
+    groups.set(key, group);
+  }
+
+  const orderedGroups: readonly RankedPackageGroup[] = [...groups.entries()]
+    .map(([key, group]) => ({ key, firstIndex: group.firstIndex, refs: group.refs }))
+    .sort((left, right) => {
+      if (left.firstIndex !== right.firstIndex) return left.firstIndex - right.firstIndex;
+      return compareStableStrings(left.key, right.key);
+    });
+
+  const spread: string[] = [];
+  let offset = 0;
+  while (spread.length < rankedRefs.length) {
+    let added = false;
+    for (const group of orderedGroups) {
+      const sourceRef = group.refs[offset];
+      if (!sourceRef) continue;
+      spread.push(sourceRef);
+      added = true;
+    }
+    if (!added) break;
+    offset += 1;
+  }
+
+  return spread;
 }
 
 function remainingSlots(selected: readonly string[], maxSelectedSources: number): number {
