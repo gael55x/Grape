@@ -5,6 +5,7 @@ import type {
 } from "../../../../../shared/index.js";
 import { compressionDependencyId } from "../../manifest/dependencies.js";
 import { repositoryContextSection as section } from "../factory.js";
+import { sectionDependencyRefs } from "../dependencies.js";
 import type { CompileRepositoryContextArtifactInput } from "../../types.js";
 
 export function compressionArtifactsSection(
@@ -31,7 +32,10 @@ export function compressionArtifactsSection(
         ].join("\n")
       )
     ].join("\n\n"),
-    dependencyRefs: compressionDependencyRefs(artifacts, dependencies),
+    dependencyRefs: sectionDependencyRefs(
+      ["repo-snapshot", "worktree-state"],
+      compressionDependencyRefs(artifacts, dependencies)
+    ),
     pinned: false,
     exactRequired: false
   });

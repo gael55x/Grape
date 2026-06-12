@@ -183,6 +183,19 @@ test("repository artifact compiler derives a dependency-backed context artifact 
         artifact.dependencyManifest.dependencies.map((dependency) => dependency.id)
       );
 
+      for (const section of artifact.sections) {
+        assert.equal(
+          section.dependencyRefs.includes("repo-snapshot"),
+          true,
+          `${section.id} has repo snapshot dependency`
+        );
+        assert.equal(
+          section.dependencyRefs.includes("worktree-state"),
+          true,
+          `${section.id} has worktree dependency`
+        );
+      }
+
       assert.equal(artifact.input.branch, "main");
       assert.equal(artifact.input.commit, snapshotResult.snapshot.commit);
       assert.equal(artifact.input.worktreeHash, snapshotResult.snapshot.worktreeHash);
@@ -329,6 +342,8 @@ test("repository artifact compiler renders current-valid claim sections with cla
       assert.equal(activeClaims?.type, "active_claim");
       assert.equal(activeClaims?.exactRequired, true);
       assert.deepEqual(activeClaims?.proofRefs, ["proof:source-excerpt"]);
+      assert.equal(activeClaims?.dependencyRefs.includes("repo-snapshot"), true);
+      assert.equal(activeClaims?.dependencyRefs.includes("worktree-state"), true);
       assert.match(activeClaims?.body ?? "", /repository_source_excerpt_exists/);
       assert.equal(claimDependency?.kind, "claim");
       assert.equal(claimDependency?.hash, "c".repeat(64));

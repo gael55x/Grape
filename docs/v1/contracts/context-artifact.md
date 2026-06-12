@@ -203,6 +203,7 @@ This is still narrower than the final broad durable-claim retrieval system. It u
 
 - Every artifact must include a dependency manifest.
 - Every section must reference dependency IDs used to build its body.
+- Repository-derived sections that can be sent, omitted, or restored must reference `repo-snapshot` and `worktree-state` so branch and dirty-worktree changes cannot reuse stale sent context.
 - Dependency hashes must be recalculated before diff generation.
 - Any dependency hash mismatch makes the artifact `context_artifact_dirty`.
 - If a dirty artifact was previously sent, the diff engine must emit `INVALIDATE_PREVIOUS`.

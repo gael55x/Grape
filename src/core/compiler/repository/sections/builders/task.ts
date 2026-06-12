@@ -12,7 +12,7 @@ export function taskSection(input: CompileRepositoryContextArtifactInput): InMem
       `Task id: ${input.taskId}`,
       `Risk overlays: ${input.riskOverlays.length > 0 ? input.riskOverlays.join(", ") : "none"}`
     ].join("\n"),
-    dependencyRefs: ["repo-snapshot"],
+    dependencyRefs: ["repo-snapshot", "worktree-state"],
     pinned: false,
     exactRequired: false
   });

@@ -8,6 +8,7 @@ import type {
 } from "../../../../../shared/index.js";
 import { claimDependencyId } from "../../manifest/dependencies.js";
 import { repositoryContextSection as section } from "../factory.js";
+import { sectionDependencyRefs } from "../dependencies.js";
 import type { CompileRepositoryContextArtifactInput } from "../../types.js";
 import { sourceProofDependencyId } from "../../proofs/source-proofs.js";
 
@@ -25,7 +26,10 @@ export function activeClaimsSection(
     body: activeClaimsBody(claims),
     sourceRefs: [...new Set(claims.flatMap((claim) => claim.sourceRefs))],
     proofRefs: [...new Set(claims.flatMap((claim) => claim.proofRefs))],
-    dependencyRefs: activeClaimDependencyRefs(claims, dependencies),
+    dependencyRefs: sectionDependencyRefs(
+      ["repo-snapshot", "worktree-state"],
+      activeClaimDependencyRefs(claims, dependencies)
+    ),
     pinned: false,
     exactRequired: true
   });
