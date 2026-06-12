@@ -399,6 +399,7 @@ test("repository artifact compiler uses indexed package-root metadata for nested
       );
       const exactEvidence = artifact.sections.find((section) => section.id === "exact-source-evidence");
       const taskInputs = artifact.sections.find((section) => section.id === "task-retrieval");
+      const blindSpots = artifact.sections.find((section) => section.id === "index-blind-spots");
 
       assert.equal(artifact.input.packageRoot, undefined);
       assert.equal(pyprojectDependency?.kind, "config");
@@ -406,6 +407,11 @@ test("repository artifact compiler uses indexed package-root metadata for nested
       assert.equal(pyprojectDependency?.scope.packageContextSource, true);
       assert.ok(exactEvidence?.dependencyRefs.includes(pyprojectDependency.id));
       assert.ok(taskInputs?.dependencyRefs.includes(pyprojectDependency.id));
+      assert.match(blindSpots?.body ?? "", /Selected package provider capability summary:/);
+      assert.match(
+        blindSpots?.body ?? "",
+        /components\/backend: python via generic_text; files 1; capabilities lexical_path, symbols_basic; gaps module_edges, test_edges\./
+      );
     });
   });
 });

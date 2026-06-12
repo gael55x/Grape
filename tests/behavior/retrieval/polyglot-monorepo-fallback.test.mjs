@@ -258,6 +258,7 @@ test("monorepo fixture keeps task retrieval focused on package-local source and 
     ]);
     const retrieval = section(artifactJson, "task-retrieval");
     const exactEvidence = section(artifactJson, "exact-source-evidence");
+    const blindSpots = section(artifactJson, "index-blind-spots");
 
     assert.equal(output.warnings.includes("repository_artifact_uses_lightweight_index"), true);
     assert.equal(output.warnings.includes("task_retrieval_no_related_tests_found"), false);
@@ -271,6 +272,11 @@ test("monorepo fixture keeps task retrieval focused on package-local source and 
     assert.match(exactEvidence.text, /Source: packages\/api\/src\/apiBilling\.ts/);
     assert.match(exactEvidence.text, /Source: packages\/api\/src\/apiBilling\.test\.ts/);
     assert.doesNotMatch(exactEvidence.text, /Source: packages\/web\/src\/cart\.ts/);
+    assert.match(blindSpots.text, /Selected package provider capability summary:/);
+    assert.match(
+      blindSpots.text,
+      /packages\/api: typescript via typescript_ast; files 2; capabilities lexical_path, module_edges, symbols_ast, test_edges; gaps none\./
+    );
   });
 });
 
