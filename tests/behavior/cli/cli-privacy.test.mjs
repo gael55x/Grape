@@ -97,11 +97,13 @@ test("public output sanitizer redacts repo paths, local paths, and secret-lookin
   assert.equal(serialized.includes("service-secret-value"), false);
   assert.equal(serialized.includes("sk-test-1234567890abcdef"), false);
 
-  const aliased = sanitizePublicOutput(
-    { rootPath: "/private/var/folders/grape-private-workspace/repo" },
-    { rootPath: "/var/folders/grape-private-workspace/repo" }
-  );
-  assert.equal(aliased.rootPath, "<repo-root>");
+  if (path.sep === "/") {
+    const aliased = sanitizePublicOutput(
+      { rootPath: "/private/var/folders/grape-private-workspace/repo" },
+      { rootPath: "/var/folders/grape-private-workspace/repo" }
+    );
+    assert.equal(aliased.rootPath, "<repo-root>");
+  }
 
   const windowsCaseVariant = sanitizePublicOutput(
     {
