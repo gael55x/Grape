@@ -146,7 +146,7 @@ Before Grape claims broad polyglot or monorepo retrieval, it needs:
 - a provider dispatcher with a stable normalized output contract
 - capability metadata surfaced in artifacts or diagnostics
 - package/workspace boundary metadata consumed by retrieval, current-valid scope, and invalidation policy
-- per-package/per-language retrieval caps beyond the current explicit-path guard
+- per-package/per-language retrieval caps beyond the current explicit-path guard and in-tier package spreading
 - benchmark baselines for polyglot and monorepo scenarios, not only behavior fixtures
 - tests that prove package-local manifest changes do not over-invalidate unrelated package context when dependency refs are scoped
 

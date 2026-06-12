@@ -108,7 +108,7 @@ The current TypeScript/JavaScript signal includes function declarations, class d
 
 Current implementation can fail or become inefficient in these cases:
 
-- nested `package.json`, `pyproject.toml`, `go.mod`, or `Cargo.toml` files can scope selected source retrieval and dependency-back selected package context through index metadata, but they do not create full workspace budgets, current-valid claim scope, or dependency closure
+- nested `package.json`, `pyproject.toml`, `go.mod`, or `Cargo.toml` files can scope selected source retrieval and dependency-back selected package context through index metadata. Manifest-backed package roots can also participate in current-valid package scope for exact refs and supported claim types. They still do not create full workspace budgets, dependency closure, or non-npm manifest dependency claims
 - unsupported language files receive lexical/path fallback, and common fallback source languages can receive conservative declaration anchors, but non-TS/JS files still do not receive language-aware imports or test relationships
 - Python, Java, Kotlin, Go, Rust, YAML, C#, Ruby, PHP, Swift, C, C++, and shell relationships are not extracted as language-aware graph edges today
 - JS/TS import resolution can miss aliases, package exports, generated code, framework routing, dynamic imports, and non-relative imports
