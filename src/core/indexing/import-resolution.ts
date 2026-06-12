@@ -2,25 +2,6 @@ import path from "node:path";
 
 import { tryNormalizeIndexRepoPath } from "./index-paths.js";
 
-const importPatterns = [
-  /\bimport\s+(?:[^'"]+\s+from\s+)?["']([^"']+)["']/g,
-  /\bexport\s+[^'"]+\s+from\s+["']([^"']+)["']/g,
-  /\brequire\(\s*["']([^"']+)["']\s*\)/g,
-  /\bimport\(\s*["']([^"']+)["']\s*\)/g
-];
-
-export function importSpecifiers(content: string): string[] {
-  const specifiers = new Set<string>();
-
-  for (const pattern of importPatterns) {
-    for (const match of content.matchAll(pattern)) {
-      specifiers.add(match[1]);
-    }
-  }
-
-  return [...specifiers].sort();
-}
-
 export function resolveLocalImport(
   fromRepoPath: string,
   specifier: string,

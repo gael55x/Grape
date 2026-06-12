@@ -1,5 +1,5 @@
 import { hashStableParts } from "./index-hash.js";
-import { importSpecifiers, resolveLocalImport } from "./import-resolution.js";
+import { resolveLocalImport } from "./import-resolution.js";
 import { languageProviderMetadataFields, type LanguageProviderMetadata } from "./language-provider.js";
 import { packageRootMetadataFields, type PackageRootMetadata } from "./package-roots.js";
 import type { AstCallCandidate } from "./typescript-ast-index.js";
@@ -42,11 +42,7 @@ function detectImportEdges(
   parsed: ParsedFileIndex,
   filePaths: ReadonlySet<string>
 ): FileIndexEdge[] {
-  const imports = parsed.ast?.imports ?? importSpecifiers(parsed.text).map((specifier) => ({
-    specifier,
-    bindings: [],
-    dynamic: false
-  }));
+  const imports = parsed.ast?.imports ?? [];
 
   return imports.map((candidate) => {
     const targetPath = resolveLocalImport(parsed.file.path, candidate.specifier, filePaths);

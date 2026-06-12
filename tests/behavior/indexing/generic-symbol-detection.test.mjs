@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
@@ -60,8 +61,64 @@ test("generic_text_fallback_detects_common_language_symbols", () => {
   assert.equal(result.edges.some((edge) => edge.edgeType === "calls"), false);
 });
 
+test("generic_text_fallback_does_not_emit_js_style_import_edges", () => {
+  const rootPath = mkdtempSync(path.join(tmpdir(), "grape-generic-import-"));
+
+  try {
+    writeFileSync(
+      path.join(rootPath, "worker.py"),
+      [
+        "import { helper } from './helper';",
+        "",
+        "def run_worker():",
+        "    return helper()",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(
+      path.join(rootPath, "helper.py"),
+      [
+        "def helper():",
+        "    return 1",
+        ""
+      ].join("\n")
+    );
+
+    const result = buildFileIndex({
+      projectId: "project-1",
+      repoId: "repo-1",
+      snapshotId: "snapshot-1",
+      rootPath,
+      files: [
+        sourceFrom(rootPath, "worker.py"),
+        sourceFrom(rootPath, "helper.py")
+      ],
+      createdAt: now
+    });
+    const workerModule = result.nodes.find(
+      (node) => node.path === "worker.py" && node.symbolKind === "module"
+    );
+
+    assert.ok(workerModule);
+    assert.equal(workerModule.metadata.providerId, "generic_text");
+    assert.equal(
+      workerModule.metadata.providerDiagnostics.some(
+        (diagnostic) => diagnostic.code === "provider_capability_gap" && diagnostic.capability === "module_edges"
+      ),
+      true
+    );
+    assert.equal(result.edges.some((edge) => edge.edgeType === "imports"), false);
+  } finally {
+    rmSync(rootPath, { recursive: true, force: true });
+  }
+});
+
 function source(repoPath) {
-  const bytes = readFileSync(path.join(fixtureRoot, repoPath));
+  return sourceFrom(fixtureRoot, repoPath);
+}
+
+function sourceFrom(rootPath, repoPath) {
+  const bytes = readFileSync(path.join(rootPath, repoPath));
   return {
     path: repoPath,
     sha256: createHash("sha256").update(bytes).digest("hex"),
