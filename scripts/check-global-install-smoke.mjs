@@ -1,13 +1,14 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { runMcpContextRestoreSession } from "./mcp-smoke-session.mjs";
 import { envWithSqliteNodeOptions } from "./sqlite-node-env.mjs";
 
-const expectedPackage = "grape-context";
-const expectedVersion = "0.1.0-alpha.3";
+const sourcePackage = JSON.parse(readFileSync(path.join(process.cwd(), "package.json"), "utf8"));
+const expectedPackage = sourcePackage.name;
+const expectedVersion = sourcePackage.version;
 const repoPath = mkdtempSync(path.join(tmpdir(), "grape-global-smoke-"));
 
 try {
