@@ -67,6 +67,15 @@ export function recoveryGuidanceForCompileResult(input: {
   if (input.warnings.includes("dirty_worktree_context")) {
     guidance.add("Commit or stash changes for branch-global context, or continue with worktree-scoped context.");
   }
+  if (input.warnings.some((warning) => warning.startsWith("task_retrieval_seed_packages_omitted_over_cap:"))) {
+    guidance.add("Split the task by package or reduce seed refs; capped source selection did not represent every seeded package.");
+  }
+  if (input.warnings.some((warning) => warning.startsWith("task_retrieval_package_groups_omitted_over_cap:"))) {
+    guidance.add("Name exact files, symbols, or tests for the package you need, or split broad mixed-package work into package-scoped tasks.");
+  }
+  if (input.warnings.some((warning) => warning.startsWith("task_retrieval_language_groups_omitted_over_cap:"))) {
+    guidance.add("Name exact files, symbols, or tests for the language you need, or split broad mixed-language work into language-scoped tasks.");
+  }
   if (input.budget.status === "over_budget") {
     guidance.add("Use grape artifacts --artifact <id> to inspect the pack before choosing a larger token budget.");
   }
