@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Record the alpha.3 alignment work that sharpens Grape's product wedge: **local-first, session-scoped context transport** via MCP/CLI—not a daemon, memory platform, or full repo graph.
+Record the alpha.3 alignment work that sharpens Grape's product wedge: **local-first, session-scoped context transport** via MCP/CLI, not a daemon, memory platform, or full repo graph.
 
 ## Completed
 
@@ -17,7 +17,7 @@ Record the alpha.3 alignment work that sharpens Grape's product wedge: **local-f
 ## Remaining beta blockers (honest)
 
 - Real MCP client trials (Cursor, Claude Code, etc.) against the published package.
-- Cross-platform CI coverage beyond current gates.
+- Keep hosted cross-platform CI current after GitHub Actions reported action runtime and Windows image redirect notices.
 - Public schema/contract freeze for transport JSON.
 - Turn-1 retrieval quality hardening for non-TS/JS repos.
 - Dirty-worktree invalidation at full spec fidelity (dependency-hash drift covers many cases; explicit worktree-hash ledger invalidation may still be partial).

@@ -187,7 +187,7 @@ npm install -g grape-context@0.1.0-alpha.3
 ## Remaining blockers after transport-wedge cleanup
 
 - Real MCP client trials (Cursor, Claude Code, or equivalent) against the published package are not yet recorded in-repo.
-- Cross-platform CI matrix needs its first green GitHub Actions run.
+- Hosted cross-platform CI now passes for the current alpha.3 gate, but GitHub Actions reported action runtime and Windows image redirect notices that need follow-up before they become failures.
 - Turn-1 retrieval for non-TS/JS repos now has basic declaration anchors, but still lacks language-aware graph edges, package-aware caps, and benchmark baselines.
 - Benchmarks: deferred until beta architecture, schema, dirty/package, and compact output are confirmed.
 
