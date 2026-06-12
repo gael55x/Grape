@@ -1,1 +1,2 @@
 tests/fixtures/** text eol=lf
+src/core/storage/migrations/*.sql text eol=lf

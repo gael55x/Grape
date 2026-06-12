@@ -204,6 +204,7 @@ Local bootstrap-capable flows (`init`, `sync`, and `compile`) may repair an unus
 - Every schema change updates this file, `../planning/spec-changelog.md`, and migration tests.
 - Every migration stores checksum and applied timestamp in `schema_migrations`.
 - Committed migration references must include the SHA-256 checksum of the SQL file bytes.
+- Migration SQL files are checksum-sensitive and must check out with LF line endings on every platform. `.gitattributes` pins `src/core/storage/migrations/*.sql` to LF so Windows checkout bytes match the committed manifest checksums.
 - Destructive migrations require an ADR before implementation.
 - `npm run storage:check` validates migration naming, manifest coverage, the initial table set, canonical table names, and obviously unsafe migration statements.
 - Migration planning must reject duplicate IDs, out-of-order available migrations, unknown applied migrations, and changed checksums before any SQL is applied. Filename-only drift is tolerated when the migration ID and checksum still match so purpose-based migration renames do not break existing local projects.
