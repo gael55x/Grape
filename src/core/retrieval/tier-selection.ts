@@ -36,7 +36,10 @@ export function selectTieredSourceRefs(input: SelectTieredSourceRefsInput): Tier
   const tiers = partitionByTier(input.selectedReasons);
   const rankedTier1a = rankTierRefs(tiers.tier1a, input.semanticCandidates);
   const rankedTier1b = rankTierRefs(tiers.tier1b, input.semanticCandidates);
-  const rankedTier2 = rankTierRefs(tiers.tier2, input.semanticCandidates);
+  const rankedTier2 = spreadRankedPackageRefs(
+    rankTierRefs(tiers.tier2, input.semanticCandidates),
+    input.packageRootBySourceRef ?? new Map()
+  );
   const rankedTier3 = spreadRankedPackageRefs(
     rankTierRefs(tiers.tier3, input.semanticCandidates),
     input.packageRootBySourceRef ?? new Map()

@@ -662,6 +662,40 @@ test("task source retrieval spreads lower-priority package refs before global ca
   assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:2"));
 });
 
+test("task source retrieval spreads direct symbol matches across package roots before global cap", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix checkout total",
+    maxSelectedSources: 4,
+    sources: [
+      source("api-a", "packages/api/src/checkout-a.ts"),
+      source("api-b", "packages/api/src/checkout-b.ts"),
+      source("api-c", "packages/api/src/checkout-c.ts"),
+      source("api-d", "packages/api/src/checkout-d.ts"),
+      source("web-a", "packages/web/src/checkout-a.ts"),
+      source("web-b", "packages/web/src/checkout-b.ts")
+    ],
+    symbols: [
+      symbol("api-a", "packages/api/src/checkout-a.ts", "checkoutTotal"),
+      symbol("api-b", "packages/api/src/checkout-b.ts", "checkoutTotal"),
+      symbol("api-c", "packages/api/src/checkout-c.ts", "checkoutTotal"),
+      symbol("api-d", "packages/api/src/checkout-d.ts", "checkoutTotal"),
+      symbol("web-a", "packages/web/src/checkout-a.ts", "checkoutTotal"),
+      symbol("web-b", "packages/web/src/checkout-b.ts", "checkoutTotal")
+    ],
+    lexicalMatches: []
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "packages/api/src/checkout-a.ts",
+    "packages/web/src/checkout-a.ts",
+    "packages/api/src/checkout-b.ts",
+    "packages/web/src/checkout-b.ts"
+  ]);
+  assert.deepEqual(result.symbolSourceRefs, result.selectedSourceRefs);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:2"));
+});
+
 test("task source retrieval spreads lower-priority refs using indexed nested package roots", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix order total",
