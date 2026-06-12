@@ -98,6 +98,15 @@ test("polyglot fixture returns lexical fallback evidence for Python with partial
       blindSpots.text,
       /python via generic_text: capabilities lexical_path, symbols_basic; gaps module_edges, test_edges\./
     );
+    assert.match(blindSpots.text, /Indexed provider capability summary:/);
+    assert.match(
+      blindSpots.text,
+      /python via generic_text: files 2; capabilities lexical_path, symbols_basic; gaps module_edges, test_edges\./
+    );
+    assert.match(
+      blindSpots.text,
+      /go via generic_text: files 1; capabilities lexical_path, symbols_basic; gaps module_edges, test_edges\./
+    );
   });
 });
 

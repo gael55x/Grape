@@ -248,6 +248,11 @@ test("repository artifact compiler derives a dependency-backed context artifact 
         blindSpots?.body ?? "",
         /typescript via typescript_ast: capabilities lexical_path, module_edges, symbols_ast, test_edges; gaps none\./
       );
+      assert.match(blindSpots?.body ?? "", /Indexed provider capability summary:/);
+      assert.match(
+        blindSpots?.body ?? "",
+        /typescript via typescript_ast: files 2; capabilities lexical_path, module_edges, symbols_ast, test_edges; gaps none\./
+      );
       assert.equal(artifact.warnings.includes("repository_artifact_uses_lightweight_index"), true);
       assert.equal(JSON.stringify(artifact).includes("PRIVATE=value"), false);
     });

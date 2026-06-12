@@ -7,6 +7,7 @@ import type { CompileRepositoryContextArtifactInput } from "../../types.js";
 export function blindSpotSection(input: CompileRepositoryContextArtifactInput): InMemoryContextSectionShape {
   const fallbackLanguages = selectedFallbackLanguages(input);
   const providerSummaries = selectedProviderSummaries(input);
+  const indexedProviderSummaries = indexedProviderSummariesByLanguage(input);
 
   return section({
     id: "index-blind-spots",
@@ -17,6 +18,7 @@ export function blindSpotSection(input: CompileRepositoryContextArtifactInput): 
       "It is an impact candidate set, not a complete call graph.",
       ...fallbackLanguageLines(fallbackLanguages),
       ...providerCapabilityLines(providerSummaries),
+      ...indexedProviderCapabilityLines(indexedProviderSummaries),
       "Regex import/symbol extraction can miss dynamic imports, framework routing, dependency injection, and generated code.",
       "No durable claims are promoted from this artifact without proof validation."
     ].join("\n"),
@@ -29,6 +31,7 @@ export function blindSpotSection(input: CompileRepositoryContextArtifactInput): 
 interface ProviderSummary {
   readonly language: string;
   readonly providerId: string;
+  readonly fileCount?: number;
   readonly capabilities: readonly string[];
   readonly gaps: readonly string[];
 }
@@ -86,6 +89,52 @@ function selectedProviderSummaries(input: CompileRepositoryContextArtifactInput)
     });
 }
 
+function indexedProviderSummariesByLanguage(input: CompileRepositoryContextArtifactInput): readonly ProviderSummary[] {
+  const summaries = new Map<string, {
+    language: string;
+    providerId: string;
+    sourceRefs: Set<string>;
+    capabilities: Set<string>;
+    gaps: Set<string>;
+  }>();
+
+  for (const node of input.symbolNodes) {
+    if (node.symbolKind !== "module") continue;
+    const metadata = parseMetadataJson(node.metadataJson);
+    const providerId = stringField(metadata, "providerId") ?? "unknown";
+    const key = `${node.language}\0${providerId}`;
+    const summary = summaries.get(key) ?? {
+      language: node.language,
+      providerId,
+      sourceRefs: new Set<string>(),
+      capabilities: new Set<string>(),
+      gaps: new Set<string>()
+    };
+    summary.sourceRefs.add(node.path);
+    for (const capability of stringArrayField(metadata, "providerCapabilities")) {
+      summary.capabilities.add(capability);
+    }
+    for (const gap of providerCapabilityGaps(metadata)) {
+      summary.gaps.add(gap);
+    }
+    summaries.set(key, summary);
+  }
+
+  return [...summaries.values()]
+    .map((summary) => ({
+      language: summary.language,
+      providerId: summary.providerId,
+      fileCount: summary.sourceRefs.size,
+      capabilities: [...summary.capabilities].sort(),
+      gaps: [...summary.gaps].sort()
+    }))
+    .sort((left, right) => {
+      const languageOrder = left.language.localeCompare(right.language);
+      if (languageOrder !== 0) return languageOrder;
+      return left.providerId.localeCompare(right.providerId);
+    });
+}
+
 function fallbackLanguageLines(languages: readonly string[]): readonly string[] {
   if (languages.length === 0) return [];
   return [
@@ -100,6 +149,21 @@ function providerCapabilityLines(summaries: readonly ProviderSummary[]): readonl
     "Selected provider capability summary:",
     ...summaries.map((summary) =>
       `- ${summary.language} via ${summary.providerId}: capabilities ${listOrNone(summary.capabilities)}; gaps ${listOrNone(summary.gaps)}.`
+    )
+  ];
+}
+
+function indexedProviderCapabilityLines(summaries: readonly ProviderSummary[]): readonly string[] {
+  if (summaries.length === 0) return [];
+  return [
+    "Indexed provider capability summary:",
+    ...summaries.map((summary) =>
+      [
+        `- ${summary.language} via ${summary.providerId}:`,
+        `files ${summary.fileCount ?? 0};`,
+        `capabilities ${listOrNone(summary.capabilities)};`,
+        `gaps ${listOrNone(summary.gaps)}.`
+      ].join(" ")
     )
   ];
 }
