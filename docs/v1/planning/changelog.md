@@ -9,7 +9,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 ### Changed
 
 - Restricted import graph edges to AST-backed files so generic fallback files do not emit module-edge evidence that their provider metadata says is unsupported.
-- Pinned the hosted Windows CI leg to `windows-2025` so the beta package gate does not depend on a moving Windows runner alias.
+- Pinned the hosted Windows CI leg to `windows-2025-vs2026` so the beta package gate does not depend on a moving Windows runner alias or a redirecting `windows-2025` label.
 - Spread capped Tier 2 task retrieval across direct symbol-match and related-test evidence roles after package and language grouping.
 - Added compact retrieval warnings and compile recovery guidance when source caps leave package-root or known source-language groups without selected context.
 - Added global trust wording guardrails so generated claim text, artifact sections, CLI/MCP inspection output, compression orientation, status messages, and benchmark reports use conservative evidence-based language and reject forbidden root-cause, fix-proof, semantic-authority, benchmark-savings, and agent-enforcement overclaims.
