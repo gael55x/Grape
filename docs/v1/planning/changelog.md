@@ -8,6 +8,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- Added compact retrieval warnings and compile recovery guidance when source caps leave package-root or known source-language groups without selected context.
 - Added global trust wording guardrails so generated claim text, artifact sections, CLI/MCP inspection output, compression orientation, status messages, and benchmark reports use conservative evidence-based language and reject forbidden root-cause, fix-proof, semantic-authority, benchmark-savings, and agent-enforcement overclaims.
 - Added observed test failure span-link claims for failed Grape-observed `grape test` runs. They persist `observed_test_failure_relation` proofs and `observed_test_failure_span_link` claims with command/output hashes, bounded exact test/source span proof refs, separate import/filename/package/manifest evidence slots, missing-evidence warnings, and `related_to` edges from the observed-run claim while proving only candidate linkage without causality or fix proof.
 - Added narrow provider-backed package manifest dependency claims for trusted npm `package.json` dependency entries. They persist direct manifest-entry proofs with repo-relative manifest/package refs, source hashes, line span, provider capability metadata, dependency specifier hashes, normalized package scope, current-valid filtering, and conservative conflict blocking while proving only `Manifest declares dependency <dependency-name>.`
