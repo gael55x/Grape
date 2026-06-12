@@ -224,20 +224,32 @@ function spreadRankedContextRefs(
   }
 
   const groups = new Map<string, { firstIndex: number; refs: string[] }>();
+  const unscopedRefs: string[] = [];
   for (const [index, sourceRef] of rankedRefs.entries()) {
-    const key = packageRootForRankedRef(sourceRef, packageRootBySourceRef) ?? "";
+    const key = packageRootForRankedRef(sourceRef, packageRootBySourceRef);
+    if (!key) {
+      unscopedRefs.push(sourceRef);
+      continue;
+    }
     const group = groups.get(key) ?? { firstIndex: index, refs: [] };
     group.refs.push(sourceRef);
     groups.set(key, group);
   }
 
-  return spreadRankedGroups(
-    [...groups.entries()].map(([key, group]) => ({
-      key,
-      firstIndex: group.firstIndex,
-      refs: spreadRankedLanguageRefs(group.refs, languageBySourceRef, evidenceRoleByRef)
-    }))
-  );
+  const spreadGroups: RankedContextGroup[] = [...groups.entries()].map(([key, group]) => ({
+    key,
+    firstIndex: group.firstIndex,
+    refs: spreadRankedLanguageRefs(group.refs, languageBySourceRef, evidenceRoleByRef)
+  }));
+  if (unscopedRefs.length > 0) {
+    spreadGroups.push({
+      key: "",
+      firstIndex: Number.MAX_SAFE_INTEGER,
+      refs: spreadRankedLanguageRefs(unscopedRefs, languageBySourceRef, evidenceRoleByRef)
+    });
+  }
+
+  return spreadRankedGroups(spreadGroups);
 }
 
 function spreadRankedLanguageRefs(
@@ -254,20 +266,32 @@ function spreadRankedLanguageRefs(
   if (languages.size < 2) return spreadRankedEvidenceRoleRefs(rankedRefs, evidenceRoleByRef);
 
   const groups = new Map<string, { firstIndex: number; refs: string[] }>();
+  const unscopedRefs: string[] = [];
   for (const [index, sourceRef] of rankedRefs.entries()) {
-    const key = languageBySourceRef.get(sourceRef) ?? "";
+    const key = languageBySourceRef.get(sourceRef);
+    if (!key) {
+      unscopedRefs.push(sourceRef);
+      continue;
+    }
     const group = groups.get(key) ?? { firstIndex: index, refs: [] };
     group.refs.push(sourceRef);
     groups.set(key, group);
   }
 
-  return spreadRankedGroups(
-    [...groups.entries()].map(([key, group]) => ({
-      key,
-      firstIndex: group.firstIndex,
-      refs: spreadRankedEvidenceRoleRefs(group.refs, evidenceRoleByRef)
-    }))
-  );
+  const spreadGroups: RankedContextGroup[] = [...groups.entries()].map(([key, group]) => ({
+    key,
+    firstIndex: group.firstIndex,
+    refs: spreadRankedEvidenceRoleRefs(group.refs, evidenceRoleByRef)
+  }));
+  if (unscopedRefs.length > 0) {
+    spreadGroups.push({
+      key: "",
+      firstIndex: Number.MAX_SAFE_INTEGER,
+      refs: spreadRankedEvidenceRoleRefs(unscopedRefs, evidenceRoleByRef)
+    });
+  }
+
+  return spreadRankedGroups(spreadGroups);
 }
 
 function spreadRankedEvidenceRoleRefs(

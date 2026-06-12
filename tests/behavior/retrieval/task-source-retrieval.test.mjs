@@ -848,6 +848,34 @@ test("task source retrieval spreads lower-priority package refs before global ca
   assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:2"));
 });
 
+test("task source retrieval gives known package roots a first pass before unscoped refs", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix checkout total",
+    maxSelectedSources: 2,
+    sources: [
+      source("guide", "docs/checkout-total-guide.md"),
+      source("api-a", "packages/api/src/checkout.ts"),
+      source("web-a", "packages/web/src/checkout.ts")
+    ],
+    symbols: [],
+    lexicalMatches: [
+      { sourceId: "guide", sourceRef: "docs/checkout-total-guide.md", matchedTerm: "checkout" },
+      { sourceId: "guide", sourceRef: "docs/checkout-total-guide.md", matchedTerm: "total" },
+      { sourceId: "api-a", sourceRef: "packages/api/src/checkout.ts", matchedTerm: "total" },
+      { sourceId: "web-a", sourceRef: "packages/web/src/checkout.ts", matchedTerm: "total" }
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "packages/api/src/checkout.ts",
+    "packages/web/src/checkout.ts"
+  ]);
+  assert.equal(result.selectedSourceRefs.includes("docs/checkout-total-guide.md"), false);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+  assert.equal(result.warnings.includes("task_retrieval_package_groups_omitted_over_cap:1"), false);
+});
+
 test("task source retrieval spreads direct symbol matches across package roots before global cap", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix checkout total",
@@ -951,6 +979,34 @@ test("task source retrieval spreads fallback language refs before global cap", (
     "src/c.go",
     "src/b.py"
   ]);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+  assert.equal(result.warnings.includes("task_retrieval_language_groups_omitted_over_cap:1"), false);
+});
+
+test("task source retrieval gives known languages a first pass before unscoped refs", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix checkout total",
+    maxSelectedSources: 2,
+    sources: [
+      source("guide", "docs/checkout-total-guide.md"),
+      source("go-a", "src/refund.go"),
+      source("py-a", "src/refund.py")
+    ],
+    symbols: [
+      symbol("go-a", "src/refund.go", "refund.go", "module", 1, 1, undefined, "go"),
+      symbol("py-a", "src/refund.py", "refund.py", "module", 1, 1, undefined, "python")
+    ],
+    lexicalMatches: [
+      { sourceId: "guide", sourceRef: "docs/checkout-total-guide.md", matchedTerm: "checkout" },
+      { sourceId: "guide", sourceRef: "docs/checkout-total-guide.md", matchedTerm: "total" },
+      { sourceId: "go-a", sourceRef: "src/refund.go", matchedTerm: "total" },
+      { sourceId: "py-a", sourceRef: "src/refund.py", matchedTerm: "total" }
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, ["src/refund.go", "src/refund.py"]);
+  assert.equal(result.selectedSourceRefs.includes("docs/checkout-total-guide.md"), false);
   assert.ok(result.warnings.includes("task_retrieval_truncated"));
   assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
   assert.equal(result.warnings.includes("task_retrieval_language_groups_omitted_over_cap:1"), false);
