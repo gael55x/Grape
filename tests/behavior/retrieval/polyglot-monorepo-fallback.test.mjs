@@ -93,6 +93,11 @@ test("polyglot fixture returns lexical fallback evidence for Python with partial
       symbolSummary.text,
       /src\/grape_polyglot\/pricing\.py :: calculate_member_total \[python, function, medium\]/
     );
+    const blindSpots = section(artifactJson, "index-blind-spots");
+    assert.match(
+      blindSpots.text,
+      /python via generic_text: capabilities lexical_path, symbols_basic; gaps module_edges, test_edges\./
+    );
   });
 });
 

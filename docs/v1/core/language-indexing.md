@@ -118,7 +118,7 @@ Current implementation is useful but not broad language-aware indexing:
 - Markdown files are labelled as known by path and can be selected as exact source evidence. Ordinary docs are not part of lexical or symbol indexing today unless they are rule files.
 - Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, and shell mostly fall back to file path, lexical text, and conservative declaration anchors today. JSON, YAML, TOML, and other config files fall back to path and text indexing.
 - Bootstrap detection can report Python, Go, Rust, package managers, and common frameworks from root manifests, but those are setup hints only.
-- Current provider diagnostics live in index metadata, not a first-class storage family.
+- Current provider diagnostics live in index metadata, not a first-class storage family. The `index-blind-spots` artifact section summarizes selected source languages, provider IDs, provider capabilities, and provider capability gaps from selected symbol metadata.
 - Current selection caps are mostly global. If a task names exact source refs outside a recognized workspace path or indexed package root, broad lexical expansion stays on those refs. If exact refs identify one common workspace path under `packages/<name>/`, `apps/<name>/`, `services/<name>/`, or `libs/<name>/`, or selected refs carry manifest-derived package-root metadata, symbol and lexical expansion can stay inside that package before the global cap is applied. Direct graph relationships and explicit seed symbol or test-name matches can still add sources. Within a ranked tier, selected refs can spread across known package roots and across indexed source languages before the global cap applies. Current-valid claim filtering can use one common-prefix root or one manifest-backed package root when explicit source refs identify exactly one package root. Claim scopes record common-prefix package roots, source/symbol metadata package roots, or supported npm manifest package roots from their exact proof sources. Manifest-derived package roots can guide selected source retrieval, current-valid package scope, and package-local manifest and lockfile dependency refs for selected package context, but they are not a complete package-aware retrieval policy.
 - `tests/fixtures/polyglot-fallback-repo` proves Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, shell, JSON, YAML, TOML, and explicit Markdown paths can be selected as exact fallback evidence with partial-context warnings. It also proves conservative declaration anchors for common source languages through `tests/behavior/indexing/generic-symbol-detection.test.mjs` and artifact-level anchors through `tests/behavior/retrieval/polyglot-monorepo-fallback.test.mjs`. It does not prove language-aware import, call, or test edges for those languages or file types.
 - `tests/fixtures/monorepo-lite-repo` proves an explicit `packages/api/...` task can select package-local TS source plus related tests without pulling an unrelated `packages/web/...` source. Retrieval tests cover nested manifest-derived package scoping outside common workspace prefixes. Package-local manifest and lockfile dependency refs are covered by compiler and transport tests for explicit package-root context, and compiler tests also cover nested manifest-derived package context outside common workspace prefixes. The fixture still does not prove full workspace dependency closure or per-package budgets.
@@ -136,7 +136,7 @@ This is acceptable for a controlled beta only if the promise stays: reliable con
 - Manifest dependency narrowness: durable manifest dependency claims are currently npm `package.json` declaration facts only. Other manifest formats, dependency closure, lockfile resolution, and import-derived dependency claims remain disabled.
 - Root-manifest bias: bootstrap detection mostly checks root-level manifests/configs and can miss nested workspaces.
 - Test adjacency bias: related-test selection depends on import/call edges that exist today primarily for TS/JS.
-- Capability opacity: agents see blind spots, but not a complete provider capability report per language/package.
+- Capability opacity: agents see selected provider capability gaps, but not a complete provider capability report per language/package.
 - Fixture drift: checked-in polyglot and monorepo fixtures now cover safe fallback, explicit path scoping, manifest-derived nested package scoping, and selected package manifest dependency refs only. Dynamic imports, full workspace graph policy, and full polyglot graph fixtures are still narrower than the long-term matrix.
 
 ## Beta Readiness Standard
@@ -144,7 +144,7 @@ This is acceptable for a controlled beta only if the promise stays: reliable con
 Before Grape claims broad polyglot or monorepo retrieval, it needs:
 
 - a provider dispatcher with a stable normalized output contract
-- capability metadata surfaced in artifacts or diagnostics
+- complete capability metadata surfaced in artifacts or diagnostics
 - package/workspace boundary metadata consumed by retrieval, current-valid scope, and invalidation policy
 - per-package/per-language retrieval caps beyond the current explicit-path guard and in-tier package/language spreading
 - benchmark baselines for polyglot and monorepo scenarios, not only behavior fixtures
