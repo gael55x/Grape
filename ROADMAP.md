@@ -47,13 +47,13 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 
 ## Now
 
-- Run formal benchmark comparison and tuning after the beta publish.
+- Post-beta benchmark validation is in progress. The first run compares the published npm package (`grape-context@1.0.0-beta.0`) against naive and search baselines across retrieval, bug-fix, and documentation tasks. Weak components from those results drive the next roadmap items.
 - Record human MCP client trials from [`docs/v1/planning/beta-trial-checklist.md`](docs/v1/planning/beta-trial-checklist.md) when release policy requires Cursor, Claude Code, or equivalent IDE UI proof beyond automated `beta:client-trial`.
 - Keep future version bumps, tags, GitHub releases, npm publishes, and dist-tag changes approval-gated.
 
 ## Next
 
-- Formal benchmark comparison runs and human MCP client trials on the published beta package.
+- Repeat post-beta benchmark runs across more tasks and tune retrieval where the published-beta results show known noise or missed files.
 
 ## Soon
 

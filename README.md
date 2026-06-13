@@ -327,6 +327,8 @@ Implementation standards are strict:
 
 Grape 1.0 beta is prerelease software. APIs, schemas, command names, and setup guidance may still change before stable 1.0. The beta package is not production-ready and is not a broad agent memory platform.
 
+The first post-beta benchmark validation compares the published npm package with naive and search-based context baselines. Those results guide the next retrieval and transport improvements.
+
 ## Star History
 <p align="center">
 

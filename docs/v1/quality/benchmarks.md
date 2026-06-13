@@ -90,6 +90,19 @@ npm run bench:comparators   # skips unavailable external tools
 
 `npm run bench` builds `dist/`, runs `npm pack`, installs the tarball, and runs all fixtures through the **installed** `grape` binary. This exercises the beta candidate artifact from the current git tree.
 
+Post-beta baseline harness (published npm registry package):
+
+```bash
+npm run bench:post-beta
+npm run bench:post-beta:local
+```
+
+`npm run bench:post-beta` records `artifactIdentity: npm:grape-context@1.0.0-beta.0` from a registry install. `npm run bench:post-beta:local` records `artifactIdentity: local-candidate:<git commit>` from a packed install for post-fix comparison only.
+
+The uncapped mode measures maximum recall. The budgeted mode caps each baseline to the same case budget so the benchmark can compare context selection under equal pressure.
+
+Committed results live under `benchmarks/results/post-beta-*-published-beta.json`.
+
 See [`../../../benchmarks/README.md`](../../../benchmarks/README.md) and [`../legacy/alpha/benchmark-readiness-report.md`](../legacy/alpha/benchmark-readiness-report.md) for historical pre-beta evidence.
 
 Alpha e2e (dist build, pack install smoke, benchmark suite from installed package):

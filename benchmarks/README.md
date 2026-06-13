@@ -27,23 +27,29 @@ benchmarks/
     run-comparator.mjs      # external tool probes (skips when unavailable)
     summarize-results.mjs     # latest JSON to markdown summary
     naive-baseline.mjs        # naive + rg baseline for one fixture
-  results/                  # generated JSON (gitignored); latest-summary.md is regenerable
+  results/                  # generated JSON (gitignored except post-beta-*.json)
 ```
 
-Fixture **source trees** live under `tests/fixtures/`. The manifest describes scenario intent; `npm run benchmark:run` remains the CI gate for the six core fixtures.
+Fixture **source trees** live under `tests/fixtures/`. The manifest describes post-beta case intent; `npm run benchmark:run` remains the CI gate for the six core transport fixtures.
 
 ## Commands
 
 From repo root:
 
 ```bash
-npm run bench              # beta candidate: npm run build, pack, install, run all fixtures via installed grape
-npm run bench:summary      # summarize latest results/
-npm run bench:comparators  # probe external tools (skips unavailable)
+npm run bench:post-beta        # published npm package vs naive/search/grape baselines
+npm run bench:post-beta:local  # local packed candidate (post-fix comparison only)
+npm run bench                  # beta candidate transport: npm pack + install from git tree
+npm run bench:summary          # summarize latest results/
+npm run bench:comparators      # probe external tools (skips unavailable)
 node benchmarks/scripts/naive-baseline.mjs clean-typescript-app
 ```
 
-`npm run bench` is the **beta candidate** path: it does **not** benchmark published npm alpha and does **not** use the dev source-checkout CLI unless you pass `--include-dev-source`.
+`npm run bench:post-beta` installs `grape-context` from the npm registry into a fresh consumer workspace and records `artifactIdentity: npm:grape-context@1.0.0-beta.0`. `npm run bench:post-beta:local` installs a packed tarball from the current git commit for before/after comparison.
+
+The uncapped mode measures maximum recall. The budgeted mode caps each baseline to the same case budget so the benchmark can compare context selection under equal pressure.
+
+`npm run bench` is the **beta candidate transport** path: it does **not** benchmark the published registry package and does **not** use the dev source-checkout CLI unless you pass `--include-dev-source`.
 
 Full beta gate (unchanged):
 
