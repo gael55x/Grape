@@ -6,6 +6,8 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ## Unreleased
 
+## 1.0.0-beta.0 - 2026-06-13
+
 ### Added
 
 - Added `npm run beta:client-trial` as the automated packaged-install MCP client trial. It exercises `initialize`, `tools/list`, `grape_get_status`, two-turn `grape_get_context`, omission, restore, source invalidation, branch invalidation, reset, task/session mismatch recovery guidance, status redaction checks, and ignored secret-looking file rejection over stdio from a packed install.
