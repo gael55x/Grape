@@ -1,0 +1,61 @@
+# Grape Comparative Benchmarks
+
+This directory holds the comparative benchmark harness for Grape. It is separate from product code under `src/`.
+
+## Goals
+
+Grape includes benchmark fixtures and scripts for local comparison.
+
+The harness measures transport behavior (omission, invalidation, restore) on named fixtures. It also compares against fair baselines (naive full context, manual `rg`, packed tarball install) and records partial external comparator runs where installable (Graphify orientation, chum-mem when Docker available).
+
+## What this is not
+
+- Not marketing benchmark claims
+- Not proof that Grape beats Graphify, Mem0, or Composer
+- Not a substitute for `npm run check` or `npm run beta:check`
+
+## Layout
+
+```text
+benchmarks/
+  README.md                 # this file
+  design.md                 # methodology and benchmark questions
+  comparators/              # per-tool comparator notes
+  fixtures/manifest.json    # scenario manifest (maps to tests/fixtures/)
+  scripts/
+    run-benchmarks.mjs      # Grape fixture + baseline orchestrator
+    run-comparator.mjs      # external tool probes (skips when unavailable)
+    summarize-results.mjs     # latest JSON to markdown summary
+    naive-baseline.mjs        # naive + rg baseline for one fixture
+  results/                  # generated JSON (gitignored); latest-summary.md is regenerable
+```
+
+Fixture **source trees** live under `tests/fixtures/`. The manifest describes scenario intent; `npm run benchmark:run` remains the CI gate for the six core fixtures.
+
+## Commands
+
+From repo root:
+
+```bash
+npm run bench              # beta candidate: npm run build, pack, install, run all fixtures via installed grape
+npm run bench:summary      # summarize latest results/
+npm run bench:comparators  # probe external tools (skips unavailable)
+node benchmarks/scripts/naive-baseline.mjs clean-typescript-app
+```
+
+`npm run bench` is the **beta candidate** path: it does **not** benchmark published npm alpha and does **not** use the dev source-checkout CLI unless you pass `--include-dev-source`.
+
+Full beta gate (unchanged):
+
+```bash
+npm run beta:check
+```
+
+## Comparator fairness rules
+
+1. Mark dimensions as **not applicable** when a tool does not target that capability (session diff, restore tokens, proof-backed claims, MCP transport).
+2. Do not optimize Grape before collecting the first baseline on a branch.
+3. Record environment metadata (git commit, package version, Node, OS) on every run.
+4. Separate **local source checkout** runs from **packed tarball** runs (`npm run e2e:alpha`, `npm run install:check`).
+
+See [`design.md`](design.md) and [`../docs/v1/planning/benchmark-readiness-report.md`](../docs/v1/planning/benchmark-readiness-report.md).
