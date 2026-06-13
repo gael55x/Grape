@@ -15,6 +15,7 @@ import { runGrapeGetStaleItemsTool } from "./stale.js";
 import { runGrapeGetStatusTool } from "./status.js";
 import { summarizeToolResult } from "./tool-result-summary.js";
 import { sanitizePublicOutput, sanitizePublicText } from "../shared/index.js";
+import { recoveryGuidanceForErrorMessage } from "../app/local-project/setup/recovery.js";
 
 export { listMcpTools } from "./tool-list.js";
 
@@ -94,9 +95,16 @@ function toolResult(toolName: string, value: unknown, isError: boolean, rootPath
 }
 
 function toolError(message: string, rootPath: string): McpToolResult {
+  const recoveryGuidance = recoveryGuidanceForErrorMessage(message);
+  const text = recoveryGuidance.length > 0
+    ? [message, "", "Recovery:", ...recoveryGuidance.map((item) => `- ${item}`)].join("\n")
+    : message;
+  const structured = recoveryGuidance.length > 0
+    ? { error: message, recoveryGuidance }
+    : { error: message };
   return {
-    content: [{ type: "text", text: sanitizePublicText(message, { rootPath }) }],
-    structuredContent: sanitizePublicOutput({ error: message }, { rootPath }),
+    content: [{ type: "text", text: sanitizePublicText(text, { rootPath }) }],
+    structuredContent: sanitizePublicOutput(structured, { rootPath }),
     isError: true
   };
 }

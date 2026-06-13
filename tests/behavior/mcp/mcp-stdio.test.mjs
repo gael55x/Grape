@@ -1155,6 +1155,49 @@ test("mcp grape_get_context requires a session identity", () => {
   });
 });
 
+test("mcp task mismatch errors include recovery guidance", () => {
+  withGitRepo((repoPath) => {
+    const responses = runMcp(repoPath, [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain the repository",
+            sessionId: "mcp-mismatch-session"
+          }
+        }
+      },
+      {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: {
+          name: "grape_get_context",
+          arguments: {
+            query: "Explain a different repository task",
+            sessionId: "mcp-mismatch-session"
+          }
+        }
+      }
+    ]);
+
+    const toolResult = responses[1].result;
+    assert.equal(toolResult.isError, true);
+    assert.match(toolResult.structuredContent.error, /context session task mismatch/);
+    assert.ok(Array.isArray(toolResult.structuredContent.recoveryGuidance));
+    assert.ok(
+      toolResult.structuredContent.recoveryGuidance.some((item) =>
+        item.includes("Reuse the exact original")
+      )
+    );
+    assert.match(toolResult.content[0].text, /Recovery:/);
+    assert.match(toolResult.content[0].text, /resetSession/);
+  });
+});
+
 test("mcp agentSessionId maps to an isolated stable Grape session", () => {
   withGitRepo((repoPath) => {
     const first = runMcp(repoPath, [
