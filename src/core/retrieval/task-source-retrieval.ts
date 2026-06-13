@@ -159,9 +159,13 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   const missingSeedWarnings = newMissingSeedWarningCounts();
   const explicitPathRefs = new Set<string>();
 
+  const excludedPathPrefixes = taskExcludedPathPrefixes(input.task);
+  const isExcludedSourceRef = (sourceRef: string): boolean =>
+    isTaskExcludedSourceRef(sourceRef, excludedPathPrefixes);
+
   for (const seedFile of input.seedFiles ?? []) {
     const normalized = normalizeSeedFile(seedFile);
-    if (!normalized || !sourceByRef.has(normalized)) {
+    if (!normalized || !sourceByRef.has(normalized) || isExcludedSourceRef(normalized)) {
       addMissingSeedWarning(warnings, "file", normalized ?? "invalid", missingSeedWarnings);
       continue;
     }
@@ -169,7 +173,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     explicitPathRefs.add(normalized);
   }
 
-  for (const taskSourceRef of taskMentionedSourceRefs(input.task, sourceByRef)) {
+  for (const taskSourceRef of taskMentionedSourceRefs(input.task, sourceByRef, excludedPathPrefixes)) {
     addReason(selectedReasons, taskSourceRef, "explicit_seed");
     explicitPathRefs.add(taskSourceRef);
   }
@@ -177,7 +181,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   for (const seedTest of input.seedTests ?? []) {
     if (!isPathLikeTestSeed(seedTest)) continue;
     const normalized = normalizeSeedFile(seedTest);
-    if (!normalized || !sourceByRef.has(normalized)) {
+    if (!normalized || !sourceByRef.has(normalized) || isExcludedSourceRef(normalized)) {
       addMissingSeedWarning(warnings, "test", normalized ?? "invalid", missingSeedWarnings);
       continue;
     }
@@ -195,7 +199,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   );
   for (const symbol of input.symbols) {
     const sourceRef = sourceRefById.get(symbol.sourceId);
-    if (!sourceRef) continue;
+    if (!sourceRef || isExcludedSourceRef(sourceRef)) continue;
     const matchesSeedSymbol = matchesAnyTerm(symbol.name, seedSymbolTerms);
     if (!scopedCandidate(sourceRef) && !matchesSeedSymbol) continue;
     if (matchesAnyTerm(symbol.name, normalizedTerms) || matchesAnyTerm(symbol.path, normalizedTerms)) {
@@ -213,17 +217,39 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   }
 
   const relationships = input.relationships ?? [];
-  addGraphRelatedSources(selectedReasons, sourceByRef, relationships, new Set(selectedReasons.keys()));
-  addRelatedTests(selectedReasons, sourceByRef, relationships, new Set(selectedReasons.keys()), relatedTestRelationships);
+  addGraphRelatedSources(
+    selectedReasons,
+    sourceByRef,
+    relationships,
+    new Set(selectedReasons.keys()),
+    isExcludedSourceRef
+  );
+  addRelatedTests(
+    selectedReasons,
+    sourceByRef,
+    relationships,
+    new Set(selectedReasons.keys()),
+    relatedTestRelationships,
+    isExcludedSourceRef
+  );
 
   for (const match of input.lexicalMatches) {
     const sourceRef = sourceRefById.get(match.sourceId) ?? match.sourceRef;
-    if (!sourceByRef.has(sourceRef)) continue;
+    if (!sourceByRef.has(sourceRef) || isExcludedSourceRef(sourceRef)) continue;
     if (!scopedCandidate(sourceRef)) continue;
     addReason(selectedReasons, sourceRef, "lexical_match");
-    addGraphRelatedSources(selectedReasons, sourceByRef, relationships, new Set([sourceRef]));
-    addRelatedTests(selectedReasons, sourceByRef, relationships, new Set([sourceRef]), relatedTestRelationships);
+    addGraphRelatedSources(selectedReasons, sourceByRef, relationships, new Set([sourceRef]), isExcludedSourceRef);
+    addRelatedTests(
+      selectedReasons,
+      sourceByRef,
+      relationships,
+      new Set([sourceRef]),
+      relatedTestRelationships,
+      isExcludedSourceRef
+    );
   }
+
+  removeExcludedSourceRefs(selectedReasons, excludedPathPrefixes);
 
   const allCandidateRefs = [...selectedReasons.keys()];
   const semanticCandidatesAll = buildTaskSemanticCandidates({
@@ -291,13 +317,15 @@ function addGraphRelatedSources(
   selectedReasons: Map<string, Set<SelectionReason>>,
   sourceByRef: ReadonlyMap<string, TaskRetrievalSource>,
   relationships: readonly TaskRetrievalRelationship[],
-  sourceRefs: ReadonlySet<string>
+  sourceRefs: ReadonlySet<string>,
+  isExcludedSourceRef: (sourceRef: string) => boolean = () => false
 ): void {
   for (const relationship of relationships) {
     if (!graphExpansionRelationship(relationship.relationship)) continue;
     if (!sourceRefs.has(relationship.sourceRef)) continue;
     if (!sourceByRef.has(relationship.targetSourceRef)) continue;
     if (relationship.targetSourceRef === relationship.sourceRef) continue;
+    if (isExcludedSourceRef(relationship.targetSourceRef)) continue;
     addReason(selectedReasons, relationship.targetSourceRef, "graph_related");
   }
 }
@@ -307,7 +335,8 @@ function addRelatedTests(
   sourceByRef: ReadonlyMap<string, TaskRetrievalSource>,
   relationships: readonly TaskRetrievalRelationship[],
   targetSourceRefs: ReadonlySet<string>,
-  relatedTestRelationships: TaskRetrievalRelatedTestRelationship[]
+  relatedTestRelationships: TaskRetrievalRelatedTestRelationship[],
+  isExcludedSourceRef: (sourceRef: string) => boolean = () => false
 ): void {
   for (const relationship of relationships) {
     const relationshipKind = graphExpansionRelationship(relationship.relationship);
@@ -315,6 +344,7 @@ function addRelatedTests(
     if (!targetSourceRefs.has(relationship.targetSourceRef)) continue;
     if (!sourceByRef.has(relationship.sourceRef)) continue;
     if (!isTestSourceRef(relationship.sourceRef)) continue;
+    if (isExcludedSourceRef(relationship.sourceRef)) continue;
     addReason(selectedReasons, relationship.sourceRef, "related_test");
     addRelatedTestRelationship(relatedTestRelationships, {
       relationshipRef: relationship.relationshipRef,
@@ -437,10 +467,45 @@ function normalizeSearchText(value: string): string {
 
 function taskMentionedSourceRefs(
   task: string,
-  sourceByRef: ReadonlyMap<string, TaskRetrievalSource>
+  sourceByRef: ReadonlyMap<string, TaskRetrievalSource>,
+  excludedPathPrefixes: readonly string[] = taskExcludedPathPrefixes(task)
 ): readonly string[] {
   const normalizedTask = task.replace(/\\/g, "/").toLowerCase();
-  return [...sourceByRef.keys()].filter((sourceRef) => normalizedTask.includes(sourceRef.toLowerCase()));
+  return [...sourceByRef.keys()].filter(
+    (sourceRef) =>
+      normalizedTask.includes(sourceRef.toLowerCase()) && !isTaskExcludedSourceRef(sourceRef, excludedPathPrefixes)
+  );
+}
+
+function taskExcludedPathPrefixes(task: string): readonly string[] {
+  const prefixes: string[] = [];
+  const normalizedTask = task.replace(/\\/g, "/");
+  for (const match of normalizedTask.matchAll(/without\s+(?:pulling\s+)?([^\s,]+?)(?:\s+context)?/gi)) {
+    const prefix = normalizeSeedFile(match[1]);
+    if (prefix) prefixes.push(prefix);
+  }
+  if (/(post-beta|1\.0\.0-beta|1\.0 beta)/i.test(task) && !/\b(legacy|alpha)\b/i.test(task)) {
+    prefixes.push("docs/v1/legacy");
+  }
+  return prefixes;
+}
+
+function isTaskExcludedSourceRef(sourceRef: string, excludedPathPrefixes: readonly string[]): boolean {
+  const normalized = sourceRef.replace(/\\/g, "/");
+  return excludedPathPrefixes.some(
+    (prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`)
+  );
+}
+
+function removeExcludedSourceRefs(
+  selectedReasons: Map<string, Set<SelectionReason>>,
+  excludedPathPrefixes: readonly string[]
+): void {
+  for (const sourceRef of [...selectedReasons.keys()]) {
+    if (isTaskExcludedSourceRef(sourceRef, excludedPathPrefixes)) {
+      selectedReasons.delete(sourceRef);
+    }
+  }
 }
 
 function normalizeSeedFile(value: string): string | undefined {
