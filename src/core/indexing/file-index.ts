@@ -1,8 +1,7 @@
 import { readIndexableText } from "./indexable-source-reader.js";
-import { parseTypeScriptAstIndex } from "./typescript-ast-index.js";
 import { detectRegexSymbols, moduleNodeForFile, symbolNodeForAstSymbol } from "./file-index-nodes.js";
 import { fileIndexEdgesForParsedFiles } from "./file-index-edges.js";
-import { languageProviderForFile, type FileIndexExtractor } from "./language-provider.js";
+import { selectFileIndexProvider } from "./file-index-provider.js";
 import { detectPackageRootEvidence, packageRootMetadataForFile } from "./package-roots.js";
 import type {
   FileIndexInput,
@@ -38,9 +37,7 @@ export function buildFileIndex(input: FileIndexInput): FileIndexResult {
       continue;
     }
 
-    const ast = parseTypeScriptAstIndex(file.path, readResult.text);
-    const extractor: FileIndexExtractor = ast ? "typescript_ast" : "regex_basic";
-    const provider = languageProviderForFile(file.path, extractor);
+    const { ast, extractor, provider } = selectFileIndexProvider(file.path, readResult.text);
     const packageRoot = packageRootMetadataForFile(file, packageRoots);
     const moduleNode = moduleNodeForFile(input, file, extractor, provider, packageRoot);
     const symbols = ast

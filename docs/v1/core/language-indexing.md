@@ -129,7 +129,7 @@ This is acceptable for a controlled beta only if the promise stays: reliable con
 
 ## Known Failure Modes And Bad Assumptions
 
-- Shallow provider dispatch: `src/core/indexing/file-index.ts` chooses between the TS/JS parser and generic text fallback. Grape does not yet have a dedicated provider dispatcher or per-language provider module tree.
+- Shallow provider dispatch: `src/core/indexing/file-index-provider.ts` chooses between the TS/JS parser and generic text fallback. Grape does not yet have a per-language provider module tree.
 - JS-style import bias: local import resolution checks JS/TS extensions and `index.*` forms only.
 - Regex fallback is declaration-only: generic symbol detection recognizes conservative common declaration lines, but it can miss decorators, annotations, macros, overloads, generated code, nested declarations, language-specific type aliases, and framework entry points.
 - Language detection gaps: unknown extensions still collapse to `unknown`, and language labels do not imply graph extraction capability.
@@ -144,7 +144,7 @@ This is acceptable for a controlled beta only if the promise stays: reliable con
 
 Before Grape claims broad polyglot or monorepo retrieval, it needs:
 
-- a provider dispatcher with a stable normalized output contract
+- per-language provider modules that emit the normalized index output
 - complete per-package capability metadata surfaced in artifacts or diagnostics
 - package/workspace boundary metadata consumed by retrieval, current-valid scope, and invalidation policy
 - per-package/per-language retrieval caps beyond the current explicit-path guard and in-tier package/language spreading

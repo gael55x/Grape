@@ -1,4 +1,5 @@
 export * from "./file-index.js";
+export * from "./file-index-provider.js";
 export * from "./language-provider.js";
 export * from "./package-roots.js";
 export * from "./lexical-index.js";

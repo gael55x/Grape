@@ -121,7 +121,7 @@ Retrieval should surface these cases as blind spots or `partial_with_risk` rathe
 
 ## Remaining Work
 
-- provider dispatcher for normalized language index output
+- per-language provider modules that emit normalized language index output
 - package/workspace boundary detection
 - full per-package and per-language source budgets
 - broader language extraction beyond TypeScript/JavaScript

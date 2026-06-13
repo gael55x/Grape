@@ -592,7 +592,7 @@ Keep entries simple:
 ### 2026-05-30 - Publish path and install smoke
 
 - Author/agent: Gaille Amolong / Composer
-- Summary: fixed npm bin entry detection for symlinked `grape`, added `npm run install:check` (pack → install → help/init/two-turn compile), bumped package version to `0.1.0-alpha.1`, and published `grape-context` to npm.
+- Summary: fixed npm bin entry detection for symlinked `grape`, added `npm run install:check` for pack, install, help/init/two-turn compile, bumped package version to `0.1.0-alpha.1`, and published `grape-context` to npm.
 - Checks run: `npm run check`.
 - Risks/follow-ups: protocol golden tests and multi-fixture benchmarks remain open.
 
@@ -748,7 +748,7 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: documented the language-provider capability model for polyglot and monorepo repos. Grape's transport remains language-agnostic, while language-aware graph extraction is provider-scoped orientation only. Unsupported languages and unknown package/workspace boundaries must fall back to safe exact/path/lexical context with explicit blind spots.
 - Checks run: `npm run check` (pass, behavior suite included).
-- Risks/follow-ups: provider dispatch, package/workspace detection, polyglot fixtures, monorepo fixtures, and package-scoped invalidation tests remain implementation work before broad polyglot/monorepo beta claims.
+- Risks/follow-ups: per-language providers, package/workspace detection, polyglot fixtures, monorepo fixtures, and package-scoped invalidation tests remain implementation work before broad polyglot/monorepo beta claims.
 
 ### 2026-06-03 - Documentation Consistency Audit
 

@@ -95,7 +95,7 @@ No product code should start before the Documentation Foundation is complete. In
 
 **V1 Alpha: Context Transport Protocol + publishable CLI/MCP.**
 
-Foundations through the first MCP `grape_get_context` path, session diffing, and fixture benchmark shell are in place. Next work prioritizes **protocol hardening**, **compiler quality for turn-1 packs**, and **multi-scenario benchmarks**—not a full memory-platform graph/search stack (see ADR-0010). Publish path and install smoke are done; see root [`ROADMAP.md`](../../../ROADMAP.md).
+Foundations through the first MCP `grape_get_context` path, session diffing, and fixture benchmark shell are in place. Next work prioritizes **protocol hardening**, **compiler quality for turn-1 packs**, and **multi-scenario benchmarks**, not a full memory-platform graph/search stack (see ADR-0010). Publish path and install smoke are done; see root [`ROADMAP.md`](../../../ROADMAP.md).
 
 ## Priority workstreams
 
@@ -103,35 +103,35 @@ Aligned with the root [`ROADMAP.md`](../../../ROADMAP.md). The outward `ContextP
 
 | Priority | Focus | Primary code areas |
 |---|---|---|
-| Done — story + publish | ADR-0010, npm package, install smoke CI | `docs/v1/`, `package.json`, `scripts/check-package.mjs`, `.github/workflows/` |
-| Next — protocol | pack golden tests, invalidation/restore | `src/core/diff/`, `src/core/sessions/`, `tests/behavior/` |
-| Next — compile | excerpts, rules, retrieval, budgets | `src/core/compiler/`, `src/core/retrieval/`, `src/core/proofs/`, `src/core/claims/` |
-| Next — benchmarks | fixtures + `grape bench` thresholds | `src/app/benchmark/`, `tests/fixtures/` |
-| Soon — trust depth | more observed-run claim workflows, more claims, rules | `src/core/trust/`, `src/core/claims/`, `src/mcp/` |
-| Later — retrieval | durable compile, language-provider dispatch, monorepo/package boundaries, optional embeddings | `src/core/retrieval/`, `src/core/indexing/`, `src/core/compiler/artifact/` |
+| Done: story + publish | ADR-0010, npm package, install smoke CI | `docs/v1/`, `package.json`, `scripts/check-package.mjs`, `.github/workflows/` |
+| Next: protocol | pack golden tests, invalidation/restore | `src/core/diff/`, `src/core/sessions/`, `tests/behavior/` |
+| Next: compile | excerpts, rules, retrieval, budgets | `src/core/compiler/`, `src/core/retrieval/`, `src/core/proofs/`, `src/core/claims/` |
+| Next: benchmarks | fixtures + `grape bench` thresholds | `src/app/benchmark/`, `tests/fixtures/` |
+| Soon: trust depth | more observed-run claim workflows, more claims, rules | `src/core/trust/`, `src/core/claims/`, `src/mcp/` |
+| Later: retrieval | durable compile, language-provider modules, monorepo/package boundaries, optional embeddings | `src/core/retrieval/`, `src/core/indexing/`, `src/core/compiler/artifact/` |
 
 ## Feature Decision Filter
 
 Before adding V1 scope, confirm the work improves at least one of:
 
-1. **Compile quality** — task packs contain correct, proof-backed, current-valid spans.
-2. **Git validity** — branch/worktree/dependency changes invalidate or scope context correctly.
-3. **Diff correctness** — session ledger, omission, restore, and `INVALIDATE_PREVIOUS` behavior.
+1. **Compile quality:** task packs contain correct, proof-backed, current-valid spans.
+2. **Git validity:** branch/worktree/dependency changes invalidate or scope context correctly.
+3. **Diff correctness:** session ledger, omission, restore, and `INVALIDATE_PREVIOUS` behavior.
 
 | Category | V1 build | V1 integrate (defer deep build) | V1 defer |
 |---|---|---|---|
-| ContextPack protocol + ledger | yes | — | — |
-| Git snapshot / invalidation | yes | — | — |
-| Exact excerpts + narrow proofs | yes | — | — |
-| Pinned rules + high-risk gate | yes | — | — |
-| Lightweight index + lexical | yes | — | — |
+| ContextPack protocol + ledger | yes | none | none |
+| Git snapshot / invalidation | yes | none | none |
+| Exact excerpts + narrow proofs | yes | none | none |
+| Pinned rules + high-risk gate | yes | none | none |
+| Lightweight index + lexical | yes | none | none |
 | Language-agnostic provider capability layer | safe fallback + diagnostics | provider integrations after fixtures | universal parser |
 | Monorepo/package boundary retrieval | package-aware safety docs + fixtures | narrow package-scoped invalidation | complete multi-repo graph |
-| Inspector CLI/MCP | yes | — | — |
+| Inspector CLI/MCP | yes | none | none |
 | Deep repo graph (19 langs, Leiden) | lite only | graph MCP refs in artifacts | own graph product |
-| Embeddings / hybrid memory search | — | optional later | default cloud search |
-| Session chat ingestion hooks | — | — | until protocol proven on npm |
-| Docker/Postgres/Chroma stack | — | — | local SQLite path |
+| Embeddings / hybrid memory search | none | optional later | default cloud search |
+| Session chat ingestion hooks | none | none | until protocol proven on npm |
+| Docker/Postgres/Chroma stack | none | none | local SQLite path |
 
 ## Human Review Bar
 
