@@ -2,6 +2,8 @@
 
 This folder contains committed documentation for Grape.
 
+Grape 1.0 beta is a local-first context transport slice for coding agents. The published npm package is still `0.1.0-alpha.3` on `latest`/`alpha` until `1.0.0-beta.0` ships with the `beta` dist-tag. User-facing install and session docs live in the root [`README.md`](../README.md) and [`v1/interfaces/`](v1/interfaces/). Grape includes benchmark fixtures and scripts for local comparison. Official benchmark superiority claims are pending post-publish benchmark runs.
+
 ## Active Docs
 
 - [V1 documentation](v1/README.md)

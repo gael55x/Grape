@@ -4,7 +4,7 @@
 **Canonical source of truth:** This file, `grape_v1_final_framework_spec.md`, is the final V1 implementation contract. If another V1 spec conflicts with this file, this file wins.  
 **Product:** Grape, local-first context compiler and context transport layer for AI coding agents on git repositories
 
-**Implementation status (alpha.3 transport slice):**
+**Implementation status (1.0 beta transport slice):**
 
 | Area | Status |
 |---|---|
@@ -18,10 +18,10 @@
 | Incremental sync, cloud/team sync, embeddings/semantic ranking | **Deferred** |
 | Broad polyglot graph / complete call graphs | **Deferred** |
 | Daemon or autonomous background observation without MCP calls | **Not implemented** |
-**Primary goal:** save tokens by compiling safe repository context once per task/session and shipping only the next session-safe context pack diff  
+**Primary goal:** reduce repeated context transport by compiling safe repository context once per task/session and shipping only the next session-safe context pack diff  
 **Safety model:** proof-backed, branch-aware, task-specific context artifacts with explicit uncertainty  
-**Runtime:** TypeScript on Node.js 22.13+ for the published alpha package  
-**Distribution:** `npm install -g grape-context`  
+**Runtime:** TypeScript on Node.js 22.13+ for the published package (currently `0.1.0-alpha.3` on npm `latest`/`alpha`; `1.0.0-beta.0` with `beta` dist-tag is planned)  
+**Distribution:** `npm install -g grape-context@0.1.0-alpha.3` today; after beta publish use `@beta` or `@1.0.0-beta.0`  
 **Storage:** SQLite + WAL + portable lexical source index
 **Integration:** MCP server + CLI  
 **Default mode:** local-first, no cloud dependency, no remote embeddings by default  
@@ -408,7 +408,7 @@ Grape V1.0 is:
 - a session-aware context diff engine
 - an MCP-compatible context provider
 - a CLI-first inspection/debugging tool
-- a token-reduction layer for AI coding agents
+- a session-aware context transport layer for AI coding agents
 
 ### 5.2 What Grape is not
 
@@ -663,7 +663,7 @@ sequenceDiagram
 
 | Parameter | V1 value |
 |---|---|
-| Runtime | Node.js 22.13+ for the published alpha package |
+| Runtime | Node.js 22.13+ for the published package (currently `0.1.0-alpha.3`) |
 | Language | TypeScript |
 | Package | `grape-context` |
 | CLI binary | `grape` |
@@ -3507,7 +3507,7 @@ Do not report token reduction against an ad hoc baseline.
 | cross-process write corruption | 0 |
 | current-valid retrieval correctness on labeled gold fixtures | >= 95% |
 | typed claim retrieval precision on labeled claim fixtures | >= 80% |
-| context token reduction after first turn versus scripted naive baseline | >= 50% |
+| context token reduction after first turn versus scripted naive baseline | >= 50% (internal harness target on named fixtures; not a release marketing claim) |
 | deterministic supersession correctness | >= 90% |
 | session lock collision rate | 0 |
 
@@ -3542,13 +3542,13 @@ Formula:
 savingsRatio = 1 - (diffTokenCost / naiveEstimatedTokens)
 ```
 
-Minimum target:
+Minimum target (internal harness acceptance on named fixtures only; not a release marketing claim):
 
 ```text
 After first turn, context token reduction >= 50% on benchmark fixtures versus the scripted naive baseline, with unsafeOmissionCount = 0.
 ```
 
-Stretch target:
+Stretch target (harness stretch only; not proven and not release-facing):
 
 ```text
 After first turn, context token reduction >= 70% for stable bug-fix/refactor sessions.
@@ -3876,7 +3876,7 @@ Evidence Store
 = Incremental AI Coding Context Framework
 ```
 
-The thing Grape does better than generic RAG, repo maps, or memory stores is not merely retrieving relevant context.
+Grape's V1 wedge is not merely retrieving relevant context. Grape does not claim benchmark-proven superiority over external tools.
 
 It compiles a **safe delta**:
 

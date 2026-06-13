@@ -22,11 +22,13 @@ Run at least these repos before beta:
 ## Runtime And Install
 
 - Node.js is `22.13.0` or newer.
-- Install command succeeds:
+- Install command succeeds (published package today):
 
 ```bash
 npm install -g grape-context@0.1.0-alpha.3
 ```
+
+After `1.0.0-beta.0` publish, human trials should use `npm install -g grape-context@beta` or `@1.0.0-beta.0` instead.
 
 - `grape help` exits `0`.
 - `grape doctor --json` exits `0` or returns clear setup recovery guidance.

@@ -23,6 +23,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ### Changed
 
+- Refreshed user-facing docs for the planned `1.0.0-beta.0` npm prerelease: dual install path (published `0.1.0-alpha.3` today, `@beta` after publish), honest transport scope, benchmark claim boundaries, and documentation style rules in `AGENTS.md`.
 - CI `beta-smoke` now runs `npm run benchmark:run`, `npm run e2e:alpha`, and `npm run beta:client-trial` after the cross-platform `npm run check` matrix.
 - Hardened packaged install smoke to prove CLI omitted restore, task/session mismatch recovery, and reset recovery in the installed consumer-repo path.
 - Refreshed beta-readiness docs to reflect the published `0.1.0-alpha.3` npm package, npm `latest`/`alpha` dist-tags, GitHub tag/release state, global install smoke, and external alpha.3 published-package smoke.

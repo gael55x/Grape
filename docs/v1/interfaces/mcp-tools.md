@@ -14,7 +14,7 @@ Tool schemas and safety rules are derived from `docs/v1/SPEC.md`.
 
 For the beta transport/schema stability boundary, including stable, experimental, and debug fields, warning taxonomy, and compatibility rules, see [`docs/v1/contracts/transport-stability.md`](../contracts/transport-stability.md).
 
-For stable agent session identity, task mismatch recovery, JSON-RPC framing examples, and alpha.3 install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
+For stable agent session identity, task mismatch recovery, JSON-RPC framing examples, and published-package install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
 
 ## Update Triggers
 

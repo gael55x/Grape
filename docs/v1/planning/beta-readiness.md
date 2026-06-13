@@ -178,19 +178,19 @@ Observed:
 
 - `npm run check` passed in the latest follow-up gate, including the behavior suite, docs checks, fixture checks, package dry-run contents check, and TypeScript build checks.
 - `npm pack --dry-run` passed with a temporary npm cache and confirmed `README.md`, `CHANGELOG.md`, `dist/`, package metadata, and storage migrations ship. The default local npm cache had an ownership issue, so the dry-run used a temporary npm cache path.
-- `npm run benchmark:run` passed all four fixtures. The stable no-change fixture met the second-turn reduction threshold; branch-switch, stale-source, and session-reset fixtures intentionally emitted `INVALIDATE_PREVIOUS` instead of unsafe omission.
+- `npm run benchmark:run` passed all six gated fixtures. The stable no-change fixtures met the second-turn reduction threshold; branch-switch, stale-source, and session-reset fixtures intentionally emitted `INVALIDATE_PREVIOUS` instead of unsafe omission.
 - Follow-up token-efficiency hardening added a serialized default MCP agent-output estimate and a first-turn overhead gate. The refreshed benchmark suite passed with compact `agent_pack` output while preserving the second-turn reduction threshold.
 - Follow-up pipeline performance hardening reused caller-captured snapshots, guarded repeat evidence/index skips by existing rows, added scoped ledger queries and lookup indexes, and bounded lexical SQL prefiltering with normalized fallback. Artifact output now uses temp-file then rename materialization, but full post-commit file materialization remains deferred until a staged design can preserve sent-ledger correctness.
 - `npm run e2e:alpha` initially failed inside restricted sandbox networking while resolving `registry.npmjs.org`; rerun with approved network access passed.
 - `npm run global:smoke` passed against global `grape-context@0.1.0-alpha.3`.
-- External benchmark workspace `node run-pass.mjs` passed all scripted scenarios. The same-task no-change turn preserved safe omission and restore behavior without recording raw token counts in this planning note.
+- External benchmark workspace scripted transport scenarios passed under documented methodology (local fixture results, not official release benchmarks). The same-task no-change turn preserved safe omission and restore behavior without recording raw token counts in this planning note.
 - External `node smoke-published.mjs` passed 8/8 checks against the published/global CLI, including MCP `initialize`, `tools/list`, two `grape_get_context` turns, and `grape_get_omitted_item` restore.
 - Graphify AST update produced a local graph for `ts-checkout-app`, and `graphify query` found the expected discount/cart/test neighborhood. Graphify's built-in `benchmark` command did not run on this small graph because its sample questions found no matching nodes, so Graphify is recorded here as a structural orientation comparison, not as an equivalent context-transport benchmark.
 - The sample repo was dirty during the external trial because generated/local files were present, and Grape surfaced `dirty_worktree_context` rather than treating the context as branch-global.
 
 Verdict:
 
-- Ready for **controlled pre-beta review** of the scripted transport slice: install, local bootstrap, MCP stdio protocol, same-session omission, restore, branch/source/rules invalidation, reset recovery, package contents, and token accounting have scripted proof on the recorded gate runs.
+- Ready for **controlled pre-beta review** of the scripted transport slice: install, local bootstrap, MCP stdio protocol, same-session omission, restore, branch/source/rules invalidation, reset recovery, package contents, and token accounting have scripted harness coverage on the recorded gate runs (fixture estimates only).
 - Not a defensible **beta 1.0** or broad beta claim until at least one actual Cursor/Claude-style MCP client trial is recorded against the published package, plus a clean consumer repo and dirty/branch/reset recovery pass through that real client configuration. `npm run beta:client-trial` is scripted packaged MCP smoke only; it does not satisfy the human trial checklist.
 
 ## Verification Commands

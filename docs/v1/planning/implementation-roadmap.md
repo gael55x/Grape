@@ -136,11 +136,11 @@ Before adding V1 scope, confirm the work improves at least one of:
 ## Human Review Bar
 
 - **Minimum bar (met for first review):** clone, `npm run check`, honest docs/contracts, artifact limitations, passing gates.
-- **V1 alpha bar (current target):** npm install, `grape_get_context` twice with safe `OMIT_UNCHANGED`, dependency invalidation benchmarks, install smoke CI, and automated `npm run beta:client-trial` over packaged MCP stdio.
-- **Beta candidate bar (planned):** `npm run beta:check` green locally and in CI, plus human MCP client trials from [`beta-trial-checklist.md`](beta-trial-checklist.md) when release policy requires IDE UI proof.
+- **V1 alpha bar (met):** npm install, `grape_get_context` twice with safe `OMIT_UNCHANGED`, dependency invalidation benchmarks, install smoke CI, and automated `npm run beta:client-trial` over packaged MCP stdio.
+- **Beta candidate bar (current target):** `npm run beta:check` green locally and in CI, plus human MCP client trials from [`beta-trial-checklist.md`](beta-trial-checklist.md) when release policy requires IDE UI proof.
 - **Full product bar (not V1):** broad durable retrieval, multi-fixture gold labels, observed-run result-to-behavior workflows, optional graph-memory parity with dedicated memory products.
 
-Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations uses the built-in `node:sqlite` runtime path to avoid native package compilation; the published alpha package requires Node.js 22.13+.
+Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations uses the built-in `node:sqlite` runtime path to avoid native package compilation; the published `grape-context` package (currently `0.1.0-alpha.3`) requires Node.js 22.13+.
 
 ## Documentation Foundation Exit Criteria
 

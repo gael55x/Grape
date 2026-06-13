@@ -2,7 +2,7 @@
 
 Contract docs define the structured product objects Grape returns or persists.
 
-- [Transport stability](transport-stability.md) — beta transport/schema stability boundary: stable, experimental, and internal fields; warning taxonomy; compatibility rules.
+- [Transport stability](transport-stability.md): beta transport/schema stability boundary, stable, experimental, and internal fields, warning taxonomy, and compatibility rules.
 - [Context artifact](context-artifact.md)
 - [Context diff](context-diff.md)
 
