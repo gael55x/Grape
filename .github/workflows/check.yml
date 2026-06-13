@@ -58,3 +58,6 @@ jobs:
 
       - name: Run alpha e2e smoke
         run: npm run e2e:alpha
+
+      - name: Run beta client trial
+        run: npm run beta:client-trial
