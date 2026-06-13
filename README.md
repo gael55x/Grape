@@ -31,11 +31,11 @@
 
 Grape is a local-first context compiler and context transport layer for AI coding agents.
 
-After MCP setup, the agent calls `grape_get_context` each turn with stable session identity. Grape tracks what that session has already seen, invalidates stale context when repo state changes, and ships only the safe delta (`NEW`, `CHANGED`, `PINNED`, `RESTORE_AVAILABLE`, `INVALIDATE_PREVIOUS`) without manual compile/diff commands. Install Grape once, configure your agent through MCP, and keep using your coding agent normally.
-
 Instead of making agents reread the same files, rediscover the same rules, and repeat the same mistakes, Grape turns repository knowledge into dependency-tracked context artifacts that can be diffed, restored, and invalidated.
 
 Grape is not a coding assistant, chatbot, broad agent memory platform, vector database, correctness prover, repo graph daemon, or generic search layer. It is session-scoped, proof-backed context transport: built to make coding agents cheaper to run, harder to mislead, and more consistent on real codebases.
+
+After MCP setup, the agent calls `grape_get_context` each turn with stable session identity. Grape tracks what that session has already seen, invalidates stale context when repo state changes, and ships only the safe delta (`NEW`, `CHANGED`, `PINNED`, `RESTORE_AVAILABLE`, `INVALIDATE_PREVIOUS`) without manual compile/diff commands. Install Grape once, configure your agent through MCP, and keep using your coding agent normally.
 
 ## Quickstart
 
