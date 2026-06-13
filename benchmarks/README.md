@@ -49,6 +49,8 @@ node benchmarks/scripts/naive-baseline.mjs clean-typescript-app
 
 The uncapped mode measures maximum recall. The budgeted mode caps each baseline to the same case budget so the benchmark can compare context selection under equal pressure.
 
+Post-beta grape rows include layered metrics per output stage: retrieval selection, evidence attachment, project rules, pack `inputRefs`, and final agent-facing refs. Each layer reports recall, known-noise ratio, and selected file count. The harness records `searchEngine` (`rg` or `node-fallback`) in the result environment. Compare published-beta and local-candidate runs only when `artifactIdentity` differs.
+
 `npm run bench` is the **beta candidate transport** path: it does **not** benchmark the published registry package and does **not** use the dev source-checkout CLI unless you pass `--include-dev-source`.
 
 Full beta gate (unchanged):

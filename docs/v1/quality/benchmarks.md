@@ -101,6 +101,8 @@ npm run bench:post-beta:local
 
 The uncapped mode measures maximum recall. The budgeted mode caps each baseline to the same case budget so the benchmark can compare context selection under equal pressure.
 
+Post-beta grape rows now report layered metrics separately: `retrievalSelectedRefs`, `evidenceRefs`, `projectRuleRefs`, `packInputRefs`, and `finalAgentFacingRefs`. Each layer records `relevanceRecall`, `knownNoiseRatio`, and `selectedCount`. The harness records `searchEngine` as `rg` or `node-fallback` in the environment block. Uncommitted local JSON under `benchmarks/results/` is fixture evidence only, not an official release benchmark.
+
 Committed results live under `benchmarks/results/post-beta-*-published-beta.json`.
 
 See [`../../../benchmarks/README.md`](../../../benchmarks/README.md) and [`../legacy/alpha/benchmark-readiness-report.md`](../legacy/alpha/benchmark-readiness-report.md) for historical pre-beta evidence.
