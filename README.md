@@ -173,7 +173,7 @@ Not in the 1.0 beta promise:
 - no full semantic ranking, embeddings, complete call graphs, broad language parsing, or broad polyglot/monorepo graph claim yet
 - broader durable claim types, nested rule scope resolution, and automatic conflict resolution remain outside the beta transport promise
 - automated `npm run beta:client-trial` proves MCP over stdio from a packed install; a literal Cursor or Claude Code UI trial still needs a human run when release policy requires it
-- numeric token savings are fixture estimates only until official benchmark artifacts are published with fixture, command, date, and limits
+- numeric token savings are fixture estimates only; on the recorded 2026-06-13 tarball run at `e8a1656`, all six gated fixtures passed with zero unsafe omissions (see [Benchmarks](docs/v1/quality/benchmarks.md))
 
 ## Architecture
 

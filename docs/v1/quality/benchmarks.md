@@ -108,7 +108,17 @@ npm run beta:check
 
 ### Recorded baselines (local fixture reference, 2026-06-13)
 
-Local fixture reference from `npm run bench` on branch `benchmark/beta-1-readiness`. These are not official release benchmark claims. CI and other machines may differ; run `npm run benchmark:run` or `npm run bench` to refresh.
+On the recorded fixture run dated **2026-06-13**, Grape produced the listed token and invalidation results under the documented harness limits.
+
+| Field | Value |
+|---|---|
+| Command | `npm run bench` |
+| Git commit | `e8a1656298b1de9a47f3ecfe158c6d530094d31a` (`v1.0.0-beta.0`) |
+| Package version | `1.0.0-beta.0` (packed tarball from git tree) |
+| Node | `v22.18.0` on `darwin` |
+| Fixtures | all six gated fixtures below |
+| Limits | harness thresholds in this doc; zero unsafe omissions; zero stale sends |
+| Caveats | local fixture results only; npm registry publish was pending human authentication at record time; not proof of production savings or external tool superiority |
 
 | Fixture | Turn 1 tokens | Turn 2 tokens | Turn 2 reduction | Serialized agent output | Agent output overhead | `OMIT_UNCHANGED` | `INVALIDATE_PREVIOUS` | Unsafe |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|

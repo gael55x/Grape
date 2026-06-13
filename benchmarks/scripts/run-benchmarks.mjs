@@ -35,7 +35,7 @@ const report = {
     packageJsonVersion: pkg.version,
     publishedNpmVersion: publishedVersion,
     betaCandidateNote:
-      "Primary results use npm pack + install from the current git tree. package.json may still read alpha.3 until version bump; this is not the published npm artifact."
+      "Primary results use npm pack + install from the current git tree. This is not the published npm registry artifact until post-publish verification completes."
   },
   phases: {},
   scenarios: [],
