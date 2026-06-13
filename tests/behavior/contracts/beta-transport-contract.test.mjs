@@ -7,7 +7,8 @@
  * or internal content.
  *
  * Experimental surfaces (agentGraph, recoveryGuidance, contextPackMarkdown)
- * are optional: they are checked for shape only when present.
+ * are optional. Default compact output omits contextPackMarkdown; full
+ * inspection output checks its shape.
  * Debug-only warnings are never required.
  */
 
@@ -144,6 +145,7 @@ test("beta transport: default outputMode is agent_pack with no embedded contextA
 
     assert.equal(sc.outputMode, "agent_pack");
     assert.equal(Object.hasOwn(sc, "contextArtifact"), false);
+    assert.equal(Object.hasOwn(sc, "contextPackMarkdown"), false);
   });
 });
 
@@ -314,11 +316,9 @@ test("beta transport: agentGraph when present has graphFormat and nodeCounts", (
 
 test("beta transport: contextPackMarkdown when present is a string", () => {
   withGitRepo((repoPath) => {
-    const sc = getContextResponse(repoPath);
+    const sc = getContextResponse(repoPath, { outputMode: "full" });
 
-    if (Object.hasOwn(sc, "contextPackMarkdown")) {
-      assert.equal(typeof sc.contextPackMarkdown, "string");
-    }
+    assert.equal(typeof sc.contextPackMarkdown, "string");
   });
 });
 

@@ -732,7 +732,7 @@ Keep entries simple:
 ### 2026-06-03 - Beta Token Transport Hardening
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: compacted default MCP `grape_get_context` transport for beta token-efficiency proof. The default output is now `agent_pack` with compact pack scopes, artifact refs, compact Markdown, short MCP text summaries, and an adjacency `agentGraph` over returned context-pack items. Full embedded artifacts remain available through `outputMode: "full"` or `grape_get_artifact`. Benchmarks now estimate serialized default agent-output tokens and fail the stable fixture when first-turn agent-output overhead exceeds 400 percent.
+- Summary: compacted default MCP `grape_get_context` transport for beta token-efficiency proof. The default output uses `agent_pack` with compact pack scopes, artifact refs, short MCP text summaries, and an adjacency `agentGraph` over returned context-pack items. Later hardening removed inline Markdown from this default compact response; full embedded artifacts and inline Markdown remain available through `outputMode: "full"` or `grape_get_artifact`. Benchmarks estimate serialized default agent-output tokens and fail the stable fixture when first-turn agent-output overhead exceeds 400 percent.
 - Checks run: `npm run build:test`; focused MCP/context-artifact/benchmark behavior tests; `npm run benchmark:run`.
 - Risks/follow-ups: serialized output overhead is now measured and gated but still materially higher than logical body tokens. Further savings should target restore/invalidation row compacting and first-turn metadata density without weakening restore or invalidation safety.
 

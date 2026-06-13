@@ -2,7 +2,7 @@
 
 **Status:** Canonical V1 framework contract (not a claim that every section is shipped)  
 **Canonical source of truth:** This file, `grape_v1_final_framework_spec.md`, is the final V1 implementation contract. If another V1 spec conflicts with this file, this file wins.  
-**Product:** Grape — local-first context transport layer for AI coding agents on git repositories  
+**Product:** Grape, local-first context transport layer for AI coding agents on git repositories
 
 **Implementation status (alpha.3 transport slice):**
 
@@ -48,14 +48,14 @@ repo state
 + reusable compression artifacts
 + previous context sent to this agent session
 + dependency hashes
-→ compiled context artifact
-→ diffed context pack
-→ AI agent receives only what is new, changed, pinned, or invalidated
+then compiled context artifact
+then diffed context pack
+then AI agent receives only what is new, changed, pinned, or invalidated
 ```
 
 The product is not “memory.” The outward contract is the **ContextPack** diff protocol (`docs/v1/contracts/context-diff.md`). Internally, Grape also produces a **Context Artifact** with a dependency manifest.
 
-V1 product framing (accepted ADR-0010): Grape is a **lightweight extension** agents and repos plug into—enough compile features to be useful, with session-scoped transport as the hero—not a full graph/embedding memory platform in V1.
+V1 product framing (accepted ADR-0010): Grape is a **lightweight extension** agents and repos plug into, enough compile features to be useful, with session-scoped transport as the hero, not a full graph/embedding memory platform in V1.
 
 Grape’s user-visible promise:
 
@@ -574,12 +574,12 @@ Best-effort:
 
 Fallback:
 
-- unsupported language → file path/text indexing only
-- parser failure → file-level lexical indexing
-- huge file → skip/truncate with warning
-- binary file → skip
-- nested package/workspace uncertainty → partial context warning
-- generated or framework-magic edge uncertainty → blind-spot warning
+- unsupported language: file path/text indexing only
+- parser failure: file-level lexical indexing
+- huge file: skip/truncate with warning
+- binary file: skip
+- nested package/workspace uncertainty: partial context warning
+- generated or framework-magic edge uncertainty: blind-spot warning
 
 ---
 
@@ -861,7 +861,7 @@ Rules:
 
 ---
 
-## 11. Layer 1 — Evidence Store
+## 11. Layer 1 - Evidence Store
 
 Everything starts as evidence.
 
@@ -967,7 +967,7 @@ function classifySource(source: Source): "trusted" | "temporary" | "untrusted" {
 
 ---
 
-## 12. Layer 2 — RepoSnapshot and WorktreeState
+## 12. Layer 2 - RepoSnapshot and WorktreeState
 
 Branch names are not enough. Grape must snapshot actual repo state.
 
@@ -1051,7 +1051,7 @@ async function preflight(request: ContextRequest): Promise<PreflightResult> {
 
 ---
 
-## 13. Layer 3 — Trust Kernel
+## 13. Layer 3 - Trust Kernel
 
 The Trust Kernel prevents Grape from becoming a hallucination database.
 
@@ -1176,7 +1176,7 @@ V1.0 forbidden durable extraction:
 
 ---
 
-## 14. Layer 4 — Scope Engine
+## 14. Layer 4 - Scope Engine
 
 Most real contradictions are scope errors.
 
@@ -1239,7 +1239,7 @@ Rules:
 
 ---
 
-## 15. Layer 5 — Layer Isolation
+## 15. Layer 5 - Layer Isolation
 
 Grape uses five isolated layers.
 
@@ -1282,7 +1282,7 @@ No layer silently becomes another layer.
 
 ---
 
-## 16. Layer 6 — Claims and Proofs
+## 16. Layer 6 - Claims and Proofs
 
 ### 16.1 Claim schema
 
@@ -1450,7 +1450,7 @@ type Proof = {
 
 ---
 
-## 17. Layer 7 — Symbol and Dependency Index
+## 17. Layer 7 - Symbol and Dependency Index
 
 V1 needs a basic symbol index, not a perfect code intelligence engine.
 
@@ -1579,7 +1579,7 @@ Never let a repo-wide source cap silently starve the package that owns an explic
 
 ---
 
-## 18. Layer 8 — Project Rules
+## 18. Layer 8 - Project Rules
 
 Project rules are persistent instructions and constraints.
 
@@ -1643,7 +1643,7 @@ type ProjectRule = {
 
 ---
 
-## 19. Layer 9 — Current-Valid Retrieval
+## 19. Layer 9 - Current-Valid Retrieval
 
 Current-valid retrieval is a safety filter before relevance ranking.
 
@@ -1716,7 +1716,7 @@ claims for debugging.
 
 ---
 
-## 20. Layer 10 — Compression Cache
+## 20. Layer 10 - Compression Cache
 
 Compression is a first-class V1 layer because Grape's main goal is token reduction. But compression is **derived cache, not truth**.
 
@@ -1724,8 +1724,8 @@ The compression layer sits between current-valid retrieval / dependency state an
 
 ```text
 current-valid claims + proofs + symbols + rules + tests + prior artifacts
-→ dependency-checked compression artifacts
-→ compiler routing + low-risk summaries + diff-friendly context sections
+then dependency-checked compression artifacts
+then compiler routing + low-risk summaries + diff-friendly context sections
 ```
 
 Compression is used for three things:
@@ -2244,7 +2244,10 @@ Never omit silently:
 
 ```ts
 function evaluateCompileSafety(artifact: ContextArtifact, policy: CompilerPolicy): CompileMode {
-  if (policy.forbiddenOmissions.some(item => artifact.omittedRequired.includes(item))) {
+  const omitsForbiddenContext = policy.forbiddenOmissions.some(function forbiddenContextWasOmitted(item) {
+    return artifact.omittedRequired.includes(item);
+  });
+  if (omitsForbiddenContext) {
     return "cannot_compile_safely";
   }
 
@@ -2900,31 +2903,31 @@ type AgentContextGraphCut = {
 };
 
 type GrapeGetContextOutput = {
-  // Core identifiers — stable
+  // Core identifiers - stable
   artifactId: string;
   artifactHash: string;
   dependencyManifestHash: string;
   sessionId: string;
   sessionResetId?: string; // present only when reset occurred
 
-  // VCS state — stable
+  // VCS state - stable
   branch: string;
   headCommit: string;
   dirtyWorktree: boolean;
 
-  // Task and compile state — stable
+  // Task and compile state - stable
   taskType: TaskType;
   riskOverlays: RiskOverlay[];
   compileMode: CompileMode; // "broad_context_required" reserved, not currently emitted
   outputMode: "agent_pack" | "full"; // defaults to "agent_pack"
 
-  // Current scope — stable
+  // Current scope - stable
   currentScope: CurrentScopeShape;
 
-  // Compact agent surface — stable
+  // Compact agent surface - stable
   artifactRef: AgentContextArtifactRef;
   contextPackItems: AgentContextPackItem[]; // compact preview shape in agent_pack mode
-  contextPackMarkdown?: string; // inspection-oriented navigation summary; optional for agent use
+  contextPackMarkdown?: string; // inspection-oriented navigation summary; omitted from default agent_pack
   diffSummary: {
     newItems: number;
     changedItems: number;
@@ -2935,17 +2938,17 @@ type GrapeGetContextOutput = {
   };
   artifactFiles: { json: string; markdown: string };
 
-  // Safety — stable (arrays may be empty)
+  // Safety - stable (arrays may be empty)
   warnings: string[];
   unsafeReasons: string[];
   budget: ContextPackBudgetResult;
   restoreAvailable: boolean;
 
-  // Experimental — do not require for beta agent operation
+  // Experimental - do not require for beta agent operation
   agentGraph?: AgentContextGraphCut;
   recoveryGuidance?: string[];
 
-  // Inspection only — not present in agent_pack mode
+  // Inspection only - not present in agent_pack mode
   contextArtifact?: ContextArtifact;
 };
 ```
@@ -3641,7 +3644,7 @@ Before implementation starts, all of the following must be true:
 - `RiskOverlay`, `DiffState`, `TaskType`, `SourceType`, and `CompressionArtifactType` are used consistently
 - dependency manifest rules are implemented for source, proof, rule, config, test, symbol, and compression inputs
 - MCP write tools create evidence only and cannot directly promote durable truth
-- `grape_get_context` returns structured `contextPackItems` plus rendered Markdown
+- `grape_get_context` returns structured `contextPackItems`; default compact output omits inline Markdown and full inspection output may render it
 - scope matching returns deterministic `match`, `mismatch`, `partial`, or `unknown`
 - high-risk overlays block summary-only required context
 - basic install works without local native compilation on supported platforms

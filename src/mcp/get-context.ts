@@ -137,16 +137,6 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
       contextPackItems
     }),
     contextPackItems,
-    contextPackMarkdown: renderAgentContextPackMarkdown({
-      artifactId: result.artifactId,
-      contextArtifact: result.contextArtifact,
-      contextPackItems,
-      packItemContentMode: outputMode === "full" ? "full" : "preview",
-      diffSummary,
-      warnings,
-      unsafeReasons: result.unsafeReasons,
-      budget: result.budget
-    }),
     diffSummary,
     warnings,
     unsafeReasons: result.unsafeReasons,
@@ -158,7 +148,20 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
   };
 
   if (outputMode === "full") {
-    return { ...output, contextArtifact: result.contextArtifact };
+    return {
+      ...output,
+      contextArtifact: result.contextArtifact,
+      contextPackMarkdown: renderAgentContextPackMarkdown({
+        artifactId: result.artifactId,
+        contextArtifact: result.contextArtifact,
+        contextPackItems,
+        packItemContentMode: "full",
+        diffSummary,
+        warnings,
+        unsafeReasons: result.unsafeReasons,
+        budget: result.budget
+      })
+    };
   }
 
   return output;

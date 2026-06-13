@@ -85,7 +85,7 @@ The stability boundary is enforced through TypeScript types, this document, and 
 | `outputMode` | **Stable** | `agent_pack` or `full`. Defaults to `agent_pack`. |
 | `artifactRef` | **Stable** | Object. See `AgentContextArtifactRef` below. |
 | `contextPackItems` | **Stable** | Array of compact `AgentContextPackItem` objects in `agent_pack` mode. |
-| `contextPackMarkdown` | Inspection-oriented / optional | String when present. Compact navigation summary for CLI parity and human inspection. Agents should prefer `contextPackItems` and `artifactRef`. Not required for compact-agent operation. |
+| `contextPackMarkdown` | Inspection-oriented / optional | Not included in default `agent_pack`. String when present in inspection output. Compact navigation summary for CLI parity and human inspection. Agents should prefer `contextPackItems` and `artifactRef`. |
 | `diffSummary` | **Stable** | Object with counts for all diff states (`NEW`, `CHANGED`, `PINNED`, `OMIT_UNCHANGED`, `INVALIDATE_PREVIOUS`, `RESTORE_AVAILABLE`). |
 | `warnings` | **Stable (array shape)** | Array of strings; may be empty. Machine-readable only for codes listed in the warning taxonomy below. Default `agent_pack` filters debug-only warning strings. Full inspection output may include them. |
 | `unsafeReasons` | **Stable** | Array of strings; may be empty on safe compile. See taxonomy below. |
@@ -192,7 +192,7 @@ These surfaces are implemented and tested but may change shape before stable 1.0
 
 - `agentGraph`: adjacency graph over context-pack items. The `graphFormat` version string will bump if the node/edge schema changes. Beta clients must not require this field.
 - `recoveryGuidance`: human-readable array of recovery suggestions. Content is advisory; beta clients must not parse or branch on prose.
-- `contextPackMarkdown`: inspection-oriented Markdown navigation summary. Agents should prefer structured `contextPackItems` and `artifactRef` for reliable extraction.
+- `contextPackMarkdown`: inspection-oriented Markdown navigation summary. Default `agent_pack` omits it to avoid duplicating structured fields. Agents should prefer structured `contextPackItems` and `artifactRef` for reliable extraction.
 
 ## Accepted Advisory Surfaces
 

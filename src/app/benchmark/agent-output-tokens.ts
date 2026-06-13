@@ -4,8 +4,7 @@ import type { CompileLocalContextResult } from "../local-project/types.js";
 import {
   buildAgentContextArtifactRef,
   buildAgentContextGraphCut,
-  compactAgentContextPackItems,
-  renderAgentContextPackMarkdown
+  compactAgentContextPackItems
 } from "../../shared/index.js";
 import type { ContextPackItemShape, DiffState } from "../../shared/index.js";
 
@@ -50,16 +49,6 @@ export function buildBenchmarkAgentOutputTokenMetric(
       contextPackItems
     }),
     contextPackItems,
-    contextPackMarkdown: renderAgentContextPackMarkdown({
-      artifactId: result.artifactId,
-      contextArtifact: result.contextArtifact,
-      contextPackItems,
-      packItemContentMode: "preview",
-      diffSummary,
-      warnings: result.warnings,
-      unsafeReasons: result.unsafeReasons,
-      budget: result.budget
-    }),
     diffSummary,
     warnings: result.warnings,
     unsafeReasons: result.unsafeReasons,

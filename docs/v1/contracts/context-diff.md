@@ -38,7 +38,7 @@ Public stored artifact JSON and CLI compile responses that include a context pac
 - `contextPackItems`: array of pack items (see below)
 - `contextArtifact`: nested V1 artifact (`context-artifact.md`)
 
-MCP `grape_get_context` defaults to `outputMode: "agent_pack"` and returns compact preview `contextPackItems` plus `artifactRef`, compact `contextPackMarkdown`, and `agentGraph`. Full item bodies and the full `contextArtifact` are not embedded in this default response because the stored artifact file and `grape_get_artifact` can inspect them on demand. MCP callers may request `outputMode: "full"` when they need the embedded artifact and full `ContextPackItem.content` payloads.
+MCP `grape_get_context` defaults to `outputMode: "agent_pack"` and returns compact preview `contextPackItems` plus `artifactRef` and optional `agentGraph`. It does not embed full item bodies, the full `contextArtifact`, or inline `contextPackMarkdown` in this default response because the stored artifact file and `grape_get_artifact` can inspect them on demand. MCP callers may request `outputMode: "full"` when they need the embedded artifact, full `ContextPackItem.content` payloads, and inline inspection Markdown.
 
 Pack items must use the canonical `state` values below. `INVALIDATE_PREVIOUS` items must include `invalidatesSentItemId`. Restorable omissions must surface as `RESTORE_AVAILABLE` with `restoreId` when policy allows restore.
 
@@ -150,7 +150,7 @@ This proof does not perform MCP transport, CLI rendering, broad repository index
 
 Current implementation note: the durable diff service uses internal section-diff rows for comparison and ledger persistence, then maps them to V1-shaped `ContextPackItem` outputs at the compiler/app boundary. Public CLI, artifact JSON, and MCP context responses expose `content`, `restoreId`, `inputRefs`, `itemKind`, and safety fields rather than internal ledger row shapes.
 
-MCP may group `INVALIDATE_PREVIOUS` rows in `contextPackMarkdown` to reduce repeated prose, but this is only a presentation optimization. Structured `contextPackItems[]` still emits one row per invalidated prior sent item and each row retains `invalidatesSentItemId`.
+Full inspection output may group `INVALIDATE_PREVIOUS` rows in `contextPackMarkdown` to reduce repeated prose, but this is only a presentation choice. Structured `contextPackItems[]` still emits one row per invalidated prior sent item and each row retains `invalidatesSentItemId`.
 
 Before artifact compilation, local compile can build and render a deterministic `context_pack_summary` compression artifact from the latest active, non-compression sent rows for the current branch/head when prior sent context exists. After the durable pack is persisted, local compile rebuilds that summary for the next turn. Already-invalidated sent rows, compression-orientation rows, and rows from another branch/head are excluded so the summary cannot recursively summarize itself or revive stale context. If the previously sent compression-orientation section becomes stale, the diff emits `INVALIDATE_PREVIOUS` for that sent item while still allowing unchanged unrelated sections to omit safely.
 

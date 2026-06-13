@@ -6,8 +6,8 @@ Define the system layers, module boundaries, and dependency direction for Grape 
 
 V1 has two cooperating layers (ADR-0010):
 
-1. **Compile layer** — evidence, git snapshot, indexing, trust, compiler, compression → `ContextArtifact`.
-2. **Transport layer** — session-scoped diff engine → `ContextPack` / `ContextPackItem` ledger.
+1. **Compile layer**: evidence, git snapshot, indexing, trust, compiler, and compression produce `ContextArtifact`.
+2. **Transport layer**: session-scoped diff engine produces the `ContextPack` / `ContextPackItem` ledger.
 
 Adapters (`src/cli/`, `src/mcp/`) expose transport. Session transport policy vocabulary lives in `src/core/sessions/`; durable ledgers and locks live in `src/core/storage/session/` and `src/core/storage/context-ledger/`; orchestration lives in `src/app/local-project/context/compile-session.ts` and `src/app/durable-context-build.ts`; the diff algorithm lives in `src/core/diff/`. Grape is not a standalone graph database.
 
@@ -136,7 +136,7 @@ flowchart TD
 - Storage must not contain business logic. It persists validated objects and returns typed rows.
 - Production code must not import from `tests/`, benchmark harnesses, or fixture helpers.
 - Shared utilities must stay narrow. If a utility needs domain vocabulary, it belongs in that domain module.
-- Shared agent transport contracts may define the stable serialized shapes consumed by both MCP and benchmark code, such as compact `agent_pack` graph cuts and agent Markdown summaries. They must not own repository IO, trust decisions, retrieval policy, or MCP adapter behavior.
+- Shared agent transport contracts may define the stable serialized shapes consumed by both MCP and benchmark code, such as compact `agent_pack` graph cuts and full-output agent Markdown summaries. They must not own repository IO, trust decisions, retrieval policy, or MCP adapter behavior.
 - Language and framework providers are extraction adapters inside indexing. They may produce normalized symbols, edges, capability metadata, and diagnostics, but retrieval and compiler policy decide what context is selected and rendered. Provider facts remain orientation and cannot become proof.
 
 `npm run architecture:check` enforces the basic import boundaries from this section. It is intentionally conservative and only checks layer direction. Domain-specific behavior still needs normal review and tests.
@@ -196,7 +196,7 @@ The indexing path should split language-specific extraction under `src/core/inde
 
 The compiler path is split under `src/core/compiler/` by artifact ownership rather than by generic helper type. `artifact/` owns public artifact shape guards and public artifact builders, `pack/` owns context-pack item mapping, budget evaluation, and optional budget pruning, and `repository/` owns repository-derived artifact compilation. Inside `repository/`, `manifest/` owns dependency manifest construction, `proofs/` owns compiler proof-ref helpers, `validation/` owns artifact and manifest integrity checks, `selection/` owns bounded source/symbol selection, `sections/` owns section assembly plus section-local dependency helpers, `sections/builders/` owns individual section builders, `policy/` owns compiler task/risk policy, `rendering/` owns JSON/render input contracts, and `markdown/` owns agent-facing Markdown rendering for compiled repository context packs. External layers should import through `src/core/compiler/index.ts` unless a same-layer implementation test needs a focused internal function.
 
-The shared agent transport path owns only reusable serialized transport helpers: compact pack projection, the default MCP `agent_pack` graph-cut shape, and compact agent Markdown rendering used by MCP and benchmark output estimation. The graph cut is adjacency over already-compiled context pack items; it is not a durable graph database and must not replace proof-backed exact spans, dependency manifests, or current-valid filtering.
+The shared agent transport path owns only reusable serialized transport helpers: compact pack projection, the default MCP `agent_pack` graph-cut shape, and full-output agent Markdown rendering for inspection. The graph cut is adjacency over already-compiled context pack items; it is not a durable graph database and must not replace proof-backed exact spans, dependency manifests, or current-valid filtering.
 
 The benchmark path is split under `src/app/benchmark/` so scripted fixture setup and token-reduction result shaping stay outside CLI rendering and outside core compiler policy. Benchmarks must run named fixture workflows and must fail on unsafe omissions or stale sends instead of treating token reduction as sufficient.
 

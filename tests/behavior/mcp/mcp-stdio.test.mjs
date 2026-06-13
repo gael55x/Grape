@@ -909,9 +909,7 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     assert.equal(packItem.inputRefs.some((ref) => Object.hasOwn(ref.scope, "repoId")), false);
     assert.equal(packItem.inputRefs.some((ref) => Object.hasOwn(ref.scope, "taskId")), false);
     assert.equal("body" in packItem, false);
-    if (Object.hasOwn(toolResult.structuredContent, "contextPackMarkdown")) {
-      assert.equal(typeof toolResult.structuredContent.contextPackMarkdown, "string");
-    }
+    assert.equal(Object.hasOwn(toolResult.structuredContent, "contextPackMarkdown"), false);
     assert.match(toolResult.structuredContent.artifactFiles.json, /^\.grape\//);
     assert.equal(toolResult.structuredContent.artifactRef.artifactFiles.json, toolResult.structuredContent.artifactFiles.json);
     const artifactJson = JSON.parse(
@@ -1038,9 +1036,7 @@ test("mcp grape_get_context invalidates prior sent context when a session switch
     assert.equal(second.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "NEW"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), false);
-    if (Object.hasOwn(second, "contextPackMarkdown")) {
-      assert.equal(typeof second.contextPackMarkdown, "string");
-    }
+    assert.equal(Object.hasOwn(second, "contextPackMarkdown"), false);
 
     const stale = runMcp(repoPath, [
       {
