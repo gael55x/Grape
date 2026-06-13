@@ -33,11 +33,6 @@ export function packageRootForSourceRefWithMetadata(
   return packageRootForSourceRef(sourceRef) ?? packageRootFromSourceMetadata(sourceRef, metadataJson);
 }
 
-export function packagePrefixForSourceRef(sourceRef: string): string | undefined {
-  const packageRoot = packageRootForSourceRef(sourceRef);
-  return packageRoot ? `${packageRoot}/` : undefined;
-}
-
 export function currentPackageRootFromSourceRefs(
   sourceRefs: readonly string[],
   packageRootBySourceRef: ReadonlyMap<string, string> = new Map()

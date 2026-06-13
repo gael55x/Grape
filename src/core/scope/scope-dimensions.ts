@@ -37,16 +37,6 @@ export function compareRequiredStringToCurrent(
   recordDimension(comparison, key, value === currentValue ? "match" : "mismatch");
 }
 
-export function compareOptionalStringToCurrent(
-  comparison: MutableScopeComparison,
-  scope: ScopeRecord,
-  key: string,
-  currentValue: string | undefined
-): void {
-  const result = compareOptionalStringValues(stringScope(scope, key), currentValue ?? "");
-  recordOptionalDimension(comparison, key, result);
-}
-
 export function compareOptionalSessionToCurrent(
   comparison: MutableScopeComparison,
   scope: ScopeRecord,

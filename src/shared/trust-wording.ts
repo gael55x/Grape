@@ -53,10 +53,6 @@ export function findForbiddenTrustWording(text: string): readonly string[] {
   );
 }
 
-export function hasForbiddenTrustWording(text: string): boolean {
-  return findForbiddenTrustWording(text).length > 0;
-}
-
 export function assertConservativeTrustWording(text: string, context: string): void {
   const violations = findForbiddenTrustWording(text);
   if (violations.length > 0) {

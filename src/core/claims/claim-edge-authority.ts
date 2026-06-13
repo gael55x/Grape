@@ -26,7 +26,6 @@ export interface ClaimEdgeAuthorityDecision {
 }
 
 const blockingAuthorities = new Set(["user_confirmation", "test_verification", "grape_observed", "trusted_import"]);
-const reviewOnlyAuthorities = new Set(["deterministic_rule", "model_suggestion", "review_metadata"]);
 
 export function claimEdgeAuthoritySummary(edge: ClaimEdgeAuthorityPolicyEdge): ClaimEdgeAuthoritySummary {
   const authority = edge.authority;
@@ -89,10 +88,6 @@ export function claimEdgeCanResolveConflict(edge: ClaimEdgeAuthorityPolicyEdge):
   }
 
   return { allowed: false };
-}
-
-export function isReviewOnlyClaimEdge(edge: ClaimEdgeAuthorityPolicyEdge): boolean {
-  return reviewOnlyAuthorities.has(claimEdgeAuthoritySummary(edge).createdBy);
 }
 
 function isLegacyAuthority(authority: ClaimEdgeAuthoritySummary): boolean {

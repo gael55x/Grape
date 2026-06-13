@@ -16,10 +16,6 @@ export const sentDiffStates = ["NEW", "CHANGED", "PINNED"] as const satisfies re
 
 export type SentDiffState = (typeof sentDiffStates)[number];
 
-export function isSentDiffState(state: DiffState): state is SentDiffState {
-  return (sentDiffStates as readonly string[]).includes(state);
-}
-
 /** Reasons Grape may invalidate prior sent context for a session. */
 export const sessionInvalidationReasons = [
   "branch_changed",

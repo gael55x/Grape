@@ -1,6 +1,5 @@
 export {
   assertKnownDiffState,
-  isSentDiffState,
   restorableOmissionReason,
   restoreStaleReasons,
   sentDiffStates,
