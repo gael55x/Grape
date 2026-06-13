@@ -14,7 +14,8 @@ const allowedV1RootDirs = new Set([
   "planning",
   "decisions",
   "examples",
-  "fixtures"
+  "fixtures",
+  "legacy"
 ]);
 
 const stalePathPattern =
