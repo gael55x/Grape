@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { captureEnvironment, repoRoot } from "./lib/environment.mjs";
 import { readFixtureMetadata } from "./lib/fixtures.mjs";
+import { sanitizeReportText } from "./lib/sanitize-paths.mjs";
 import { estimateTokens } from "./lib/tokens.mjs";
 
 const root = repoRoot();
@@ -64,7 +65,7 @@ function runGraphify() {
       status: "fail",
       setupMinutes: indexMs / 60000,
       compileOrIndexMs: indexMs,
-      detail: update.stderr.trim() || update.stdout.trim()
+      detail: sanitizeReportText(update.stderr.trim() || update.stdout.trim(), root)
     });
     return;
   }
@@ -92,7 +93,7 @@ function runGraphify() {
     comparisonClass: "orientation",
     notApplicable: ["session_diff_transport", "restore_semantics", "proof_backed_claims", "mcp_grape_get_context"],
     humanUsefulnessScore: payload.length > 100 ? 3 : 1,
-    detail: query.status !== 0 ? query.stderr.trim() : undefined
+    detail: query.status !== 0 ? sanitizeReportText(query.stderr.trim(), root) : undefined
   });
 }
 

@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { captureEnvironment, readPackageJson, repoRoot } from "./lib/environment.mjs";
 import { grapeBenchFixtures, readFixtureMetadata } from "./lib/fixtures.mjs";
+import { sanitizeReportText } from "./lib/sanitize-paths.mjs";
 import { estimateTokens } from "./lib/tokens.mjs";
 import { installBetaCandidateTarball, spawnInstalledGrape } from "./lib/tarball-install.mjs";
 
@@ -83,7 +84,7 @@ async function main() {
   } catch (error) {
     report.phases.betaCandidateInstall = {
       status: "fail",
-      detail: error instanceof Error ? error.message : String(error)
+      detail: sanitizeReportText(error instanceof Error ? error.message : String(error), root)
     };
     console.error(error);
     process.exitCode = 1;
@@ -117,7 +118,7 @@ function runGrapeDevSourceBenchmarks() {
   const cliPath = path.join(root, ".tmp/build/src/cli/index.js");
   const clean = spawnSync(process.execPath, ["scripts/clean-test-build.mjs"], { cwd: root, encoding: "utf8" });
   if (clean.status !== 0) {
-    return { status: "fail", detail: clean.stderr.trim() };
+    return { status: "fail", detail: sanitizeReportText(clean.stderr.trim(), root) };
   }
   const build = spawnSync("npm", ["run", "build:test"], {
     cwd: root,
@@ -125,7 +126,7 @@ function runGrapeDevSourceBenchmarks() {
     shell: process.platform === "win32"
   });
   if (build.status !== 0) {
-    return { status: "fail", detail: build.stderr.trim() };
+    return { status: "fail", detail: sanitizeReportText(build.stderr.trim(), root) };
   }
   return runFixtureLoop(cliPath, "grape-local-source-dev", (fixture) =>
     spawnSync(
@@ -152,7 +153,7 @@ function runFixtureLoop(_runner, target, spawnBench) {
         scenario: fixture,
         target,
         result: "error",
-        detail: result.stderr?.trim() || result.stdout?.trim()
+        detail: sanitizeReportText(result.stderr?.trim() || result.stdout?.trim(), root)
       };
       rows.push(row);
       report.scenarios.push(row);
