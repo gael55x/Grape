@@ -6,6 +6,21 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ## Unreleased
 
+## 1.0.0-beta.1 - 2026-06-13
+
+### Added
+
+- Added layered post-beta benchmark reporting for retrieval, evidence, project rules, pack `inputRefs`, and final agent-facing refs, with recorded `searchEngine` metadata (`rg` or `node-fallback`).
+
+### Fixed
+
+- Fixed task retrieval to exclude package paths named in `without pulling <path>` task phrases and to exclude `docs/v1/legacy` paths on post-beta documentation tasks unless the task explicitly names legacy or alpha content.
+- Fixed source-manifest context pack items to attach dependency refs only for task-retrieval-selected sources, reducing known-irrelevant files in pack `inputRefs`.
+
+### Changed
+
+- Clarified post-beta benchmark docs and evidence boundaries. Local fixture JSON is directional evidence only, not an official release benchmark claim.
+
 ## 1.0.0-beta.0 - 2026-06-13
 
 ### Added
