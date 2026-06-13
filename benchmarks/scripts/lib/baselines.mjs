@@ -204,12 +204,17 @@ export function assemblePayload(repoPath, files, budgetMode, budgetBytes) {
   };
 }
 
-export function runSearchBaseline(repoPath, caseDef, budgetMode, budgetBytes) {
+export function runSearchBaseline(repoPath, caseDef, budgetMode, budgetBytes, resolvedEngine = null) {
+  const engine = resolvedEngine ?? resolveSearchEngine();
+
+  if (engine.searchEngine === "node-fallback") {
+    return runNodeSearchFallback(repoPath, caseDef, budgetMode, budgetBytes);
+  }
+
   const matched = new Set();
-  const rgBinary = resolveRgBinary();
   for (const query of caseDef.searchQueries ?? []) {
     try {
-      const output = execFileSync(rgBinary, ["-l", query, repoPath], { encoding: "utf8" }).trim();
+      const output = execFileSync(engine.binary, ["-l", query, repoPath], { encoding: "utf8" }).trim();
       for (const absolutePath of output.split("\n").filter(Boolean)) {
         matched.add(path.relative(repoPath, absolutePath).split(path.sep).join("/"));
       }
@@ -220,10 +225,36 @@ export function runSearchBaseline(repoPath, caseDef, budgetMode, budgetBytes) {
   }
 
   const files = [...matched].sort();
-  return assemblePayload(repoPath, files, budgetMode, budgetBytes);
+  const payload = assemblePayload(repoPath, files, budgetMode, budgetBytes);
+  return { ...payload, searchEngine: "rg" };
 }
 
-function resolveRgBinary() {
+function runNodeSearchFallback(repoPath, caseDef, budgetMode, budgetBytes) {
+  const queries = caseDef.searchQueries ?? [];
+  const matched = new Set();
+
+  if (queries.length > 0) {
+    const normalizedQueries = queries.map((q) => q.toLowerCase());
+    walkRepo(repoPath, repoPath, (relativePath) => {
+      const absolutePath = path.join(repoPath, relativePath);
+      try {
+        const content = readFileSync(absolutePath, "utf8");
+        const lower = content.toLowerCase();
+        if (normalizedQueries.some((q) => lower.includes(q))) {
+          matched.add(relativePath);
+        }
+      } catch {
+        // skip unreadable or binary files
+      }
+    });
+  }
+
+  const files = [...matched].sort();
+  const payload = assemblePayload(repoPath, files, budgetMode, budgetBytes);
+  return { ...payload, searchEngine: "node-fallback" };
+}
+
+export function resolveRgBinary() {
   const candidates = ["rg", "/opt/homebrew/bin/rg", "/usr/local/bin/rg"];
   for (const candidate of candidates) {
     try {
@@ -234,6 +265,15 @@ function resolveRgBinary() {
     }
   }
   throw new Error("ripgrep (rg) is required for the search baseline but was not found on PATH");
+}
+
+export function resolveSearchEngine() {
+  try {
+    const binary = resolveRgBinary();
+    return { searchEngine: "rg", binary };
+  } catch {
+    return { searchEngine: "node-fallback", binary: null };
+  }
 }
 
 export function runNaiveBaseline(repoPath, budgetMode, budgetBytes) {
@@ -272,7 +312,9 @@ export function runGrapeBaseline({ grapeCli, repoPath, caseDef, budgetMode, budg
   }
 
   const output = JSON.parse(compile.stdout);
-  const files = extractGrapeFiles(output, repoPath);
+  const layers = extractGrapeRefLayers(output);
+  const files = layers.finalAgentFacingRefs;
+  const layeredMetrics = buildLayerMetrics(layers, caseDef);
   const payloadText = compile.stdout;
   let contextBytes = Buffer.byteLength(payloadText, "utf8");
   if (budgetMode === "budgeted" && contextBytes > budgetBytes) {
@@ -282,6 +324,8 @@ export function runGrapeBaseline({ grapeCli, repoPath, caseDef, budgetMode, budg
   const spanDiagnostics = evaluateSpanChecks(caseDef, output, repoPath);
   return {
     files,
+    layers,
+    layeredMetrics,
     text: payloadText,
     contextBytes,
     estimatedTokens: estimateTokens(payloadText),
@@ -290,40 +334,77 @@ export function runGrapeBaseline({ grapeCli, repoPath, caseDef, budgetMode, budg
   };
 }
 
-const FILE_SELECTION_SECTION_IDS = new Set([
-  "task-retrieval",
-  "exact-source-evidence",
-  "active-project-rules"
-]);
+export function extractGrapeFiles(compileOutput, _repoPath) {
+  return extractGrapeRefLayers(compileOutput).finalAgentFacingRefs;
+}
 
-export function extractGrapeFiles(compileOutput, repoPath) {
-  const files = new Set();
+export function extractGrapeRefLayers(compileOutput) {
+  const retrievalRefs = new Set();
+  const evidenceRefs = new Set();
+  const projectRuleRefs = new Set();
+  const packInputRefs = new Set();
+
   const artifact = compileOutput.contextArtifact;
   if (artifact?.outputSections) {
     for (const section of artifact.outputSections) {
-      if (!FILE_SELECTION_SECTION_IDS.has(section.id)) continue;
-      for (const sourceRef of section.sourceRefs ?? []) {
-        addRepoFilePath(files, sourceRef);
-      }
-      for (const itemRef of section.itemRefs ?? []) {
-        if (itemRef.ref) addRepoFilePath(files, itemRef.ref);
-      }
-      if (section.id === "task-retrieval" && section.text) {
-        for (const line of section.text.split("\n")) {
-          const match = /^- (.+)$/.exec(line.trim());
-          if (match) addRepoFilePath(files, match[1]);
-        }
+      if (section.id === "task-retrieval") {
+        collectSectionRefs(section, retrievalRefs);
+      } else if (section.id === "exact-source-evidence") {
+        collectSectionRefs(section, evidenceRefs);
+      } else if (section.id === "active-project-rules") {
+        collectSectionRefs(section, projectRuleRefs);
       }
     }
   }
 
   for (const item of compileOutput.contextPackItems ?? []) {
     for (const inputRef of item.inputRefs ?? []) {
-      if (inputRef.ref) addRepoFilePath(files, inputRef.ref);
+      if (inputRef.ref) {
+        const normalized = normalizeToRepoFile(inputRef.ref);
+        if (isRepoFilePath(normalized)) packInputRefs.add(normalized);
+      }
     }
   }
 
-  return [...files].sort();
+  const finalRefs = new Set([...retrievalRefs, ...evidenceRefs, ...projectRuleRefs]);
+
+  return {
+    retrievalSelectedRefs: [...retrievalRefs].sort(),
+    evidenceRefs: [...evidenceRefs].sort(),
+    projectRuleRefs: [...projectRuleRefs].sort(),
+    packInputRefs: [...packInputRefs].sort(),
+    finalAgentFacingRefs: [...finalRefs].sort()
+  };
+}
+
+function collectSectionRefs(section, target) {
+  for (const sourceRef of section.sourceRefs ?? []) {
+    addRepoFilePath(target, sourceRef);
+  }
+  for (const itemRef of section.itemRefs ?? []) {
+    if (itemRef.ref) addRepoFilePath(target, itemRef.ref);
+  }
+  if (section.id === "task-retrieval" && section.text) {
+    for (const line of section.text.split("\n")) {
+      const match = /^- (.+)$/.exec(line.trim());
+      if (match) addRepoFilePath(target, match[1]);
+    }
+  }
+}
+
+export function buildLayerMetrics(layers, caseDef) {
+  const result = {};
+  for (const [layerName, files] of Object.entries(layers)) {
+    const classification = classifySelection(files, caseDef);
+    result[layerName] = {
+      actualFilesSelected: classification.actualFilesSelected,
+      selectedCount: classification.actualFilesSelected.length,
+      relevanceRecall: classification.relevanceRecall,
+      knownNoiseRatio: classification.knownNoiseRatio,
+      knownIrrelevantFilesSelected: classification.knownIrrelevantFilesSelected
+    };
+  }
+  return result;
 }
 
 function addRepoFilePath(files, rawValue) {
@@ -547,13 +628,46 @@ function findRow(rows, baselineName, budgetMode) {
 
 function metricSnapshot(row) {
   if (!row) return null;
-  return {
+  const snapshot = {
     relevanceRecall: row.relevanceRecall,
     knownNoiseRatio: row.knownNoiseRatio,
     contextBytes: row.contextBytes,
     expectedFilesFoundCount: row.expectedFilesFoundCount,
     knownIrrelevantFilesSelectedCount: row.knownIrrelevantFilesSelectedCount
   };
+  if (row.layers) {
+    snapshot.layerKnownNoiseRatios = Object.fromEntries(
+      Object.entries(row.layers).map(([name, layer]) => [name, layer.knownNoiseRatio])
+    );
+  }
+  return snapshot;
+}
+
+const LAYER_ORDER = [
+  "retrievalSelectedRefs",
+  "evidenceRefs",
+  "projectRuleRefs",
+  "packInputRefs",
+  "finalAgentFacingRefs"
+];
+
+const LAYER_COMPONENT_NAMES = {
+  retrievalSelectedRefs: "task retrieval selection",
+  evidenceRefs: "exact source evidence attachment",
+  projectRuleRefs: "project rule selection",
+  packInputRefs: "compiler source manifest selection",
+  finalAgentFacingRefs: "final context compilation"
+};
+
+function resolveFirstNoisyLayer(layers) {
+  if (!layers) return { firstNoisyLayer: "unknown", likelyComponent: "ranking or selection cap" };
+  for (const layerName of LAYER_ORDER) {
+    const layer = layers[layerName];
+    if (layer && (layer.knownIrrelevantFilesSelected?.length ?? 0) > 0) {
+      return { firstNoisyLayer: layerName, likelyComponent: LAYER_COMPONENT_NAMES[layerName] };
+    }
+  }
+  return { firstNoisyLayer: "none", likelyComponent: "none" };
 }
 
 export function attributeComponents(rows) {
@@ -591,10 +705,12 @@ export function attributeComponents(rows) {
     }
 
     if ((row.knownIrrelevantFilesSelectedCount ?? 0) > 0) {
+      const { firstNoisyLayer, likelyComponent } = resolveFirstNoisyLayer(row.layers);
       attributions.push({
         symptom: "Selected known-irrelevant files",
         affectedCase: row.caseId,
-        likelyComponent: "ranking or selection cap",
+        likelyComponent,
+        firstNoisyLayer,
         evidence: row.knownIrrelevantFilesSelected.join(", "),
         fixNow: true,
         budgetMode: row.budgetMode

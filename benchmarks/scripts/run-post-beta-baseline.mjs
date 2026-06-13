@@ -7,6 +7,7 @@ import {
   caseBudgetBytes,
   loadPostBetaManifest,
   prepareCaseRepo,
+  resolveSearchEngine,
   runGrapeBaseline,
   runNaiveBaseline,
   runSearchBaseline
@@ -40,6 +41,8 @@ async function main() {
   const pkg = readPackageJson(root);
   const runId = new Date().toISOString().replace(/[:.]/g, "-");
   mkdirSync(resultsDir, { recursive: true });
+
+  const searchEngineInfo = resolveSearchEngine();
 
   let install = null;
   const caseResults = [];
@@ -83,23 +86,24 @@ async function main() {
           let searchPayload;
           let searchError = null;
           try {
-            searchPayload = runSearchBaseline(prepared.repoPath, caseDef, budgetMode, budgetBytes);
+            searchPayload = runSearchBaseline(prepared.repoPath, caseDef, budgetMode, budgetBytes, searchEngineInfo);
           } catch (error) {
             searchError = error;
-            searchPayload = { files: [], contextBytes: 0, estimatedTokens: 0 };
+            searchPayload = { files: [], contextBytes: 0, estimatedTokens: 0, searchEngine: null };
           }
           rows.push(
             buildBaselineRow({
               caseDef,
               baselineName: "search",
-              inputSource: "rg-manifest-queries",
+              inputSource: searchPayload.searchEngine === "node-fallback" ? "node-fallback-manifest-queries" : "rg-manifest-queries",
               packageVersion: install.installedVersion,
               budgetMode,
               budgetBytes,
               payload: searchPayload,
               runtimeMs: Date.now() - searchStarted,
               errorCount: searchError ? 1 : 0,
-              notes: searchError ? [sanitizeReportText(searchError.message, root)] : []
+              notes: searchError ? [sanitizeReportText(searchError.message, root)] : [],
+              extra: { searchEngine: searchPayload.searchEngine }
             })
           );
 
@@ -139,6 +143,7 @@ async function main() {
               errorCount: grapeError ? 1 : 0,
               notes: grapeError ? [sanitizeReportText(grapeError.message, root)] : [],
               extra: {
+                layers: grapePayload.layeredMetrics ?? null,
                 expectedSpans: grapePayload.expectedSpans,
                 actualSpanHits: grapePayload.actualSpanHits,
                 proofOrEvidencePresent: grapePayload.proofOrEvidencePresent,
@@ -185,11 +190,17 @@ async function main() {
     install?.cleanup();
   }
 
+  const searchErrors = allRows.filter((row) => row.baselineName === "search" && row.errorCount > 0);
+  const searchBaselineStatus = searchErrors.length > 0 ? "incomplete" : searchEngineInfo.searchEngine;
+
   const report = {
     runId,
     capturedAt: new Date().toISOString(),
+    benchmarkComplete: searchBaselineStatus !== "incomplete",
+    searchBaselineStatus,
     environment: {
       ...captureEnvironment(root),
+      searchEngine: searchEngineInfo.searchEngine,
       artifactMode: install.artifactMode,
       artifactIdentity: install.artifactIdentity,
       testedPackageName: pkg.name,
