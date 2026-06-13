@@ -3,7 +3,6 @@ import path from "node:path";
 import type { CompileLocalContextResult } from "../local-project/types.js";
 import {
   buildAgentContextArtifactRef,
-  buildAgentContextGraphCut,
   compactAgentContextPackItems
 } from "../../shared/index.js";
 import type { ContextPackItemShape, DiffState } from "../../shared/index.js";
@@ -41,12 +40,6 @@ export function buildBenchmarkAgentOutputTokenMetric(
       artifactHash: result.artifactHash,
       dependencyManifestHash: result.dependencyManifestHash,
       artifactFiles
-    }),
-    agentGraph: buildAgentContextGraphCut({
-      artifactId: result.artifactId,
-      artifactHash: result.artifactHash,
-      dependencyManifestHash: result.dependencyManifestHash,
-      contextPackItems
     }),
     contextPackItems,
     diffSummary,

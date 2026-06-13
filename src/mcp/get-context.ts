@@ -130,12 +130,6 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     compileMode: compileModeFor(result, riskWarnings),
     outputMode,
     artifactRef,
-    agentGraph: buildAgentContextGraphCut({
-      artifactId: result.artifactId,
-      artifactHash: result.artifactHash,
-      dependencyManifestHash: result.dependencyManifestHash,
-      contextPackItems
-    }),
     contextPackItems,
     diffSummary,
     warnings,
@@ -151,6 +145,12 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     return {
       ...output,
       contextArtifact: result.contextArtifact,
+      agentGraph: buildAgentContextGraphCut({
+        artifactId: result.artifactId,
+        artifactHash: result.artifactHash,
+        dependencyManifestHash: result.dependencyManifestHash,
+        contextPackItems
+      }),
       contextPackMarkdown: renderAgentContextPackMarkdown({
         artifactId: result.artifactId,
         contextArtifact: result.contextArtifact,

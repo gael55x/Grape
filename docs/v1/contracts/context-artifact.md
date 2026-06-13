@@ -213,7 +213,7 @@ This is still narrower than the final broad durable-claim retrieval system. It u
 
 - JSON is the canonical machine contract.
 - Markdown is a rendering of the structured artifact or context pack. It must expose enough metadata for a coding agent to inspect why context was sent, which dependencies support it, what was omitted or restorable, and what safety warnings remain.
-- MCP `agent_pack` must return structured compact preview `contextPackItems` and artifact refs without duplicating full bodies or navigation Markdown. `outputMode: "full"` may return full `ContextPackItem.content` plus inline rendered Markdown for inspection.
+- MCP `agent_pack` must return structured compact preview `contextPackItems` and artifact refs without duplicating full bodies, navigation Markdown, or experimental graph data. `outputMode: "full"` may return full `ContextPackItem.content`, inline rendered Markdown, and the graph cut for inspection.
 - CLI snapshot tests must validate rendered Markdown, but golden contract tests must validate JSON.
 
 ## Required Golden Tests

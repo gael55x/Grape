@@ -74,6 +74,8 @@ test("MCP context pack Markdown renders the structured context pack items", () =
 
     assert.equal(result.isError, false);
     assert.equal(result.structuredContent.outputMode, "full");
+    assert.equal(result.structuredContent.agentGraph.graphFormat, "grape.agent-context-graph.v1");
+    assert.equal(result.structuredContent.agentGraph.nodeCounts.packItems, result.structuredContent.contextPackItems.length);
     assertContextArtifactShape(result.structuredContent.contextArtifact);
     assertContextPackItems(result.structuredContent.contextPackItems, result.structuredContent.contextArtifact);
     assertCompactAgentMarkdownReferencesPackItems(

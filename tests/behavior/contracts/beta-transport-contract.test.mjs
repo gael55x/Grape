@@ -7,8 +7,8 @@
  * or internal content.
  *
  * Experimental surfaces (agentGraph, recoveryGuidance, contextPackMarkdown)
- * are optional. Default compact output omits contextPackMarkdown; full
- * inspection output checks its shape.
+ * are optional. Default compact output omits agentGraph and
+ * contextPackMarkdown; full inspection output checks their shape.
  * Debug-only warnings are never required.
  */
 
@@ -145,6 +145,7 @@ test("beta transport: default outputMode is agent_pack with no embedded contextA
 
     assert.equal(sc.outputMode, "agent_pack");
     assert.equal(Object.hasOwn(sc, "contextArtifact"), false);
+    assert.equal(Object.hasOwn(sc, "agentGraph"), false);
     assert.equal(Object.hasOwn(sc, "contextPackMarkdown"), false);
   });
 });
@@ -303,14 +304,12 @@ test("beta transport: stored artifact file has artifactFormatVersion and correct
 
 test("beta transport: agentGraph when present has graphFormat and nodeCounts", () => {
   withGitRepo((repoPath) => {
-    const sc = getContextResponse(repoPath);
+    const sc = getContextResponse(repoPath, { outputMode: "full" });
 
-    if (Object.hasOwn(sc, "agentGraph") && sc.agentGraph !== null) {
-      assert.equal(typeof sc.agentGraph.graphFormat, "string");
-      assert.equal(typeof sc.agentGraph.nodeCounts, "object");
-      assert.ok(Array.isArray(sc.agentGraph.nodes));
-      assert.ok(Array.isArray(sc.agentGraph.edges));
-    }
+    assert.equal(typeof sc.agentGraph.graphFormat, "string");
+    assert.equal(typeof sc.agentGraph.nodeCounts, "object");
+    assert.ok(Array.isArray(sc.agentGraph.nodes));
+    assert.ok(Array.isArray(sc.agentGraph.edges));
   });
 });
 

@@ -2944,7 +2944,7 @@ type GrapeGetContextOutput = {
   budget: ContextPackBudgetResult;
   restoreAvailable: boolean;
 
-  // Experimental - do not require for beta agent operation
+  // Experimental / inspection only - omitted from default agent_pack
   agentGraph?: AgentContextGraphCut;
   recoveryGuidance?: string[];
 
@@ -3644,7 +3644,7 @@ Before implementation starts, all of the following must be true:
 - `RiskOverlay`, `DiffState`, `TaskType`, `SourceType`, and `CompressionArtifactType` are used consistently
 - dependency manifest rules are implemented for source, proof, rule, config, test, symbol, and compression inputs
 - MCP write tools create evidence only and cannot directly promote durable truth
-- `grape_get_context` returns structured `contextPackItems`; default compact output omits inline Markdown and full inspection output may render it
+- `grape_get_context` returns structured `contextPackItems`; default compact output omits inline Markdown and experimental graph data, and full inspection output may render them
 - scope matching returns deterministic `match`, `mismatch`, `partial`, or `unknown`
 - high-risk overlays block summary-only required context
 - basic install works without local native compilation on supported platforms

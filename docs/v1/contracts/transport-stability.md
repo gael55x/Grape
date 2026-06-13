@@ -93,7 +93,7 @@ The stability boundary is enforced through TypeScript types, this document, and 
 | `restoreAvailable` | **Stable** | Boolean. `false` on first turn is expected. |
 | `artifactFiles` | **Stable** | Object with `json` and `markdown` repo-relative paths. |
 | `currentScope` | **Stable** | Object with scope fields; see below. |
-| `agentGraph` | Experimental | Optional transport adjacency graph. Shape may refine before 1.0. Beta clients must not require this field. |
+| `agentGraph` | Experimental / inspection-oriented | Not included in default `agent_pack`. Optional transport adjacency graph when present in full inspection output. Shape may refine before 1.0. Beta clients must not require this field. |
 | `recoveryGuidance` | Experimental | Optional human-readable guidance array. Beta clients must not branch on prose content. |
 | `contextArtifact` | Inspection only | Embedded full artifact present only in `outputMode: "full"`. Not part of compact-agent contract. |
 | `sessionResetId` | **Stable (conditional)** | Present only when a session reset occurred. |
@@ -176,7 +176,7 @@ Fields stable in the stored `.grape/artifacts/*.json` file:
 | `tokenMetric` | **Stable (optional)** |
 | `budget` | **Stable (optional)** |
 
-`agentGraph` transport shape: `graphFormat: "grape.agent-context-graph.v1"` is experimental and may refine before 1.0.
+`agentGraph` transport shape: `graphFormat: "grape.agent-context-graph.v1"` is experimental, omitted from default `agent_pack`, and may refine before 1.0.
 
 ### Restore tokens
 
@@ -190,7 +190,7 @@ Claims, proofs, and rules returned by `grape_get_claims`, `grape_get_proofs`, an
 
 These surfaces are implemented and tested but may change shape before stable 1.0:
 
-- `agentGraph`: adjacency graph over context-pack items. The `graphFormat` version string will bump if the node/edge schema changes. Beta clients must not require this field.
+- `agentGraph`: full-inspection adjacency graph over context-pack items. The `graphFormat` version string will bump if the node/edge schema changes. Default `agent_pack` omits this field, and beta clients must not require it.
 - `recoveryGuidance`: human-readable array of recovery suggestions. Content is advisory; beta clients must not parse or branch on prose.
 - `contextPackMarkdown`: inspection-oriented Markdown navigation summary. Default `agent_pack` omits it to avoid duplicating structured fields. Agents should prefer structured `contextPackItems` and `artifactRef` for reliable extraction.
 

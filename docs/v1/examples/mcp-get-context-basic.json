@@ -3,9 +3,7 @@
     "scenario": "first MCP grape_get_context response",
     "fixture": "clean-typescript-app",
     "expectedState": "structured context pack with NEW or PINNED items",
-    "expectedWarnings": [
-      "repository_artifact_uses_lightweight_index"
-    ],
+    "expectedWarnings": [],
     "relatedTests": [
       "mcp grape_get_context compiles and returns structured context pack output",
       "MCP context pack Markdown renders the structured context pack items"
@@ -20,7 +18,7 @@
   "dirtyWorktree": false,
   "taskType": "analysis",
   "riskOverlays": [],
-  "compileMode": "partial_with_risk",
+  "compileMode": "safe_minimum",
   "outputMode": "agent_pack",
   "artifactRef": {
     "artifactId": "artifact:example",
@@ -37,33 +35,6 @@
         "outputMode": "full"
       }
     }
-  },
-  "agentGraph": {
-    "graphFormat": "grape.agent-context-graph.v1",
-    "artifactId": "artifact:example",
-    "artifactHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "dependencyManifestHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-    "nodeCounts": {
-      "packItems": 1,
-      "sections": 1,
-      "inputRefs": 0,
-      "sentItems": 0,
-      "restoreHandles": 0
-    },
-    "nodes": [
-      {
-        "id": "section:repo-state",
-        "kind": "section",
-        "sectionId": "repo-state"
-      }
-    ],
-    "edges": [
-      {
-        "from": "item:example-new",
-        "to": "section:repo-state",
-        "kind": "renders_section"
-      }
-    ]
   },
   "currentScope": {
     "branch": "main",
@@ -98,7 +69,6 @@
       "warnings": []
     }
   ],
-  "contextPackMarkdown": "# Grape Context Pack\n\n## Artifact Summary\n\nArtifact: artifact:example\n\n## Context Pack Items\n\nExact item payloads are in contextPackItems; relationships are in agentGraph.\n",
   "diffSummary": {
     "newItems": 1,
     "changedItems": 0,
@@ -107,9 +77,7 @@
     "invalidatedItems": 0,
     "restoreAvailableItems": 0
   },
-  "warnings": [
-    "repository_artifact_uses_lightweight_index"
-  ],
+  "warnings": [],
   "unsafeReasons": [],
   "recoveryGuidance": [],
   "budget": {

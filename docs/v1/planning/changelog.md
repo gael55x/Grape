@@ -8,7 +8,8 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
-- Omitted optional inline `contextPackMarkdown` from default MCP `agent_pack` output so compact transport no longer duplicates structured `contextPackItems`, `artifactRef`, and `agentGraph`. Full inspection output and stored artifact Markdown still provide the Markdown view.
+- Omitted experimental `agentGraph` from default MCP `agent_pack` output so compact transport no longer spends tokens on unproven graph adjacency. Full inspection output still provides the graph cut.
+- Omitted optional inline `contextPackMarkdown` from default MCP `agent_pack` output so compact transport no longer duplicates structured `contextPackItems` and `artifactRef`. Full inspection output and stored artifact Markdown still provide the Markdown view.
 - Restricted import graph edges to AST-backed files so generic fallback files do not emit module-edge evidence that their provider metadata says is unsupported.
 - Pinned the hosted Windows CI leg to `windows-2025-vs2026` so the beta package gate does not depend on a moving Windows runner alias or a redirecting `windows-2025` label.
 - Spread capped Tier 2 task retrieval across direct symbol-match and related-test evidence roles after package and language grouping.
@@ -165,4 +166,4 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added the purpose-built session-reset benchmark fixture, restore-path protocol goldens, and dedicated task/session mismatch exit classification for alpha.3 hardening.
 - Refreshed implementation standards around functional core / imperative shell, purposeful same-shape transforms, boundary error classification, clear naming, and avoiding nested policy conditionals.
 - Split storage repository ownership into table-family directories while keeping `src/core/storage/repositories.ts` as the shared record-type and aggregate factory surface.
-- Compact default MCP context transport for beta token efficiency. `grape_get_context` returns `agent_pack` by default with artifact refs, compact pack items, adjacency `agentGraph`, and short MCP text summaries; full embedded artifacts and inline Markdown require `outputMode: "full"`. Benchmarks report and gate serialized agent-output token estimates.
+- Compact default MCP context transport for beta token efficiency. `grape_get_context` returns `agent_pack` by default with artifact refs, compact pack items, and short MCP text summaries; full embedded artifacts require `outputMode: "full"` or artifact inspection, while inline Markdown and the graph cut require `outputMode: "full"`. Benchmarks report and gate serialized agent-output token estimates.

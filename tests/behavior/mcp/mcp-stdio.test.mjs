@@ -891,14 +891,7 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     assert.equal(toolResult.structuredContent.artifactRef.artifactId, toolResult.structuredContent.artifactId);
     assert.equal(toolResult.structuredContent.artifactRef.fullArtifactTool.name, "grape_get_artifact");
     assert.equal(toolResult.structuredContent.artifactRef.fullArtifactTool.arguments.outputMode, "full");
-    if (toolResult.structuredContent.agentGraph) {
-      assert.equal(toolResult.structuredContent.agentGraph.graphFormat, "grape.agent-context-graph.v1");
-      assert.equal(toolResult.structuredContent.agentGraph.nodeCounts.packItems > 0, true);
-      assert.equal(
-        toolResult.structuredContent.agentGraph.edges.some((edge) => edge.kind === "depends_on"),
-        true
-      );
-    }
+    assert.equal(Object.hasOwn(toolResult.structuredContent, "agentGraph"), false);
     assert.equal(toolResult.structuredContent.contextPackItems.some((item) => item.state === "NEW"), true);
     const packItem = toolResult.structuredContent.contextPackItems[0];
     assert.equal(typeof packItem.id, "string");
@@ -1036,6 +1029,7 @@ test("mcp grape_get_context invalidates prior sent context when a session switch
     assert.equal(second.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "NEW"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), false);
+    assert.equal(Object.hasOwn(second, "agentGraph"), false);
     assert.equal(Object.hasOwn(second, "contextPackMarkdown"), false);
 
     const stale = runMcp(repoPath, [
