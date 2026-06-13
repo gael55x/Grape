@@ -21,12 +21,14 @@ export function providerCapabilityReportLines(
   const providerSummaries = selectedProviderSummaries(input);
   const packageProviderSummaries = selectedPackageProviderSummaries(input);
   const indexedProviderSummaries = indexedProviderSummariesByLanguage(input);
+  const indexedPackageProviderSummaries = indexedPackageProviderSummariesByPackage(input);
 
   return [
     ...fallbackLanguageLines(fallbackLanguages),
     ...selectedProviderCapabilityLines(providerSummaries),
     ...selectedPackageProviderCapabilityLines(packageProviderSummaries),
-    ...indexedProviderCapabilityLines(indexedProviderSummaries)
+    ...indexedProviderCapabilityLines(indexedProviderSummaries),
+    ...indexedPackageProviderCapabilityLines(indexedPackageProviderSummaries)
   ];
 }
 
@@ -115,11 +117,7 @@ function selectedPackageProviderSummaries(
       capabilities: [...summary.capabilities].sort(),
       gaps: [...summary.gaps].sort()
     }))
-    .sort((left, right) => {
-      const packageOrder = left.packageRoot.localeCompare(right.packageRoot);
-      if (packageOrder !== 0) return packageOrder;
-      return compareProviderSummary(left, right);
-    });
+    .sort(comparePackageProviderSummary);
 }
 
 function indexedProviderSummariesByLanguage(input: CompileRepositoryContextArtifactInput): readonly ProviderSummary[] {
@@ -159,6 +157,50 @@ function indexedProviderSummariesByLanguage(input: CompileRepositoryContextArtif
     .sort(compareProviderSummary);
 }
 
+function indexedPackageProviderSummariesByPackage(
+  input: CompileRepositoryContextArtifactInput
+): readonly PackageProviderSummary[] {
+  const summaries = new Map<string, {
+    packageRoot: string;
+    language: string;
+    providerId: string;
+    sourceRefs: Set<string>;
+    capabilities: Set<string>;
+    gaps: Set<string>;
+  }>();
+
+  for (const node of input.symbolNodes) {
+    if (node.symbolKind !== "module") continue;
+    const metadata = parseMetadataJson(node.metadataJson);
+    const packageRoot = packageRootFromMetadata(node.path, metadata);
+    if (!packageRoot) continue;
+    const providerId = stringField(metadata, "providerId") ?? "unknown";
+    const key = `${packageRoot}\0${node.language}\0${providerId}`;
+    const summary = summaries.get(key) ?? {
+      packageRoot,
+      language: node.language,
+      providerId,
+      sourceRefs: new Set<string>(),
+      capabilities: new Set<string>(),
+      gaps: new Set<string>()
+    };
+    summary.sourceRefs.add(node.path);
+    addProviderMetadata(summary, metadata);
+    summaries.set(key, summary);
+  }
+
+  return [...summaries.values()]
+    .map((summary) => ({
+      packageRoot: summary.packageRoot,
+      language: summary.language,
+      providerId: summary.providerId,
+      fileCount: summary.sourceRefs.size,
+      capabilities: [...summary.capabilities].sort(),
+      gaps: [...summary.gaps].sort()
+    }))
+    .sort(comparePackageProviderSummary);
+}
+
 function fallbackLanguageLines(languages: readonly string[]): readonly string[] {
   if (languages.length === 0) return [];
   return [
@@ -180,18 +222,7 @@ function selectedProviderCapabilityLines(summaries: readonly ProviderSummary[]):
 function selectedPackageProviderCapabilityLines(
   summaries: readonly PackageProviderSummary[]
 ): readonly string[] {
-  if (summaries.length === 0) return [];
-  return [
-    "Selected package provider capability summary:",
-    ...summaries.map((summary) =>
-      [
-        `- ${summary.packageRoot}: ${summary.language} via ${summary.providerId};`,
-        `files ${summary.fileCount ?? 0};`,
-        `capabilities ${listOrNone(summary.capabilities)};`,
-        `gaps ${listOrNone(summary.gaps)}.`
-      ].join(" ")
-    )
-  ];
+  return packageProviderCapabilityLines("Selected package provider capability summary:", summaries);
 }
 
 function indexedProviderCapabilityLines(summaries: readonly ProviderSummary[]): readonly string[] {
@@ -201,6 +232,30 @@ function indexedProviderCapabilityLines(summaries: readonly ProviderSummary[]): 
     ...summaries.map((summary) =>
       [
         `- ${summary.language} via ${summary.providerId}:`,
+        `files ${summary.fileCount ?? 0};`,
+        `capabilities ${listOrNone(summary.capabilities)};`,
+        `gaps ${listOrNone(summary.gaps)}.`
+      ].join(" ")
+    )
+  ];
+}
+
+function indexedPackageProviderCapabilityLines(
+  summaries: readonly PackageProviderSummary[]
+): readonly string[] {
+  return packageProviderCapabilityLines("Indexed package provider capability summary:", summaries);
+}
+
+function packageProviderCapabilityLines(
+  title: string,
+  summaries: readonly PackageProviderSummary[]
+): readonly string[] {
+  if (summaries.length === 0) return [];
+  return [
+    title,
+    ...summaries.map((summary) =>
+      [
+        `- ${summary.packageRoot}: ${summary.language} via ${summary.providerId};`,
         `files ${summary.fileCount ?? 0};`,
         `capabilities ${listOrNone(summary.capabilities)};`,
         `gaps ${listOrNone(summary.gaps)}.`
@@ -234,6 +289,12 @@ function compareProviderSummary(left: ProviderSummary, right: ProviderSummary): 
   const languageOrder = left.language.localeCompare(right.language);
   if (languageOrder !== 0) return languageOrder;
   return left.providerId.localeCompare(right.providerId);
+}
+
+function comparePackageProviderSummary(left: PackageProviderSummary, right: PackageProviderSummary): number {
+  const packageOrder = left.packageRoot.localeCompare(right.packageRoot);
+  if (packageOrder !== 0) return packageOrder;
+  return compareProviderSummary(left, right);
 }
 
 function parseMetadataJson(value: string | undefined): Record<string, unknown> | undefined {

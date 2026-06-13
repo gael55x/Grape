@@ -277,6 +277,15 @@ test("monorepo fixture keeps task retrieval focused on package-local source and 
       blindSpots.text,
       /packages\/api: typescript via typescript_ast; files 2; capabilities lexical_path, module_edges, symbols_ast, test_edges; gaps none\./
     );
+    assert.match(blindSpots.text, /Indexed package provider capability summary:/);
+    assert.match(
+      blindSpots.text,
+      /packages\/api: typescript via typescript_ast; files 2; capabilities lexical_path, module_edges, symbols_ast, test_edges; gaps none\./
+    );
+    assert.match(
+      blindSpots.text,
+      /packages\/web: typescript via typescript_ast; files 2; capabilities lexical_path, module_edges, symbols_ast, test_edges; gaps none\./
+    );
   });
 });
 

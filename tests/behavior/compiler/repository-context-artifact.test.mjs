@@ -337,6 +337,7 @@ test("repository artifact compiler dependency-backs selected package context wit
 test("repository artifact compiler uses indexed package-root metadata for nested manifest context", () => {
   withGitRepo((repoPath) => {
     mkdirSync(path.join(repoPath, "components", "backend", "src"), { recursive: true });
+    mkdirSync(path.join(repoPath, "components", "worker", "src"), { recursive: true });
     writeFileSync(
       path.join(repoPath, "components", "backend", "pyproject.toml"),
       [
@@ -351,6 +352,26 @@ test("repository artifact compiler uses indexed package-root metadata for nested
       [
         "def run_backend_service():",
         "    return \"backend\"",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(
+      path.join(repoPath, "components", "worker", "go.mod"),
+      [
+        "module example.test/worker",
+        "",
+        "go 1.22",
+        ""
+      ].join("\n")
+    );
+    writeFileSync(
+      path.join(repoPath, "components", "worker", "src", "job.go"),
+      [
+        "package worker",
+        "",
+        "func RunWorkerJob() string {",
+        "    return \"worker\"",
+        "}",
         ""
       ].join("\n")
     );
@@ -411,6 +432,11 @@ test("repository artifact compiler uses indexed package-root metadata for nested
       assert.match(
         blindSpots?.body ?? "",
         /components\/backend: python via generic_text; files 1; capabilities lexical_path, symbols_basic; gaps module_edges, test_edges\./
+      );
+      assert.match(blindSpots?.body ?? "", /Indexed package provider capability summary:/);
+      assert.match(
+        blindSpots?.body ?? "",
+        /components\/worker: go via generic_text; files 2; capabilities lexical_path, symbols_basic; gaps module_edges, test_edges\./
       );
     });
   });
