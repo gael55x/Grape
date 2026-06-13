@@ -27,7 +27,7 @@
 
 
 
-## Stop making agents rediscover your codebase
+**Stop making agents rediscover your codebase.** 
 
 AI coding agents are powerful, but they waste context.
 
