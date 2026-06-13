@@ -1,0 +1,104 @@
+{
+  "defaultBudgetBytes": {
+    "retrieval_monorepo": 32768,
+    "bugfix_discount": 32768,
+    "docs_beta_release": 65536
+  },
+  "cases": [
+    {
+      "id": "retrieval_monorepo",
+      "name": "Retrieval task",
+      "targetTask": "Fix apiBillingTotal in packages/api/src/apiBilling.ts and include the package-local test without pulling packages/web context.",
+      "fixtureName": "monorepo-lite-repo",
+      "budgetBytes": 32768,
+      "searchQueries": [
+        "apiBilling",
+        "apiBillingTotal",
+        "packages/api",
+        "apiBilling.test"
+      ],
+      "expectedRelevantFiles": [
+        "packages/api/src/apiBilling.ts",
+        "packages/api/src/apiBilling.test.ts",
+        "packages/api/package.json"
+      ],
+      "knownIrrelevantFiles": [
+        "packages/web/src/cart.ts",
+        "packages/web/src/cart.test.ts"
+      ],
+      "knownIrrelevantPrefixes": [
+        "packages/web/"
+      ],
+      "expectedSpans": [
+        {
+          "file": "packages/api/src/apiBilling.test.ts",
+          "contains": "apiBillingTotal"
+        }
+      ]
+    },
+    {
+      "id": "bugfix_discount",
+      "name": "Bug-fix task",
+      "targetTask": "Find the failing calculateDiscount test, the source span to fix, and the smallest change.",
+      "fixtureName": "clean-typescript-app",
+      "budgetBytes": 32768,
+      "searchQueries": [
+        "calculateDiscount",
+        "discount test",
+        "failing calculateDiscount"
+      ],
+      "expectedRelevantFiles": [
+        "src/calculateDiscount.ts",
+        "src/calculateDiscount.test.ts"
+      ],
+      "knownIrrelevantFiles": [],
+      "knownIrrelevantPrefixes": [],
+      "expectedSpans": [
+        {
+          "file": "src/calculateDiscount.test.ts",
+          "contains": "expect"
+        },
+        {
+          "file": "src/calculateDiscount.ts",
+          "contains": "calculateDiscount"
+        }
+      ]
+    },
+    {
+      "id": "docs_beta_release",
+      "name": "Documentation task",
+      "targetTask": "Find files to update release install instructions and post-beta benchmark validation docs for grape-context 1.0 beta.",
+      "repoKind": "grape-docs-slice",
+      "budgetBytes": 65536,
+      "searchQueries": [
+        "grape-context",
+        "1.0.0-beta",
+        "benchmark validation",
+        "npm install",
+        "post-beta"
+      ],
+      "expectedRelevantFiles": [
+        "README.md",
+        "package.json",
+        "ROADMAP.md",
+        "docs/README.md",
+        "docs/v1/quality/benchmarks.md",
+        "benchmarks/README.md"
+      ],
+      "knownIrrelevantFiles": [],
+      "knownIrrelevantPrefixes": [
+        "docs/v1/legacy/alpha/"
+      ],
+      "docsSlicePaths": [
+        "README.md",
+        "package.json",
+        "ROADMAP.md",
+        "CHANGELOG.md",
+        "docs/README.md",
+        "docs/v1/quality/benchmarks.md",
+        "benchmarks/README.md",
+        "docs/v1/legacy/alpha/README.md"
+      ]
+    }
+  ]
+}

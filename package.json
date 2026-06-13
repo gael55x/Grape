@@ -37,6 +37,8 @@
     "install:check": "node scripts/check-install-smoke.mjs",
     "global:smoke": "node scripts/check-global-install-smoke.mjs",
     "bench": "node benchmarks/scripts/run-benchmarks.mjs",
+    "bench:post-beta": "node benchmarks/scripts/run-post-beta-baseline.mjs --artifact published-beta",
+    "bench:post-beta:local": "node benchmarks/scripts/run-post-beta-baseline.mjs --artifact local-candidate",
     "bench:comparators": "node benchmarks/scripts/run-comparator.mjs",
     "bench:summary": "node benchmarks/scripts/summarize-results.mjs",
     "benchmark:run": "node scripts/run-benchmark-suite.mjs",
