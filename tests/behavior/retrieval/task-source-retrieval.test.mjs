@@ -1078,6 +1078,43 @@ test("task source retrieval warns when caps omit fallback language groups", () =
   );
 });
 
+test("task source retrieval warns when caps omit seeded fallback language groups", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix failing regression tests",
+    maxSelectedSources: 4,
+    sources: [
+      source("go-test", "tests/refund-go.test.go"),
+      source("py-test", "tests/refund-python.test.py"),
+      source("rb-test", "tests/refund-ruby.test.rb")
+    ],
+    symbols: [
+      symbol("go-test", "tests/refund-go.test.go", "refund-go.test.go", "module", 1, 1, undefined, "go"),
+      symbol("py-test", "tests/refund-python.test.py", "refund-python.test.py", "module", 1, 1, undefined, "python"),
+      symbol("rb-test", "tests/refund-ruby.test.rb", "refund-ruby.test.rb", "module", 1, 1, undefined, "ruby")
+    ],
+    lexicalMatches: [],
+    seedTests: [
+      "tests/refund-go.test.go",
+      "tests/refund-python.test.py",
+      "tests/refund-ruby.test.rb"
+    ]
+  });
+
+  assert.equal(result.selectedSourceRefs.length, 2);
+  assert.equal(result.testSourceRefs.length, 2);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+  assert.ok(result.warnings.includes("task_retrieval_language_groups_omitted_over_cap:1"));
+  assert.ok(result.warnings.includes("task_retrieval_seed_languages_omitted_over_cap:1"));
+  for (const language of ["go", "python", "ruby"]) {
+    assert.equal(
+      result.warnings.some((warning) => warning.includes(language)),
+      false,
+      "seeded language warnings must stay count-only"
+    );
+  }
+});
+
 test("task source retrieval no-candidate tie-break uses stable string order not seed order", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix",

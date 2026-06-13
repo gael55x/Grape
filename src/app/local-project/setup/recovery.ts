@@ -70,6 +70,9 @@ export function recoveryGuidanceForCompileResult(input: {
   if (input.warnings.some((warning) => warning.startsWith("task_retrieval_seed_packages_omitted_over_cap:"))) {
     guidance.add("Split the task by package or reduce seed refs; capped source selection did not represent every seeded package.");
   }
+  if (input.warnings.some((warning) => warning.startsWith("task_retrieval_seed_languages_omitted_over_cap:"))) {
+    guidance.add("Split the task by language or reduce seed refs; capped source selection did not represent every seeded language.");
+  }
   if (input.warnings.some((warning) => warning.startsWith("task_retrieval_package_groups_omitted_over_cap:"))) {
     guidance.add("Name exact files, symbols, or tests for the package you need, or split broad mixed-package work into package-scoped tasks.");
   }

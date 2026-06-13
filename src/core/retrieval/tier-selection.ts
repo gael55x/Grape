@@ -385,6 +385,15 @@ function buildOmittedWarnings(
   if (omittedSeedPackageCount > 0) {
     warnings.push(`task_retrieval_seed_packages_omitted_over_cap:${omittedSeedPackageCount}`);
   }
+  const omittedSeedLanguageCount = omittedSeedLanguages(
+    omitted,
+    selectedSet,
+    selectedReasons,
+    languageBySourceRef
+  ).size;
+  if (omittedSeedLanguageCount > 0) {
+    warnings.push(`task_retrieval_seed_languages_omitted_over_cap:${omittedSeedLanguageCount}`);
+  }
   return warnings;
 }
 
@@ -427,4 +436,26 @@ function omittedSeedPackageRoots(
     omittedPackageRoots.add(packageRoot);
   }
   return omittedPackageRoots;
+}
+
+function omittedSeedLanguages(
+  omittedRefs: readonly string[],
+  selectedSet: ReadonlySet<string>,
+  selectedReasons: ReadonlyMap<string, ReadonlySet<SelectionReason>>,
+  languageBySourceRef: ReadonlyMap<string, string>
+): Set<string> {
+  const selectedLanguages = new Set(
+    [...selectedSet]
+      .map((sourceRef) => languageBySourceRef.get(sourceRef))
+      .filter((language): language is string => Boolean(language))
+  );
+  const omittedLanguages = new Set<string>();
+  for (const sourceRef of omittedRefs) {
+    const reasons = selectedReasons.get(sourceRef);
+    if (!reasons?.has("explicit_seed") && !reasons?.has("test_seed")) continue;
+    const language = languageBySourceRef.get(sourceRef);
+    if (!language || selectedLanguages.has(language)) continue;
+    omittedLanguages.add(language);
+  }
+  return omittedLanguages;
 }

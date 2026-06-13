@@ -225,6 +225,7 @@ These warning codes and patterns are part of the stable beta contract. Beta clie
 | `task_retrieval_package_groups_omitted_over_cap:<count>` | Parameterized: `<count>` is a numeric integer. This is the number of package-root groups that received no selected source because the cap was exhausted. |
 | `task_retrieval_language_groups_omitted_over_cap:<count>` | Parameterized: `<count>` is a numeric integer. This is the number of known source-language groups that received no selected source because the cap was exhausted. |
 | `task_retrieval_seed_packages_omitted_over_cap:<count>` | Parameterized: `<count>` is a numeric integer. This is the number of seeded package roots that received no selected source because the cap was exhausted. |
+| `task_retrieval_seed_languages_omitted_over_cap:<count>` | Parameterized: `<count>` is a numeric integer. This is the number of seeded source-language groups that received no selected source because the cap was exhausted. |
 | `task_retrieval_no_source_matches` | No source refs matched the query after retrieval. |
 | `task_retrieval_no_related_tests_found` | No related test files were found for the selected implementation sources. |
 | `task_seed_file_not_found:<ref>` | An explicit seed file was not found in the current snapshot. |

@@ -39,6 +39,20 @@ test("compile recovery guidance distinguishes omitted seeded package warnings", 
   assert.ok(guidance.some((item) => item.includes("package-scoped tasks")));
 });
 
+test("compile recovery guidance distinguishes omitted seeded language warnings", () => {
+  const guidance = recoveryGuidanceForCompileResult({
+    warnings: [
+      "task_retrieval_language_groups_omitted_over_cap:1",
+      "task_retrieval_seed_languages_omitted_over_cap:1"
+    ],
+    unsafeReasons: [],
+    budget: budget()
+  });
+
+  assert.ok(guidance.some((item) => item.includes("every seeded language")));
+  assert.ok(guidance.some((item) => item.includes("language-scoped tasks")));
+});
+
 function budget(status = "within_budget") {
   return { status };
 }
