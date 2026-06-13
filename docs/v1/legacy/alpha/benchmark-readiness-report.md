@@ -1,8 +1,9 @@
 # Grape Comparative Benchmark Readiness Report
 
+> **Historical document.** This report records pre-beta publish evidence from the alpha.3 candidate era. `grape-context@1.0.0-beta.0` is now published on npm under `beta`. Use current docs and formal benchmark runs for post-publish validation.
+
 > **Run date:** 2026-06-13  
-> **Branch:** `benchmark/beta-1-readiness`  
-> **Author:** Gaille Amolong
+> **Branch:** `benchmark/beta-1-readiness`
 
 ## 1. Executive verdict
 

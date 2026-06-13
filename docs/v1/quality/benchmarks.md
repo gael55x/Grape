@@ -90,7 +90,7 @@ npm run bench:comparators   # skips unavailable external tools
 
 `npm run bench` builds `dist/`, runs `npm pack`, installs the tarball, and runs all fixtures through the **installed** `grape` binary. This exercises the beta candidate artifact from the current git tree.
 
-See [`../../../benchmarks/README.md`](../../../benchmarks/README.md) and [`../planning/benchmark-readiness-report.md`](../planning/benchmark-readiness-report.md).
+See [`../../../benchmarks/README.md`](../../../benchmarks/README.md) and [`../legacy/alpha/benchmark-readiness-report.md`](../legacy/alpha/benchmark-readiness-report.md) for historical pre-beta evidence.
 
 Alpha e2e (dist build, pack install smoke, benchmark suite from installed package):
 
@@ -118,7 +118,7 @@ On the recorded fixture run dated **2026-06-13**, Grape produced the listed toke
 | Node | `v22.18.0` on `darwin` |
 | Fixtures | all six gated fixtures below |
 | Limits | harness thresholds in this doc; zero unsafe omissions; zero stale sends |
-| Caveats | local fixture results only; npm registry publish was pending human authentication at record time; not proof of production savings or external tool superiority |
+| Caveats | local fixture results only; recorded at beta publish (`1.0.0-beta.0`); not proof of production savings or external tool superiority |
 
 | Fixture | Turn 1 tokens | Turn 2 tokens | Turn 2 reduction | Serialized agent output | Agent output overhead | `OMIT_UNCHANGED` | `INVALIDATE_PREVIOUS` | Unsafe |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|

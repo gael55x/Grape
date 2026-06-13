@@ -30,6 +30,7 @@ Beta (`1.0.0-beta.0`, npm `beta` dist-tag) is the workflow-ready transport slice
 |---|---|
 | [in-memory-context-loop.md](in-memory-context-loop.md) | Completed first implementation goal: in-memory compiler loop before SQLite, CLI, or MCP. |
 | [transport-wedge-cleanup.md](transport-wedge-cleanup.md) | Alpha.3 product-wedge alignment summary and completed cleanup items. |
+| [benchmark-readiness-report.md](benchmark-readiness-report.md) | Pre-beta benchmark readiness evidence from the alpha.3 candidate era. Superseded by `1.0.0-beta.0` publish. |
 
 ## Related active docs that reference alpha work
 

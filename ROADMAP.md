@@ -53,7 +53,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 
 ## Next
 
-- Beta candidate only after install/connect/recover flows are boring across clean consumer repos and the documented smoke/benchmark suite is reproducible.
+- Formal benchmark comparison runs and human MCP client trials on the published beta package.
 
 ## Soon
 

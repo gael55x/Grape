@@ -16,7 +16,7 @@ Create a V1 documentation tree under `docs/v1/` with domain-specific documents f
 
 - Implementation work must update the relevant docs and tests.
 - Future-version ideas stay out of V1 implementation docs.
-- Historical material belongs in `docs/archive/`.
+- Historical material belongs in `docs/v1/legacy/alpha/` (see `docs/archive/README.md`).
 - AI agents have a documented operating framework before editing code.
 
 ## Alternatives

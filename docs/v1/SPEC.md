@@ -663,7 +663,7 @@ sequenceDiagram
 
 | Parameter | V1 value |
 |---|---|
-| Runtime | Node.js 22.13+ for the published package (currently `0.1.0-alpha.3`) |
+| Runtime | Node.js 22.13+ for the published package (`grape-context@1.0.0-beta.0` on npm `beta`) |
 | Language | TypeScript |
 | Package | `grape-context` |
 | CLI binary | `grape` |

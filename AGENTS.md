@@ -35,6 +35,7 @@ For V1 implementation, start with `docs/v1/SPEC.md`, then read only the folder t
 - `docs/v1/planning/` for roadmap, logs, and changelogs.
 - `docs/v1/decisions/` for accepted ADRs.
 - `docs/v1/examples/` and `docs/v1/fixtures/` for serialized examples and fixture expectations.
+- `docs/v1/legacy/alpha/` for historical alpha-era documentation only. Do not treat legacy docs as current implementation input.
 
 Do not add new V1 topic files directly under `docs/v1/` unless they are canonical anchors like `README.md` or `SPEC.md`.
 

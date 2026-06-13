@@ -43,7 +43,7 @@
 | CLI from tarball? | `install:check`, `e2e:alpha` |
 | MCP stdio from tarball? | `beta:client-trial` |
 | Package contents correct? | `package:check` |
-| Beta npm prerelease justified? | Transport gates in [`benchmark-readiness-report.md`](../docs/v1/planning/benchmark-readiness-report.md); not benchmark superiority |
+| Beta npm prerelease justified? | Historical transport gates in [`benchmark-readiness-report.md`](../docs/v1/legacy/alpha/benchmark-readiness-report.md); formal benchmark comparison is the next validation phase |
 | Honest positioning? | Capability matrix + competitor docs |
 
 ## Baselines

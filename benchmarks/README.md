@@ -58,4 +58,4 @@ npm run beta:check
 3. Record environment metadata (git commit, package version, Node, OS) on every run.
 4. Separate **local source checkout** runs from **packed tarball** runs (`npm run e2e:alpha`, `npm run install:check`).
 
-See [`design.md`](design.md) and [`../docs/v1/planning/benchmark-readiness-report.md`](../docs/v1/planning/benchmark-readiness-report.md).
+See [`../../../docs/v1/legacy/alpha/benchmark-readiness-report.md`](../../../docs/v1/legacy/alpha/benchmark-readiness-report.md).
