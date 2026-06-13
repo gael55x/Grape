@@ -7,3 +7,5 @@ dist/
 /graphify-out/
 benchmarks/results/*.json
 benchmarks/results/latest-summary.md
+!benchmarks/results/
+!benchmarks/results/post-beta-*.json
