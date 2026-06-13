@@ -1,11 +1,11 @@
 {
-  "capturedAt": "2026-06-13T10:41:37.970Z",
+  "capturedAt": "2026-06-13T12:12:52.986Z",
   "beforeArtifactIdentity": "npm:grape-context@1.0.0-beta.0",
-  "afterArtifactIdentity": "local-candidate:8f1b97ff9a84e8a5ce426dae6c8d13c56dac93cd",
+  "afterArtifactIdentity": "local-candidate:39e0acd39971185dd8d0f4d624bb9a528eb4a9fc",
   "beforeAfterComparison": {
     "valid": true,
     "beforeArtifactIdentity": "npm:grape-context@1.0.0-beta.0",
-    "afterArtifactIdentity": "local-candidate:8f1b97ff9a84e8a5ce426dae6c8d13c56dac93cd",
+    "afterArtifactIdentity": "local-candidate:39e0acd39971185dd8d0f4d624bb9a528eb4a9fc",
     "caseComparisons": [
       {
         "caseId": "retrieval_monorepo",
@@ -14,34 +14,62 @@
             "budgetMode": "uncapped",
             "publishedBeta": {
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0.375,
+              "knownNoiseRatio": 0,
               "contextBytes": 208560,
               "expectedFilesFoundCount": 3,
-              "knownIrrelevantFilesSelectedCount": 3
+              "knownIrrelevantFilesSelectedCount": 0,
+              "layerKnownNoiseRatios": {
+                "retrievalSelectedRefs": 0,
+                "evidenceRefs": 0,
+                "projectRuleRefs": null,
+                "packInputRefs": 0.375,
+                "finalAgentFacingRefs": 0
+              }
             },
             "localCandidate": {
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0.375,
-              "contextBytes": 208560,
+              "knownNoiseRatio": 0,
+              "contextBytes": 203444,
               "expectedFilesFoundCount": 3,
-              "knownIrrelevantFilesSelectedCount": 3
+              "knownIrrelevantFilesSelectedCount": 0,
+              "layerKnownNoiseRatios": {
+                "retrievalSelectedRefs": 0,
+                "evidenceRefs": 0,
+                "projectRuleRefs": null,
+                "packInputRefs": 0,
+                "finalAgentFacingRefs": 0
+              }
             }
           },
           {
             "budgetMode": "budgeted",
             "publishedBeta": {
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0.375,
+              "knownNoiseRatio": 0,
               "contextBytes": 32768,
               "expectedFilesFoundCount": 3,
-              "knownIrrelevantFilesSelectedCount": 3
+              "knownIrrelevantFilesSelectedCount": 0,
+              "layerKnownNoiseRatios": {
+                "retrievalSelectedRefs": 0,
+                "evidenceRefs": 0,
+                "projectRuleRefs": null,
+                "packInputRefs": 0.375,
+                "finalAgentFacingRefs": 0
+              }
             },
             "localCandidate": {
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0.375,
+              "knownNoiseRatio": 0,
               "contextBytes": 32768,
               "expectedFilesFoundCount": 3,
-              "knownIrrelevantFilesSelectedCount": 3
+              "knownIrrelevantFilesSelectedCount": 0,
+              "layerKnownNoiseRatios": {
+                "retrievalSelectedRefs": 0,
+                "evidenceRefs": 0,
+                "projectRuleRefs": null,
+                "packInputRefs": 0,
+                "finalAgentFacingRefs": 0
+              }
             }
           }
         ]
@@ -56,14 +84,28 @@
               "knownNoiseRatio": 0,
               "contextBytes": 192128,
               "expectedFilesFoundCount": 2,
-              "knownIrrelevantFilesSelectedCount": 0
+              "knownIrrelevantFilesSelectedCount": 0,
+              "layerKnownNoiseRatios": {
+                "retrievalSelectedRefs": 0,
+                "evidenceRefs": 0,
+                "projectRuleRefs": null,
+                "packInputRefs": 0,
+                "finalAgentFacingRefs": 0
+              }
             },
             "localCandidate": {
               "relevanceRecall": 1,
               "knownNoiseRatio": 0,
-              "contextBytes": 192128,
+              "contextBytes": 191207,
               "expectedFilesFoundCount": 2,
-              "knownIrrelevantFilesSelectedCount": 0
+              "knownIrrelevantFilesSelectedCount": 0,
+              "layerKnownNoiseRatios": {
+                "retrievalSelectedRefs": 0,
+                "evidenceRefs": 0,
+                "projectRuleRefs": null,
+                "packInputRefs": 0,
+                "finalAgentFacingRefs": 0
+              }
             }
           },
           {
@@ -73,14 +115,28 @@
               "knownNoiseRatio": 0,
               "contextBytes": 32768,
               "expectedFilesFoundCount": 2,
-              "knownIrrelevantFilesSelectedCount": 0
+              "knownIrrelevantFilesSelectedCount": 0,
+              "layerKnownNoiseRatios": {
+                "retrievalSelectedRefs": 0,
+                "evidenceRefs": 0,
+                "projectRuleRefs": null,
+                "packInputRefs": 0,
+                "finalAgentFacingRefs": 0
+              }
             },
             "localCandidate": {
               "relevanceRecall": 1,
               "knownNoiseRatio": 0,
               "contextBytes": 32768,
               "expectedFilesFoundCount": 2,
-              "knownIrrelevantFilesSelectedCount": 0
+              "knownIrrelevantFilesSelectedCount": 0,
+              "layerKnownNoiseRatios": {
+                "retrievalSelectedRefs": 0,
+                "evidenceRefs": 0,
+                "projectRuleRefs": null,
+                "packInputRefs": 0,
+                "finalAgentFacingRefs": 0
+              }
             }
           }
         ]
@@ -93,16 +149,30 @@
             "publishedBeta": {
               "relevanceRecall": 1,
               "knownNoiseRatio": 0.125,
-              "contextBytes": 204631,
+              "contextBytes": 199256,
               "expectedFilesFoundCount": 6,
-              "knownIrrelevantFilesSelectedCount": 1
+              "knownIrrelevantFilesSelectedCount": 1,
+              "layerKnownNoiseRatios": {
+                "retrievalSelectedRefs": 0.125,
+                "evidenceRefs": 0,
+                "projectRuleRefs": null,
+                "packInputRefs": 0.125,
+                "finalAgentFacingRefs": 0.125
+              }
             },
             "localCandidate": {
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0.125,
-              "contextBytes": 197571,
+              "knownNoiseRatio": 0,
+              "contextBytes": 195876,
               "expectedFilesFoundCount": 6,
-              "knownIrrelevantFilesSelectedCount": 1
+              "knownIrrelevantFilesSelectedCount": 0,
+              "layerKnownNoiseRatios": {
+                "retrievalSelectedRefs": 0,
+                "evidenceRefs": 0,
+                "projectRuleRefs": null,
+                "packInputRefs": 0,
+                "finalAgentFacingRefs": 0
+              }
             }
           },
           {
@@ -112,31 +182,36 @@
               "knownNoiseRatio": 0.125,
               "contextBytes": 65536,
               "expectedFilesFoundCount": 6,
-              "knownIrrelevantFilesSelectedCount": 1
+              "knownIrrelevantFilesSelectedCount": 1,
+              "layerKnownNoiseRatios": {
+                "retrievalSelectedRefs": 0.125,
+                "evidenceRefs": 0,
+                "projectRuleRefs": null,
+                "packInputRefs": 0.125,
+                "finalAgentFacingRefs": 0.125
+              }
             },
             "localCandidate": {
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0.125,
+              "knownNoiseRatio": 0,
               "contextBytes": 65536,
               "expectedFilesFoundCount": 6,
-              "knownIrrelevantFilesSelectedCount": 1
+              "knownIrrelevantFilesSelectedCount": 0,
+              "layerKnownNoiseRatios": {
+                "retrievalSelectedRefs": 0,
+                "evidenceRefs": 0,
+                "projectRuleRefs": null,
+                "packInputRefs": 0,
+                "finalAgentFacingRefs": 0
+              }
             }
           }
         ]
       }
     ]
   },
-  "interpretation": [
-    "Published beta and local candidate share package version 1.0.0-beta.0; artifactIdentity distinguishes the runs.",
-    "The local candidate changed task retrieval exclusion for negative package paths and post-beta legacy doc paths.",
-    "In this harness, monorepo known-noise remained 3 web files for both runs (uncapped grape rows).",
-    "Docs known-noise remained 1 legacy alpha README for both runs (uncapped grape rows).",
-    "Bug-fix recall stayed 2/2 for both runs."
-  ],
-  "limitations": [
-    "Small sample: three cases on one machine.",
-    "Directional fixture results only; not official release benchmarks.",
-    "File-level recall is primary; span checks are supplementary.",
-    "Docs case uses a curated docs slice, not the full Grape repository tree."
+  "notes": [
+    "Published beta uses npm:grape-context@1.0.0-beta.0.",
+    "Local candidate includes source-manifest dependency filtering and retrieval path exclusions from main."
   ]
 }
