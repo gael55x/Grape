@@ -5,7 +5,7 @@
 <h1 align="center">Grape</h1>
 
 <p align="center">
-   Better context transport for AI agents.
+   Better context transport for AI coding agents.
 </p>
 
 <p align="center">
@@ -39,21 +39,28 @@ Grape is not a coding assistant, chatbot, broad agent memory platform, vector da
 
 ## Quickstart
 
-**Alpha status:** the current transport slice is published as [`grape-context@0.1.0-alpha.3`](https://www.npmjs.com/package/grape-context/v/0.1.0-alpha.3). It requires **Node.js 22.13+**.
+**1.0 beta transport slice:** Grape ships as `grape-context` on npm. It requires **Node.js 22.13+**.
 
-For reproducible alpha.3 testing:
+**Install today (published registry):** npm currently ships `0.1.0-alpha.3` on the `latest` and `alpha` dist-tags:
 
 ```bash
 npm install -g grape-context@0.1.0-alpha.3
 grape init --connect
 ```
 
-The normal alpha install path is:
+**After `1.0.0-beta.0` publish:** use the `beta` dist-tag or pin the exact prerelease:
 
 ```bash
-npm install -g grape-context
+npm install -g grape-context@beta
 grape init --connect
 ```
+
+```bash
+npm install -g grape-context@1.0.0-beta.0
+grape init --connect
+```
+
+Until the beta publish lands, `@beta` and `1.0.0-beta.0` are the planned install targets, not the current registry default.
 
 `grape init --connect` creates `.grape/`, applies local SQLite migrations, captures the initial Git snapshot, reports scan diagnostics, and prints MCP integration guidance plus an agent instruction block you can paste into Cursor, Claude Code, or other MCP clients.
 
@@ -65,7 +72,7 @@ grape_get_context
 
 Grape only omits context already sent to the **same session**. If the MCP client changes session ID, Grape resends rather than unsafe-omit. Restore is session-bound. Branch, source, and dependency changes may invalidate prior sent context.
 
-For continued turns, keep the same task/query and session identity. The alpha.3 session contract is strict by design: different task wording with the same explicit session is a mismatch, and derived MCP sessions change when the query changes. See [Agent Sessions](docs/v1/interfaces/agent-sessions.md) for examples and recovery paths.
+For continued turns, keep the same task/query and session identity. The beta session contract is strict by design: different task wording with the same explicit session is a mismatch, and derived MCP sessions change when the query changes. See [Agent Sessions](docs/v1/interfaces/agent-sessions.md) for examples and recovery paths.
 
 ## Security And AI Context Safety
 
@@ -86,7 +93,7 @@ AI coding agents repeatedly spend context window and tool calls rediscovering th
 
 Search, embeddings, repo maps, and graph retrieval can find related information. Grape’s wedge is different: it treats context like a build artifact. It compiles what is safe and current, remembers what this exact agent session already received, and sends only what is new, changed, pinned, restorable, or invalidated.
 
-The goal is not just smaller prompts. The goal is trustworthy incremental context: token savings without hiding uncertainty, stale evidence, or safety-critical constraints.
+The goal is not just smaller prompts. The goal is trustworthy incremental context: safe omission of unchanged context without hiding uncertainty, stale evidence, or safety-critical constraints.
 
 Internally, Grape context is graph-shaped: source refs, symbols, package manifests, proofs, dependency refs, pack items, omissions, restore handles, and invalidations are connected. Language-specific parsers only add optional orientation edges. TypeScript/JavaScript graph extraction is the strongest current signal. Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, shell, JSON, YAML, TOML, Markdown, and other allowed text files must still be handled safely through exact source, path, and lexical fallback until providers prove stronger graph coverage.
 
@@ -97,7 +104,7 @@ Grape compiles safe, current repository context into a dependency-tracked artifa
 - `NEW` for context the agent has not seen
 - `CHANGED` for updated context
 - `PINNED` for safety-critical context that must be resent
-- `OMIT_UNCHANGED` for safe token savings
+- `OMIT_UNCHANGED` for safe omission of unchanged context
 - `RESTORE_AVAILABLE` for omitted content that can be fetched back
 - `INVALIDATE_PREVIOUS` for stale prior context
 
@@ -137,13 +144,13 @@ Core objects:
 | `ContextDiff` | The session-scoped delta between the latest artifact and what the agent has already seen. |
 | `ContextPackItem` | A structured item sent as `NEW`, `CHANGED`, `PINNED`, `OMIT_UNCHANGED`, `INVALIDATE_PREVIOUS`, or `RESTORE_AVAILABLE`. |
 | `Trust Kernel` | The rules that prevent unproven, stale, private, or assistant-generated claims from becoming durable truth. |
-| `Compression Cache` | Deterministic derived cache used for token savings, never proof. |
+| `Compression Cache` | Deterministic derived cache used to reduce repeated transport cost, never proof. |
 
 ## Current Status
 
-Grape is a controlled public alpha. The current package is ready for serious pre-beta review of install flow, CLI/MCP transport, session identity, context diffing, stale invalidation, and omitted-context restore.
+Grape 1.0 beta is a local-first context transport slice for coding agents. It compiles repository evidence into session-aware context packs through CLI and MCP. Official benchmark superiority claims are pending proper post-publish benchmark runs.
 
-Implemented in the alpha transport slice:
+Implemented in the 1.0 beta transport slice:
 
 - global npm install and `grape init --connect`
 - local SQLite session ledger and dependency manifests
@@ -157,15 +164,16 @@ Implemented in the alpha transport slice:
 - Grape-observed `grape run` / `grape test` evidence and narrow observed-run result claims
 - local checks for docs, architecture boundaries, storage, typechecking, package contents, install smoke, behavior tests, benchmarks, alpha e2e smoke, and the automated beta client trial
 
-Still alpha / not a shipped beta promise:
+Not in the 1.0 beta promise:
 
-- this is a local context transport slice, not a full memory platform
+- this is local context transport, not a full memory platform or cloud sync product
 - stable task/session identity is required for reliable second-turn omission
 - broader runtime truth from Grape-observed command/test runs is not promoted beyond the narrow observed-run result claim
 - retrieval has AST-backed TypeScript/JavaScript graph expansion, while Python/Java/Kotlin/Go/Rust/C#/Ruby/PHP/Swift/C/C++/shell/config/docs paths currently rely on safe fallback unless a provider and fixture prove stronger support
 - no full semantic ranking, embeddings, complete call graphs, broad language parsing, or broad polyglot/monorepo graph claim yet
 - broader durable claim types, nested rule scope resolution, and automatic conflict resolution remain outside the beta transport promise
 - automated `npm run beta:client-trial` proves MCP over stdio from a packed install; a literal Cursor or Claude Code UI trial still needs a human run when release policy requires it
+- numeric token savings are fixture estimates only until official benchmark artifacts are published with fixture, command, date, and limits
 
 ## Architecture
 
@@ -227,12 +235,14 @@ grape bench --fixture monorepo-lite-repo
 
 MCP exposes the same local transport path through `grape mcp --stdio`. Read tools include context retrieval, artifacts, claims, proofs, rules, omitted restore, stale items, conflicts, and status. Restricted write tools can record temporary candidates, command/test observations, user decisions, and confirmation requests, but they cannot promote durable truth directly.
 
-If npm appears to keep older alpha code after installing alpha.3, clear the cache and reinstall the exact package:
+If npm appears to keep an older package after install, clear the cache and reinstall the exact version you intend to use:
 
 ```bash
 npm cache clean --force
 npm install -g grape-context@0.1.0-alpha.3
 ```
+
+After beta publish, reinstall `grape-context@1.0.0-beta.0` or `@beta` instead.
 
 ## Documentation
 
@@ -319,7 +329,7 @@ Implementation standards are strict:
 
 ## Repository Status
 
-This repository is public-facing alpha software. APIs, schemas, command names, and setup guidance may change before 1.0, and the current package is not a broad beta or production memory platform.
+Grape 1.0 beta is prerelease software. APIs, schemas, command names, and setup guidance may still change before stable 1.0. The beta package is not production-ready and is not a broad agent memory platform.
 
 ## Star History
 <p align="center">

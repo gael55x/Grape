@@ -36,7 +36,7 @@ Before editing CLI behavior, agents must verify:
 
 Public CLI JSON uses the V1 `ContextArtifact` envelope and compiles repository-derived sections from proof-backed excerpts, current-valid narrow claims, dependency refs, and orientation-only index data. Treat artifacts as inspectable, dependency-tracked context, not as proof of runtime behavior or complete durable memory. See `docs/v1/contracts/context-artifact.md`.
 
-For continued-turn behavior, task/session identity, mismatch recovery, and alpha.3 install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
+For continued-turn behavior, task/session identity, mismatch recovery, and published-package install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
 
 ## Command Status
 
@@ -149,7 +149,7 @@ When `--reset-session` is supplied for an existing compile session, `grape compi
 
 All implemented commands support `--repo <path>` where relevant and `--json` for machine-readable output. Public stdout/stderr and JSON output are sanitized by default: absolute local paths, private workspace names, usernames embedded in local paths, API keys, tokens, private-key-looking values, and sensitive object-field values are redacted or replaced with placeholders. Unsupported options fail with a usage error instead of being silently ignored; privacy export and purge workflows remain deferred until their data contracts exist.
 
-Runtime compatibility is checked before storage-backed commands import SQLite-backed application services. `grape help`, command-specific `--help`, `grape mcp`, and `grape mcp --print-config` remain available on older Node runtimes so setup guidance can still render. Commands that need local storage, including `init`, `sync`, `status`, `doctor`, `compile`, `diff-context`, inspection commands, benchmarks, and `mcp --stdio`, require Node.js 22.13 or newer in the published alpha package. If the runtime is too old, the CLI fails before bootstrap with recovery guidance. `grape doctor --json` can still return a minimal machine-readable `node_runtime` failure without importing storage modules.
+Runtime compatibility is checked before storage-backed commands import SQLite-backed application services. `grape help`, `grape init --help`, top-level `-h`/`--help`, `grape mcp`, and `grape mcp --print-config` remain available on older Node runtimes so setup guidance can still render. Commands that need local storage, including `init`, `sync`, `status`, `doctor`, `compile`, `diff-context`, inspection commands, benchmarks, and `mcp --stdio`, require Node.js 22.13 or newer in the published package. If the runtime is too old, the CLI fails before bootstrap with recovery guidance. `grape doctor --json` can still return a minimal machine-readable `node_runtime` failure without importing storage modules.
 
 Package builds must include the compiled `dist/cli/index.js` binary target and copied SQL migrations under `dist/core/storage/migrations/` so globally installed storage-backed commands can bootstrap without access to TypeScript source files.
 
@@ -209,7 +209,7 @@ Required when deferred V1.0 commands are implemented:
 
 ## Beta Verification
 
-Before beta promotion, run the full local gate:
+After changing transport or package behavior, run the full local gate:
 
 ```bash
 npm run beta:check

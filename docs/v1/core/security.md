@@ -24,7 +24,7 @@ Before editing security-sensitive code, agents must verify:
 - proof hashes remain tied to canonical source spans
 - artifacts are scanned before storage and return
 
-## Implementation status (alpha.3)
+## Implementation status (1.0 beta)
 
 | Workflow | Status |
 |---|---|

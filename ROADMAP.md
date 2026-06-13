@@ -8,7 +8,7 @@ Canonical protocol: [`docs/v1/contracts/context-diff.md`](docs/v1/contracts/cont
 
 ## North Star
 
-Any MCP-capable agent on any git repo can call `grape_get_context`, receive a structured context pack diff, and pay fewer tokens on later turns without losing safety-critical or invalidated context.
+Any MCP-capable agent on any git repo can call `grape_get_context`, receive a structured context pack diff, and omit unchanged same-session context on later turns when task and session identity stay stable, without losing safety-critical or invalidated context. Grape includes benchmark fixtures and scripts for local comparison; numeric savings are fixture estimates only until official benchmark artifacts are published.
 
 ## Release Shape
 
@@ -36,7 +36,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - Package-lock metadata is aligned with alpha.3 version/runtime.
 - Global install smoke passed against `grape-context@0.1.0-alpha.3`.
 - Published-package smoke passed against registry-installed alpha.3 in the external benchmark workspace.
-- The benchmark workspace reports 13/13 scripted scenarios passing when run with the documented methodology and stable task/session contract.
+- The external benchmark workspace reports scripted transport scenarios passing under its documented methodology and stable task/session contract. Those are local fixture results, not official release benchmarks or superiority proof.
 - In-repo `grape bench` fixtures cover clean, branch-switch, stale-source, session-reset, polyglot fallback, and monorepo-lite scenarios.
 - Package dry-run and install smoke are part of the local gate.
 - `npm run beta:client-trial` proves packaged-install MCP stdio transport, including omission, restore, invalidation, reset, branch change, redaction, and ignored secret-looking file rejection.
@@ -47,9 +47,10 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 
 ## Now
 
+- Ship and document `1.0.0-beta.0` on npm with the `beta` dist-tag after version bump, changelog cut, and `npm run beta:check`.
 - Keep the beta path explicit: install Grape, initialize once, keep using the coding agent normally, and let MCP `grape_get_context` drive MCP session tracking on each agent turn.
 - Record human MCP client trials from [`docs/v1/planning/beta-trial-checklist.md`](docs/v1/planning/beta-trial-checklist.md) when release policy requires Cursor, Claude Code, or equivalent IDE UI proof beyond automated `beta:client-trial`.
-- Keep release mutations such as version bumps, tags, GitHub releases, and npm dist-tag changes approval-gated. Beta has not shipped while package metadata remains `0.1.0-alpha.3`.
+- Keep release mutations such as tags, GitHub releases, and npm dist-tag changes approval-gated.
 
 ## Next
 
@@ -75,12 +76,19 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - IDE plugins and deeper agent-client integrations.
 - Stable `1.0.0`.
 
-## Alpha Exit Check
+## Beta Install Check
 
-The published alpha.3 install path is:
+**Published today:**
 
 ```bash
 npm install -g grape-context@0.1.0-alpha.3
+grape init --connect
+```
+
+**After `1.0.0-beta.0` publish:**
+
+```bash
+npm install -g grape-context@beta
 grape init --connect
 ```
 

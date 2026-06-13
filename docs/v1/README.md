@@ -8,6 +8,8 @@ It **compiles** safe, current, task-specific `ContextArtifact` objects from repo
 
 Compression is cache, not truth. Proofs gate durable claims. Git branch/worktree and dependency hashes drive invalidation. See [`decisions/adr-0010-context-transport-protocol.md`](decisions/adr-0010-context-transport-protocol.md) and the root [`ROADMAP.md`](../../ROADMAP.md).
 
+**Published npm today:** `0.1.0-alpha.3` on `latest`/`alpha`. **Planned beta publish:** `1.0.0-beta.0` with the `beta` dist-tag after `npm run beta:check` and an approved version bump. Install and session setup: root [`README.md`](../../README.md) and [`interfaces/agent-sessions.md`](interfaces/agent-sessions.md).
+
 ## Structure
 
 ```text
@@ -66,11 +68,11 @@ docs/v1/
 | Contracts | `contracts/transport-stability.md` | Beta transport/schema stability boundary, warning taxonomy, and compatibility rules. | MCP request/response fields are added, reclassified, or removed. | Stable vs experimental fields remain clear. |
 | Contracts | `contracts/context-artifact.md` | Context artifact schema, sections, dependency manifest, output rules. | Artifact schema or sections change. | Artifact changes include manifest and tests. |
 | Contracts | `contracts/context-diff.md` | Session-scoped diff protocol, sent ledger, omitted restore, invalidation. | Diff/session behavior changes. | The change remains session-scoped. |
-| Interfaces | `interfaces/agent-sessions.md` | Agent-facing session/task identity contract, recovery paths, and alpha install notes. | Session identity guidance, setup handoff, or mismatch recovery changes. | Continued turns keep stable task/session identity. |
+| Interfaces | `interfaces/agent-sessions.md` | Agent-facing session/task identity contract, recovery paths, and beta install notes. | Session identity guidance, setup handoff, or mismatch recovery changes. | Continued turns keep stable task/session identity. |
 | Interfaces | `interfaces/mcp-tools.md` | MCP tool contracts and safety boundaries. | MCP tools change. | Write tools cannot promote durable truth. |
 | Interfaces | `interfaces/cli.md` | CLI commands, outputs, exit codes, inspection workflows. | CLI behavior changes. | CLI is adapter-only. |
 | Quality | `quality/testing.md` | Test categories, named tests, fixture mapping. | Test strategy or required tests change. | Required tests exist for touched invariant/transition. |
-| Quality | `quality/benchmarks.md` | Benchmark metrics, baselines, thresholds, token-saving proof. | Benchmarks or token-saving claims change. | Baselines are scripted. |
+| Quality | `quality/benchmarks.md` | Benchmark metrics, baselines, thresholds, and transport harness gates. | Benchmarks or transport benchmark claims change. | Baselines are scripted. Local fixture numbers are not official release benchmarks. |
 | Planning | `planning/implementation-roadmap.md` | Goal order, deliverables, exit criteria. | Scope or build order changes. | Work belongs to the current goal. |
 | Planning | `planning/implementation-status.md` | Acceptance matrix for the V1 core pipeline. | A core-pipeline area changes status. | Status reflects implementation, tests, docs, and known limitations honestly. |
 | Planning | `planning/beta-readiness.md` | Pre-beta review checklist, setup verification commands, and benchmark workspace alignment notes. | Alpha/beta readiness criteria, human-review checklist, or external benchmark alignment changes. | Checklist does not expand V1 scope or change benchmark methodology. |

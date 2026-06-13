@@ -24,8 +24,8 @@ V1 is **local-first** (`.grape/`, SQLite, MCP/CLI). V1 does **not** require a Do
 
 ## Consequences
 
-- Public roadmap and alpha exit criteria prioritize **protocol hardening**, **npm install**, and **turn-2 token savings with zero unsafe omissions**.
-- Broader claim ontologies, deep repo graphs, embeddings, and chat-session ingestion hooks are **V1.5/V2**, or **integration** with external tools—not V1 heroes.
+- Public roadmap and beta exit criteria prioritize **protocol hardening**, **npm install**, and **turn-2 omission harness targets with zero unsafe omissions** (fixture estimates, not release marketing claims).
+- Broader claim ontologies, deep repo graphs, embeddings, and chat-session ingestion hooks are **V1.5/V2**, or integration with external tools, not V1 heroes.
 - `docs/v1/contracts/context-diff.md` is a first-class contract alongside `context-artifact.md`.
 - New features must pass the filter: improve **compile quality**, **git validity**, or **diff correctness**; avoid "bigger graph than X" as a V1 goal.
 

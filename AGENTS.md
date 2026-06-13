@@ -46,6 +46,33 @@ Before finishing any documentation edit, scan the changed docs for accidental lo
 
 Lesson learned: benchmark notes and trial logs can be useful evidence, but raw local command transcripts often contain personal paths. Preserve the evidence, not the machine-specific details.
 
+## Documentation Style And Release Claims
+
+Future documentation changes must:
+
+- use plain language and short sentences
+- avoid hype, vague claims, and zombie nouns when they hide the subject or verb
+- avoid unsupported benchmark claims, production-readiness claims, and broad major version readiness claims unless proven
+- keep technical terms only when they are accurate (for example: compiler, artifact, context pack, session ledger, claim, proof, retrieval, MCP, CLI, SQLite)
+- avoid em dashes, arrow symbols, not equal signs, and emojis
+- use plus signs and tildes only when technically required
+- verify docs against code before changing release-facing claims
+- update stale docs when changing CLI, MCP, package, benchmark, compiler, retrieval, session, ledger, restore, invalidation, claim, proof, or artifact behavior
+
+Zombie noun example:
+
+Bad: `The implementation of retrieval optimization enables better utilization of context.`
+
+Better: `Grape ranks retrieved context before it sends a context pack.`
+
+Benchmark claim policy:
+
+- Docs may say Grape includes benchmark fixtures and scripts for local comparison.
+- Docs may not claim proven token reduction percentages, external tool superiority, benchmark-proven savings, or production readiness unless committed benchmark artifacts prove the claim and the docs name fixture, command, date, and limits.
+- Label local uncommitted JSON as local fixture results, not official release benchmarks.
+
+Before finishing documentation edits, scan changed docs for banned style and accidental local identifiers.
+
 ## Commit Message Hygiene
 
 All agent-created commits must use Conventional Commits format:

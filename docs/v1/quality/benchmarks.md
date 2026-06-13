@@ -48,7 +48,7 @@ Rules:
 - `unsafeOmissions` must be `0`; otherwise the token-saving result is invalid.
 - These numbers are not release benchmark claims. They only prove the accounting path exists.
 
-## Current Alpha Benchmark Harness
+## Current Benchmark Harness
 
 The current product harness is `grape bench --fixture <name>`. It is intentionally narrow: it copies a named fixture into a temporary Git repository, commits the fixture, runs the real local `compileLocalContext` path twice with the same session, and reports the token accounting already persisted by the context diff pipeline.
 
@@ -80,6 +80,18 @@ Run all fixtures:
 npm run benchmark:run
 ```
 
+Comparative benchmark harness (beta candidate tarball, not the published registry package):
+
+```bash
+npm run bench
+npm run bench:summary
+npm run bench:comparators   # skips unavailable external tools
+```
+
+`npm run bench` builds `dist/`, runs `npm pack`, installs the tarball, and runs all fixtures through the **installed** `grape` binary. This exercises the beta candidate artifact from the current git tree.
+
+See [`../../../benchmarks/README.md`](../../../benchmarks/README.md) and [`../planning/benchmark-readiness-report.md`](../planning/benchmark-readiness-report.md).
+
 Alpha e2e (dist build, pack install smoke, benchmark suite from installed package):
 
 ```bash
@@ -94,9 +106,9 @@ npm run beta:check
 
 `npm run beta:check` ends with `npm run beta:client-trial`, which installs the packed tarball in a temporary consumer repo and exercises MCP stdio transport end to end. That trial is an internal harness check, not an external benchmark superiority claim.
 
-### Recorded baselines (local reference, 2026-06-13)
+### Recorded baselines (local fixture reference, 2026-06-13)
 
-Machine-local reference run on `main` with Node.js 22.18.0. CI may differ slightly; use `npm run benchmark:run` to refresh.
+Local fixture reference from `npm run bench` on branch `benchmark/beta-1-readiness`. These are not official release benchmark claims. CI and other machines may differ; run `npm run benchmark:run` or `npm run bench` to refresh.
 
 | Fixture | Turn 1 tokens | Turn 2 tokens | Turn 2 reduction | Serialized agent output | Agent output overhead | `OMIT_UNCHANGED` | `INVALIDATE_PREVIOUS` | Unsafe |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -113,7 +125,7 @@ Current benchmark thresholds:
 
 - first-turn overhead must be no more than 10 percent above naive resend
 - first-turn serialized agent-output overhead must be no more than 400 percent above naive resend
-- second-turn reduction must be at least 30 percent
+- second-turn reduction must be at least 30 percent (internal CI harness threshold on gated no-change fixtures; not a user-facing savings claim)
 - unsafe omissions must be zero
 - stale items sent must be zero
 - second turn must include at least one `OMIT_UNCHANGED`
@@ -121,9 +133,9 @@ Current benchmark thresholds:
 
 Benchmark output also reports serialized context-pack token estimates, serialized default agent-output token estimates, and token breakdowns by diff state and section. These are transport diagnostics: body-token counts explain logical context savings, serialized-pack counts show JSON overhead from metadata, restore hints, and dependency references, and serialized-agent-output counts estimate the default MCP `agent_pack` frame including compact text summary and compact preview structured content.
 
-These numbers are deterministic approximate token estimates, not release performance claims. They are valid as harness checks because they run against named fixtures and fail on unsafe omission or stale send counters.
+These numbers are deterministic approximate token estimates from named fixtures. They are valid as local harness checks because they fail on unsafe omission or stale send counters. They are not proof of production token savings or external tool superiority.
 
-The current benchmark harness is therefore ready for internal sanity checks, not external claims against Composer or Graphify. Real beta benchmarking must add comparable scripted scenarios for normal Composer, Graphify, and Grape, then publish sanitized raw results and summaries separately.
+The current benchmark harness is ready for internal sanity checks, not external claims against Composer or Graphify. Official release benchmarking must add comparable scripted scenarios, publish sanitized raw results, and label fixture, command, date, and limits.
 
 ## Metric Schema
 
@@ -184,7 +196,7 @@ interface BenchmarkTurnMetric {
 | context artifact determinism | validate reproducibility | `clean-typescript-app` | same inputs produce same artifact hash | hash changes without input change | enables diffing |
 | restore omitted item success rate | validate restore path | `session-reset-fixture` | restorable omissions resolve or invalidate safely | stale content restored | prevents hidden context loss |
 
-## Minimum Alpha Targets
+## Minimum Harness Targets
 
 - Zero trust violations.
 - Zero summary-as-proof violations.
@@ -192,7 +204,7 @@ interface BenchmarkTurnMetric {
 - Zero stale proof dependencies in active artifacts.
 - Zero omitted pinned safety sections.
 - First-turn token cost reported separately from later-turn cost.
-- Later-turn token reduction target is provisional until fixtures are implemented.
+- Later-turn token reduction measured on the six gated no-change and invalidation fixtures above. Broader gold-label and sync-time fixtures in the metrics table below are not yet bench-gated.
 
 ## Required Benchmark Names
 
