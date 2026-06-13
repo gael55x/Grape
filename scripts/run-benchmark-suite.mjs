@@ -8,7 +8,9 @@ const fixtures = [
   "clean-typescript-app",
   "branch-switch-typescript-app",
   "stale-source-typescript-app",
-  "session-reset-typescript-app"
+  "session-reset-typescript-app",
+  "polyglot-fallback-repo",
+  "monorepo-lite-repo"
 ];
 
 const clean = spawnSync(process.execPath, ["scripts/clean-test-build.mjs"], {

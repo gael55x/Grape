@@ -2,8 +2,6 @@ import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
 import type { SessionResetBenchmarkInput, SessionResetBenchmarkResult } from "./types.js";
 
-const defaultTask = "Explain session reset handling and the tests that cover it.";
-
 export function runSessionResetBenchmark(input: SessionResetBenchmarkInput): SessionResetBenchmarkResult {
   const prepared = prepareBenchmarkFixtureRepository({
     fixtureName: input.fixtureName,
@@ -12,7 +10,7 @@ export function runSessionResetBenchmark(input: SessionResetBenchmarkInput): Ses
     keepWorkspace: input.keepWorkspace
   });
 
-  const task = input.task ?? defaultTask;
+  const task = input.task;
   const sessionId = benchmarkSessionId(input.fixtureName, "reset");
 
   try {

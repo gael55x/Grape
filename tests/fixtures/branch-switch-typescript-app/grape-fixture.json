@@ -1,6 +1,7 @@
 {
   "name": "branch-switch-typescript-app",
   "purpose": "Repository fixture for branch-switch invalidation benchmarks.",
+  "benchmarkTask": "Explain calculateDiscount behavior and the tests that cover it.",
   "repoShape": {
     "branches": ["main", "feature/context"],
     "worktree": "clean",

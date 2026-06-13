@@ -12,11 +12,17 @@ export interface TokenReductionBenchmarkInput extends BenchmarkFixtureInput {
   readonly task: string;
 }
 
-export interface BranchSwitchBenchmarkInput extends BenchmarkFixtureInput {}
+export interface BranchSwitchBenchmarkInput extends BenchmarkFixtureInput {
+  readonly task: string;
+}
 
-export interface StaleSourceBenchmarkInput extends BenchmarkFixtureInput {}
+export interface StaleSourceBenchmarkInput extends BenchmarkFixtureInput {
+  readonly task: string;
+}
 
-export interface SessionResetBenchmarkInput extends BenchmarkFixtureInput {}
+export interface SessionResetBenchmarkInput extends BenchmarkFixtureInput {
+  readonly task: string;
+}
 
 export type BenchmarkStatus = "pass" | "fail";
 

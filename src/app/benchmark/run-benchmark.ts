@@ -2,20 +2,23 @@ import { runBranchSwitchBenchmark } from "./branch-switch.js";
 import { runSessionResetBenchmark } from "./session-reset.js";
 import { runStaleSourceBenchmark } from "./stale-source.js";
 import { runTokenReductionBenchmark } from "./token-reduction.js";
+import { resolveBenchmarkTask } from "./fixture-metadata.js";
 import type { BenchmarkFixtureInput, BenchmarkResult } from "./types.js";
 
 export function runFixtureBenchmark(input: BenchmarkFixtureInput): BenchmarkResult {
+  const resolvedInput = {
+    ...input,
+    task: resolveBenchmarkTask(input)
+  };
+
   switch (input.fixtureName) {
     case "branch-switch-typescript-app":
-      return runBranchSwitchBenchmark(input);
+      return runBranchSwitchBenchmark(resolvedInput);
     case "session-reset-typescript-app":
-      return runSessionResetBenchmark(input);
+      return runSessionResetBenchmark(resolvedInput);
     case "stale-source-typescript-app":
-      return runStaleSourceBenchmark(input);
+      return runStaleSourceBenchmark(resolvedInput);
     default:
-      return runTokenReductionBenchmark({
-        ...input,
-        task: input.task ?? "Explain calculateDiscount behavior and the tests that cover it."
-      });
+      return runTokenReductionBenchmark(resolvedInput);
   }
 }

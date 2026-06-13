@@ -221,6 +221,8 @@ grape bench --fixture clean-typescript-app
 grape bench --fixture branch-switch-typescript-app
 grape bench --fixture stale-source-typescript-app
 grape bench --fixture session-reset-typescript-app
+grape bench --fixture polyglot-fallback-repo
+grape bench --fixture monorepo-lite-repo
 ```
 
 MCP exposes the same local transport path through `grape mcp --stdio`. Read tools include context retrieval, artifacts, claims, proofs, rules, omitted restore, stale items, conflicts, and status. Restricted write tools can record temporary candidates, command/test observations, user decisions, and confirmation requests, but they cannot promote durable truth directly.

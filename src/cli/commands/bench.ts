@@ -5,8 +5,6 @@ import { exitCodes } from "../exit-codes.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
 import { errorMessage, renderProblems, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 
-const defaultBenchmarkTask = "Explain calculateDiscount behavior and the tests that cover it.";
-
 export async function runBench(parsed: ParsedArgs): Promise<number> {
   const flag = unsupportedFlag(
     parsed,
@@ -30,7 +28,7 @@ export async function runBench(parsed: ParsedArgs): Promise<number> {
     const result = runFixtureBenchmark({
       fixtureName,
       fixturePath: fixturePathFor(parsed, fixtureName, rootPath),
-      task: parsed.values.get("--task") ?? defaultBenchmarkTask,
+      task: parsed.values.get("--task"),
       keepWorkspace: parsed.flags.has("--keep-workspace")
     });
 

@@ -1,6 +1,7 @@
 {
   "name": "polyglot-fallback-repo",
   "purpose": "Behavior fixture proving safe lexical/path fallback for unsupported or partially supported languages.",
+  "benchmarkTask": "Review member_discount calculate_member_total in src/grape_polyglot/pricing.py and explain fallback limits for common language files.",
   "repoShape": {
     "branches": ["main"],
     "worktree": "clean",
@@ -154,6 +155,6 @@
     "polyglot fixture returns exact fallback evidence for common config formats"
   ],
   "relatedBenchmarks": [
-    "composer_graphify_grape_polyglot_fallback_pending"
+    "bench_token_reduction_after_first_turn"
   ]
 }

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { existsSync, rmSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
@@ -9,6 +10,8 @@ const cleanFixturePath = path.join(fixturesRoot, "clean-typescript-app");
 const branchFixturePath = path.join(fixturesRoot, "branch-switch-typescript-app");
 const staleFixturePath = path.join(fixturesRoot, "stale-source-typescript-app");
 const sessionResetFixturePath = path.join(fixturesRoot, "session-reset-typescript-app");
+const polyglotFixturePath = path.join(fixturesRoot, "polyglot-fallback-repo");
+const monorepoFixturePath = path.join(fixturesRoot, "monorepo-lite-repo");
 
 function runCli(args) {
   return spawnSync(process.execPath, [cliPath, ...args], {
@@ -32,6 +35,7 @@ test("cli bench reports deterministic token reduction for a named fixture", () =
   const output = JSON.parse(result.stdout);
   assert.equal(output.benchmark, "bench_token_reduction_after_first_turn");
   assert.equal(output.fixture, "clean-typescript-app");
+  assert.equal(output.task, "Explain calculateDiscount behavior and the tests that cover it.");
   assert.equal(output.status, "pass");
   assert.equal(output.workspacePath, undefined);
   assert.equal(output.turns.length, 2);
@@ -118,11 +122,81 @@ test("cli bench session-reset fixture reports invalidation and full resend after
   const output = JSON.parse(result.stdout);
   assert.equal(output.benchmark, "bench_diff_vs_naive_resend");
   assert.equal(output.fixture, "session-reset-typescript-app");
+  assert.equal(output.task, "Explain session reset handling and the tests that cover it.");
   assert.equal(output.status, "pass");
   assert.equal(output.turns[1].stateCounts.INVALIDATE_PREVIOUS > 0, true);
   assert.equal(output.turns[1].stateCounts.NEW > 0, true);
   assert.equal(output.turns[1].stateCounts.OMIT_UNCHANGED ?? 0, 0);
   assert.deepEqual(output.failures, []);
+});
+
+test("cli bench polyglot fixture uses fixture metadata task", () => {
+  const result = runCli([
+    "bench",
+    "--fixture",
+    "polyglot-fallback-repo",
+    "--fixture-path",
+    polyglotFixturePath,
+    "--json"
+  ]);
+
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.benchmark, "bench_token_reduction_after_first_turn");
+  assert.equal(output.fixture, "polyglot-fallback-repo");
+  assert.match(output.task, /calculate_member_total/);
+  assert.doesNotMatch(output.task, /calculateDiscount/);
+  assert.equal(output.status, "pass");
+  assert.equal(output.turns[1].stateCounts.OMIT_UNCHANGED > 0, true);
+  assert.equal(output.turns[1].restoreAvailableCount > 0, true);
+  assert.equal(output.turns[1].unsafeOmissions, 0);
+  assert.deepEqual(output.failures, []);
+});
+
+test("cli bench monorepo fixture uses fixture metadata task", () => {
+  const result = runCli([
+    "bench",
+    "--fixture",
+    "monorepo-lite-repo",
+    "--fixture-path",
+    monorepoFixturePath,
+    "--json"
+  ]);
+
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.benchmark, "bench_token_reduction_after_first_turn");
+  assert.equal(output.fixture, "monorepo-lite-repo");
+  assert.match(output.task, /apiBillingTotal/);
+  assert.doesNotMatch(output.task, /calculateDiscount/);
+  assert.equal(output.status, "pass");
+  assert.equal(output.turns[1].stateCounts.OMIT_UNCHANGED > 0, true);
+  assert.equal(output.turns[1].restoreAvailableCount > 0, true);
+  assert.equal(output.turns[1].unsafeOmissions, 0);
+  assert.deepEqual(output.failures, []);
+});
+
+test("cli bench does not copy fixture metadata into the prepared repo", () => {
+  const result = runCli([
+    "bench",
+    "--fixture",
+    "clean-typescript-app",
+    "--fixture-path",
+    cleanFixturePath,
+    "--keep-workspace",
+    "--json"
+  ]);
+
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  try {
+    assert.equal(typeof output.workspacePath, "string");
+    assert.equal(existsSync(path.join(output.workspacePath, "clean-typescript-app", "grape-fixture.json")), false);
+  } finally {
+    if (typeof output.workspacePath === "string") {
+      rmSync(output.workspacePath, { recursive: true, force: true });
+    }
+  }
 });
 
 test("cli bench requires a named fixture", () => {

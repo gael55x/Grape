@@ -540,7 +540,7 @@ Transport/indexable fallback:
 
 - any allowed Git-visible text file whose bytes pass privacy, size, binary, hash, and secret-scan gates
 - unsupported language files receive file path/text indexing and exact-source excerpt support where safe
-- example fallback languages include Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, shell, and Terraform until a provider proves stronger graph capabilities
+- example fallback languages include Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, shell, JSON, YAML, TOML, and explicit Markdown paths until a provider proves stronger graph capabilities
 - parser failures receive file-level lexical indexing with warnings
 
 Primary graph extraction:

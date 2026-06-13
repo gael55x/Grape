@@ -5,8 +5,6 @@ import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
 import type { StaleSourceBenchmarkInput, StaleSourceBenchmarkResult } from "./types.js";
 
-const defaultTask = "Explain calculateDiscount behavior and the tests that cover it.";
-
 export function runStaleSourceBenchmark(input: StaleSourceBenchmarkInput): StaleSourceBenchmarkResult {
   const prepared = prepareBenchmarkFixtureRepository({
     fixtureName: input.fixtureName,
@@ -15,7 +13,7 @@ export function runStaleSourceBenchmark(input: StaleSourceBenchmarkInput): Stale
     keepWorkspace: input.keepWorkspace
   });
 
-  const task = input.task ?? defaultTask;
+  const task = input.task;
   const sessionId = benchmarkSessionId(input.fixtureName, "stale");
 
   try {

@@ -5,8 +5,6 @@ import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { execGitInBenchmarkRepo, prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
 import type { BranchSwitchBenchmarkInput, BranchSwitchBenchmarkResult } from "./types.js";
 
-const defaultTask = "Explain calculateDiscount behavior and the tests that cover it.";
-
 export function runBranchSwitchBenchmark(input: BranchSwitchBenchmarkInput): BranchSwitchBenchmarkResult {
   const prepared = prepareBenchmarkFixtureRepository({
     fixtureName: input.fixtureName,
@@ -16,7 +14,7 @@ export function runBranchSwitchBenchmark(input: BranchSwitchBenchmarkInput): Bra
   });
 
   const gitBinary = input.gitBinary ?? "git";
-  const task = input.task ?? defaultTask;
+  const task = input.task;
   const sessionId = benchmarkSessionId(input.fixtureName, "branch");
 
   try {

@@ -1,6 +1,7 @@
 {
   "name": "session-reset-typescript-app",
   "purpose": "Repository fixture for explicit session-reset invalidation benchmarks.",
+  "benchmarkTask": "Explain session reset handling and the tests that cover it.",
   "repoShape": {
     "branches": ["main"],
     "worktree": "clean",

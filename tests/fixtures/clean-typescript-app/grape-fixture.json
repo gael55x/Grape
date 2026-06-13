@@ -1,6 +1,7 @@
 {
   "name": "clean-typescript-app",
   "purpose": "Baseline clean repository for In-Memory Context Loop context compilation.",
+  "benchmarkTask": "Explain calculateDiscount behavior and the tests that cover it.",
   "repoShape": {
     "branches": ["main"],
     "worktree": "clean",

@@ -37,7 +37,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - Global install smoke passed against `grape-context@0.1.0-alpha.3`.
 - Published-package smoke passed against registry-installed alpha.3 in the external benchmark workspace.
 - The benchmark workspace reports 13/13 scripted scenarios passing when run with the documented methodology and stable task/session contract.
-- In-repo `grape bench` fixtures cover clean, branch-switch, stale-source, and session-reset scenarios.
+- In-repo `grape bench` fixtures cover clean, branch-switch, stale-source, session-reset, polyglot fallback, and monorepo-lite scenarios.
 - Package dry-run and install smoke are part of the local gate.
 - `npm run beta:check` runs the full local beta-readiness gate.
 - Local `grape run` / `grape test` can promote narrow `grape_observed_run_result` proofs/claims from trusted observed run metadata.

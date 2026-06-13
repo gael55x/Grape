@@ -1,6 +1,7 @@
 {
   "name": "stale-source-typescript-app",
   "purpose": "Repository fixture for dependency-stale invalidation benchmarks.",
+  "benchmarkTask": "Explain calculateDiscount behavior and the tests that cover it.",
   "repoShape": {
     "branches": ["main"],
     "worktree": "clean",

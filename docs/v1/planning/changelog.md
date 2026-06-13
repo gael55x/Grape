@@ -8,6 +8,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- Moved `grape bench` default tasks into fixture metadata, required `benchmarkTask` in fixture checks, and added polyglot fallback plus monorepo-lite to the scripted no-change benchmark suite.
 - Omitted experimental `agentGraph` from default MCP `agent_pack` output so compact transport no longer spends tokens on unproven graph adjacency. Full inspection output still provides the graph cut.
 - Omitted optional inline `contextPackMarkdown` from default MCP `agent_pack` output so compact transport no longer duplicates structured `contextPackItems` and `artifactRef`. Full inspection output and stored artifact Markdown still provide the Markdown view.
 - Restricted import graph edges to AST-backed files so generic fallback files do not emit module-edge evidence that their provider metadata says is unsupported.

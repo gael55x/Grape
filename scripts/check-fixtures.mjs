@@ -16,6 +16,12 @@ function requireArray(value, field, fixturePath) {
   }
 }
 
+function requireNonEmptyString(value, field, fixturePath) {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    errors.push(`${fixturePath}: ${field} must be a non-empty string`);
+  }
+}
+
 if (existsSync(fixturesRoot)) {
   for (const entry of readdirSync(fixturesRoot, { withFileTypes: true })) {
     if (!entry.isDirectory()) {
@@ -42,6 +48,7 @@ if (existsSync(fixturesRoot)) {
     requireArray(metadata.expectedArtifactSections, "expectedArtifactSections", fixtureLabel);
     requireArray(metadata.expectedFirstTurnDiffStates, "expectedFirstTurnDiffStates", fixtureLabel);
     requireArray(metadata.expectedSecondTurnDiffStates, "expectedSecondTurnDiffStates", fixtureLabel);
+    requireNonEmptyString(metadata.benchmarkTask, "benchmarkTask", fixtureLabel);
 
     for (const file of metadata.files ?? []) {
       const filePath = join(fixtureDir, file.path);

@@ -1,6 +1,7 @@
 {
   "name": "monorepo-lite-repo",
   "purpose": "Behavior fixture proving task-specific retrieval stays focused on a nested package when explicit package refs are present.",
+  "benchmarkTask": "Fix apiBillingTotal in packages/api/src/apiBilling.ts and include the package-local test without pulling packages/web context.",
   "repoShape": {
     "branches": ["main"],
     "worktree": "clean",
@@ -82,6 +83,6 @@
     "monorepo fixture keeps task retrieval focused on package-local source and tests"
   ],
   "relatedBenchmarks": [
-    "composer_graphify_grape_monorepo_pending"
+    "bench_token_reduction_after_first_turn"
   ]
 }

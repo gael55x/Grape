@@ -69,8 +69,10 @@ Fixture name selects the benchmark scenario:
 | `branch-switch-typescript-app` | `bench_branch_switch_invalidation` |
 | `stale-source-typescript-app` | `bench_stale_source_invalidation` |
 | `session-reset-typescript-app` | `bench_diff_vs_naive_resend` |
+| `polyglot-fallback-repo` | `bench_token_reduction_after_first_turn` |
+| `monorepo-lite-repo` | `bench_token_reduction_after_first_turn` |
 
-Checked-in behavior fixtures also exist for `polyglot-fallback-repo` and `monorepo-lite-repo`. They prove safe fallback and explicit package-path scoping in tests, but `grape bench` does not run them as token or latency benchmarks yet.
+Each fixture metadata file owns its default `benchmarkTask`. `--task <text>` overrides that fixture-owned task for ad hoc local inspection.
 
 Run all fixtures:
 
@@ -90,12 +92,14 @@ Machine-local reference run on `main` with Node.js 22.18.0. CI may differ slight
 
 | Fixture | Turn 1 tokens | Turn 2 tokens | Turn 2 reduction | Serialized agent output | Agent output overhead | `OMIT_UNCHANGED` | `INVALIDATE_PREVIOUS` | Unsafe |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `clean-typescript-app` | 3481 | 1678 | 58.29% | 28483 | 178.48% | 7 | 1 | 0 |
-| `branch-switch-typescript-app` | 3481 | 4110 | 0% | 29967 | 179.11% | 0 | 9 | 0 |
-| `stale-source-typescript-app` | 3481 | 4349 | 0% | 30674 | 178.94% | 0 | 9 | 0 |
-| `session-reset-typescript-app` | 3790 | 4959 | 0% | 32258 | 177.87% | 0 | 9 | 0 |
+| `clean-typescript-app` | 2811 | 1663 | 50.4% | 26021 | 215.35% | 7 | 1 | 0 |
+| `branch-switch-typescript-app` | 2811 | 3440 | 0% | 27460 | 216.13% | 0 | 9 | 0 |
+| `stale-source-typescript-app` | 2811 | 3600 | 0% | 27824 | 215.91% | 0 | 9 | 0 |
+| `session-reset-typescript-app` | 3770 | 4947 | 0% | 32561 | 182.2% | 0 | 9 | 0 |
+| `polyglot-fallback-repo` | 3132 | 2523 | 31.46% | 20191 | 121.71% | 7 | 1 | 0 |
+| `monorepo-lite-repo` | 3388 | 1885 | 52.07% | 28509 | 186.32% | 7 | 1 | 0 |
 
-Token reduction thresholds apply only to `clean-typescript-app`. Invalidation benchmarks require `INVALIDATE_PREVIOUS > 0` on turn 2 with zero unsafe omissions. The session-reset benchmark also requires `NEW > 0` and `OMIT_UNCHANGED = 0` on the reset turn to prove the agent receives a safe full resend instead of a no-change omission.
+Token reduction thresholds apply to no-change transport fixtures: `clean-typescript-app`, `polyglot-fallback-repo`, and `monorepo-lite-repo`. Invalidation benchmarks require `INVALIDATE_PREVIOUS > 0` on turn 2 with zero unsafe omissions. The session-reset benchmark also requires `NEW > 0` and `OMIT_UNCHANGED = 0` on the reset turn to prove the agent receives a safe full resend instead of a no-change omission.
 
 Current benchmark thresholds:
 

@@ -59,6 +59,7 @@ function safeFixtureDirName(value: string): string {
 function shouldCopyFixturePath(rootPath: string, sourcePath: string): boolean {
   const relativePath = path.relative(rootPath, sourcePath);
   if (relativePath === "") return true;
+  if (relativePath === "grape-fixture.json") return false;
 
   const segments = relativePath.split(path.sep);
   if (segments.includes(".git") || segments.includes("node_modules")) return false;

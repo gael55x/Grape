@@ -28,6 +28,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added a beta trial checklist for real MCP client trials, pass/fail criteria, recovery scenarios, and explicit durable-workflow beta exclusions.
 - Reduced default MCP `grape_get_context` payload duplication for beta trials. The tool now returns compact `agent_pack` output by default, keeps full artifacts behind `outputMode: "full"` / `grape_get_artifact`, summarizes MCP text instead of duplicating structured JSON, and reports serialized agent-output token estimates in benchmarks.
 - Moved experimental MCP `agentGraph` data out of default `agent_pack` output. `outputMode: "full"` still returns the graph for inspection.
+- `grape bench --fixture <name>` now reads the default benchmark task from each fixture's `grape-fixture.json` metadata instead of using a TypeScript discount-app task for every fixture. The benchmark suite now includes the polyglot fallback and monorepo-lite fixtures as scripted no-change transport scenarios.
 - Hardened local compile performance without changing transport semantics: repeated compiles reuse the already-captured repo snapshot, skip existing snapshot evidence/index materialization when rows are complete, use narrower session-ledger queries, and apply bounded SQL prefiltering before lexical match fallback.
 
 ## 0.1.0-alpha.3 - 2026-05-31
