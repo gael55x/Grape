@@ -129,7 +129,7 @@ This is acceptable for a controlled beta only if the promise stays: reliable con
 
 ## Known Failure Modes And Bad Assumptions
 
-- Shallow provider dispatch: `src/core/indexing/file-index.ts` chooses between the TS/JS parser and generic text fallback, but broad provider modules under `src/core/indexing/languages/` are still pending.
+- Shallow provider dispatch: `src/core/indexing/file-index.ts` chooses between the TS/JS parser and generic text fallback. Grape does not yet have a dedicated provider dispatcher or per-language provider module tree.
 - JS-style import bias: local import resolution checks JS/TS extensions and `index.*` forms only.
 - Regex fallback is declaration-only: generic symbol detection recognizes conservative common declaration lines, but it can miss decorators, annotations, macros, overloads, generated code, nested declarations, language-specific type aliases, and framework entry points.
 - Language detection gaps: unknown extensions still collapse to `unknown`, and language labels do not imply graph extraction capability.
