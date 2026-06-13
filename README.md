@@ -27,307 +27,355 @@
 
 
 
+## Stop making agents rediscover your codebase
 
+AI coding agents are powerful, but they waste context.
 
-Grape is a local-first context compiler and context transport layer for AI coding agents.
+They reread the same files.
+They rediscover the same project rules.
+They forget what changed between turns.
+They keep stale assumptions after branch switches and file edits.
+They burn tool calls rebuilding context they already had.
 
-Instead of making agents reread the same files, rediscover the same rules, and repeat the same mistakes, Grape turns repository knowledge into dependency-tracked context artifacts that can be diffed, restored, and invalidated.
+Grape gives coding agents a local context layer for real repositories.
 
-Grape is not a coding assistant, chatbot, broad agent memory platform, vector database, correctness prover, repo graph daemon, or generic search layer. It is session-scoped, proof-backed context transport: built to make coding agents cheaper to run, harder to mislead, and more consistent on real codebases.
+It compiles the useful parts of your repo into dependency-tracked context artifacts, remembers what a specific agent session has already seen, and sends only what is new, changed, pinned, restorable, or stale.
 
-After MCP setup, the agent calls `grape_get_context` each turn with stable session identity. Grape tracks what that session has already seen, invalidates stale context when repo state changes, and ships only the safe delta (`NEW`, `CHANGED`, `PINNED`, `RESTORE_AVAILABLE`, `INVALIDATE_PREVIOUS`) without manual compile/diff commands. Install Grape once, configure your agent through MCP, and keep using your coding agent normally.
+The result is cleaner agent context, safer omission, and fewer repeated “let me inspect the repo again” loops.
 
-## Quickstart
+## What Grape does
 
-**1.0 beta transport slice:** Grape ships as `grape-context@1.0.0-beta.0` on npm under the `beta` dist-tag. It requires **Node.js 22.13+**.
+Grape sits between your repository and your AI coding agent.
 
-**Install the published beta:**
+It helps the agent answer three questions every turn:
+
+1. **What context does this task need?**
+2. **What context has this session already received?**
+3. **What previous context is now stale because the repo changed?**
+
+Instead of shipping a fresh wall of files every time, Grape returns a structured context pack:
+
+| Item                  | Meaning                                                               |
+| --------------------- | --------------------------------------------------------------------- |
+| `NEW`                 | Context the current session has not seen yet.                         |
+| `CHANGED`             | Context that changed since the session last saw it.                   |
+| `PINNED`              | Safety-critical context that must be resent.                          |
+| `OMIT_UNCHANGED`      | Context safely omitted because this same session already received it. |
+| `RESTORE_AVAILABLE`   | Omitted context that can be fetched back if needed.                   |
+| `INVALIDATE_PREVIOUS` | Prior context that should no longer be trusted.                       |
+
+Grape is not trying to replace your coding agent. It makes your existing agent better at carrying repository context across turns.
+
+## Install
+
+Requirements:
+
+* Node.js 22.13 or newer
+* npm
+* Git
+
+Install Grape:
 
 ```bash
-npm install -g grape-context@beta
+npm install -g grape-context
+```
+
+Initialize it inside a repository:
+
+```bash
 grape init --connect
 ```
 
-To pin the exact prerelease:
+This creates local Grape state, captures the initial repository snapshot, and prints MCP setup guidance for your coding agent.
+
+Check local privacy settings:
 
 ```bash
-npm install -g grape-context@1.0.0-beta.0
-grape init --connect
+grape doctor --privacy
 ```
 
-npm `latest` and `beta` both point at `1.0.0-beta.0`. The `alpha` dist-tag still points at `0.1.0-alpha.3`. Alpha install docs are historical: [Alpha era legacy](docs/v1/legacy/alpha/README.md).
+## Use it with an agent
 
-`grape init --connect` creates `.grape/`, applies local SQLite migrations, captures the initial Git snapshot, reports scan diagnostics, and prints MCP integration guidance plus an agent instruction block you can paste into Cursor, Claude Code, or other MCP clients.
+Grape works best through MCP.
 
-Run `grape doctor --privacy` after setup to review local-first defaults, ignored paths, and scanner coverage without exposing file bodies or secret values.
-
-An MCP-capable coding agent then requests context through:
+After setup, your MCP-capable coding agent calls:
 
 ```text
 grape_get_context
 ```
 
-Grape only omits context already sent to the **same session**. If the MCP client changes session ID, Grape resends rather than unsafe-omit. Restore is session-bound. Branch, source, and dependency changes may invalidate prior sent context.
+The agent can then request task-specific repository context without manually rebuilding the same prompt every turn.
 
-For continued turns, keep the same task/query and session identity. The beta session contract is strict by design: different task wording with the same explicit session is a mismatch, and derived MCP sessions change when the query changes. See [Agent Sessions](docs/v1/interfaces/agent-sessions.md) for examples and recovery paths.
-
-## Security And AI Context Safety
-
-Grape is local-first and does not send repository content, proofs, artifacts, embeddings, telemetry, or summaries to a remote service by default. It respects Git and local privacy ignores, rejects local `.grape/` runtime state from snapshots, blocks common raw secret shapes before artifact output, and keeps generated local state out of Git through `.git/info/exclude`.
-
-Repository content is still untrusted input. Source files, docs, comments, rules, and fixtures can contain prompt-injection text or private implementation details that may be delivered to an AI agent as evidence. Review generated context before pasting or forwarding it to an LLM, and keep secrets in ignored files rather than relying on any scanner as the only control.
-
-## Why Grape Exists
-
-AI coding agents repeatedly spend context window and tool calls rediscovering the same facts:
-
-- repository structure
-- active project rules
-- branch and worktree state
-- relevant code, tests, config, and decisions
-- prior failures and stale assumptions
-- context already sent earlier in the same session
-
-Search, embeddings, repo maps, and graph retrieval can find related information. Grape’s wedge is different: it treats context like a build artifact. It compiles what is safe and current, remembers what this exact agent session already received, and sends only what is new, changed, pinned, restorable, or invalidated.
-
-The goal is not just smaller prompts. The goal is trustworthy incremental context: safe omission of unchanged context without hiding uncertainty, stale evidence, or safety-critical constraints.
-
-Internally, Grape context is graph-shaped: source refs, symbols, package manifests, proofs, dependency refs, pack items, omissions, restore handles, and invalidations are connected. Language-specific parsers only add optional orientation edges. TypeScript/JavaScript graph extraction is the strongest current signal. Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, shell, JSON, YAML, TOML, Markdown, and other allowed text files must still be handled safely through exact source, path, and lexical fallback until providers prove stronger graph coverage.
-
-## What Grape Does
-
-Grape compiles safe, current repository context into a dependency-tracked artifact, diffs it against what the current agent session already received, and sends a structured context pack:
-
-- `NEW` for context the agent has not seen
-- `CHANGED` for updated context
-- `PINNED` for safety-critical context that must be resent
-- `OMIT_UNCHANGED` for safe omission of unchanged context
-- `RESTORE_AVAILABLE` for omitted content that can be fetched back
-- `INVALIDATE_PREVIOUS` for stale prior context
-
-## Core Guarantees
-
-Grape is designed around a few hard rules:
-
-- **Runs on repository state directly.** Context is built from the working tree, branch state, proofs, rules, and session ledger.
-- **Proof before durable truth.** Raw evidence, assistant summaries, and durable claims stay separate.
-- **Current-valid before relevance.** Stale, branch-invalid, dirty-scope, private, or contradicted facts are filtered before ranking.
-- **Compression is cache, not truth.** Summaries can orient; they cannot prove behavior.
-- **Diffs are session-scoped.** One agent session cannot omit context just because another session saw it.
-- **Pinned safety context is resent.** Rules and high-risk context are not optimized away.
-- **Every artifact has dependencies.** Context can be invalidated when files, proofs, rules, config, branches, or manifests change.
-
-## Product Model
+A typical loop looks like this:
 
 ```text
-repo snapshot
-+ worktree state
-+ task policy
-+ active rules
-+ proof-backed claims
-+ relevant code, tests, and config
-+ dependency hashes
-+ prior sent context for this session
--> ContextArtifact
--> ContextDiff
--> ContextPack
+User asks coding agent to fix a task
+Agent calls grape_get_context
+Grape returns relevant repo context
+Agent edits code
+Repo changes
+Agent calls grape_get_context again
+Grape sends only the useful delta and invalidates stale context
 ```
 
-Core objects:
-
-| Object | Purpose |
-|---|---|
-| `ContextArtifact` | A compiled, dependency-tracked context artifact for a task. |
-| `ContextDiff` | The session-scoped delta between the latest artifact and what the agent has already seen. |
-| `ContextPackItem` | A structured item sent as `NEW`, `CHANGED`, `PINNED`, `OMIT_UNCHANGED`, `INVALIDATE_PREVIOUS`, or `RESTORE_AVAILABLE`. |
-| `Trust Kernel` | The rules that prevent unproven, stale, private, or assistant-generated claims from becoming durable truth. |
-| `Compression Cache` | Deterministic derived cache used to reduce repeated transport cost, never proof. |
-
-## Current Status
-
-Grape 1.0 beta is a local-first context transport slice for coding agents. It compiles repository evidence into session-aware context packs through CLI and MCP. Official benchmark superiority claims are pending proper post-publish benchmark runs.
-
-Implemented in the 1.0 beta transport slice:
-
-- global npm install and `grape init --connect`
-- local SQLite session ledger and dependency manifests
-- CLI and MCP `grape_get_context` transport
-- session-scoped `NEW`, `PINNED`, `OMIT_UNCHANGED`, `RESTORE_AVAILABLE`, and `INVALIDATE_PREVIOUS` context packs
-- branch switch, stale source, and explicit session reset invalidation
-- omitted-context restore through CLI and MCP
-- exact source/rule proof rows, narrow current-valid claims, parsed project rules, and conservative conflict inspection
-- deterministic TypeScript/JavaScript AST graph indexing for common imports, exports, symbols, calls, and related test hints
-- safe exact/path/lexical fallback for Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, shell, JSON, YAML, TOML, and explicit Markdown paths, with broad language-aware graph providers still pending
-- Grape-observed `grape run` / `grape test` evidence and narrow observed-run result claims
-- local checks for docs, architecture boundaries, storage, typechecking, package contents, install smoke, behavior tests, benchmarks, alpha e2e smoke, and the automated beta client trial
-
-Not in the 1.0 beta promise:
-
-- this is local context transport, not a full memory platform or cloud sync product
-- stable task/session identity is required for reliable second-turn omission
-- broader runtime truth from Grape-observed command/test runs is not promoted beyond the narrow observed-run result claim
-- retrieval has AST-backed TypeScript/JavaScript graph expansion, while Python/Java/Kotlin/Go/Rust/C#/Ruby/PHP/Swift/C/C++/shell/config/docs paths currently rely on safe fallback unless a provider and fixture prove stronger support
-- no full semantic ranking, embeddings, complete call graphs, broad language parsing, or broad polyglot/monorepo graph claim yet
-- broader durable claim types, nested rule scope resolution, and automatic conflict resolution remain outside the beta transport promise
-- automated `npm run beta:client-trial` proves MCP over stdio from a packed install; a literal Cursor or Claude Code UI trial still needs a human run when release policy requires it
-- numeric token savings are fixture estimates only; on the recorded 2026-06-13 tarball run at `e8a1656`, all six gated fixtures passed with zero unsafe omissions (see [Benchmarks](docs/v1/quality/benchmarks.md))
-
-## Architecture
-
-```mermaid
-flowchart LR
-  Agent[AI Agent / CLI] --> Adapter[CLI or MCP Adapter]
-  Adapter --> App[Application Services]
-  App --> State[State Machine]
-  App --> Repo[Repo Snapshot]
-  Repo --> Evidence[Evidence Store]
-  Evidence --> Trust[Trust Kernel]
-  Trust --> Scope[Scope Engine]
-  Scope --> Current[Current-Valid Retrieval]
-  Current --> Compiler[Context Compiler]
-  Compression[Compression Cache] --> Compiler
-  Compiler --> Artifact[Context Artifact]
-  Artifact --> Diff[Context Diff]
-  Sessions[Session Locks] --> Diff
-  Diff --> Pack[Context Pack]
-  Pack --> Adapter
-  Storage[(SQLite Repositories)] --> Evidence
-  Storage --> Trust
-  Storage --> Current
-  Storage --> Compiler
-  Storage --> Diff
-```
-
-## CLI And MCP
-
-Manual CLI commands are debugging and fallback surfaces:
+Manual CLI usage is available for debugging:
 
 ```bash
 grape compile --task "Explain the files I need to edit"
-grape compile --task "Explain the files I need to edit" --token-budget 4000
-grape artifacts
-grape artifacts --artifact <id>
-grape proofs
-grape proofs --proof <id>
-grape claims --active
-grape sessions
 grape status
-grape doctor
-grape mcp --print-config
-grape mcp --stdio
+grape sessions
+grape artifacts
 grape omitted --session <id>
-grape omitted --session <id> --token <restoreToken>
 grape stale
 grape conflicts
-grape conflicts --resolve <edge_id> --as coexists_with
-grape run --session <id> -- <cmd...>
-grape test --session <id> -- <cmd...>
-grape bench --fixture clean-typescript-app
-grape bench --fixture branch-switch-typescript-app
-grape bench --fixture stale-source-typescript-app
-grape bench --fixture session-reset-typescript-app
-grape bench --fixture polyglot-fallback-repo
-grape bench --fixture monorepo-lite-repo
 ```
 
-MCP exposes the same local transport path through `grape mcp --stdio`. Read tools include context retrieval, artifacts, claims, proofs, rules, omitted restore, stale items, conflicts, and status. Restricted write tools can record temporary candidates, command/test observations, user decisions, and confirmation requests, but they cannot promote durable truth directly.
+See the full [CLI reference](docs/v1/interfaces/cli.md) and [MCP tools](docs/v1/interfaces/mcp-tools.md).
 
-If npm appears to keep an older package after install, clear the cache and reinstall the beta package:
+## Why this matters
+
+Most agent workflows still treat context as disposable text.
+
+That breaks down on larger tasks because the agent needs more than search results. It needs to know:
+
+* which files matter
+* which rules apply
+* which context it already saw
+* which context changed
+* which assumptions are stale
+* which omitted context can be restored
+* which safety constraints must be repeated
+* which evidence supports a claim
+
+Grape treats context like a build artifact.
+
+It is compiled from repository state, linked to dependencies, scoped to a session, and invalidated when its inputs change.
+
+## Local-first by design
+
+Grape runs against your local repository.
+
+By default, it does not send repository content, artifacts, proofs, summaries, embeddings, or telemetry to a remote Grape service.
+
+Local runtime state lives under `.grape/`. Grape keeps this state out of Git through `.git/info/exclude`.
+
+Grape also:
+
+* respects Git ignores and local privacy ignores
+* excludes `.grape/` runtime state from snapshots
+* blocks common raw secret shapes before artifact output
+* avoids exposing raw secret values in diagnostics
+* separates raw evidence from assistant-written summaries
+* prevents summaries from becoming durable proof
+
+Repository content is still untrusted input. Source files, comments, docs, tests, and fixtures can contain prompt-injection text or private implementation details. Review context before forwarding it to an LLM, and keep real secrets in ignored files.
+
+## How Grape works
+
+Grape has three core stages.
+
+### 1. Compile
+
+Grape reads the working tree, branch state, source excerpts, project rules, manifests, observed command results, and narrow proof-backed claims.
+
+It builds a `ContextArtifact` for the current task.
+
+### 2. Track
+
+Each artifact records the files, rules, proofs, config, branch state, manifests, and dependency hashes that shaped it.
+
+When those inputs change, Grape can detect stale context instead of silently reusing it.
+
+### 3. Diff
+
+Grape compares the latest artifact with what the same agent session already received.
+
+It then returns a `ContextPack` containing only the useful delta.
+
+```mermaid
+flowchart LR
+  Agent[AI coding agent] --> MCP[MCP or CLI]
+  MCP --> Compile[Compile context]
+  Compile --> Artifact[Context artifact]
+  Artifact --> Diff[Session diff]
+  Diff --> Pack[Context pack]
+  Pack --> Agent
+  Repo[Git working tree] --> Compile
+  State[(Local SQLite state)] --> Compile
+  State --> Diff
+```
+
+## Core guarantees
+
+Grape is built around strict context rules:
+
+* **Repository state is the source of truth.** Context comes from the working tree, branch state, rules, evidence, and local session ledger.
+* **Diffs are session-scoped.** One session cannot omit context just because another session saw it.
+* **Pinned context is resent.** Safety-critical rules and constraints are not optimized away.
+* **Stale context is invalidated.** Branch, file, rule, config, manifest, and proof changes can invalidate prior context.
+* **Proof is not summary.** Assistant-written summaries cannot promote themselves into durable truth.
+* **Compression is cache, not truth.** Summaries may reduce repeated transport cost, but they do not prove behavior.
+* **Current context beats merely relevant context.** Stale, private, branch-invalid, dirty-scope, or contradicted context is filtered before ranking.
+
+## What Grape is not
+
+Grape is not:
+
+* a chatbot
+* a coding assistant
+* a vector database
+* a cloud memory platform
+* a correctness prover
+* a full repo graph daemon
+* a replacement for tests or review
+
+Grape does not prove that an agent’s answer is correct. It gives the agent better repository context to work with.
+
+## Language support
+
+Grape currently has its strongest graph signal for TypeScript and JavaScript.
+
+For other languages and text formats, Grape uses safe fallback behavior unless stronger support is proven through fixtures.
+
+Fallback coverage includes:
+
+* Python
+* Java
+* Kotlin
+* Go
+* Rust
+* C#
+* Ruby
+* PHP
+* Swift
+* C
+* C++
+* shell
+* JSON
+* YAML
+* TOML
+* Markdown
+
+Fallback does not mean ignored. It means Grape avoids pretending it has precise graph knowledge when it only has exact source, paths, lexical matches, or explicit references.
+
+## Project status
+
+Grape is currently in 1.0 beta.
+
+The beta focuses on local context transport, session-aware diffs, restore behavior, stale context invalidation, proof separation, and MCP integration.
+
+Implemented today:
+
+* global npm install through `grape-context`
+* `grape init --connect`
+* local SQLite runtime state
+* CLI and MCP context retrieval
+* session-aware context packs
+* omitted context restore
+* branch, source, and session invalidation
+* dependency-tracked context artifacts
+* exact source and rule proof rows
+* narrow current-valid claims
+* TypeScript and JavaScript indexing for common imports, exports, symbols, calls, and related test hints
+* safe fallback for supported text files
+* observed command and test evidence through `grape run` and `grape test`
+* local check suite, benchmark fixtures, package smoke, and packaged MCP smoke
+
+Not promised yet:
+
+* production stability
+* cloud sync
+* broad agent memory
+* full semantic ranking
+* embeddings
+* complete call graphs
+* broad language-aware graph extraction
+* automatic conflict resolution
+* broad durable claim promotion
+* benchmark superiority claims before post-publish validation
+* guaranteed behavior in every IDE MCP client without a human client trial
+
+APIs, schemas, command names, setup guidance, and internal contracts may still change before stable 1.0.
+
+## Development
+
+Install dependencies:
 
 ```bash
-npm cache clean --force
-npm install -g grape-context@beta
+npm ci
+```
+
+Run the local gate:
+
+```bash
+npm run check
+```
+
+Run the extended beta-readiness gate:
+
+```bash
+npm run beta:check
+```
+
+`npm run check` covers documentation structure, fixtures, in-memory context loop checks, architecture boundaries, storage migrations, TypeScript typechecking, package dry-run contents, and behavior tests.
+
+`npm run beta:check` runs the local check suite, benchmark fixtures, and packaged MCP smoke. The packaged MCP smoke validates stdio MCP behavior from an installed package. It is not a replacement for a human Cursor or Claude Code UI trial when release policy requires one.
+
+After installing the published package globally, run:
+
+```bash
+npm run global:smoke
 ```
 
 ## Documentation
 
 Start here:
 
-- [Documentation Index](docs/README.md)
-- [V1 Documentation](docs/v1/README.md)
-- [Implementation Contract](docs/v1/SPEC.md)
-- [Architecture](docs/v1/architecture/overview.md)
-- [State Machine](docs/v1/architecture/state-machine.md)
-- [Invariants](docs/v1/architecture/invariants.md)
-- [Roadmap](ROADMAP.md)
-- [Contributing](CONTRIBUTING.md)
+* [Documentation index](docs/README.md)
+* [V1 documentation](docs/v1/README.md)
+* [Implementation contract](docs/v1/SPEC.md)
+* [Architecture overview](docs/v1/architecture/overview.md)
+* [State machine](docs/v1/architecture/state-machine.md)
+* [Invariants](docs/v1/architecture/invariants.md)
+* [Roadmap](ROADMAP.md)
+* [Contributing](CONTRIBUTING.md)
 
-Core contracts:
+Core references:
 
-- [Trust Model](docs/v1/core/trust-model.md)
-- [Context Artifact](docs/v1/contracts/context-artifact.md)
-- [Context Diff](docs/v1/contracts/context-diff.md)
-- [Agent Sessions](docs/v1/interfaces/agent-sessions.md)
-- [Compression](docs/v1/core/compression.md)
-- [Storage](docs/v1/core/storage.md)
-- [Security](docs/v1/core/security.md)
-- [MCP Tools](docs/v1/interfaces/mcp-tools.md)
-- [CLI](docs/v1/interfaces/cli.md)
-- [Testing](docs/v1/quality/testing.md)
-- [Benchmarks](docs/v1/quality/benchmarks.md)
-- [Alpha era legacy docs](docs/v1/legacy/alpha/README.md)
-
-## Development
-
-Requirements:
-
-- Node.js 22.13+
-- npm
-
-Run the full local gate:
-
-```bash
-npm ci
-npm run check
-```
-
-The check suite currently covers documentation structure, fixtures, in-memory context loop checks, architecture boundaries, storage migrations, TypeScript typechecking, package dry-run contents, and behavior tests.
-
-Run the extended beta-readiness gate before release sign-off:
-
-```bash
-npm run beta:check
-```
-
-`beta:check` runs `check`, `benchmark:run`, `e2e:alpha`, and `beta:client-trial` (scripted packaged MCP smoke, not a real Cursor/Claude client trial).
-
-`npm run beta:check` runs `npm run check`, then `npm run benchmark:run`, `npm run e2e:alpha`, and `npm run beta:client-trial`.
-
-`npm run beta:client-trial` packs the current build, installs it in a temporary consumer git repo, and exercises MCP `initialize`, `tools/list`, `grape_get_status`, two-turn `grape_get_context` with `OMIT_UNCHANGED` and `RESTORE_AVAILABLE`, omitted-item restore, source invalidation after a file edit, stale restore rejection, task/session mismatch recovery guidance, `resetSession` invalidation and resend, branch invalidation, status and output redaction checks, and ignored secret-looking file rejection. It proves stdio MCP from a packaged install, not a specific IDE UI.
-
-GitHub Actions runs `npm run check` on Ubuntu, macOS, and Windows, then a `beta-smoke` job that runs `npm run benchmark:run`, `npm run e2e:alpha`, and `npm run beta:client-trial`.
-
-After installing the published package globally, run the global smoke:
-
-```bash
-npm run global:smoke
-```
+* [Trust model](docs/v1/core/trust-model.md)
+* [Context artifact](docs/v1/contracts/context-artifact.md)
+* [Context diff](docs/v1/contracts/context-diff.md)
+* [Agent sessions](docs/v1/interfaces/agent-sessions.md)
+* [Compression](docs/v1/core/compression.md)
+* [Storage](docs/v1/core/storage.md)
+* [Security](docs/v1/core/security.md)
+* [MCP tools](docs/v1/interfaces/mcp-tools.md)
+* [CLI](docs/v1/interfaces/cli.md)
+* [Testing](docs/v1/quality/testing.md)
+* [Benchmarks](docs/v1/quality/benchmarks.md)
 
 ## Contributing
 
-Grape is not ready for broad feature work yet. Contributions should preserve the implementation contract and avoid expanding product surface before the current roadmap goal is proven.
+Grape is not ready for broad feature expansion yet.
+
+Contributions should preserve the implementation contract and avoid expanding the product surface before the current roadmap goal is proven.
 
 Before contributing, read:
 
-- [Contributing Guide](CONTRIBUTING.md)
-- [Invariants](docs/v1/architecture/invariants.md)
-- [Roadmap](ROADMAP.md)
+* [Contributing guide](CONTRIBUTING.md)
+* [Invariants](docs/v1/architecture/invariants.md)
+* [Roadmap](ROADMAP.md)
 
-Implementation standards are strict:
+Implementation standards:
 
-- no godfiles
-- no generic utility dumps
-- no hidden state transitions
-- no direct SQLite outside storage repositories
-- no summaries as proof
-- no MCP writes that promote durable truth
-- no stale dependency manifests in returned context
+* no godfiles
+* no generic utility dumps
+* no hidden state transitions
+* no direct SQLite access outside storage repositories
+* no summaries as proof
+* no MCP writes that promote durable truth
+* no stale dependency manifests in returned context
 
-## Repository Status
-
-Grape 1.0 beta is prerelease software. APIs, schemas, command names, and setup guidance may still change before stable 1.0. The beta package is not production-ready and is not a broad agent memory platform.
-
-The first post-beta benchmark validation compares the published npm package with naive and search-based context baselines. Those results guide the next retrieval and transport improvements.
 
 ## Star History
 <p align="center">
