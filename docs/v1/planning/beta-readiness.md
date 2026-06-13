@@ -234,7 +234,7 @@ npm install -g grape-context@0.1.0-alpha.3
 
 The public beta transport/schema stability boundary is documented in [`docs/v1/contracts/transport-stability.md`](../contracts/transport-stability.md) and enforced through TypeScript types and `tests/behavior/contracts/beta-transport-contract.test.mjs`. A standalone output JSON Schema artifact is not required for the controlled 1.0 beta.
 
-See [`transport-wedge-cleanup.md`](transport-wedge-cleanup.md) for the alignment summary.
+See [`transport-wedge-cleanup.md`](../legacy/alpha/transport-wedge-cleanup.md) for the alpha.3 alignment summary.
 
 ## Do Not Treat As Beta Complete
 

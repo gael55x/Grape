@@ -157,7 +157,7 @@ Status: complete.
 
 ## In-Memory Context Loop Exit Criteria
 
-- in-memory scope is documented in `in-memory-context-loop.md`
+- in-memory scope is documented in `../legacy/alpha/in-memory-context-loop.md`
 - smallest in-memory path compiles a safe context artifact shape
 - proof-backed claim promotion is implemented for the alpha source types
 - current-valid filtering runs before artifact compilation
