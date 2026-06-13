@@ -1,6 +1,6 @@
 # Beta Trial Checklist
 
-Use this checklist for human MCP client trials before promoting `grape-context` from alpha to beta.
+Use this checklist for human MCP client trials on the published `1.0.0-beta.0` beta transport slice.
 
 Automated `npm run beta:client-trial` already proves packaged-install MCP stdio transport, including omission, restore, invalidation, reset, branch change, redaction, and ignored secret-looking file rejection. Run it locally or rely on CI `beta-smoke`. It does not replace this checklist when release policy requires a real Cursor, Claude Code, or equivalent IDE client configuration.
 
@@ -22,13 +22,13 @@ Run at least these repos before beta:
 ## Runtime And Install
 
 - Node.js is `22.13.0` or newer.
-- Install command succeeds (published package today):
+- Install command succeeds:
 
 ```bash
-npm install -g grape-context@0.1.0-alpha.3
+npm install -g grape-context@beta
 ```
 
-After `1.0.0-beta.0` publish, human trials should use `npm install -g grape-context@beta` or `@1.0.0-beta.0` instead.
+Or pin the exact prerelease: `npm install -g grape-context@1.0.0-beta.0`.
 
 - `grape help` exits `0`.
 - `grape doctor --json` exits `0` or returns clear setup recovery guidance.
@@ -38,7 +38,7 @@ After `1.0.0-beta.0` publish, human trials should use `npm install -g grape-cont
 
 For each client, configure Grape through stdio using the target repository as `--repo` or `cwd`.
 
-- Client can start `grape mcp --stdio`.
+- Client can start `grape mcp --stdio --repo <target-repo>`.
 - Client receives `initialize` response.
 - Client receives `tools/list` with `grape_get_context`, `grape_get_omitted_item`, `grape_get_status`, and inspection tools.
 - Client can call `grape_get_status` without leaking absolute local root paths in user-facing output.

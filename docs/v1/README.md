@@ -8,7 +8,7 @@ It **compiles** safe, current, task-specific `ContextArtifact` objects from repo
 
 Compression is cache, not truth. Proofs gate durable claims. Git branch/worktree and dependency hashes drive invalidation. See [`decisions/adr-0010-context-transport-protocol.md`](decisions/adr-0010-context-transport-protocol.md) and the root [`ROADMAP.md`](../../ROADMAP.md).
 
-**Published npm today:** `0.1.0-alpha.3` on `latest`/`alpha`. **Planned beta publish:** `1.0.0-beta.0` with the `beta` dist-tag after `npm run beta:check` and an approved version bump. Install and session setup: root [`README.md`](../../README.md) and [`interfaces/agent-sessions.md`](interfaces/agent-sessions.md).
+**Published npm today:** `grape-context@1.0.0-beta.0` on the `beta` dist-tag. npm `latest` and `alpha` still point at `0.1.0-alpha.3`. Install and session setup: root [`README.md`](../../README.md) and [`interfaces/agent-sessions.md`](interfaces/agent-sessions.md). Alpha-era docs: [`legacy/alpha/README.md`](legacy/alpha/README.md).
 
 ## Structure
 
@@ -46,6 +46,8 @@ docs/v1/
     implementation-log.md
     changelog.md
     spec-changelog.md
+  legacy/
+    alpha/
   decisions/
   examples/
   fixtures/
@@ -90,7 +92,8 @@ docs/v1/
 - Domain docs in this folder are implementation guides derived from `SPEC.md`.
 - If a domain doc and `SPEC.md` disagree, stop and update the docs before coding.
 - `docs/v2/` is future planning only.
-- `docs/archive/` is historical only.
+- `docs/v1/legacy/alpha/` is historical alpha documentation only.
+- `docs/archive/` redirects to the legacy index.
 - Private planning folders are not implementation input after the canonical material has been copied into this docs tree through an explicit docs change.
 - `do-not-commit-docs/` must never be committed.
 

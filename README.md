@@ -39,30 +39,27 @@ After MCP setup, the agent calls `grape_get_context` each turn with stable sessi
 
 ## Quickstart
 
-**1.0 beta transport slice:** Grape ships as `grape-context` on npm. It requires **Node.js 22.13+**.
+**1.0 beta transport slice:** Grape ships as `grape-context@1.0.0-beta.0` on npm under the `beta` dist-tag. It requires **Node.js 22.13+**.
 
-**Install today (published registry):** npm currently ships `0.1.0-alpha.3` on the `latest` and `alpha` dist-tags:
-
-```bash
-npm install -g grape-context@0.1.0-alpha.3
-grape init --connect
-```
-
-**After `1.0.0-beta.0` publish:** use the `beta` dist-tag or pin the exact prerelease:
+**Install the published beta:**
 
 ```bash
 npm install -g grape-context@beta
 grape init --connect
 ```
 
+To pin the exact prerelease:
+
 ```bash
 npm install -g grape-context@1.0.0-beta.0
 grape init --connect
 ```
 
-Until the beta publish lands, `@beta` and `1.0.0-beta.0` are the planned install targets, not the current registry default.
+npm still lists `0.1.0-alpha.3` on `latest` and `alpha`. Use `@beta` or `@1.0.0-beta.0` for the current transport slice. Alpha install docs are historical: [Alpha era legacy](docs/v1/legacy/alpha/README.md).
 
 `grape init --connect` creates `.grape/`, applies local SQLite migrations, captures the initial Git snapshot, reports scan diagnostics, and prints MCP integration guidance plus an agent instruction block you can paste into Cursor, Claude Code, or other MCP clients.
+
+Run `grape doctor --privacy` after setup to review local-first defaults, ignored paths, and scanner coverage without exposing file bodies or secret values.
 
 An MCP-capable coding agent then requests context through:
 
@@ -235,14 +232,12 @@ grape bench --fixture monorepo-lite-repo
 
 MCP exposes the same local transport path through `grape mcp --stdio`. Read tools include context retrieval, artifacts, claims, proofs, rules, omitted restore, stale items, conflicts, and status. Restricted write tools can record temporary candidates, command/test observations, user decisions, and confirmation requests, but they cannot promote durable truth directly.
 
-If npm appears to keep an older package after install, clear the cache and reinstall the exact version you intend to use:
+If npm appears to keep an older package after install, clear the cache and reinstall the beta package:
 
 ```bash
 npm cache clean --force
-npm install -g grape-context@0.1.0-alpha.3
+npm install -g grape-context@beta
 ```
-
-After beta publish, reinstall `grape-context@1.0.0-beta.0` or `@beta` instead.
 
 ## Documentation
 
@@ -270,6 +265,7 @@ Core contracts:
 - [CLI](docs/v1/interfaces/cli.md)
 - [Testing](docs/v1/quality/testing.md)
 - [Benchmarks](docs/v1/quality/benchmarks.md)
+- [Alpha era legacy docs](docs/v1/legacy/alpha/README.md)
 
 ## Development
 

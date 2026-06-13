@@ -1,6 +1,6 @@
 # V1 Implementation Status
 
-> **Snapshot note:** The Done/Now sections below were written around the `0.1.0-alpha.3` publish. `main` may include unreleased post-alpha.3 work. For current transport hardening and gate evidence, prefer [`beta-readiness.md`](beta-readiness.md) Product Engineering Ledger, `CHANGELOG.md` Unreleased, and `docs/v1/planning/changelog.md` Unreleased.
+> **Snapshot note:** This matrix tracks the `1.0.0-beta.0` transport slice. Alpha-era history lives in [`legacy/alpha/README.md`](../legacy/alpha/README.md). For gate evidence and human trial status, prefer [`beta-readiness.md`](beta-readiness.md) and [`beta-trial-checklist.md`](beta-trial-checklist.md).
 
 This matrix tracks implementation against the final V1 core-pipeline acceptance areas. It is an implementation aid, not a substitute for working code, tests, docs, review, and pushed commits.
 
@@ -14,14 +14,14 @@ Status values:
 - Reviewed
 - Done
 
-## Alpha.3 Post-Publish Pre-Beta Status
+## Beta Transport Status
 
-This note captures the real pre-beta state for human review. The detailed matrix below remains the implementation-area tracker.
+This note captures the published beta state for human review. The detailed matrix below remains the implementation-area tracker.
 
 Done:
 
-- `grape-context@0.1.0-alpha.2` is published and the release exists.
-- `grape-context@0.1.0-alpha.3` is published on npm, tagged as both `latest` and `alpha`, and has a GitHub tag/release.
+- `grape-context@1.0.0-beta.0` is published on npm under the `beta` dist-tag with GitHub tag `v1.0.0-beta.0`.
+- Alpha releases `0.1.0-alpha.1` through `0.1.0-alpha.3` remain on npm `latest`/`alpha` as historical prereleases.
 - The context transport wedge is proven through CLI and MCP `grape_get_context`.
 - MCP stdio smoke exists.
 - Same-session two-turn omission works when task/session identity is stable.
@@ -41,7 +41,8 @@ Done:
 Now:
 
 - Record human MCP client trials from `beta-trial-checklist.md` when release policy requires IDE UI proof beyond automated `beta:client-trial`.
-- Keep future version bumps, tags, GitHub releases, npm publishes, and dist-tag changes approval-gated. Beta has not shipped while package metadata remains `0.1.0-alpha.3`.
+- Run formal benchmark comparison runs after the beta publish.
+- Keep future version bumps, tags, GitHub releases, npm publishes, and dist-tag changes approval-gated.
 
 Next:
 

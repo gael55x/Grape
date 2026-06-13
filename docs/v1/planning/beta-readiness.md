@@ -2,11 +2,11 @@
 
 ## Main vs published package
 
-npm, GitHub release, and `package.json` still ship **`grape-context@0.1.0-alpha.3`**. `main` may be many commits ahead with unreleased transport, retrieval, and CI hardening. Installing from npm does not include unreleased `main` behavior until the next approved publish. See `CHANGELOG.md` Unreleased and `docs/v1/planning/changelog.md` Unreleased for post-alpha.3 deltas.
+`grape-context@1.0.0-beta.0` is published on npm under the `beta` dist-tag. `main` may include unreleased post-beta work. Installing from npm does not include unreleased `main` behavior until the next approved publish. See `CHANGELOG.md` Unreleased and `docs/v1/planning/changelog.md` Unreleased for post-beta deltas.
 
 ## Purpose
 
-Track the work required to move from the alpha transport proof to serious human pre-beta review.
+Track beta validation work after the `1.0.0-beta.0` publish: human MCP client trials, formal benchmark runs, and recovery-path verification.
 
 This checklist does not expand V1 scope. It makes the current transport slice easier to install, connect, verify, and recover from.
 
@@ -68,24 +68,24 @@ Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client tri
 | Explicit and test seed tiers still spent capped slots in one package before another seeded package received context. | `src/core/retrieval/tier-selection.ts`; `tests/behavior/retrieval/task-source-retrieval.test.mjs`; `docs/v1/core/retrieval.md`. | A beta user who names files or failing tests in two packages could miss one package even though both packages supplied highest-priority seed evidence. | Reuse package-root spreading for Tier 1A and Tier 1B while preserving tier priority, global caps, and test-seed reservation limits. | Reassess real MCP client trials and package graph limits next. | This is still in-tier spreading, not full per-package budget planning, dependency closure, or language-aware package graph reasoning. |
 | Retrieval only emitted a generic omitted-over-cap count when caps excluded every source from a seeded package root. | `src/core/retrieval/tier-selection.ts`; `tests/behavior/retrieval/task-source-retrieval.test.mjs`; `docs/v1/contracts/transport-stability.md`; `docs/v1/core/retrieval.md`. | A beta user could miss one seeded package and see only a generic truncation count, which makes recovery harder. | Add a compact stable warning that counts seeded package roots omitted by caps without listing package names or paths. | Reassess real MCP client trials and package graph limits next. | The warning reports coverage loss only; it does not raise caps or create full package budget planning. |
 
-## Current Alpha.3 Hardening Baseline
+## Current Beta Baseline
 
-- `grape-context@0.1.0-alpha.3` is published on npm and currently tagged as both `latest` and `alpha`.
-- GitHub has `v0.1.0-alpha.3` pushed and a published GitHub release for the same version.
+- `grape-context@1.0.0-beta.0` is published on npm under the `beta` dist-tag.
+- GitHub has `v1.0.0-beta.0` pushed.
 - Node.js 22.13 or newer is the supported global-install runtime.
-- The happy path is `npm install -g grape-context@0.1.0-alpha.3`, then `grape init --connect`, then an MCP-capable agent calls `grape_get_context`.
+- The happy path is `npm install -g grape-context@beta`, then `grape init --connect`, then an MCP-capable agent calls `grape_get_context`.
 - Manual CLI commands are debugging and fallback surfaces.
 - Stable task/session identity is required for same-session omission.
 - The external benchmark workspace has a scripted pass when run with the documented methodology.
 
 ## Human Review Checklist
 
-- [x] README install/setup story names alpha.3 and Node.js 22.13+.
-- [x] README explains that Grape is a controlled alpha transport slice, not a full memory platform.
+- [x] README install/setup story names beta install (`@beta`) and Node.js 22.13+.
+- [x] README explains that Grape is a 1.0 beta transport slice, not a full memory platform.
 - [x] Agent session contract documents stable task/session identity, reset, mismatch recovery, diff states, and MCP framing.
 - [x] CLI and MCP interface docs link to the session contract.
 - [x] Roadmap separates Alpha, Beta, and 1.0 expectations.
-- [x] Roadmap/status docs use Done, Now, Next, Soon, and Later buckets for the real alpha.3 hardening-candidate state.
+- [x] Roadmap/status docs use Done, Now, Next, Soon, and Later buckets for the published beta state.
 - [x] Stale alpha.1 npm-cache recovery is documented.
 - [x] Task/session mismatch errors render recovery guidance that distinguishes same-task reset from new-task sessions.
 - [x] Packaged install smoke selects the exact just-packed tarball, asserts installed package metadata, runs CLI help/init/two-turn compile, restores omitted CLI context, proves task/session mismatch recovery, proves reset recovery, runs MCP `initialize` and `tools/list`, performs two `grape_get_context` turns, and restores an omitted item through `grape_get_omitted_item`.
@@ -97,9 +97,8 @@ Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client tri
 - [x] External benchmark workspace dependency metadata is aligned to alpha.3 after approval.
 - [x] Published-package smoke passed against the registry-installed alpha.3 package in the external benchmark workspace.
 - [x] Alpha.3 package metadata is aligned and `npm run check`, `npm run benchmark:run`, and `npm run e2e:alpha` are green.
-- [x] `0.1.0-alpha.3` is published on npm and GitHub after release approval.
-- [x] Global `npm install -g grape-context@0.1.0-alpha.3` smoke has been rerun against the published package.
-- [x] External benchmark workspace published-package smoke has been rerun against registry-installed alpha.3.
+- [x] `1.0.0-beta.0` is published on npm under the `beta` dist-tag with GitHub tag `v1.0.0-beta.0`.
+- [x] Global `npm install -g grape-context@beta` smoke can be rerun against the published package.
 - [x] Beta trial checklist exists with required client trials, pass/fail criteria, and explicit durable-workflow exclusions.
 - [x] `npm run beta:client-trial` proves packaged-install MCP stdio transport, including omission, restore, source and branch invalidation, reset, redaction, recovery guidance, and ignored secret-looking file rejection.
 - [x] `npm run beta:check` runs `check`, `benchmark:run`, `e2e:alpha`, and `beta:client-trial`.
@@ -107,7 +106,24 @@ Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client tri
 
 ## Verified Registry And GitHub State
 
-Checked on 2026-06-01:
+Checked on 2026-06-13 for beta publish:
+
+```bash
+npm view grape-context@1.0.0-beta.0 version
+npm view grape-context dist-tags --json
+git ls-remote --tags origin refs/tags/v1.0.0-beta.0
+```
+
+Observed:
+
+- npm `beta` dist-tag points at `1.0.0-beta.0`.
+- npm `latest` and `alpha` still point at `0.1.0-alpha.3`.
+- remote Git tag `refs/tags/v1.0.0-beta.0` points at release commit `e8a1656`.
+
+Alpha.3 verification from 2026-06-01 remains historical evidence below.
+
+<details>
+<summary>Historical alpha.3 verification (2026-06-01)</summary>
 
 ```bash
 npm view grape-context version dist-tags time --json
@@ -117,12 +133,11 @@ gh release view v0.1.0-alpha.3 --repo gael55x/Grape --json tagName,isDraft,isPre
 
 Observed:
 
-- npm version is `0.1.0-alpha.3`.
-- npm dist-tags are `latest: 0.1.0-alpha.3` and `alpha: 0.1.0-alpha.3`.
-- npm publish time for `0.1.0-alpha.3` is `2026-05-31T08:17:08.988Z`.
-- remote Git tag `refs/tags/v0.1.0-alpha.3` points at `802e07f0947b09a87194bae8adfc38eb53bd5091`.
-- GitHub release `0.1.0-alpha.3` is published at `2026-05-31T08:24:25Z`, is not a draft, and is currently not marked as a GitHub prerelease.
-- Global npm install reports `grape-context@0.1.0-alpha.3` installed, and `npm run global:smoke` passes.
+- npm version was `0.1.0-alpha.3`.
+- npm dist-tags were `latest: 0.1.0-alpha.3` and `alpha: 0.1.0-alpha.3`.
+- GitHub release `0.1.0-alpha.3` was published at `2026-05-31T08:24:25Z`.
+
+</details>
 
 ## Benchmark Workspace Alignment
 
@@ -190,8 +205,9 @@ Observed:
 
 Verdict:
 
-- Ready for **controlled pre-beta review** of the scripted transport slice: install, local bootstrap, MCP stdio protocol, same-session omission, restore, branch/source/rules invalidation, reset recovery, package contents, and token accounting have scripted harness coverage on the recorded gate runs (fixture estimates only).
-- Not a defensible **beta 1.0** or broad beta claim until at least one actual Cursor/Claude-style MCP client trial is recorded against the published package, plus a clean consumer repo and dirty/branch/reset recovery pass through that real client configuration. `npm run beta:client-trial` is scripted packaged MCP smoke only; it does not satisfy the human trial checklist.
+- **Published beta:** `grape-context@1.0.0-beta.0` is on npm under `beta` with scripted harness coverage (`npm run beta:check`).
+- **Next validation:** formal benchmark comparison runs and human MCP client trials from [`beta-trial-checklist.md`](beta-trial-checklist.md) when release policy requires IDE UI proof beyond `beta:client-trial`.
+- **Not GA:** this is not a general availability release. Benchmark superiority claims remain deferred until formal benchmark runs are completed.
 
 ## Verification Commands
 
@@ -214,15 +230,15 @@ npm run global:smoke
 Global package smoke for a consumer repo:
 
 ```bash
-npm install -g grape-context@0.1.0-alpha.3
+npm install -g grape-context@beta
 npm run global:smoke
 ```
 
-If npm resolves stale alpha.1:
+If npm resolves a stale package:
 
 ```bash
 npm cache clean --force
-npm install -g grape-context@0.1.0-alpha.3
+npm install -g grape-context@beta
 ```
 
 ## Remaining blockers after transport-wedge cleanup
@@ -230,7 +246,8 @@ npm install -g grape-context@0.1.0-alpha.3
 - Human MCP client trials in Cursor, Claude Code, or equivalent IDE UIs are not yet recorded in-repo. Automated `npm run beta:client-trial` covers packaged-install MCP stdio only.
 - Hosted cross-platform CI last verified green on run `27460794736` (`check` on Ubuntu/macOS/Windows plus `beta-smoke` with benchmark, e2e, and `beta:client-trial`). Re-verify after material transport or packaging changes.
 - Turn-1 retrieval for non-TS/JS repos has basic declaration anchors and internal fixture benchmarks (`docs/v1/quality/benchmarks.md`), but still lacks language-aware graph edges, full per-package budgets, and comparable external benchmark claims.
-- Next npm publish requires version bump, changelog cut, approval, and post-publish `global:smoke` on the new version. Republishing `0.1.0-alpha.3` is not valid.
+- Formal benchmark comparison runs after the beta publish.
+- Next npm publish requires version bump, changelog cut, approval, and post-publish `global:smoke` on the new version.
 
 The public beta transport/schema stability boundary is documented in [`docs/v1/contracts/transport-stability.md`](../contracts/transport-stability.md) and enforced through TypeScript types and `tests/behavior/contracts/beta-transport-contract.test.mjs`. A standalone output JSON Schema artifact is not required for the controlled 1.0 beta.
 

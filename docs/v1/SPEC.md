@@ -20,8 +20,8 @@
 | Daemon or autonomous background observation without MCP calls | **Not implemented** |
 **Primary goal:** reduce repeated context transport by compiling safe repository context once per task/session and shipping only the next session-safe context pack diff  
 **Safety model:** proof-backed, branch-aware, task-specific context artifacts with explicit uncertainty  
-**Runtime:** TypeScript on Node.js 22.13+ for the published package (currently `0.1.0-alpha.3` on npm `latest`/`alpha`; `1.0.0-beta.0` with `beta` dist-tag is planned)  
-**Distribution:** `npm install -g grape-context@0.1.0-alpha.3` today; after beta publish use `@beta` or `@1.0.0-beta.0`  
+**Runtime:** TypeScript on Node.js 22.13+ for the published package (`grape-context@1.0.0-beta.0` on npm `beta`; `latest`/`alpha` still point at `0.1.0-alpha.3`)  
+**Distribution:** `npm install -g grape-context@beta` or `npm install -g grape-context@1.0.0-beta.0`  
 **Storage:** SQLite + WAL + portable lexical source index
 **Integration:** MCP server + CLI  
 **Default mode:** local-first, no cloud dependency, no remote embeddings by default  

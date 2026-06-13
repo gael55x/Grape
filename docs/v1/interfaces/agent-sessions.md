@@ -20,33 +20,28 @@ Grape does **not** run as a daemon that observes every agent turn automatically.
 
 The beta transport slice requires Node.js 22.13 or newer.
 
-**Published today (`0.1.0-alpha.3` on `latest`/`alpha`):**
-
-```bash
-npm install -g grape-context@0.1.0-alpha.3
-grape init --connect
-```
-
-**After `1.0.0-beta.0` publish:**
+**Published beta (`1.0.0-beta.0` on npm `beta`):**
 
 ```bash
 npm install -g grape-context@beta
 grape init --connect
 ```
 
-To pin the exact beta prerelease after publish:
+To pin the exact prerelease:
 
 ```bash
 npm install -g grape-context@1.0.0-beta.0
 grape init --connect
 ```
 
-If a machine keeps resolving an older package after install, clear the npm cache and reinstall the version you intend to use:
+If a machine keeps resolving an older package after install, clear the npm cache and reinstall the beta package:
 
 ```bash
 npm cache clean --force
-npm install -g grape-context@0.1.0-alpha.3
+npm install -g grape-context@beta
 ```
+
+Run `grape doctor --privacy` after setup to review local storage, ignored paths, and scanner coverage.
 
 After beta publish, use `grape-context@1.0.0-beta.0` or `@beta` in that reinstall command instead.
 
@@ -166,7 +161,7 @@ Use the byte length of the JSON body, not the character count. Grape writes resp
 | Second turn sends a full pack unexpectedly | Confirm the exact task/query, task type, risk overlays, branch, and explicit `sessionId` are stable. |
 | Restore returns `stale` | Call `grape_get_context` again for current context; do not reuse the old omitted body. |
 | MCP client hangs or parse fails | Verify `Content-Length` is the UTF-8 byte length and the blank line separates headers from JSON. |
-| Installed CLI appears to be an older package | Run `npm cache clean --force`, reinstall the published package (`grape-context@0.1.0-alpha.3` today; `@beta` or `@1.0.0-beta.0` after beta publish), and check `grape help` from the active shell path. |
+| Installed CLI appears to be an older package | Run `npm cache clean --force`, reinstall `grape-context@beta` or `@1.0.0-beta.0`, and check `grape help` from the active shell path. |
 
 ## Related Contracts
 
