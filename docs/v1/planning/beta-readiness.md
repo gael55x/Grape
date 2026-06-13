@@ -117,7 +117,8 @@ git ls-remote --tags origin refs/tags/v1.0.0-beta.0
 Observed:
 
 - npm `beta` dist-tag points at `1.0.0-beta.0`.
-- npm `latest` and `alpha` still point at `0.1.0-alpha.3`.
+- npm `latest` and `beta` point at `1.0.0-beta.0`.
+- npm `alpha` still points at `0.1.0-alpha.3`.
 - remote Git tag `refs/tags/v1.0.0-beta.0` points at release commit `e8a1656`.
 
 Alpha.3 verification from 2026-06-01 remains historical evidence below.

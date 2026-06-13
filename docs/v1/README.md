@@ -8,7 +8,7 @@ It **compiles** safe, current, task-specific `ContextArtifact` objects from repo
 
 Compression is cache, not truth. Proofs gate durable claims. Git branch/worktree and dependency hashes drive invalidation. See [`decisions/adr-0010-context-transport-protocol.md`](decisions/adr-0010-context-transport-protocol.md) and the root [`ROADMAP.md`](../../ROADMAP.md).
 
-**Published npm today:** `grape-context@1.0.0-beta.0` on the `beta` dist-tag. npm `latest` and `alpha` still point at `0.1.0-alpha.3`. Install and session setup: root [`README.md`](../../README.md) and [`interfaces/agent-sessions.md`](interfaces/agent-sessions.md). Alpha-era docs: [`legacy/alpha/README.md`](legacy/alpha/README.md).
+**Published npm today:** `grape-context@1.0.0-beta.0` on `latest` and `beta`. The `alpha` dist-tag still points at `0.1.0-alpha.3`. Install and session setup: root [`README.md`](../../README.md) and [`interfaces/agent-sessions.md`](interfaces/agent-sessions.md). Alpha-era docs: [`legacy/alpha/README.md`](legacy/alpha/README.md).
 
 ## Structure
 

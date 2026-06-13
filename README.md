@@ -55,7 +55,7 @@ npm install -g grape-context@1.0.0-beta.0
 grape init --connect
 ```
 
-npm still lists `0.1.0-alpha.3` on `latest` and `alpha`. Use `@beta` or `@1.0.0-beta.0` for the current transport slice. Alpha install docs are historical: [Alpha era legacy](docs/v1/legacy/alpha/README.md).
+npm `latest` and `beta` both point at `1.0.0-beta.0`. The `alpha` dist-tag still points at `0.1.0-alpha.3`. Alpha install docs are historical: [Alpha era legacy](docs/v1/legacy/alpha/README.md).
 
 `grape init --connect` creates `.grape/`, applies local SQLite migrations, captures the initial Git snapshot, reports scan diagnostics, and prints MCP integration guidance plus an agent instruction block you can paste into Cursor, Claude Code, or other MCP clients.
 

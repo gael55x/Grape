@@ -20,7 +20,7 @@ Alpha proved the context transport protocol on real repos:
 - branch, source, dependency, and explicit reset invalidation
 - packaged install smoke, benchmark fixtures, and cross-platform CI hardening
 
-Published alpha releases: `0.1.0-alpha.1` through `0.1.0-alpha.3` (npm `latest`/`alpha` before the beta publish).
+Published alpha releases: `0.1.0-alpha.1` through `0.1.0-alpha.3` (npm `alpha` dist-tag).
 
 Beta (`1.0.0-beta.0`, npm `beta` dist-tag) is the workflow-ready transport slice built on that proof.
 

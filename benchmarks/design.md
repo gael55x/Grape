@@ -51,7 +51,7 @@
 | Target | Description |
 | --- | --- |
 | A | Local packed tarball (`npm pack`, then consumer install) |
-| B | Published beta tarball from `e2e:alpha` or registry `@beta` (planned after `1.0.0-beta.0` publish; current baseline A uses packed tarball) |
+| B | Published beta tarball from `e2e:alpha` or registry `@beta` / `latest` |
 | C | Naive full-context (`naive-baseline.mjs`) |
 | D | Manual `rg` keyword selection |
 | E | Embedding-only | Deferred. Requires LLM or API; not in fast path |
