@@ -12,7 +12,11 @@ export function sourceManifestSection(
   input: CompileRepositoryContextArtifactInput,
   dependencies: readonly InMemoryContextDependencyShape[]
 ): InMemoryContextSectionShape {
-  const sources = selectedSources(input.sources, preferredSourceRefs(input));
+  const preferred = preferredSourceRefs(input);
+  const sources = selectedSources(input.sources, preferred);
+  const dependencySourceRefs = new Set(
+    preferred.length > 0 ? preferred : sources.map((source) => source.sourceRef)
+  );
   const counts = sourceTypeCounts(input.sources);
   return section({
     id: "source-manifest",
@@ -27,7 +31,9 @@ export function sourceManifestSection(
     sourceRefs: sources.map((source) => source.sourceRef),
     dependencyRefs: sectionDependencyRefs(
       ["repo-snapshot", "worktree-state"],
-      dependencies.filter((dependency) => dependency.id.startsWith("source:")).map((dependency) => dependency.id)
+      dependencies
+        .filter((dependency) => dependency.id.startsWith("source:") && dependencySourceRefs.has(dependency.ref))
+        .map((dependency) => dependency.id)
     ),
     pinned: false,
     exactRequired: false

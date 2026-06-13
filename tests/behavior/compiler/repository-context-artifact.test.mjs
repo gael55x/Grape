@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -1120,6 +1120,75 @@ test("repository risk policy accepts auth overlay when excerpt body contains ses
         artifact.unsafeReasons, [],
         "body containing requireSession (camelCase) must satisfy the auth overlay via shared tokenizer"
       );
+    });
+  });
+});
+
+function withMonorepoFixtureRepo(fn) {
+  const dir = mkdtempSync(path.join(tmpdir(), "grape-monorepo-artifact-"));
+  const repoPath = path.join(dir, "repo");
+  const fixturePath = path.join(process.cwd(), "tests/fixtures/monorepo-lite-repo");
+
+  try {
+    cpSync(fixturePath, repoPath, { recursive: true });
+    execGit(repoPath, ["init", "-b", "main"]);
+    execGit(repoPath, ["add", "."]);
+    execGit(repoPath, [
+      "-c", "user.name=Grape Test", "-c", "user.email=grape@example.test",
+      "commit", "-m", "monorepo fixture"
+    ]);
+    fn(repoPath);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test("repository source manifest limits listed sources to task retrieval selection", () => {
+  withMonorepoFixtureRepo((repoPath) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database, repositories, evidenceRepositories, indexingRepositories,
+        rootPath: repoPath, projectId: "project-1", repoId: "repo-1", now
+      });
+
+      const preferredRefs = [
+        "packages/api/src/apiBilling.ts",
+        "packages/api/src/apiBilling.test.ts",
+        "packages/api/package.json"
+      ];
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
+        taskRetrieval: {
+          selectedSourceRefs: preferredRefs,
+          rankedSourceRefs: preferredRefs,
+          semanticCandidates: [],
+          explicitSourceRefs: ["packages/api/src/apiBilling.ts"],
+          testSourceRefs: [],
+          relatedTestSourceRefs: ["packages/api/src/apiBilling.test.ts"],
+          relatedTestRelationships: [],
+          graphSourceRefs: [],
+          symbolSourceRefs: ["packages/api/src/apiBilling.ts"],
+          lexicalSourceRefs: [],
+          queryTerms: ["apiBilling"],
+          warnings: []
+        }
+      });
+
+      const sourceManifest = artifact.sections.find((section) => section.id === "source-manifest");
+      const manifestDependencyRefs = new Set(sourceManifest?.dependencyRefs ?? []);
+      const manifestSourceDependencyRefs = artifact.dependencyManifest.dependencies
+        .filter((dependency) => manifestDependencyRefs.has(dependency.id) && dependency.kind === "source_file")
+        .map((dependency) => dependency.ref);
+
+      for (const webRef of [
+        "packages/web/src/cart.ts",
+        "packages/web/src/cart.test.ts",
+        "packages/web/package.json"
+      ]) {
+        assert.equal(manifestSourceDependencyRefs.includes(webRef), false, `source-manifest deps must not include ${webRef}`);
+      }
+
+      assert.equal(sourceManifest?.sourceRefs.includes("packages/api/src/apiBilling.ts"), true);
+      assert.equal(sourceManifest?.sourceRefs.includes("packages/api/src/apiBilling.test.ts"), true);
     });
   });
 });
