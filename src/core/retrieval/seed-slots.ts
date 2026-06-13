@@ -6,6 +6,7 @@ export type RetrievalTaskKind = "default" | "test_focused";
 
 export interface ComputeReservedSeedSlotsInput {
   readonly maxSelectedSources: number;
+  readonly explicitSeedCount: number;
   readonly testSeedCount: number;
   readonly taskKind: RetrievalTaskKind;
 }
@@ -16,11 +17,9 @@ export interface ReservedSeedSlots {
 }
 
 export function computeReservedSeedSlots(input: ComputeReservedSeedSlotsInput): ReservedSeedSlots {
-  const maxExplicitSourceSlots = input.maxSelectedSources;
-
   if (input.testSeedCount === 0 || input.maxSelectedSources === 0) {
     return {
-      maxExplicitSourceSlots,
+      maxExplicitSourceSlots: input.maxSelectedSources,
       maxTestSeedSlots: 0
     };
   }
@@ -34,10 +33,13 @@ export function computeReservedSeedSlots(input: ComputeReservedSeedSlotsInput): 
     input.maxSelectedSources,
     input.testSeedCount
   );
+  const reservedTestSlots =
+    input.maxSelectedSources === 1 && input.explicitSeedCount > 0 ? 0 : maxTestSeedSlots;
+  const maxExplicitSourceSlots = Math.max(0, input.maxSelectedSources - reservedTestSlots);
 
   return {
     maxExplicitSourceSlots,
-    maxTestSeedSlots
+    maxTestSeedSlots: reservedTestSlots
   };
 }
 

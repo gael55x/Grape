@@ -234,6 +234,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   });
   const reservedSlots = computeReservedSeedSlots({
     maxSelectedSources,
+    explicitSeedCount: countRefsForReason(selectedReasons, "explicit_seed"),
     testSeedCount: countTier1bRefs(selectedReasons),
     taskKind: inferRetrievalTaskKind({
       seedTests: input.seedTests,
@@ -381,6 +382,17 @@ function refsForReason(
   reason: SelectionReason
 ): string[] {
   return selectedSourceRefs.filter((sourceRef) => selectedReasons.get(sourceRef)?.has(reason));
+}
+
+function countRefsForReason(
+  selectedReasons: ReadonlyMap<string, ReadonlySet<SelectionReason>>,
+  reason: SelectionReason
+): number {
+  let count = 0;
+  for (const reasons of selectedReasons.values()) {
+    if (reasons.has(reason)) count += 1;
+  }
+  return count;
 }
 
 function matchesAnyTerm(value: string, terms: ReadonlySet<string>): boolean {

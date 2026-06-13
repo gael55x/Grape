@@ -612,6 +612,68 @@ test("task source retrieval bounds test seed reservation on default tasks", () =
   assert.equal(result.selectedSourceRefs.filter((sourceRef) => sourceRef.startsWith("tests/")).length, 1);
 });
 
+test("task source retrieval reserves a slot for path-like test seeds when explicit seeds fill the cap", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix api checkout total with failing web regression",
+    maxSelectedSources: 4,
+    sources: [
+      source("api-a", "packages/api/src/checkout-a.ts"),
+      source("api-b", "packages/api/src/checkout-b.ts"),
+      source("api-c", "packages/api/src/checkout-c.ts"),
+      source("api-d", "packages/api/src/checkout-d.ts"),
+      source("web-test", "packages/web/tests/checkout.test.ts")
+    ],
+    symbols: [
+      symbol("api-a", "packages/api/src/checkout-a.ts", "checkoutTotal"),
+      symbol("api-b", "packages/api/src/checkout-b.ts", "checkoutTotal"),
+      symbol("api-c", "packages/api/src/checkout-c.ts", "checkoutTotal"),
+      symbol("api-d", "packages/api/src/checkout-d.ts", "checkoutTotal"),
+      symbol("web-test", "packages/web/tests/checkout.test.ts", "checkout_test", "module", 1, 1)
+    ],
+    lexicalMatches: [],
+    seedFiles: [
+      "packages/api/src/checkout-a.ts",
+      "packages/api/src/checkout-b.ts",
+      "packages/api/src/checkout-c.ts",
+      "packages/api/src/checkout-d.ts"
+    ],
+    seedTests: ["packages/web/tests/checkout.test.ts"]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, [
+    "packages/api/src/checkout-a.ts",
+    "packages/api/src/checkout-b.ts",
+    "packages/api/src/checkout-c.ts",
+    "packages/web/tests/checkout.test.ts"
+  ]);
+  assert.deepEqual(result.testSourceRefs, ["packages/web/tests/checkout.test.ts"]);
+  assert.equal(result.selectedSourceRefs.includes("packages/api/src/checkout-d.ts"), false);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+  assert.equal(result.warnings.includes("task_retrieval_seed_packages_omitted_over_cap:1"), false);
+});
+
+test("task source retrieval keeps explicit source priority when one slot cannot fit source and test seeds", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix api checkout total with failing regression",
+    maxSelectedSources: 1,
+    sources: [
+      source("api-source", "packages/api/src/checkout.ts"),
+      source("api-test", "packages/api/tests/checkout.test.ts")
+    ],
+    symbols: [],
+    lexicalMatches: [],
+    seedFiles: ["packages/api/src/checkout.ts"],
+    seedTests: ["packages/api/tests/checkout.test.ts"]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, ["packages/api/src/checkout.ts"]);
+  assert.deepEqual(result.explicitSourceRefs, ["packages/api/src/checkout.ts"]);
+  assert.deepEqual(result.testSourceRefs, []);
+  assert.ok(result.warnings.includes("task_retrieval_truncated"));
+  assert.ok(result.warnings.includes("task_retrieval_omitted_over_cap:1"));
+});
+
 test("task source retrieval spreads path-like test seeds across package roots before reserved cap", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix failing api regression tests",
