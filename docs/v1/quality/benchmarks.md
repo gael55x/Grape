@@ -80,11 +80,19 @@ Run all fixtures:
 npm run benchmark:run
 ```
 
-Full alpha e2e (dist build, pack install smoke, benchmark suite):
+Alpha e2e (dist build, pack install smoke, benchmark suite from installed package):
 
 ```bash
 npm run e2e:alpha
 ```
+
+Full beta-readiness gate (check, benchmarks, alpha e2e, packaged MCP client trial):
+
+```bash
+npm run beta:check
+```
+
+`npm run beta:check` ends with `npm run beta:client-trial`, which installs the packed tarball in a temporary consumer repo and exercises MCP stdio transport end to end. That trial is an internal harness check, not an external benchmark superiority claim.
 
 ### Recorded baselines (local reference, 2026-06-13)
 

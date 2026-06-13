@@ -8,7 +8,8 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ### Added
 
-- Added `npm run beta:check` as the extended local beta-readiness gate over `check`, benchmark, and alpha e2e smoke.
+- Added `npm run beta:client-trial` as the automated packaged-install MCP client trial. It exercises `initialize`, `tools/list`, `grape_get_status`, two-turn `grape_get_context`, omission, restore, source invalidation, branch invalidation, reset, task/session mismatch recovery guidance, status redaction checks, and ignored secret-looking file rejection over stdio from a packed install.
+- Added `npm run beta:check` as the extended local beta-readiness gate over `npm run check`, `npm run benchmark:run`, `npm run e2e:alpha`, and `npm run beta:client-trial`.
 - Added `npm run global:smoke` for post-publish verification of the registry-installed global package.
 - Added `grape run` and `grape test` for local Grape-observed command/test execution. The commands record trusted redacted `command_run` / `test_run` evidence with observed run IDs, command/output hashes, exit status, timestamps, and session scope without persisting raw command output.
 - Added narrow `grape_observed_run_result` proof/claim promotion for local Grape-observed command/test runs. It proves only the observed run result, not product correctness or root cause.
@@ -22,6 +23,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ### Changed
 
+- CI `beta-smoke` now runs `npm run benchmark:run`, `npm run e2e:alpha`, and `npm run beta:client-trial` after the cross-platform `npm run check` matrix.
 - Hardened packaged install smoke to prove CLI omitted restore, task/session mismatch recovery, and reset recovery in the installed consumer-repo path.
 - Refreshed beta-readiness docs to reflect the published `0.1.0-alpha.3` npm package, npm `latest`/`alpha` dist-tags, GitHub tag/release state, global install smoke, and external alpha.3 published-package smoke.
 - Improved lightweight TypeScript/JavaScript retrieval by treating const-assigned arrow/function declarations as function symbols and documenting the beta retrieval boundary.

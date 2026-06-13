@@ -1,6 +1,8 @@
 # Beta Trial Checklist
 
-Use this checklist for real client trials before promoting `grape-context` from alpha to beta.
+Use this checklist for human MCP client trials before promoting `grape-context` from alpha to beta.
+
+Automated `npm run beta:client-trial` already proves packaged-install MCP stdio transport, including omission, restore, invalidation, reset, branch change, redaction, and ignored secret-looking file rejection. Run it locally or rely on CI `beta-smoke`. It does not replace this checklist when release policy requires a real Cursor, Claude Code, or equivalent IDE client configuration.
 
 The beta promise is context transport reliability. A passing trial proves install, MCP connection, session identity, diffing, invalidation, restore, reset, and recovery behavior. It does not prove that Grape is a complete durable memory platform.
 

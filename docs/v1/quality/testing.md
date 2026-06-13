@@ -29,6 +29,20 @@ No production behavior is complete without tests for the related state transitio
 
 The in-memory smoke harness guards file shape and obvious contract drift. Project Skeleton And Tooling adds stronger local gates: `npm run architecture:check` for import-boundary drift, `npm run storage:check` for migration-contract drift, `npm run typecheck` for TypeScript compilation, `npm run package:check` for global package dry-run contents, and `npm run test:behavior` for Node's built-in behavioral tests over compiled source. Behavior and benchmark entrypoint scripts prune stale emitted `.tmp/build/src/**/*.js` files before compiling so files from earlier module layouts cannot affect CLI/MCP behavior tests without deleting the active compiled tree. Behavior tests live in domain folders under `tests/behavior/` and are discovered recursively by `scripts/run-behavior-tests.mjs`. The runner keeps `--test-concurrency=1` because CLI/MCP integration tests create many temporary Git repositories and SQLite databases; deterministic storage behavior is more important than parallel test throughput. Contributors should install with `npm ci` so checks use the pinned toolchain from `package-lock.json`.
 
+## Package Script Gates
+
+| Script | Purpose | Failure modes |
+|---|---|---|
+| `npm run check` | Default local gate: docs, fixtures, memory loop, architecture, storage, typecheck, package dry-run, install smoke, behavior tests. | Fix the named sub-check output; behavior tests print the failing contract and file. |
+| `npm run benchmark:run` | Runs all scripted `grape bench --fixture <name>` scenarios and enforces token-reduction and invalidation thresholds. | Threshold failures report fixture name, turn metrics, and unsafe omission counts. |
+| `npm run e2e:alpha` | Builds dist, packs the tarball, installs it in a temp repo, runs install smoke, and runs the benchmark suite from the installed package path. | Install or benchmark failures exit non-zero with script stderr. |
+| `npm run beta:client-trial` | Packs and installs the current build, then exercises MCP stdio from the installed package: `initialize`, `tools/list`, `grape_get_status`, two-turn `grape_get_context`, omission, restore, source invalidation, stale restore rejection, mismatch recovery guidance, reset, branch invalidation, redaction checks, and ignored secret-looking file rejection. | MCP protocol, transport, or redaction failures throw with the failing step label. |
+| `npm run beta:check` | Runs `check`, `benchmark:run`, `e2e:alpha`, and `beta:client-trial` in order. | Stops at the first failing gate above. |
+
+GitHub Actions runs `npm run check` on Ubuntu, macOS, and Windows, then a `beta-smoke` job that runs `benchmark:run`, `e2e:alpha`, and `beta:client-trial`.
+
+The automated beta client trial proves MCP over stdio from a packaged install. It does not replace human trials in Cursor, Claude Code, or other IDE MCP clients when release policy requires a real client UI run. See [`planning/beta-trial-checklist.md`](../planning/beta-trial-checklist.md).
+
 ## Behavior Test Layout
 
 `tests/behavior/` is split by behavior surface so release-blocking contracts are easy to find and extend:

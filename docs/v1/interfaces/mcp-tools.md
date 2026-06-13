@@ -583,3 +583,29 @@ Write rules:
 - `user_decision_requires_direct_confirmation_hashes`
 - `ignored_file_read_requires_approval`
 - `unsafe_compile_does_not_return_safe_status`
+
+## Beta Verification
+
+Local release sign-off should run:
+
+```bash
+npm run beta:check
+```
+
+`npm run beta:client-trial` is the packaged-install MCP trial inside that gate. It proves:
+
+- packed tarball install in a clean consumer git repo
+- `grape help` and `grape init --connect`
+- MCP `initialize` and `tools/list`
+- `grape_get_status` without absolute repo path leaks
+- first `grape_get_context` turn with `NEW` context
+- second same-session turn with `OMIT_UNCHANGED` and `RESTORE_AVAILABLE`
+- `grape_get_omitted_item` restore
+- source edit invalidation with `INVALIDATE_PREVIOUS`
+- stale restore rejection after the source edit
+- task/session mismatch error with `recoveryGuidance`
+- `resetSession: true` invalidation and current resend
+- branch switch invalidation
+- rejection of ignored `.env`, private, and ignore-listed secret-looking files in output
+
+This trial exercises MCP over stdio from an installed package. A literal Cursor or Claude Code UI configuration trial is still a separate human step when release policy requires it. See [`beta-trial-checklist.md`](../planning/beta-trial-checklist.md).

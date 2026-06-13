@@ -206,3 +206,15 @@ The CLI must call application services. It must not:
 Required when deferred V1.0 commands are implemented:
 
 - `cli_add_decision_requires_confirmation`
+
+## Beta Verification
+
+Before beta promotion, run the full local gate:
+
+```bash
+npm run beta:check
+```
+
+That runs `npm run check`, `npm run benchmark:run`, `npm run e2e:alpha`, and `npm run beta:client-trial`.
+
+`npm run beta:client-trial` installs the packed tarball in a temporary consumer repo and proves CLI setup plus MCP stdio transport, including omission, restore, source and branch invalidation, reset, status redaction, recovery guidance, and ignored secret-looking file rejection. It does not prove a specific IDE MCP client UI. Use [`beta-trial-checklist.md`](../planning/beta-trial-checklist.md) for human client trials.

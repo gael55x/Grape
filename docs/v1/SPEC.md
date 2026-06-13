@@ -2,14 +2,15 @@
 
 **Status:** Canonical V1 framework contract (not a claim that every section is shipped)  
 **Canonical source of truth:** This file, `grape_v1_final_framework_spec.md`, is the final V1 implementation contract. If another V1 spec conflicts with this file, this file wins.  
-**Product:** Grape, local-first context transport layer for AI coding agents on git repositories
+**Product:** Grape, local-first context compiler and context transport layer for AI coding agents on git repositories
 
 **Implementation status (alpha.3 transport slice):**
 
 | Area | Status |
 |---|---|
 | CLI + MCP `grape_get_context`, session diff transport, restore, branch/dependency invalidation | **Implemented** |
-| TS/JS AST indexing; other languages via safe exact/path/lexical fallback | **Partial** |
+| TS/JS AST graph indexing (`symbols_ast`, `module_edges`, `test_edges`) | **Implemented** |
+| Python, Go, Rust, Java, C#, Ruby, PHP, Swift, Kotlin, C, C++, shell, JSON, YAML, TOML, Markdown graph extraction | **Not proven** (safe exact/path/lexical fallback only) |
 | Narrow durable claims (source excerpts, symbol declarations, parsed rules, observed runs) | **Implemented** |
 | Deterministic compression cache (`symbol_outline`, `rule_digest`, `context_pack_summary`) | **Implemented** |
 | Runtime FSM enforcement in compile path | **Deferred** (state names are documentary vocabulary; see `architecture/state-machine.md`) |

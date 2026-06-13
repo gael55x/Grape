@@ -1,5 +1,9 @@
 # Beta Readiness Checklist
 
+## Main vs published package
+
+npm, GitHub release, and `package.json` still ship **`grape-context@0.1.0-alpha.3`**. `main` may be many commits ahead with unreleased transport, retrieval, and CI hardening. Installing from npm does not include unreleased `main` behavior until the next approved publish. See `CHANGELOG.md` Unreleased and `docs/v1/planning/changelog.md` Unreleased for post-alpha.3 deltas.
+
 ## Purpose
 
 Track the work required to move from the alpha transport proof to serious human pre-beta review.
@@ -97,6 +101,9 @@ Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client tri
 - [x] Global `npm install -g grape-context@0.1.0-alpha.3` smoke has been rerun against the published package.
 - [x] External benchmark workspace published-package smoke has been rerun against registry-installed alpha.3.
 - [x] Beta trial checklist exists with required client trials, pass/fail criteria, and explicit durable-workflow exclusions.
+- [x] `npm run beta:client-trial` proves packaged-install MCP stdio transport, including omission, restore, source and branch invalidation, reset, redaction, recovery guidance, and ignored secret-looking file rejection.
+- [x] `npm run beta:check` runs `check`, `benchmark:run`, `e2e:alpha`, and `beta:client-trial`.
+- [x] GitHub Actions `beta-smoke` runs `benchmark:run`, `e2e:alpha`, and `beta:client-trial` after the cross-platform `check` matrix.
 
 ## Verified Registry And GitHub State
 
@@ -183,8 +190,8 @@ Observed:
 
 Verdict:
 
-- Ready as a **controlled beta candidate** for the V1 context-transport slice: install, local bootstrap, MCP stdio protocol, same-session omission, restore, branch/source/rules invalidation, reset recovery, package contents, and token accounting have current scripted proof.
-- Not yet a defensible broad beta claim until at least one actual Cursor/Claude-style MCP client trial is recorded against the published package, plus a clean consumer repo and dirty/branch/reset recovery pass through that real client configuration.
+- Ready for **controlled pre-beta review** of the scripted transport slice: install, local bootstrap, MCP stdio protocol, same-session omission, restore, branch/source/rules invalidation, reset recovery, package contents, and token accounting have scripted proof on the recorded gate runs.
+- Not a defensible **beta 1.0** or broad beta claim until at least one actual Cursor/Claude-style MCP client trial is recorded against the published package, plus a clean consumer repo and dirty/branch/reset recovery pass through that real client configuration. `npm run beta:client-trial` is scripted packaged MCP smoke only; it does not satisfy the human trial checklist.
 
 ## Verification Commands
 
@@ -195,9 +202,14 @@ npm run docs:check
 npm run check
 npm run benchmark:run
 npm run e2e:alpha
+npm run beta:client-trial
 npm run beta:check
 npm run global:smoke
 ```
+
+`npm run beta:check` is the single local sign-off command. It runs `check`, `benchmark:run`, `e2e:alpha`, and `beta:client-trial` in order.
+
+`npm run beta:client-trial` installs the packed tarball in a temporary consumer repo and exercises MCP stdio from the installed package. It proves `initialize`, `tools/list`, `grape_get_status`, two-turn `grape_get_context`, omission, restore, source invalidation, stale restore rejection, mismatch recovery guidance, reset, branch invalidation, status redaction, and ignored secret-looking file rejection. It does not prove a specific IDE MCP client UI.
 
 Global package smoke for a consumer repo:
 
@@ -215,10 +227,10 @@ npm install -g grape-context@0.1.0-alpha.3
 
 ## Remaining blockers after transport-wedge cleanup
 
-- Real MCP client trials (Cursor, Claude Code, or equivalent) against the published package are not yet recorded in-repo.
-- Hosted cross-platform CI now passes for the current alpha.3 gate, including the v6 GitHub action workflow and pinned `windows-2025-vs2026` runner leg. Runner-change verification run: `27449834015`.
-- Turn-1 retrieval for non-TS/JS repos now has basic declaration anchors, but still lacks language-aware graph edges, package-aware caps, and benchmark baselines.
-- Benchmarks: deferred until beta architecture, schema, dirty/package, and compact output are confirmed.
+- Human MCP client trials in Cursor, Claude Code, or equivalent IDE UIs are not yet recorded in-repo. Automated `npm run beta:client-trial` covers packaged-install MCP stdio only.
+- Hosted cross-platform CI last verified green on run `27460794736` (`check` on Ubuntu/macOS/Windows plus `beta-smoke` with benchmark, e2e, and `beta:client-trial`). Re-verify after material transport or packaging changes.
+- Turn-1 retrieval for non-TS/JS repos has basic declaration anchors and internal fixture benchmarks (`docs/v1/quality/benchmarks.md`), but still lacks language-aware graph edges, full per-package budgets, and comparable external benchmark claims.
+- Next npm publish requires version bump, changelog cut, approval, and post-publish `global:smoke` on the new version. Republishing `0.1.0-alpha.3` is not valid.
 
 The public beta transport/schema stability boundary is documented in [`docs/v1/contracts/transport-stability.md`](../contracts/transport-stability.md) and enforced through TypeScript types and `tests/behavior/contracts/beta-transport-contract.test.mjs`. A standalone output JSON Schema artifact is not required for the controlled 1.0 beta.
 

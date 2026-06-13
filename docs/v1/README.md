@@ -2,7 +2,7 @@
 
 This folder is the implementation-facing documentation set for Grape V1.
 
-Grape V1 is a **local-first context transport layer** for AI coding agents on git repositories.
+Grape V1 is a **local-first context compiler and context transport layer** for AI coding agents on git repositories.
 
 It **compiles** safe, current, task-specific `ContextArtifact` objects from repo state (snapshot, rules, proof-backed excerpts, lightweight indexing). It **diffs** each compile against what the current agent session already received. It **ships** a structured `ContextPack` (`NEW`, `CHANGED`, `PINNED`, `OMIT_UNCHANGED`, `INVALIDATE_PREVIOUS`, `RESTORE_AVAILABLE`) through MCP or CLI.
 

@@ -8,6 +8,8 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- CI `beta-smoke` runs `npm run benchmark:run`, `npm run e2e:alpha`, and `npm run beta:client-trial` after the cross-platform `npm run check` matrix.
+- `npm run beta:check` now includes `npm run beta:client-trial` after `check`, `benchmark:run`, and `e2e:alpha`.
 - Moved `grape bench` default tasks into fixture metadata, required `benchmarkTask` in fixture checks, and added polyglot fallback plus monorepo-lite to the scripted no-change benchmark suite.
 - Omitted experimental `agentGraph` from default MCP `agent_pack` output so compact transport no longer spends tokens on unproven graph adjacency. Full inspection output still provides the graph cut.
 - Omitted optional inline `contextPackMarkdown` from default MCP `agent_pack` output so compact transport no longer duplicates structured `contextPackItems` and `artifactRef`. Full inspection output and stored artifact Markdown still provide the Markdown view.
@@ -41,15 +43,16 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Applied current-valid claim-edge filtering for explicit `contradicts`, `violates`, and `supersedes` edges, while leaving `needs_review` edges as conflict-inspection metadata only.
 - Hardened repo-scoped public output sanitization across CLI commands and benchmark fixture errors so active repo roots and local path aliases are redacted by default.
 - Made `grape_get_artifact` lazy by default: metadata is returned unless callers explicitly request `outputMode: "full"` for stored public artifact JSON.
-- Pointed GitHub Actions at `npm run beta:check` so the published beta gate exercises docs, tests, benchmark fixtures, and alpha e2e smoke.
+- Pointed GitHub Actions `beta-smoke` at `npm run benchmark:run`, `npm run e2e:alpha`, and `npm run beta:client-trial` after the cross-platform `npm run check` matrix.
 
 ### Added
 
+- Added `npm run beta:client-trial` as the automated packaged-install MCP client trial over stdio.
 - Clarified current-vs-deferred CLI documentation: runnable SPEC/CLI examples now show implemented beta transport commands, while deferred decision, export/purge, and claim-linked proof commands are explicitly preserved as still-planned V1.0 surfaces.
 - Aligned current runtime docs and beta-readiness notes with the Node.js 22.13+ published package floor and current behavior-test gate.
 - Added the language-indexing contract and ADR-0011 for capability-based language providers, safe unsupported-language fallback, and monorepo/package boundary expectations without expanding V1 into a universal parser.
 - Aligned root docs, CLI/MCP interface docs, fixture docs, examples, beta trial checklist, and the canonical spec around graph-shaped context, safe Kotlin/Java/Python/etc. fallback, and monorepo/package-boundary beta expectations.
-- Added `npm run beta:check` as the extended local beta-readiness gate over `check`, benchmark, and alpha e2e smoke.
+- Added `npm run beta:check` as the extended local beta-readiness gate over `npm run check`, `npm run benchmark:run`, `npm run e2e:alpha`, and `npm run beta:client-trial`.
 - Added `npm run global:smoke` for post-publish verification of the registry-installed global package.
 - Hardened packaged install smoke to prove CLI omitted restore, task/session mismatch recovery, and reset recovery in the installed consumer-repo path.
 - Updated beta-readiness/status docs for the verified published alpha.3 npm package, npm `latest`/`alpha` dist-tags, remote Git tag, GitHub release state, global install smoke, and external alpha.3 published-package smoke.

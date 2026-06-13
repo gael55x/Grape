@@ -25,7 +25,7 @@ The stability boundary is enforced through TypeScript types, this document, and 
 | `grape diff-context` | Stable |
 | `grape diff-context --explain` | Stable |
 | `grape artifacts` | Stable |
-| `grape restore` | Stable |
+| `grape omitted --session <id> --token <restoreToken>` | Stable |
 | `grape claims` | Stable |
 | `grape proofs` | Stable |
 | `grape rules` | Stable |

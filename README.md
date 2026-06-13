@@ -29,7 +29,7 @@
 
 
 
-Grape is a local-first context transport layer for AI coding agents.
+Grape is a local-first context compiler and context transport layer for AI coding agents.
 
 After MCP setup, the agent calls `grape_get_context` each turn with stable session identity. Grape tracks what that session has already seen, invalidates stale context when repo state changes, and ships only the safe delta (`NEW`, `CHANGED`, `PINNED`, `RESTORE_AVAILABLE`, `INVALIDATE_PREVIOUS`) without manual compile/diff commands. Install Grape once, configure your agent through MCP, and keep using your coding agent normally.
 
@@ -155,9 +155,9 @@ Implemented in the alpha transport slice:
 - deterministic TypeScript/JavaScript AST graph indexing for common imports, exports, symbols, calls, and related test hints
 - safe exact/path/lexical fallback for Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, shell, JSON, YAML, TOML, and explicit Markdown paths, with broad language-aware graph providers still pending
 - Grape-observed `grape run` / `grape test` evidence and narrow observed-run result claims
-- local checks for docs, architecture boundaries, storage, typechecking, package contents, install smoke, behavior tests, benchmarks, and alpha e2e smoke
+- local checks for docs, architecture boundaries, storage, typechecking, package contents, install smoke, behavior tests, benchmarks, alpha e2e smoke, and the automated beta client trial
 
-Still alpha / not a full beta promise:
+Still alpha / not a shipped beta promise:
 
 - this is a local context transport slice, not a full memory platform
 - stable task/session identity is required for reliable second-turn omission
@@ -165,7 +165,7 @@ Still alpha / not a full beta promise:
 - retrieval has AST-backed TypeScript/JavaScript graph expansion, while Python/Java/Kotlin/Go/Rust/C#/Ruby/PHP/Swift/C/C++/shell/config/docs paths currently rely on safe fallback unless a provider and fixture prove stronger support
 - no full semantic ranking, embeddings, complete call graphs, broad language parsing, or broad polyglot/monorepo graph claim yet
 - broader durable claim types, nested rule scope resolution, and automatic conflict resolution remain outside the beta transport promise
-- real clean-repo MCP client trials beyond scripted smoke before beta sign-off
+- automated `npm run beta:client-trial` proves MCP over stdio from a packed install; a literal Cursor or Claude Code UI trial still needs a human run when release policy requires it
 
 ## Architecture
 
@@ -282,6 +282,14 @@ Run the extended beta-readiness gate before release sign-off:
 ```bash
 npm run beta:check
 ```
+
+`beta:check` runs `check`, `benchmark:run`, `e2e:alpha`, and `beta:client-trial` (scripted packaged MCP smoke, not a real Cursor/Claude client trial).
+
+`npm run beta:check` runs `npm run check`, then `npm run benchmark:run`, `npm run e2e:alpha`, and `npm run beta:client-trial`.
+
+`npm run beta:client-trial` packs the current build, installs it in a temporary consumer git repo, and exercises MCP `initialize`, `tools/list`, `grape_get_status`, two-turn `grape_get_context` with `OMIT_UNCHANGED` and `RESTORE_AVAILABLE`, omitted-item restore, source invalidation after a file edit, stale restore rejection, task/session mismatch recovery guidance, `resetSession` invalidation and resend, branch invalidation, status and output redaction checks, and ignored secret-looking file rejection. It proves stdio MCP from a packaged install, not a specific IDE UI.
+
+GitHub Actions runs `npm run check` on Ubuntu, macOS, and Windows, then a `beta-smoke` job that runs `npm run benchmark:run`, `npm run e2e:alpha`, and `npm run beta:client-trial`.
 
 After installing the published package globally, run the global smoke:
 
