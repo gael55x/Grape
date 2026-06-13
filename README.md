@@ -258,13 +258,13 @@ Fallback coverage includes:
 
 Fallback does not mean ignored. It means Grape avoids pretending it has precise graph knowledge when it only has exact source, paths, lexical matches, or explicit references.
 
-## Benchmark results
+## Benchmark evidence
 
-Grape has two current benchmark evidence paths.
+Grape includes benchmark fixtures and scripts for local comparison. Recorded numbers are fixture evidence only. They are not production performance proof or claims that Grape beats naive context, search, or external tools unless a committed result file, command, date, and limits are named together.
 
-Transport fixture evidence comes from `npm run bench`, recorded in `benchmarks/results/run-2026-06-13T12-24-54-222Z.json` for `grape-context@1.0.0-beta.0` on Node `v22.18.0`.
+### Transport fixtures
 
-On the three no-change transport fixtures, the second same-session turn reduced body-token context with zero unsafe omissions and zero stale sends:
+`npm run bench` exercises the installed package on six named fixtures. On the three no-change transport fixtures, the second same-session turn reduced body-token context with zero unsafe omissions and zero stale sends:
 
 | Fixture | Turn 1 body tokens | Turn 2 body tokens | Reduction |
 | --- | ---: | ---: | ---: |
@@ -272,13 +272,17 @@ On the three no-change transport fixtures, the second same-session turn reduced 
 | `polyglot-fallback-repo` | 3132 | 2523 | 31.46% |
 | `monorepo-lite-repo` | 3388 | 1885 | 52.07% |
 
-The same run also passed branch-switch, stale-source, and session-reset invalidation fixtures with zero unsafe omissions and zero stale sends.
+The same run also passed branch-switch, stale-source, and session-reset invalidation fixtures.
 
-That is the core beta claim: Grape works as a session-aware context transport layer on these fixtures. It can avoid resending unchanged context after the first turn, keep restore metadata for omitted context, and invalidate prior context when files, branches, or sessions change.
+That supports the core beta transport claim on these fixtures: Grape can omit unchanged same-session context, keep restore metadata for omitted items, and invalidate prior context when files, branches, or sessions change.
 
-Published-package baseline evidence comes from `npm run bench:post-beta`, recorded in `benchmarks/results/post-beta-2026-06-13T12-38-16-742Z-published-beta.json`. That run compares the published npm package with naive and `rg` search baselines on three small cases. It supports fixture-level retrieval and known-noise findings. It does not prove token-size savings against naive or search baselines, production performance, or superiority over external tools.
+### Published-package baselines
 
-What is still missing: repeated published-package benchmark runs across more tasks, lower serialized output cost, broader language-aware graph support, and human MCP client trial notes from real IDE clients.
+`npm run bench:post-beta` compares the published npm package with naive and search baselines on three small tasks. Results report file-level recall, known-noise ratio, layered output metrics, and rough serialized output size.
+
+Post-beta baselines help answer whether Grape finds the right files and where known-irrelevant paths enter the compiled output. They do not prove token-size savings against naive or search, production readiness, or superiority over external tools.
+
+See [Benchmarks](docs/v1/quality/benchmarks.md) for commands, fixture names, result files, and caveats.
 
 ## Project status
 
