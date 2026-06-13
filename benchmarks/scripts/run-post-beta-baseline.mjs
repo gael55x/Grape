@@ -224,11 +224,11 @@ async function main() {
     componentAttribution: attributeComponents(allRows),
     interpretation:
       artifact === "published-beta"
-        ? "First post-beta benchmark comparing the published npm package with naive and search baselines across retrieval, bug-fix, and documentation tasks. Results are directional until repeated across more tasks."
+        ? "Post-beta fixture benchmark comparing the published npm package with naive and search baselines across retrieval, bug-fix, and documentation tasks. Use these results as beta fixture evidence only."
         : "Local candidate benchmark from packed git tree. Compare only against published-beta results with different artifactIdentity.",
     limitations: [
       "Small sample: three cases on one machine.",
-      "Directional fixture results only; not official release benchmarks.",
+      "Fixture evidence only; not production performance evidence or an external superiority benchmark.",
       "File-level recall is primary; span checks are supplementary.",
       "Docs case uses a curated docs slice, not the full Grape repository tree."
     ]

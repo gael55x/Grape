@@ -101,9 +101,9 @@ npm run bench:post-beta:local
 
 The uncapped mode measures maximum recall. The budgeted mode caps each baseline to the same case budget so the benchmark can compare context selection under equal pressure.
 
-Post-beta grape rows now report layered metrics separately: `retrievalSelectedRefs`, `evidenceRefs`, `projectRuleRefs`, `packInputRefs`, and `finalAgentFacingRefs`. Each layer records `relevanceRecall`, `knownNoiseRatio`, and `selectedCount`. The harness records `searchEngine` as `rg` or `node-fallback` in the environment block. Uncommitted local JSON under `benchmarks/results/` is fixture evidence only, not an official release benchmark.
+Post-beta grape rows report layered metrics separately: `retrievalSelectedRefs`, `evidenceRefs`, `projectRuleRefs`, `packInputRefs`, and `finalAgentFacingRefs`. Each layer records `relevanceRecall`, `knownNoiseRatio`, and `selectedCount`. The harness records `searchEngine` as `rg` or `node-fallback` in the environment block. Uncommitted local JSON under `benchmarks/results/` is local trial evidence only. Public claims require committed raw result files and the caveats in those files.
 
-Committed results live under `benchmarks/results/post-beta-*-published-beta.json`.
+Committed published-package results live under `benchmarks/results/post-beta-*-published-beta.json`. Committed transport fixture result files, when present, use `benchmarks/results/run-*.json`.
 
 See [`../../../benchmarks/README.md`](../../../benchmarks/README.md) and [`../legacy/alpha/benchmark-readiness-report.md`](../legacy/alpha/benchmark-readiness-report.md) for historical pre-beta evidence.
 
@@ -121,28 +121,54 @@ npm run beta:check
 
 `npm run beta:check` ends with `npm run beta:client-trial`, which installs the packed tarball in a temporary consumer repo and exercises MCP stdio transport end to end. That trial is an internal harness check, not an external benchmark superiority claim.
 
-### Recorded baselines (local fixture reference, 2026-06-13)
+### Recorded transport fixture baseline (2026-06-13)
 
-On the recorded fixture run dated **2026-06-13**, Grape produced the listed token and invalidation results under the documented harness limits.
+On the recorded fixture run dated **2026-06-13**, Grape produced the listed body-token and invalidation results under the documented harness limits. This table uses body token estimates from the context pack items. Serialized pack and serialized default MCP output token counts are diagnostics because JSON metadata, restore hints, and summaries can vary as the output contract changes.
 
 | Field | Value |
 |---|---|
 | Command | `npm run bench` |
-| Git commit | `e8a1656298b1de9a47f3ecfe158c6d530094d31a` (`v1.0.0-beta.0`) |
+| Raw result file | `benchmarks/results/run-2026-06-13T12-24-54-222Z.json` |
+| Git commit | `3666a37d9e526c0f267d9b53f6357272884f6ca6` |
 | Package version | `1.0.0-beta.0` (packed tarball from git tree) |
 | Node | `v22.18.0` on `darwin` |
 | Fixtures | all six gated fixtures below |
 | Limits | harness thresholds in this doc; zero unsafe omissions; zero stale sends |
-| Caveats | local fixture results only; recorded at beta publish (`1.0.0-beta.0`); not proof of production savings or external tool superiority |
+| Caveats | local fixture results only; not proof of production savings or external tool superiority |
 
-| Fixture | Turn 1 tokens | Turn 2 tokens | Turn 2 reduction | Serialized agent output | Agent output overhead | `OMIT_UNCHANGED` | `INVALIDATE_PREVIOUS` | Unsafe |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `clean-typescript-app` | 2811 | 1663 | 50.4% | 26021 | 215.35% | 7 | 1 | 0 |
-| `branch-switch-typescript-app` | 2811 | 3440 | 0% | 27460 | 216.13% | 0 | 9 | 0 |
-| `stale-source-typescript-app` | 2811 | 3600 | 0% | 27824 | 215.91% | 0 | 9 | 0 |
-| `session-reset-typescript-app` | 3770 | 4947 | 0% | 32561 | 182.2% | 0 | 9 | 0 |
-| `polyglot-fallback-repo` | 3132 | 2523 | 31.46% | 20191 | 121.71% | 7 | 1 | 0 |
-| `monorepo-lite-repo` | 3388 | 1885 | 52.07% | 28509 | 186.32% | 7 | 1 | 0 |
+| Fixture | Turn 1 body tokens | Turn 2 body tokens | Turn 2 reduction | `OMIT_UNCHANGED` | `INVALIDATE_PREVIOUS` | Unsafe omissions | Stale sends |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `clean-typescript-app` | 2811 | 1663 | 50.4% | 7 | 1 | 0 | 0 |
+| `branch-switch-typescript-app` | 2811 | 3440 | 0% | 0 | 9 | 0 | 0 |
+| `stale-source-typescript-app` | 2811 | 3600 | 0% | 0 | 9 | 0 | 0 |
+| `session-reset-typescript-app` | 3770 | 4947 | 0% | 0 | 9 | 0 | 0 |
+| `polyglot-fallback-repo` | 3132 | 2523 | 31.46% | 7 | 1 | 0 | 0 |
+| `monorepo-lite-repo` | 3388 | 1885 | 52.07% | 7 | 1 | 0 | 0 |
+
+Allowed transport claim from this table: Grape works as a session-aware context transport layer on these fixtures. On the three no-change transport fixtures, the second same-session turn reduced body-token context by 31.46 percent to 52.07 percent with zero unsafe omissions and zero stale sends. Branch-switch, stale-source, and session-reset fixtures show stale context invalidation and safe full resend behavior, not token savings.
+
+### Recorded published-package retrieval baseline (2026-06-13)
+
+The post-beta harness compares the published registry package with naive and search baselines over three small cases. It measures file-level selection quality, known-noise ratios, and rough serialized output size. It does not prove token savings against naive or search baselines.
+
+| Field | Value |
+|---|---|
+| Command | `npm run bench:post-beta` |
+| Raw result file | `benchmarks/results/post-beta-2026-06-13T12-38-16-742Z-published-beta.json` |
+| Artifact identity | `npm:grape-context@1.0.0-beta.0` |
+| Package version | `1.0.0-beta.0` from npm registry |
+| Search baseline | `rg` |
+| Cases | `retrieval_monorepo`, `bugfix_discount`, `docs_beta_release` |
+| Caveats | three cases on one machine; docs case uses a curated docs slice; file-level recall is primary; span checks are supplementary |
+
+| Case | Mode | Naive recall / noise | Search recall / noise | Grape final-facing recall / noise | Size finding |
+|---|---|---|---|---|---|
+| `retrieval_monorepo` | uncapped | 0.67 / 0.33 | 1 / 0 | 1 / 0 | Grape serialized output was larger than naive |
+| `retrieval_monorepo` | budgeted | 0.67 / 0.33 | 1 / 0 | 1 / 0 | Grape used the full budget and was larger than naive |
+| `bugfix_discount` | uncapped | 1 / 0 | 1 / 0 | 1 / 0 | Grape serialized output was larger than naive |
+| `bugfix_discount` | budgeted | 1 / 0 | 1 / 0 | 1 / 0 | Grape used the full budget and was larger than naive |
+| `docs_beta_release` | uncapped | 1 / 0.125 | 1 / 0.125 | 1 / 0.125 | Grape selected the legacy alpha README as known noise |
+| `docs_beta_release` | budgeted | 1 / 0.125 | 1 / 0.125 | 1 / 0.125 | Grape selected the legacy alpha README as known noise |
 
 Token reduction thresholds apply to no-change transport fixtures: `clean-typescript-app`, `polyglot-fallback-repo`, and `monorepo-lite-repo`. Invalidation benchmarks require `INVALIDATE_PREVIOUS > 0` on turn 2 with zero unsafe omissions. The session-reset benchmark also requires `NEW > 0` and `OMIT_UNCHANGED = 0` on the reset turn to prove the agent receives a safe full resend instead of a no-change omission.
 

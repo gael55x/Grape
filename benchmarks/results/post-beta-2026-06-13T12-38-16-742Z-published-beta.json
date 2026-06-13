@@ -1,13 +1,13 @@
 {
-  "runId": "2026-06-13T12-12-11-346Z",
-  "capturedAt": "2026-06-13T12:12:28.015Z",
+  "runId": "2026-06-13T12-38-16-742Z",
+  "capturedAt": "2026-06-13T12:41:59.188Z",
   "benchmarkComplete": true,
-  "searchBaselineStatus": "node-fallback",
+  "searchBaselineStatus": "rg",
   "environment": {
-    "capturedAt": "2026-06-13T12:12:28.181Z",
+    "capturedAt": "2026-06-13T12:41:59.741Z",
     "grapePackageName": "grape-context",
     "grapePackageVersion": "1.0.0-beta.0",
-    "gitCommit": "39e0acd39971185dd8d0f4d624bb9a528eb4a9fc",
+    "gitCommit": "3666a37d9e526c0f267d9b53f6357272884f6ca6",
     "gitBranch": "main",
     "nodeVersion": "v22.18.0",
     "npmVersion": "11.5.2",
@@ -15,17 +15,17 @@
     "arch": "arm64",
     "cpus": 8,
     "totalMemoryGb": 16,
-    "searchEngine": "node-fallback",
-    "artifactMode": "local-candidate",
-    "artifactIdentity": "local-candidate:39e0acd39971185dd8d0f4d624bb9a528eb4a9fc",
+    "searchEngine": "rg",
+    "artifactMode": "published-beta",
+    "artifactIdentity": "npm:grape-context@1.0.0-beta.0",
     "testedPackageName": "grape-context",
     "testedPackageVersion": "1.0.0-beta.0",
-    "testedGitCommit": "39e0acd39971185dd8d0f4d624bb9a528eb4a9fc",
-    "installSource": "local-pack",
-    "installCommand": "npm pack, then npm install <packed tgz> in fresh temp consumer",
+    "testedNpmDistTag": "latest",
+    "installSource": "npm-registry",
+    "installCommand": "npm install grape-context",
     "installPathKind": "mktemp-consumer-workspace",
     "installPathSanitized": true,
-    "installPathBasename": "grape-bench-beta-ZMXj9H"
+    "installPathBasename": "grape-bench-post-beta-AgT2Jo"
   },
   "budgetInterpretation": {
     "uncapped": "Uncapped measures maximum recall.",
@@ -73,7 +73,7 @@
           "knownNoiseRatio": 0.3333333333333333,
           "contextBytes": 1276,
           "estimatedTokens": 319,
-          "runtimeMs": 2,
+          "runtimeMs": 1,
           "errorCount": 0,
           "notes": []
         },
@@ -82,7 +82,7 @@
           "caseName": "Retrieval task",
           "targetTask": "Fix apiBillingTotal in packages/api/src/apiBilling.ts and include the package-local test without pulling packages/web context.",
           "baselineName": "search",
-          "inputSource": "node-fallback-manifest-queries",
+          "inputSource": "rg-manifest-queries",
           "packageVersion": "1.0.0-beta.0",
           "budgetMode": "uncapped",
           "expectedRelevantFiles": [
@@ -105,17 +105,17 @@
           "knownNoiseRatio": 0,
           "contextBytes": 770,
           "estimatedTokens": 193,
-          "runtimeMs": 1,
+          "runtimeMs": 52,
           "errorCount": 0,
           "notes": [],
-          "searchEngine": "node-fallback"
+          "searchEngine": "rg"
         },
         {
           "caseId": "retrieval_monorepo",
           "caseName": "Retrieval task",
           "targetTask": "Fix apiBillingTotal in packages/api/src/apiBilling.ts and include the package-local test without pulling packages/web context.",
           "baselineName": "grape",
-          "inputSource": "local-pack-installed-cli",
+          "inputSource": "npm-registry-installed-cli",
           "packageVersion": "1.0.0-beta.0",
           "budgetMode": "uncapped",
           "expectedRelevantFiles": [
@@ -136,9 +136,9 @@
           "neutralFilesSelectedCount": 0,
           "relevanceRecall": 1,
           "knownNoiseRatio": 0,
-          "contextBytes": 203444,
-          "estimatedTokens": 50861,
-          "runtimeMs": 1464,
+          "contextBytes": 208560,
+          "estimatedTokens": 52140,
+          "runtimeMs": 2020,
           "errorCount": 0,
           "notes": [],
           "layers": {
@@ -173,14 +173,23 @@
             },
             "packInputRefs": {
               "actualFilesSelected": [
+                "README.md",
+                "package.json",
                 "packages/api/package.json",
                 "packages/api/src/apiBilling.test.ts",
-                "packages/api/src/apiBilling.ts"
+                "packages/api/src/apiBilling.ts",
+                "packages/web/package.json",
+                "packages/web/src/cart.test.ts",
+                "packages/web/src/cart.ts"
               ],
-              "selectedCount": 3,
+              "selectedCount": 8,
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0,
-              "knownIrrelevantFilesSelected": []
+              "knownNoiseRatio": 0.375,
+              "knownIrrelevantFilesSelected": [
+                "packages/web/package.json",
+                "packages/web/src/cart.test.ts",
+                "packages/web/src/cart.ts"
+              ]
             },
             "finalAgentFacingRefs": {
               "actualFilesSelected": [
@@ -258,7 +267,7 @@
           "knownNoiseRatio": 0.3333333333333333,
           "contextBytes": 1276,
           "estimatedTokens": 319,
-          "runtimeMs": 1,
+          "runtimeMs": 8,
           "errorCount": 0,
           "notes": []
         },
@@ -267,7 +276,7 @@
           "caseName": "Retrieval task",
           "targetTask": "Fix apiBillingTotal in packages/api/src/apiBilling.ts and include the package-local test without pulling packages/web context.",
           "baselineName": "search",
-          "inputSource": "node-fallback-manifest-queries",
+          "inputSource": "rg-manifest-queries",
           "packageVersion": "1.0.0-beta.0",
           "budgetMode": "budgeted",
           "budgetBytes": 32768,
@@ -277,31 +286,31 @@
             "packages/api/package.json"
           ],
           "actualFilesSelected": [
-            ".grape/artifacts/ctx_0a0301736eb565732998c3b9.json"
+            "packages/api/package.json",
+            "packages/api/src/apiBilling.test.ts",
+            "packages/api/src/apiBilling.ts"
           ],
-          "expectedFilesFoundCount": 0,
-          "expectedFilesMissedCount": 3,
+          "expectedFilesFoundCount": 3,
+          "expectedFilesMissedCount": 0,
           "knownIrrelevantFilesSelected": [],
           "knownIrrelevantFilesSelectedCount": 0,
-          "neutralFilesSelected": [
-            ".grape/artifacts/ctx_0a0301736eb565732998c3b9.json"
-          ],
-          "neutralFilesSelectedCount": 1,
-          "relevanceRecall": 0,
+          "neutralFilesSelected": [],
+          "neutralFilesSelectedCount": 0,
+          "relevanceRecall": 1,
           "knownNoiseRatio": 0,
-          "contextBytes": 32768,
-          "estimatedTokens": 8192,
-          "runtimeMs": 4,
+          "contextBytes": 770,
+          "estimatedTokens": 193,
+          "runtimeMs": 364,
           "errorCount": 0,
           "notes": [],
-          "searchEngine": "node-fallback"
+          "searchEngine": "rg"
         },
         {
           "caseId": "retrieval_monorepo",
           "caseName": "Retrieval task",
           "targetTask": "Fix apiBillingTotal in packages/api/src/apiBilling.ts and include the package-local test without pulling packages/web context.",
           "baselineName": "grape",
-          "inputSource": "local-pack-installed-cli",
+          "inputSource": "npm-registry-installed-cli",
           "packageVersion": "1.0.0-beta.0",
           "budgetMode": "budgeted",
           "budgetBytes": 32768,
@@ -324,8 +333,8 @@
           "relevanceRecall": 1,
           "knownNoiseRatio": 0,
           "contextBytes": 32768,
-          "estimatedTokens": 68864,
-          "runtimeMs": 1240,
+          "estimatedTokens": 71193,
+          "runtimeMs": 1288,
           "errorCount": 0,
           "notes": [],
           "layers": {
@@ -360,14 +369,23 @@
             },
             "packInputRefs": {
               "actualFilesSelected": [
+                "README.md",
+                "package.json",
                 "packages/api/package.json",
                 "packages/api/src/apiBilling.test.ts",
-                "packages/api/src/apiBilling.ts"
+                "packages/api/src/apiBilling.ts",
+                "packages/web/package.json",
+                "packages/web/src/cart.test.ts",
+                "packages/web/src/cart.ts"
               ],
-              "selectedCount": 3,
+              "selectedCount": 8,
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0,
-              "knownIrrelevantFilesSelected": []
+              "knownNoiseRatio": 0.375,
+              "knownIrrelevantFilesSelected": [
+                "packages/web/package.json",
+                "packages/web/src/cart.test.ts",
+                "packages/web/src/cart.ts"
+              ]
             },
             "finalAgentFacingRefs": {
               "actualFilesSelected": [
@@ -420,12 +438,12 @@
             "search": 0,
             "grape": 0
           },
-          "contextSizeReductionVsNaive": -158.43887147335423
+          "contextSizeReductionVsNaive": -162.44827586206895
         },
         "budgeted": {
           "relevanceRecall": {
             "naive": 0.6666666666666666,
-            "search": 0,
+            "search": 1,
             "grape": 1
           },
           "knownNoiseRatio": {
@@ -481,7 +499,7 @@
           "caseName": "Bug-fix task",
           "targetTask": "Find the failing calculateDiscount test, the source span to fix, and the smallest change.",
           "baselineName": "search",
-          "inputSource": "node-fallback-manifest-queries",
+          "inputSource": "rg-manifest-queries",
           "packageVersion": "1.0.0-beta.0",
           "budgetMode": "uncapped",
           "expectedRelevantFiles": [
@@ -502,17 +520,17 @@
           "knownNoiseRatio": 0,
           "contextBytes": 869,
           "estimatedTokens": 218,
-          "runtimeMs": 0,
+          "runtimeMs": 32,
           "errorCount": 0,
           "notes": [],
-          "searchEngine": "node-fallback"
+          "searchEngine": "rg"
         },
         {
           "caseId": "bugfix_discount",
           "caseName": "Bug-fix task",
           "targetTask": "Find the failing calculateDiscount test, the source span to fix, and the smallest change.",
           "baselineName": "grape",
-          "inputSource": "local-pack-installed-cli",
+          "inputSource": "npm-registry-installed-cli",
           "packageVersion": "1.0.0-beta.0",
           "budgetMode": "uncapped",
           "expectedRelevantFiles": [
@@ -534,9 +552,9 @@
           "neutralFilesSelectedCount": 1,
           "relevanceRecall": 1,
           "knownNoiseRatio": 0,
-          "contextBytes": 191207,
-          "estimatedTokens": 47802,
-          "runtimeMs": 1211,
+          "contextBytes": 192128,
+          "estimatedTokens": 48032,
+          "runtimeMs": 1097,
           "errorCount": 0,
           "notes": [],
           "layers": {
@@ -572,10 +590,11 @@
             "packInputRefs": {
               "actualFilesSelected": [
                 "README.md",
+                "package.json",
                 "src/calculateDiscount.test.ts",
                 "src/calculateDiscount.ts"
               ],
-              "selectedCount": 3,
+              "selectedCount": 4,
               "relevanceRecall": 1,
               "knownNoiseRatio": 0,
               "knownIrrelevantFilesSelected": []
@@ -673,7 +692,7 @@
           "caseName": "Bug-fix task",
           "targetTask": "Find the failing calculateDiscount test, the source span to fix, and the smallest change.",
           "baselineName": "search",
-          "inputSource": "node-fallback-manifest-queries",
+          "inputSource": "rg-manifest-queries",
           "packageVersion": "1.0.0-beta.0",
           "budgetMode": "budgeted",
           "budgetBytes": 32768,
@@ -682,31 +701,30 @@
             "src/calculateDiscount.test.ts"
           ],
           "actualFilesSelected": [
-            ".grape/artifacts/ctx_903d5b488f225f497668b036.json"
+            "src/calculateDiscount.test.ts",
+            "src/calculateDiscount.ts"
           ],
-          "expectedFilesFoundCount": 0,
-          "expectedFilesMissedCount": 2,
+          "expectedFilesFoundCount": 2,
+          "expectedFilesMissedCount": 0,
           "knownIrrelevantFilesSelected": [],
           "knownIrrelevantFilesSelectedCount": 0,
-          "neutralFilesSelected": [
-            ".grape/artifacts/ctx_903d5b488f225f497668b036.json"
-          ],
-          "neutralFilesSelectedCount": 1,
-          "relevanceRecall": 0,
+          "neutralFilesSelected": [],
+          "neutralFilesSelectedCount": 0,
+          "relevanceRecall": 1,
           "knownNoiseRatio": 0,
-          "contextBytes": 32768,
-          "estimatedTokens": 8192,
-          "runtimeMs": 4,
+          "contextBytes": 869,
+          "estimatedTokens": 218,
+          "runtimeMs": 29,
           "errorCount": 0,
           "notes": [],
-          "searchEngine": "node-fallback"
+          "searchEngine": "rg"
         },
         {
           "caseId": "bugfix_discount",
           "caseName": "Bug-fix task",
           "targetTask": "Find the failing calculateDiscount test, the source span to fix, and the smallest change.",
           "baselineName": "grape",
-          "inputSource": "local-pack-installed-cli",
+          "inputSource": "npm-registry-installed-cli",
           "packageVersion": "1.0.0-beta.0",
           "budgetMode": "budgeted",
           "budgetBytes": 32768,
@@ -730,8 +748,8 @@
           "relevanceRecall": 1,
           "knownNoiseRatio": 0,
           "contextBytes": 32768,
-          "estimatedTokens": 65540,
-          "runtimeMs": 1412,
+          "estimatedTokens": 65956,
+          "runtimeMs": 1231,
           "errorCount": 0,
           "notes": [],
           "layers": {
@@ -767,10 +785,11 @@
             "packInputRefs": {
               "actualFilesSelected": [
                 "README.md",
+                "package.json",
                 "src/calculateDiscount.test.ts",
                 "src/calculateDiscount.ts"
               ],
-              "selectedCount": 3,
+              "selectedCount": 4,
               "relevanceRecall": 1,
               "knownNoiseRatio": 0,
               "knownIrrelevantFilesSelected": []
@@ -840,12 +859,12 @@
             "search": 0,
             "grape": 0
           },
-          "contextSizeReductionVsNaive": -137.95857558139534
+          "contextSizeReductionVsNaive": -138.62790697674419
         },
         "budgeted": {
           "relevanceRecall": {
             "naive": 1,
-            "search": 0,
+            "search": 1,
             "grape": 1
           },
           "knownNoiseRatio": {
@@ -899,8 +918,8 @@
           "neutralFilesSelectedCount": 1,
           "relevanceRecall": 1,
           "knownNoiseRatio": 0.125,
-          "contextBytes": 61676,
-          "estimatedTokens": 15415,
+          "contextBytes": 65467,
+          "estimatedTokens": 16362,
           "runtimeMs": 2,
           "errorCount": 0,
           "notes": []
@@ -910,7 +929,7 @@
           "caseName": "Documentation task",
           "targetTask": "Find files to update release install instructions and post-beta benchmark validation docs for grape-context 1.0 beta.",
           "baselineName": "search",
-          "inputSource": "node-fallback-manifest-queries",
+          "inputSource": "rg-manifest-queries",
           "packageVersion": "1.0.0-beta.0",
           "budgetMode": "uncapped",
           "expectedRelevantFiles": [
@@ -943,19 +962,19 @@
           "neutralFilesSelectedCount": 1,
           "relevanceRecall": 1,
           "knownNoiseRatio": 0.125,
-          "contextBytes": 61676,
-          "estimatedTokens": 15415,
-          "runtimeMs": 1,
+          "contextBytes": 65467,
+          "estimatedTokens": 16362,
+          "runtimeMs": 55,
           "errorCount": 0,
           "notes": [],
-          "searchEngine": "node-fallback"
+          "searchEngine": "rg"
         },
         {
           "caseId": "docs_beta_release",
           "caseName": "Documentation task",
           "targetTask": "Find files to update release install instructions and post-beta benchmark validation docs for grape-context 1.0 beta.",
           "baselineName": "grape",
-          "inputSource": "local-pack-installed-cli",
+          "inputSource": "npm-registry-installed-cli",
           "packageVersion": "1.0.0-beta.0",
           "budgetMode": "uncapped",
           "expectedRelevantFiles": [
@@ -972,22 +991,25 @@
             "ROADMAP.md",
             "benchmarks/README.md",
             "docs/README.md",
+            "docs/v1/legacy/alpha/README.md",
             "docs/v1/quality/benchmarks.md",
             "package.json"
           ],
           "expectedFilesFoundCount": 6,
           "expectedFilesMissedCount": 0,
-          "knownIrrelevantFilesSelected": [],
-          "knownIrrelevantFilesSelectedCount": 0,
+          "knownIrrelevantFilesSelected": [
+            "docs/v1/legacy/alpha/README.md"
+          ],
+          "knownIrrelevantFilesSelectedCount": 1,
           "neutralFilesSelected": [
             "CHANGELOG.md"
           ],
           "neutralFilesSelectedCount": 1,
           "relevanceRecall": 1,
-          "knownNoiseRatio": 0,
-          "contextBytes": 195876,
-          "estimatedTokens": 48969,
-          "runtimeMs": 1332,
+          "knownNoiseRatio": 0.125,
+          "contextBytes": 196142,
+          "estimatedTokens": 49034,
+          "runtimeMs": 1730,
           "errorCount": 0,
           "notes": [],
           "layers": {
@@ -998,18 +1020,21 @@
                 "ROADMAP.md",
                 "benchmarks/README.md",
                 "docs/README.md",
+                "docs/v1/legacy/alpha/README.md",
                 "docs/v1/quality/benchmarks.md",
                 "package.json"
               ],
-              "selectedCount": 7,
+              "selectedCount": 8,
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0,
-              "knownIrrelevantFilesSelected": []
+              "knownNoiseRatio": 0.125,
+              "knownIrrelevantFilesSelected": [
+                "docs/v1/legacy/alpha/README.md"
+              ]
             },
             "evidenceRefs": {
               "actualFilesSelected": [
+                "README.md",
                 "ROADMAP.md",
-                "benchmarks/README.md",
                 "docs/v1/quality/benchmarks.md"
               ],
               "selectedCount": 3,
@@ -1031,13 +1056,16 @@
                 "ROADMAP.md",
                 "benchmarks/README.md",
                 "docs/README.md",
+                "docs/v1/legacy/alpha/README.md",
                 "docs/v1/quality/benchmarks.md",
                 "package.json"
               ],
-              "selectedCount": 7,
+              "selectedCount": 8,
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0,
-              "knownIrrelevantFilesSelected": []
+              "knownNoiseRatio": 0.125,
+              "knownIrrelevantFilesSelected": [
+                "docs/v1/legacy/alpha/README.md"
+              ]
             },
             "finalAgentFacingRefs": {
               "actualFilesSelected": [
@@ -1046,13 +1074,16 @@
                 "ROADMAP.md",
                 "benchmarks/README.md",
                 "docs/README.md",
+                "docs/v1/legacy/alpha/README.md",
                 "docs/v1/quality/benchmarks.md",
                 "package.json"
               ],
-              "selectedCount": 7,
+              "selectedCount": 8,
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0,
-              "knownIrrelevantFilesSelected": []
+              "knownNoiseRatio": 0.125,
+              "knownIrrelevantFilesSelected": [
+                "docs/v1/legacy/alpha/README.md"
+              ]
             }
           },
           "expectedSpans": [],
@@ -1099,9 +1130,9 @@
           "neutralFilesSelectedCount": 1,
           "relevanceRecall": 1,
           "knownNoiseRatio": 0.125,
-          "contextBytes": 61676,
-          "estimatedTokens": 15415,
-          "runtimeMs": 2,
+          "contextBytes": 65467,
+          "estimatedTokens": 16362,
+          "runtimeMs": 7,
           "errorCount": 0,
           "notes": []
         },
@@ -1110,44 +1141,7 @@
           "caseName": "Documentation task",
           "targetTask": "Find files to update release install instructions and post-beta benchmark validation docs for grape-context 1.0 beta.",
           "baselineName": "search",
-          "inputSource": "node-fallback-manifest-queries",
-          "packageVersion": "1.0.0-beta.0",
-          "budgetMode": "budgeted",
-          "budgetBytes": 65536,
-          "expectedRelevantFiles": [
-            "README.md",
-            "package.json",
-            "ROADMAP.md",
-            "docs/README.md",
-            "docs/v1/quality/benchmarks.md",
-            "benchmarks/README.md"
-          ],
-          "actualFilesSelected": [
-            ".grape/artifacts/ctx_581d5f58a4ea5278e20065a2.json"
-          ],
-          "expectedFilesFoundCount": 0,
-          "expectedFilesMissedCount": 6,
-          "knownIrrelevantFilesSelected": [],
-          "knownIrrelevantFilesSelectedCount": 0,
-          "neutralFilesSelected": [
-            ".grape/artifacts/ctx_581d5f58a4ea5278e20065a2.json"
-          ],
-          "neutralFilesSelectedCount": 1,
-          "relevanceRecall": 0,
-          "knownNoiseRatio": 0,
-          "contextBytes": 65536,
-          "estimatedTokens": 16384,
-          "runtimeMs": 5,
-          "errorCount": 0,
-          "notes": [],
-          "searchEngine": "node-fallback"
-        },
-        {
-          "caseId": "docs_beta_release",
-          "caseName": "Documentation task",
-          "targetTask": "Find files to update release install instructions and post-beta benchmark validation docs for grape-context 1.0 beta.",
-          "baselineName": "grape",
-          "inputSource": "local-pack-installed-cli",
+          "inputSource": "rg-manifest-queries",
           "packageVersion": "1.0.0-beta.0",
           "budgetMode": "budgeted",
           "budgetBytes": 65536,
@@ -1165,22 +1159,71 @@
             "ROADMAP.md",
             "benchmarks/README.md",
             "docs/README.md",
+            "docs/v1/legacy/alpha/README.md",
             "docs/v1/quality/benchmarks.md",
             "package.json"
           ],
           "expectedFilesFoundCount": 6,
           "expectedFilesMissedCount": 0,
-          "knownIrrelevantFilesSelected": [],
-          "knownIrrelevantFilesSelectedCount": 0,
+          "knownIrrelevantFilesSelected": [
+            "docs/v1/legacy/alpha/README.md"
+          ],
+          "knownIrrelevantFilesSelectedCount": 1,
           "neutralFilesSelected": [
             "CHANGELOG.md"
           ],
           "neutralFilesSelectedCount": 1,
           "relevanceRecall": 1,
-          "knownNoiseRatio": 0,
+          "knownNoiseRatio": 0.125,
+          "contextBytes": 65467,
+          "estimatedTokens": 16362,
+          "runtimeMs": 174,
+          "errorCount": 0,
+          "notes": [],
+          "searchEngine": "rg"
+        },
+        {
+          "caseId": "docs_beta_release",
+          "caseName": "Documentation task",
+          "targetTask": "Find files to update release install instructions and post-beta benchmark validation docs for grape-context 1.0 beta.",
+          "baselineName": "grape",
+          "inputSource": "npm-registry-installed-cli",
+          "packageVersion": "1.0.0-beta.0",
+          "budgetMode": "budgeted",
+          "budgetBytes": 65536,
+          "expectedRelevantFiles": [
+            "README.md",
+            "package.json",
+            "ROADMAP.md",
+            "docs/README.md",
+            "docs/v1/quality/benchmarks.md",
+            "benchmarks/README.md"
+          ],
+          "actualFilesSelected": [
+            "CHANGELOG.md",
+            "README.md",
+            "ROADMAP.md",
+            "benchmarks/README.md",
+            "docs/README.md",
+            "docs/v1/legacy/alpha/README.md",
+            "docs/v1/quality/benchmarks.md",
+            "package.json"
+          ],
+          "expectedFilesFoundCount": 6,
+          "expectedFilesMissedCount": 0,
+          "knownIrrelevantFilesSelected": [
+            "docs/v1/legacy/alpha/README.md"
+          ],
+          "knownIrrelevantFilesSelectedCount": 1,
+          "neutralFilesSelected": [
+            "CHANGELOG.md"
+          ],
+          "neutralFilesSelectedCount": 1,
+          "relevanceRecall": 1,
+          "knownNoiseRatio": 0.125,
           "contextBytes": 65536,
-          "estimatedTokens": 63944,
-          "runtimeMs": 1307,
+          "estimatedTokens": 64578,
+          "runtimeMs": 1246,
           "errorCount": 0,
           "notes": [],
           "layers": {
@@ -1191,18 +1234,21 @@
                 "ROADMAP.md",
                 "benchmarks/README.md",
                 "docs/README.md",
+                "docs/v1/legacy/alpha/README.md",
                 "docs/v1/quality/benchmarks.md",
                 "package.json"
               ],
-              "selectedCount": 7,
+              "selectedCount": 8,
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0,
-              "knownIrrelevantFilesSelected": []
+              "knownNoiseRatio": 0.125,
+              "knownIrrelevantFilesSelected": [
+                "docs/v1/legacy/alpha/README.md"
+              ]
             },
             "evidenceRefs": {
               "actualFilesSelected": [
+                "README.md",
                 "ROADMAP.md",
-                "benchmarks/README.md",
                 "docs/v1/quality/benchmarks.md"
               ],
               "selectedCount": 3,
@@ -1224,13 +1270,16 @@
                 "ROADMAP.md",
                 "benchmarks/README.md",
                 "docs/README.md",
+                "docs/v1/legacy/alpha/README.md",
                 "docs/v1/quality/benchmarks.md",
                 "package.json"
               ],
-              "selectedCount": 7,
+              "selectedCount": 8,
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0,
-              "knownIrrelevantFilesSelected": []
+              "knownNoiseRatio": 0.125,
+              "knownIrrelevantFilesSelected": [
+                "docs/v1/legacy/alpha/README.md"
+              ]
             },
             "finalAgentFacingRefs": {
               "actualFilesSelected": [
@@ -1239,13 +1288,16 @@
                 "ROADMAP.md",
                 "benchmarks/README.md",
                 "docs/README.md",
+                "docs/v1/legacy/alpha/README.md",
                 "docs/v1/quality/benchmarks.md",
                 "package.json"
               ],
-              "selectedCount": 7,
+              "selectedCount": 8,
               "relevanceRecall": 1,
-              "knownNoiseRatio": 0,
-              "knownIrrelevantFilesSelected": []
+              "knownNoiseRatio": 0.125,
+              "knownIrrelevantFilesSelected": [
+                "docs/v1/legacy/alpha/README.md"
+              ]
             }
           },
           "expectedSpans": [],
@@ -1264,22 +1316,22 @@
           "knownNoiseRatio": {
             "naive": 0.125,
             "search": 0.125,
-            "grape": 0
+            "grape": 0.125
           },
-          "contextSizeReductionVsNaive": -2.1758868927946042
+          "contextSizeReductionVsNaive": -1.9960438083309149
         },
         "budgeted": {
           "relevanceRecall": {
             "naive": 1,
-            "search": 0,
+            "search": 1,
             "grape": 1
           },
           "knownNoiseRatio": {
             "naive": 0.125,
-            "search": 0,
-            "grape": 0
+            "search": 0.125,
+            "grape": 0.125
           },
-          "contextSizeReductionVsNaive": -0.06258512225176727
+          "contextSizeReductionVsNaive": -0.001053966120335481
         }
       }
     }
@@ -1297,12 +1349,12 @@
           "search": 0,
           "grape": 0
         },
-        "contextSizeReductionVsNaive": -158.43887147335423
+        "contextSizeReductionVsNaive": -162.44827586206895
       },
       "budgeted": {
         "relevanceRecall": {
           "naive": 0.6666666666666666,
-          "search": 0,
+          "search": 1,
           "grape": 1
         },
         "knownNoiseRatio": {
@@ -1325,12 +1377,12 @@
           "search": 0,
           "grape": 0
         },
-        "contextSizeReductionVsNaive": -137.95857558139534
+        "contextSizeReductionVsNaive": -138.62790697674419
       },
       "budgeted": {
         "relevanceRecall": {
           "naive": 1,
-          "search": 0,
+          "search": 1,
           "grape": 1
         },
         "knownNoiseRatio": {
@@ -1351,27 +1403,46 @@
         "knownNoiseRatio": {
           "naive": 0.125,
           "search": 0.125,
-          "grape": 0
+          "grape": 0.125
         },
-        "contextSizeReductionVsNaive": -2.1758868927946042
+        "contextSizeReductionVsNaive": -1.9960438083309149
       },
       "budgeted": {
         "relevanceRecall": {
           "naive": 1,
-          "search": 0,
+          "search": 1,
           "grape": 1
         },
         "knownNoiseRatio": {
           "naive": 0.125,
-          "search": 0,
-          "grape": 0
+          "search": 0.125,
+          "grape": 0.125
         },
-        "contextSizeReductionVsNaive": -0.06258512225176727
+        "contextSizeReductionVsNaive": -0.001053966120335481
       }
     }
   },
-  "componentAttribution": [],
-  "interpretation": "Local candidate benchmark from packed git tree. Compare only against published-beta results with different artifactIdentity.",
+  "componentAttribution": [
+    {
+      "symptom": "Selected known-irrelevant files",
+      "affectedCase": "docs_beta_release",
+      "likelyComponent": "task retrieval selection",
+      "firstNoisyLayer": "retrievalSelectedRefs",
+      "evidence": "docs/v1/legacy/alpha/README.md",
+      "fixNow": true,
+      "budgetMode": "uncapped"
+    },
+    {
+      "symptom": "Selected known-irrelevant files",
+      "affectedCase": "docs_beta_release",
+      "likelyComponent": "task retrieval selection",
+      "firstNoisyLayer": "retrievalSelectedRefs",
+      "evidence": "docs/v1/legacy/alpha/README.md",
+      "fixNow": true,
+      "budgetMode": "budgeted"
+    }
+  ],
+  "interpretation": "Post-beta fixture benchmark comparing the published npm package with naive and search baselines across retrieval, bug-fix, and documentation tasks. Use these results as beta fixture evidence only.",
   "limitations": [
     "Small sample: three cases on one machine.",
     "Fixture evidence only; not production performance evidence or an external superiority benchmark.",

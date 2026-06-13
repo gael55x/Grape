@@ -1437,7 +1437,7 @@
   "interpretation": "First post-beta benchmark comparing the published npm package with naive and search baselines across retrieval, bug-fix, and documentation tasks. Results are directional until repeated across more tasks.",
   "limitations": [
     "Small sample: three cases on one machine.",
-    "Directional fixture results only; not official release benchmarks.",
+    "Fixture evidence only; not production performance evidence or an external superiority benchmark.",
     "File-level recall is primary; span checks are supplementary.",
     "Docs case uses a curated docs slice, not the full Grape repository tree."
   ]

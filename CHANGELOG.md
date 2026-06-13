@@ -25,10 +25,10 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ### Changed
 
-- Refreshed user-facing docs for the planned `1.0.0-beta.0` npm prerelease: dual install path (published `0.1.0-alpha.3` today, `@beta` after publish), honest transport scope, benchmark claim boundaries, and documentation style rules in `AGENTS.md`.
+- Refreshed user-facing docs for the `1.0.0-beta.0` npm prerelease: beta install path, honest transport scope, benchmark claim boundaries, and documentation style rules in `AGENTS.md`.
 - CI `beta-smoke` now runs `npm run benchmark:run`, `npm run e2e:alpha`, and `npm run beta:client-trial` after the cross-platform `npm run check` matrix.
 - Hardened packaged install smoke to prove CLI omitted restore, task/session mismatch recovery, and reset recovery in the installed consumer-repo path.
-- Refreshed beta-readiness docs to reflect the published `0.1.0-alpha.3` npm package, npm `latest`/`alpha` dist-tags, GitHub tag/release state, global install smoke, and external alpha.3 published-package smoke.
+- Refreshed beta-readiness docs to reflect the published `1.0.0-beta.0` npm package, npm `latest`/`beta` dist-tags, GitHub tag state, global install smoke, and packaged client trial coverage.
 - Improved lightweight TypeScript/JavaScript retrieval by treating const-assigned arrow/function declarations as function symbols and documenting the beta retrieval boundary.
 - Added a beta trial checklist for real MCP client trials, pass/fail criteria, recovery scenarios, and explicit durable-workflow beta exclusions.
 - Reduced default MCP `grape_get_context` payload duplication for beta trials. The tool now returns compact `agent_pack` output by default, keeps full artifacts behind `outputMode: "full"` / `grape_get_artifact`, summarizes MCP text instead of duplicating structured JSON, and reports serialized agent-output token estimates in benchmarks.

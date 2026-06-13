@@ -8,7 +8,7 @@ Canonical protocol: [`docs/v1/contracts/context-diff.md`](docs/v1/contracts/cont
 
 ## North Star
 
-Any MCP-capable agent on any git repo can call `grape_get_context`, receive a structured context pack diff, and omit unchanged same-session context on later turns when task and session identity stay stable, without losing safety-critical or invalidated context. Grape includes benchmark fixtures and scripts for local comparison; numeric savings are fixture estimates only until official benchmark artifacts are published.
+Any MCP-capable agent on any git repo can call `grape_get_context`, receive a structured context pack diff, and omit unchanged same-session context on later turns when task and session identity stay stable, without losing safety-critical or invalidated context. Grape includes benchmark fixtures and scripts for local comparison; numeric savings are fixture estimates only when tied to committed raw result files and their caveats.
 
 ## Release Shape
 
@@ -36,7 +36,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - Package-lock metadata is aligned with alpha.3 version/runtime.
 - Global install smoke passed against `grape-context@0.1.0-alpha.3`.
 - Published-package smoke passed against registry-installed alpha.3 in the external benchmark workspace.
-- The external benchmark workspace reports scripted transport scenarios passing under its documented methodology and stable task/session contract. Those are local fixture results, not official release benchmarks or superiority proof.
+- The external benchmark workspace reports scripted transport scenarios passing under its documented methodology and stable task/session contract. Those are local fixture results, not production performance evidence or superiority proof.
 - In-repo `grape bench` fixtures cover clean, branch-switch, stale-source, session-reset, polyglot fallback, and monorepo-lite scenarios.
 - Package dry-run and install smoke are part of the local gate.
 - `npm run beta:client-trial` proves packaged-install MCP stdio transport, including omission, restore, invalidation, reset, branch change, redaction, and ignored secret-looking file rejection.
@@ -47,13 +47,13 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 
 ## Now
 
-- Post-beta benchmark validation is in progress. The first run compares the published npm package (`grape-context@1.0.0-beta.0`) against naive and search baselines across retrieval, bug-fix, and documentation tasks. Weak components from those results drive the next roadmap items.
+- Post-beta benchmark validation has a first committed published-package run for `grape-context@1.0.0-beta.0` against naive and search baselines across retrieval, bug-fix, and documentation tasks. It supports fixture-level retrieval and noise findings, not token-size savings against those baselines.
 - Record human MCP client trials from [`docs/v1/planning/beta-trial-checklist.md`](docs/v1/planning/beta-trial-checklist.md) when release policy requires Cursor, Claude Code, or equivalent IDE UI proof beyond automated `beta:client-trial`.
 - Keep future version bumps, tags, GitHub releases, npm publishes, and dist-tag changes approval-gated.
 
 ## Next
 
-- Repeat post-beta benchmark runs across more tasks and tune retrieval where the published-beta results show known noise or missed files.
+- Repeat post-beta benchmark runs across more tasks and tune retrieval where the published-beta results show known noise, missed files, or high serialized output cost.
 
 ## Soon
 

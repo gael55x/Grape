@@ -74,7 +74,7 @@ docs/v1/
 | Interfaces | `interfaces/mcp-tools.md` | MCP tool contracts and safety boundaries. | MCP tools change. | Write tools cannot promote durable truth. |
 | Interfaces | `interfaces/cli.md` | CLI commands, outputs, exit codes, inspection workflows. | CLI behavior changes. | CLI is adapter-only. |
 | Quality | `quality/testing.md` | Test categories, named tests, fixture mapping. | Test strategy or required tests change. | Required tests exist for touched invariant/transition. |
-| Quality | `quality/benchmarks.md` | Benchmark metrics, baselines, thresholds, and transport harness gates. | Benchmarks or transport benchmark claims change. | Baselines are scripted. Local fixture numbers are not official release benchmarks. |
+| Quality | `quality/benchmarks.md` | Benchmark metrics, baselines, thresholds, and transport harness gates. | Benchmarks or transport benchmark claims change. | Baselines are scripted. Local fixture numbers are not production performance evidence. |
 | Planning | `planning/implementation-roadmap.md` | Goal order, deliverables, exit criteria. | Scope or build order changes. | Work belongs to the current goal. |
 | Planning | `planning/implementation-status.md` | Acceptance matrix for the V1 core pipeline. | A core-pipeline area changes status. | Status reflects implementation, tests, docs, and known limitations honestly. |
 | Planning | `planning/beta-readiness.md` | Pre-beta review checklist, setup verification commands, and benchmark workspace alignment notes. | Alpha/beta readiness criteria, human-review checklist, or external benchmark alignment changes. | Checklist does not expand V1 scope or change benchmark methodology. |

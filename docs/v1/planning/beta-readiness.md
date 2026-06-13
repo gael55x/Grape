@@ -199,7 +199,7 @@ Observed:
 - Follow-up pipeline performance hardening reused caller-captured snapshots, guarded repeat evidence/index skips by existing rows, added scoped ledger queries and lookup indexes, and bounded lexical SQL prefiltering with normalized fallback. Artifact output now uses temp-file then rename materialization, but full post-commit file materialization remains deferred until a staged design can preserve sent-ledger correctness.
 - `npm run e2e:alpha` initially failed inside restricted sandbox networking while resolving `registry.npmjs.org`; rerun with approved network access passed.
 - `npm run global:smoke` passed against global `grape-context@0.1.0-alpha.3`.
-- External benchmark workspace scripted transport scenarios passed under documented methodology (local fixture results, not official release benchmarks). The same-task no-change turn preserved safe omission and restore behavior without recording raw token counts in this planning note.
+- External benchmark workspace scripted transport scenarios passed under documented methodology (local fixture results, not production performance evidence or superiority proof). The same-task no-change turn preserved safe omission and restore behavior without recording raw token counts in this planning note.
 - External `node smoke-published.mjs` passed 8/8 checks against the published/global CLI, including MCP `initialize`, `tools/list`, two `grape_get_context` turns, and `grape_get_omitted_item` restore.
 - Graphify AST update produced a local graph for `ts-checkout-app`, and `graphify query` found the expected discount/cart/test neighborhood. Graphify's built-in `benchmark` command did not run on this small graph because its sample questions found no matching nodes, so Graphify is recorded here as a structural orientation comparison, not as an equivalent context-transport benchmark.
 - The sample repo was dirty during the external trial because generated/local files were present, and Grape surfaced `dirty_worktree_context` rather than treating the context as branch-global.
@@ -207,7 +207,7 @@ Observed:
 Verdict:
 
 - **Published beta:** `grape-context@1.0.0-beta.0` is on npm under `beta` with scripted harness coverage (`npm run beta:check`).
-- **Next validation:** formal benchmark comparison runs and human MCP client trials from [`beta-trial-checklist.md`](beta-trial-checklist.md) when release policy requires IDE UI proof beyond `beta:client-trial`.
+- **Next validation:** repeat benchmark comparison runs across more tasks, act on known-noise and serialized-output findings, and record human MCP client trials from [`beta-trial-checklist.md`](beta-trial-checklist.md) when release policy requires IDE UI proof beyond `beta:client-trial`.
 - **Not GA:** this is not a general availability release. Benchmark superiority claims remain deferred until formal benchmark runs are completed.
 
 ## Verification Commands
@@ -247,7 +247,7 @@ npm install -g grape-context@beta
 - Human MCP client trials in Cursor, Claude Code, or equivalent IDE UIs are not yet recorded in-repo. Automated `npm run beta:client-trial` covers packaged-install MCP stdio only.
 - Hosted cross-platform CI last verified green on run `27460794736` (`check` on Ubuntu/macOS/Windows plus `beta-smoke` with benchmark, e2e, and `beta:client-trial`). Re-verify after material transport or packaging changes.
 - Turn-1 retrieval for non-TS/JS repos has basic declaration anchors and internal fixture benchmarks (`docs/v1/quality/benchmarks.md`), but still lacks language-aware graph edges, full per-package budgets, and comparable external benchmark claims.
-- Formal benchmark comparison runs after the beta publish.
+- Repeat formal benchmark comparison runs after the first committed post-beta published-package baseline. The current baseline supports fixture-level retrieval and known-noise findings, not production token savings or external superiority claims.
 - Next npm publish requires version bump, changelog cut, approval, and post-publish `global:smoke` on the new version.
 
 The public beta transport/schema stability boundary is documented in [`docs/v1/contracts/transport-stability.md`](../contracts/transport-stability.md) and enforced through TypeScript types and `tests/behavior/contracts/beta-transport-contract.test.mjs`. A standalone output JSON Schema artifact is not required for the controlled 1.0 beta.

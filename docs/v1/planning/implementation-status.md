@@ -35,13 +35,13 @@ Done:
 - Dedicated task/session mismatch exit classification returns code `6` from CLI compile/diff-context instead of the storage/schema bucket.
 - Package-lock metadata is aligned to `1.0.0-beta.0`. Global install smoke passes against registry-installed `@beta`.
 - Storage repository ownership is split into table-family directories without schema or behavior changes.
-- The external benchmark workspace reports scripted transport scenarios passing under its documented methodology and stable task/session contract. Those are local fixture results, not official release benchmarks.
+- The external benchmark workspace reports scripted transport scenarios passing under its documented methodology and stable task/session contract. Those are local fixture results, not production performance evidence.
 - GitHub Actions run `27449834015` passed `npm run check` on Ubuntu, macOS, and the pinned `windows-2025-vs2026` runner, plus the beta smoke job with `benchmark:run`, `e2e:alpha`, and `beta:client-trial`.
 
 Now:
 
 - Record human MCP client trials from `beta-trial-checklist.md` when release policy requires IDE UI proof beyond automated `beta:client-trial`.
-- Run formal benchmark comparison runs after the beta publish.
+- Repeat formal benchmark comparison runs after the first committed post-beta published-package baseline, and treat current results as fixture-level evidence only.
 - Keep future version bumps, tags, GitHub releases, npm publishes, and dist-tag changes approval-gated.
 
 Next:

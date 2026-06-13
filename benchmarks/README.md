@@ -45,7 +45,7 @@ npm run bench:comparators      # probe external tools (skips unavailable)
 node benchmarks/scripts/naive-baseline.mjs clean-typescript-app
 ```
 
-`npm run bench:post-beta` installs `grape-context` from the npm registry into a fresh consumer workspace and records `artifactIdentity: npm:grape-context@1.0.0-beta.0`. `npm run bench:post-beta:local` installs a packed tarball from the current git commit for before/after comparison.
+`npm run bench:post-beta` installs `grape-context` from the npm registry into a fresh consumer workspace and records `artifactIdentity: npm:grape-context@1.0.0-beta.0`. `npm run bench:post-beta:local` installs a packed tarball from the current git commit for before/after comparison. These runs measure file-level recall, known-noise ratio, span checks, runtime, and rough serialized output size. They do not prove token-size savings against naive or search baselines.
 
 The uncapped mode measures maximum recall. The budgeted mode caps each baseline to the same case budget so the benchmark can compare context selection under equal pressure.
 

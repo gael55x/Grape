@@ -5,7 +5,7 @@
 | Question | How measured | Current status |
 | --- | --- | --- |
 | Context size vs naive full-context? | `naive-baseline.mjs` + `grape bench` turn metrics | Fixture estimate on `clean-typescript-app` |
-| Repeated-session reduction via `OMIT_UNCHANGED`? | Turn-2 `grapeTokens` vs turn-1 on no-change fixtures | Fixture estimate on named no-change fixtures when run locally; not an official release benchmark claim |
+| Repeated-session reduction via `OMIT_UNCHANGED`? | Turn-2 `grapeTokens` vs turn-1 on no-change fixtures | Beta fixture evidence when tied to a committed raw result file; not a production savings claim |
 | Restore when context unchanged? | Turn-2 `RESTORE_AVAILABLE` + smoke scripts | Measured on named fixtures |
 | Stale context rejected after file changes? | `stale-source-typescript-app`, `branch-switch-typescript-app` | Measured on named fixtures |
 | Context useful for coding agents, not just smaller? | Task prompts + usefulness score (1-5) | Partial. Harness scores only; human or agent eval deferred |
@@ -43,7 +43,7 @@
 | CLI from tarball? | `install:check`, `e2e:alpha` |
 | MCP stdio from tarball? | `beta:client-trial` |
 | Package contents correct? | `package:check` |
-| Beta npm prerelease justified? | Historical transport gates in [`benchmark-readiness-report.md`](../docs/v1/legacy/alpha/benchmark-readiness-report.md); formal benchmark comparison is the next validation phase |
+| Beta npm prerelease justified? | Historical transport gates in [`benchmark-readiness-report.md`](../docs/v1/legacy/alpha/benchmark-readiness-report.md); current post-beta comparison files under `benchmarks/results/post-beta-*` |
 | Honest positioning? | Capability matrix + competitor docs |
 
 ## Baselines

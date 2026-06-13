@@ -258,6 +258,28 @@ Fallback coverage includes:
 
 Fallback does not mean ignored. It means Grape avoids pretending it has precise graph knowledge when it only has exact source, paths, lexical matches, or explicit references.
 
+## Benchmark results
+
+Grape has two current benchmark evidence paths.
+
+Transport fixture evidence comes from `npm run bench`, recorded in `benchmarks/results/run-2026-06-13T12-24-54-222Z.json` for `grape-context@1.0.0-beta.0` on Node `v22.18.0`.
+
+On the three no-change transport fixtures, the second same-session turn reduced body-token context with zero unsafe omissions and zero stale sends:
+
+| Fixture | Turn 1 body tokens | Turn 2 body tokens | Reduction |
+| --- | ---: | ---: | ---: |
+| `clean-typescript-app` | 2811 | 1663 | 50.4% |
+| `polyglot-fallback-repo` | 3132 | 2523 | 31.46% |
+| `monorepo-lite-repo` | 3388 | 1885 | 52.07% |
+
+The same run also passed branch-switch, stale-source, and session-reset invalidation fixtures with zero unsafe omissions and zero stale sends.
+
+That is the core beta claim: Grape works as a session-aware context transport layer on these fixtures. It can avoid resending unchanged context after the first turn, keep restore metadata for omitted context, and invalidate prior context when files, branches, or sessions change.
+
+Published-package baseline evidence comes from `npm run bench:post-beta`, recorded in `benchmarks/results/post-beta-2026-06-13T12-38-16-742Z-published-beta.json`. That run compares the published npm package with naive and `rg` search baselines on three small cases. It supports fixture-level retrieval and known-noise findings. It does not prove token-size savings against naive or search baselines, production performance, or superiority over external tools.
+
+What is still missing: repeated published-package benchmark runs across more tasks, lower serialized output cost, broader language-aware graph support, and human MCP client trial notes from real IDE clients.
+
 ## Project status
 
 Grape is currently in 1.0 beta.
@@ -292,7 +314,7 @@ Not promised yet:
 * broad language-aware graph extraction
 * automatic conflict resolution
 * broad durable claim promotion
-* benchmark superiority claims before post-publish validation
+* benchmark superiority claims
 * guaranteed behavior in every IDE MCP client without a human client trial
 
 APIs, schemas, command names, setup guidance, and internal contracts may still change before stable 1.0.
