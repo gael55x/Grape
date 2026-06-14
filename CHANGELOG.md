@@ -6,7 +6,24 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ## Unreleased
 
-## 1.0.0-beta.1 - 2026-06-13
+## 1.0.0-beta.3 - 2026-06-14
+
+### Added
+
+- Added `docs/v1/interfaces/getting-started.md` as the end-user onboarding guide for install, MCP setup, CLI fallback workflow, and common errors.
+- Added README quick start, `@beta` install guidance, and expanded manual CLI command list.
+
+### Fixed
+
+- Improved CLI-first session errors and recovery guidance for `grape init`, `status`, `doctor`, `sync`, and `bench`.
+- Humanized status warning output for stale invalidations and dirty worktree context.
+- Clarified benchmark fixture, restore token, task mismatch, and missing `--task` argument errors.
+
+### Changed
+
+- Documented `grape diff-context --explain` in the CLI contract and added an MCP client configuration example to agent session docs.
+- Reused `ensureConfiguredLocalProjectLayout` and shared `hashStableParts` to remove duplicated local project helper code.
+
 
 ### Added
 
