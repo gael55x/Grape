@@ -1810,7 +1810,7 @@ test("cli compile gives recovery guidance for task and session mismatches", () =
 
     assert.equal(mismatch.status, 6);
     assert.equal(mismatch.stdout, "");
-    assert.match(mismatch.stderr, /context session task mismatch/);
+    assert.match(mismatch.stderr, /task mismatch/);
     assert.match(mismatch.stderr, /Recovery:/);
     assert.match(mismatch.stderr, /Reuse the exact original --task\/query/);
     assert.match(mismatch.stderr, /does not rebind a session to different task text/);

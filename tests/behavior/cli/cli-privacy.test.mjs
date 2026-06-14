@@ -193,7 +193,7 @@ test("cli bench does not leak explicit missing fixture paths", () => {
       assert.equal(result.stderr.includes(repoPath), false);
       assert.equal(result.stderr.includes(outsideCwd), false);
       assert.equal(result.stderr.includes(missingFixturePath), false);
-      assert.match(result.stderr, /grape bench failed: benchmark fixture not found/);
+      assert.match(result.stderr, /grape bench failed: Benchmark fixture not found/);
     } finally {
       rmSync(outsideCwd, { recursive: true, force: true });
     }

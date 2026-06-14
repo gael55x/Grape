@@ -1186,7 +1186,7 @@ test("mcp task mismatch errors include recovery guidance", () => {
 
     const toolResult = responses[1].result;
     assert.equal(toolResult.isError, true);
-    assert.match(toolResult.structuredContent.error, /context session task mismatch/);
+    assert.match(toolResult.structuredContent.error, /task mismatch/);
     assert.ok(Array.isArray(toolResult.structuredContent.recoveryGuidance));
     assert.ok(
       toolResult.structuredContent.recoveryGuidance.some((item) =>

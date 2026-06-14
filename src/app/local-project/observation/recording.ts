@@ -64,8 +64,8 @@ function recordObservation(
       now,
       gitBinary: input.gitBinary,
       migrationsDir: input.migrationsDir,
-      missingSessionMessage: "context session not found. Call grape_get_context before recording agent evidence.",
-      staleSessionMessage: "context session is stale. Call grape_get_context before recording agent evidence."
+      missingSessionMessage: `Context session ${input.sessionId} not found. Run grape compile --task "<task>" --session ${input.sessionId} first, or list sessions with grape sessions.`,
+      staleSessionMessage: `Context session ${input.sessionId} is stale (branch or commit changed). Rerun grape compile --task "<task>" --session ${input.sessionId}, or start a new --session.`
     },
     ({ database, context }) => {
       const evidenceRepositories = createEvidenceStorageRepositories(database);

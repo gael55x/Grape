@@ -113,7 +113,9 @@ function requireOmittedItem(
 ): OmittedContextItemRecord {
   const omitted = repositories.omittedContextItems.getBySessionAndRestoreId(sessionId, restoreToken);
   if (!omitted || !omitted.canRestore || omitted.restoreId !== restoreToken) {
-    throw new Error("omitted context restore token was not found for this session");
+    throw new Error(
+      `Restore token not found for session ${sessionId}. List tokens with grape omitted --session ${sessionId}.`
+    );
   }
   return omitted;
 }

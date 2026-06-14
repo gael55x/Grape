@@ -8,14 +8,18 @@ export interface BenchmarkFixtureMetadata {
 export function readBenchmarkFixtureMetadata(fixturePath: string): BenchmarkFixtureMetadata {
   const resolvedFixturePath = path.resolve(fixturePath);
   if (!existsSync(resolvedFixturePath)) {
-    throw new Error("benchmark fixture not found");
+    throw new Error(
+      `Benchmark fixture not found at ${resolvedFixturePath}. Try grape bench --fixture <name> (default: tests/fixtures/<name>) or --fixture-path <path>.`
+    );
   }
   const metadataPath = path.join(resolvedFixturePath, "grape-fixture.json");
   let parsed: unknown;
   try {
     parsed = JSON.parse(readFileSync(metadataPath, "utf8"));
   } catch {
-    throw new Error("benchmark fixture metadata missing or invalid");
+    throw new Error(
+      `Missing or invalid grape-fixture.json in ${resolvedFixturePath}. Add a benchmarkTask field or pass --task <text>.`
+    );
   }
 
   const benchmarkTask = taskFromMetadata(parsed);

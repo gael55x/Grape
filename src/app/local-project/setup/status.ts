@@ -316,10 +316,14 @@ function refreshRecommendationsForStatus(
     recommendations.add("Run grape init --connect from the repository root to bootstrap or repair local state.");
   }
   if (sessionFreshness.inspectedSessionCount === 0) {
-    recommendations.add("Call grape_get_context or run grape compile --task <text> --session <id> --json to create session context.");
+    recommendations.add(
+      "Run grape compile --task \"<text>\" --session <id> to create session context (MCP clients: grape_get_context)."
+    );
   }
   if (freshness.status === "stale") {
-    recommendations.add("Call grape_get_context or rerun grape compile for fresh context before using prior session context.");
+    recommendations.add(
+      "Rerun grape compile --task \"<text>\" --session <id> for fresh context (MCP: grape_get_context)."
+    );
   }
   if (freshness.status === "partial" && setup.dirtyWorktree) {
     recommendations.add("Commit or stash changes for branch-global context, or continue with worktree-scoped context.");

@@ -1,5 +1,5 @@
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, renderProblems, renderReasonCounts, repoOutputOptions, write, writeError, writeJson } from "../render.js";
+import { errorMessage, formatCommandFailure, renderProblems, renderReasonCounts, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 
 export async function runSync(parsed: ParsedArgs): Promise<number> {
@@ -40,12 +40,20 @@ export async function runSync(parsed: ParsedArgs): Promise<number> {
       `  Visible files: ${result.scan.visibleFileCount}`,
       `  Rejected files: ${result.scan.rejectedFileCount}`,
       `  Rejection reasons: ${renderReasonCounts(result.scan.rejectionReasonCounts)}`,
-      ...renderProblems("Recovery", result.recoveryGuidance)
+      ...renderProblems("Recovery", result.recoveryGuidance),
+      "",
+      "Next:",
+      "  grape status",
+      "  grape compile --task \"<text>\""
     ].filter((line): line is string => line !== undefined).join("\n"), outputOptions);
 
     return exitCodes.ok;
   } catch (error) {
-    writeError(`grape sync failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
+    const { recoveryGuidanceForErrorMessage } = await import("../../app/local-project/setup/recovery.js");
+    writeError(
+      formatCommandFailure("sync", error, recoveryGuidanceForErrorMessage(errorMessage(error))),
+      repoOutputOptions(repoPath(parsed))
+    );
     return exitCodes.storage;
   }
 }

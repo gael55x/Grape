@@ -121,7 +121,7 @@ try {
   ]);
   assert(mismatch.status === 6, `task/session mismatch must exit 6, got ${mismatch.status}`);
   assert(mismatch.stdout === "", "task/session mismatch must not emit JSON stdout");
-  assert(mismatch.stderr.includes("context session task mismatch"), "task/session mismatch must explain the mismatch");
+  assert(mismatch.stderr.includes("task mismatch"), "task/session mismatch must explain the mismatch");
   assert(mismatch.stderr.includes("Recovery:"), "task/session mismatch must include recovery guidance");
 
   const reset = spawnGrape([...compileArgs, "--reset-session"]);

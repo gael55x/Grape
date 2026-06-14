@@ -26,10 +26,10 @@ export interface EnsuredCompileSession {
 
 export function ensureCompileSession(input: EnsureCompileSessionInput): EnsuredCompileSession {
   if (input.existing) {
-    assertSessionMatch("project", input.existing.projectId, input.projectId);
-    assertSessionMatch("repo", input.existing.repoId, input.repoId);
-    assertSessionMatch("task", input.existing.taskId, input.taskId);
-    assertSessionMatch("task type", input.existing.taskType, input.taskType);
+    assertSessionMatch("project", input.existing.projectId, input.projectId, input.sessionId);
+    assertSessionMatch("repo", input.existing.repoId, input.repoId, input.sessionId);
+    assertSessionMatch("task", input.existing.taskId, input.taskId, input.sessionId);
+    assertSessionMatch("task type", input.existing.taskType, input.taskType, input.sessionId);
     if (input.existing.lockStatus === "locked" && input.existing.lockToken !== input.lockToken) {
       throw new Error(`context session is locked: ${input.sessionId}`);
     }
@@ -80,7 +80,9 @@ export function ensureCompileSession(input: EnsureCompileSessionInput): EnsuredC
   };
 }
 
-function assertSessionMatch(label: string, existing: string | undefined, next: string): void {
+function assertSessionMatch(label: string, existing: string | undefined, next: string, sessionId: string): void {
   if (existing === next) return;
-  throw new Error(`context session ${label} mismatch; choose a different --session`);
+  throw new Error(
+    `context session ${sessionId} ${label} mismatch: reuse the same --task and --task-type, or choose a new --session.`
+  );
 }

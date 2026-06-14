@@ -28,11 +28,29 @@ export function statusLabel(status: DiagnosticStatus): string {
   }
 }
 
+const STATUS_WARNING_LABELS: Readonly<Record<string, string>> = {
+  stale_context_invalidations_present:
+    "Prior sent context was invalidated; rerun compile or run grape stale.",
+  dirty_worktree_context:
+    "Uncommitted changes may not be fully reflected; commit/stash or continue with worktree-scoped context."
+};
+
+export function humanizeStatusWarning(code: string): string {
+  return STATUS_WARNING_LABELS[code] ?? code;
+}
+
+export function formatCommandFailure(command: string, error: unknown, guidance?: readonly string[]): string {
+  const message = errorMessage(error);
+  if (!guidance || guidance.length === 0) return `grape ${command} failed: ${message}`;
+  return [`grape ${command} failed: ${message}`, "", "Recovery:", ...guidance.map((line) => `  ${line}`)].join("\n");
+}
+
 export function helpText(): string {
   return [
     "Grape - local-first context compiler for AI coding agents",
     "",
     "Usage:",
+    "  grape init                  Initialize local .grape state without MCP guidance",
     "  grape init --connect        Initialize local .grape state and show MCP guidance",
     "  grape sync                  Refresh local snapshot, evidence, and file index",
     "  grape compile --task <text> Compile a task context pack",
@@ -56,6 +74,8 @@ export function helpText(): string {
     "  grape mcp --print-config    Print MCP client configuration",
     "  grape mcp --stdio           Serve MCP tools over stdio",
     "  grape help                  Show this help",
+    "",
+    "Workflow: init --connect -> status/doctor -> compile --task -> run/test --session",
     "",
     "Options:",
     "  --repo <path>               Run against a repository path",

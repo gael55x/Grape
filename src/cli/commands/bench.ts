@@ -3,7 +3,7 @@ import path from "node:path";
 import { TRUST_WORDING_DISCLAIMERS } from "../../shared/trust-wording.js";
 import { exitCodes } from "../exit-codes.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, renderProblems, repoOutputOptions, write, writeError, writeJson } from "../render.js";
+import { errorMessage, formatCommandFailure, renderProblems, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 
 export async function runBench(parsed: ParsedArgs): Promise<number> {
   const flag = unsupportedFlag(
@@ -41,7 +41,11 @@ export async function runBench(parsed: ParsedArgs): Promise<number> {
 
     return result.status === "pass" ? exitCodes.ok : exitCodes.unsafe;
   } catch (error) {
-    writeError(`grape bench failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
+    const { recoveryGuidanceForErrorMessage } = await import("../../app/local-project/setup/recovery.js");
+    writeError(
+      formatCommandFailure("bench", error, recoveryGuidanceForErrorMessage(errorMessage(error))),
+      repoOutputOptions(repoPath(parsed))
+    );
     return exitCodes.storage;
   }
 }

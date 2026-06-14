@@ -18,7 +18,9 @@ import { renderRuntimeFailure } from "./runtime-failure.js";
 import { checkCliNodeRuntime } from "./runtime-guard.js";
 import {
   errorMessage,
+  formatCommandFailure,
   helpText,
+  humanizeStatusWarning,
   initHelpText,
   repoOutputOptions,
   renderProblems,
@@ -190,7 +192,11 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
 
     return exitCodes.ok;
   } catch (error) {
-    writeError(`grape init failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
+    const { recoveryGuidanceForErrorMessage } = await import("../app/local-project/setup/recovery.js");
+    writeError(
+      formatCommandFailure("init", error, recoveryGuidanceForErrorMessage(errorMessage(error))),
+      repoOutputOptions(repoPath(parsed))
+    );
     return exitCodes.storage;
   }
 }
@@ -223,7 +229,7 @@ async function runStatus(parsed: ParsedArgs): Promise<number> {
       `Sessions: ${status.sessionFreshness.inspectedSessionCount} inspected, ${status.sessionFreshness.staleItemCount} stale invalidation(s)`,
       `Scan: ${status.scan.visibleFileCount} visible, ${status.scan.rejectedFileCount} rejected (${renderReasonCounts(status.scan.rejectionReasonCounts)})`,
       ...renderProblems("Freshness", status.freshness.reasons),
-      ...renderProblems("Freshness warnings", status.freshness.warnings),
+      ...renderProblems("Freshness warnings", status.freshness.warnings.map(humanizeStatusWarning)),
       ...renderProblems("Warnings", status.warnings),
       ...renderProblems("Errors", status.errors),
       ...renderProblems("Refresh recommendations", status.refreshRecommendations)
@@ -231,7 +237,11 @@ async function runStatus(parsed: ParsedArgs): Promise<number> {
 
     return exitCodes.ok;
   } catch (error) {
-    writeError(`grape status failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
+    const { recoveryGuidanceForErrorMessage } = await import("../app/local-project/setup/recovery.js");
+    writeError(
+      formatCommandFailure("status", error, recoveryGuidanceForErrorMessage(errorMessage(error))),
+      repoOutputOptions(repoPath(parsed))
+    );
     return exitCodes.stale;
   }
 }
@@ -262,7 +272,11 @@ async function runDoctor(parsed: ParsedArgs): Promise<number> {
 
     return doctor.overallStatus === "fail" ? exitCodes.stale : exitCodes.ok;
   } catch (error) {
-    writeError(`grape doctor failed: ${errorMessage(error)}`, repoOutputOptions(repoPath(parsed)));
+    const { recoveryGuidanceForErrorMessage } = await import("../app/local-project/setup/recovery.js");
+    writeError(
+      formatCommandFailure("doctor", error, recoveryGuidanceForErrorMessage(errorMessage(error))),
+      repoOutputOptions(repoPath(parsed))
+    );
     return exitCodes.stale;
   }
 }
@@ -306,7 +320,12 @@ async function runMcp(parsed: ParsedArgs): Promise<number> {
     "  grape_record_command_result",
     "  grape_record_test_result",
     "  grape_record_user_decision",
-    "  grape_request_user_confirmation"
+    "  grape_request_user_confirmation",
+    "",
+    "Next:",
+    "  grape mcp --print-config",
+    "  grape status",
+    "  grape doctor"
   ].join("\n"));
   return exitCodes.ok;
 }
@@ -315,6 +334,7 @@ function rejectUnsupportedFlags(parsed: ParsedArgs, allowed: ReadonlySet<string>
   const flag = unsupportedFlag(parsed, allowed);
   if (flag) {
     writeError(`Unsupported option for grape ${parsed.command}: ${flag}`);
+    writeError("Run grape help for supported options.");
     return exitCodes.usage;
   }
   return undefined;

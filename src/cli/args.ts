@@ -38,7 +38,11 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     }
     if (valueOptions.has(arg)) {
       const value = rest[index + 1];
-      if (!value) throw new Error(`${arg} requires a value`);
+      if (!value) {
+        throw new Error(
+          `${arg} requires a value (example: grape compile --task "fix auth redirect")`
+        );
+      }
       values.set(arg, value);
       index += 1;
       continue;

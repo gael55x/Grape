@@ -130,6 +130,9 @@ export function recoveryGuidanceForErrorMessage(message: string): readonly strin
   if (message.includes("secret") || message.includes("blocked redaction") || message.includes("privacy")) {
     guidance.add("Move secrets out of indexed files or add private paths to .grapeignore, then rerun grape doctor.");
   }
+  if (message.includes("feature flags must be allowlisted")) {
+    guidance.add("Add flag names to the local scope allowlist in .grape/config.json, or omit --feature-flags.");
+  }
   if (message.includes("stale")) {
     guidance.add("Rerun grape compile for fresh context, or inspect stale entries with grape stale.");
   }
