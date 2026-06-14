@@ -9,7 +9,7 @@ import {
 } from "../../../core/storage/index.js";
 import { persistGitRepoSnapshot } from "../../persist-repo-snapshot.js";
 import { ensureLocalProjectBootstrapped } from "../setup/bootstrap.js";
-import { ensureLocalProjectLayout, readLocalProjectConfig } from "../setup/config.js";
+import { ensureConfiguredLocalProjectLayout } from "../setup/configured-layout.js";
 import { assertSafeId } from "../context/compile-ids.js";
 import { withMigratedLocalDatabase } from "../setup/storage.js";
 
@@ -50,12 +50,7 @@ export function withCurrentLocalContextSession<T>(
   });
 
   const snapshot = createGitRepoSnapshot({ rootPath, createdAt: now, gitBinary: input.gitBinary });
-  const layout = ensureLocalProjectLayout(snapshot.rootPath);
-  const config = readLocalProjectConfig(layout.configPath);
-  if (!config) throw new Error("Grape config is missing. Run grape init --connect.");
-  if (path.resolve(config.project.rootPath) !== snapshot.rootPath) {
-    throw new Error("Grape config root path does not match the current repository path.");
-  }
+  const { layout, config } = ensureConfiguredLocalProjectLayout(snapshot.rootPath);
 
   return withMigratedLocalDatabase({
     databasePath: layout.databasePath,

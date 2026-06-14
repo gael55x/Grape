@@ -102,7 +102,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
   const outputMode = parsed.outputMode ?? "agent_pack";
   const allWarnings = uniqueWarnings([...result.warnings, ...unsupportedInputWarnings(parsed)]);
   const warnings = outputMode === "full" ? allWarnings : agentFacingWarnings(allWarnings);
-  const riskWarnings = actionableWarnings(allWarnings);
+  const riskWarnings = agentFacingWarnings(allWarnings);
   const compactContextPackItems = compactAgentContextPackItems(result.contextPackItems);
   const contextPackItems = outputMode === "full" ? result.contextPackItems : compactContextPackItems;
   const diffSummary = summarizeDiff(contextPackItems);
@@ -340,10 +340,6 @@ function uniqueWarnings(warnings: readonly string[]): readonly string[] {
 
 function agentFacingWarnings(warnings: readonly string[]): readonly string[] {
   return warnings.filter((warning) => !debugOnlyWarningCodes.has(warning));
-}
-
-function actionableWarnings(warnings: readonly string[]): readonly string[] {
-  return agentFacingWarnings(warnings);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

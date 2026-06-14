@@ -3,19 +3,14 @@ import path from "node:path";
 import { createGitRepoSnapshot } from "../../../core/git/index.js";
 import { createStorageRepositories } from "../../../core/storage/index.js";
 import type { ContextSessionRecord } from "../../../core/storage/index.js";
-import { ensureLocalProjectLayout, readLocalProjectConfig } from "../setup/config.js";
+import { ensureConfiguredLocalProjectLayout } from "../setup/configured-layout.js";
 import { withMigratedLocalDatabase } from "../setup/storage.js";
 import type { ListLocalSessionsInput, ListLocalSessionsResult, LocalSessionSummary } from "../types.js";
 
 export function listLocalSessions(input: ListLocalSessionsInput): ListLocalSessionsResult {
   const rootPath = path.resolve(input.rootPath);
   const snapshot = createGitRepoSnapshot({ rootPath, createdAt: new Date().toISOString() });
-  const layout = ensureLocalProjectLayout(snapshot.rootPath);
-  const config = readLocalProjectConfig(layout.configPath);
-  if (!config) throw new Error("Grape config is missing. Run grape init --connect.");
-  if (path.resolve(config.project.rootPath) !== snapshot.rootPath) {
-    throw new Error("Grape config root path does not match the current repository path.");
-  }
+  const { layout } = ensureConfiguredLocalProjectLayout(snapshot.rootPath);
 
   return withMigratedLocalDatabase({
     databasePath: layout.databasePath,

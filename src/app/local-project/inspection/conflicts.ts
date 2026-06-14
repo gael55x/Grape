@@ -13,7 +13,7 @@ import {
   type ClaimEdgeRecord,
   type ClaimRecord
 } from "../../../core/storage/index.js";
-import { ensureLocalProjectLayout, readLocalProjectConfig } from "../setup/config.js";
+import { ensureConfiguredLocalProjectLayout } from "../setup/configured-layout.js";
 import { withMigratedLocalDatabase } from "../setup/storage.js";
 
 export interface LocalConflictClaimSummary {
@@ -79,12 +79,7 @@ export function listLocalConflicts(input: ListLocalConflictsInput): ListLocalCon
     createdAt: input.now ?? new Date().toISOString(),
     gitBinary: input.gitBinary
   });
-  const layout = ensureLocalProjectLayout(snapshot.rootPath);
-  const config = readLocalProjectConfig(layout.configPath);
-  if (!config) throw new Error("Grape config is missing. Run grape init --connect.");
-  if (path.resolve(config.project.rootPath) !== snapshot.rootPath) {
-    throw new Error("Grape config root path does not match the current repository path.");
-  }
+  const { layout } = ensureConfiguredLocalProjectLayout(snapshot.rootPath);
 
   const databaseResult = withMigratedLocalDatabase({
     databasePath: layout.databasePath,
@@ -131,12 +126,7 @@ export function resolveLocalConflict(input: ResolveLocalConflictInput): ResolveL
     createdAt: input.now ?? new Date().toISOString(),
     gitBinary: input.gitBinary
   });
-  const layout = ensureLocalProjectLayout(snapshot.rootPath);
-  const config = readLocalProjectConfig(layout.configPath);
-  if (!config) throw new Error("Grape config is missing. Run grape init --connect.");
-  if (path.resolve(config.project.rootPath) !== snapshot.rootPath) {
-    throw new Error("Grape config root path does not match the current repository path.");
-  }
+  const { layout } = ensureConfiguredLocalProjectLayout(snapshot.rootPath);
 
   const now = input.now ?? new Date().toISOString();
   const resolutionEdgeId = withMigratedLocalDatabase({

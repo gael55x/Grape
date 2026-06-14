@@ -18,7 +18,7 @@ import {
   createStorageRepositories
 } from "../../../core/storage/index.js";
 import { collectCurrentScope } from "../../../core/scope/index.js";
-import { ensureLocalProjectLayout, readLocalProjectConfig } from "../setup/config.js";
+import { ensureConfiguredLocalProjectLayout } from "../setup/configured-layout.js";
 import {
   assertSafeId,
   createLockToken,
@@ -60,12 +60,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
     migrationsDir: input.migrationsDir
   });
   const snapshot = createGitRepoSnapshot({ rootPath, createdAt: now, gitBinary: input.gitBinary });
-  const layout = ensureLocalProjectLayout(snapshot.rootPath);
-  const config = readLocalProjectConfig(layout.configPath);
-  if (!config) throw new Error("Grape config is missing. Run grape init --connect.");
-  if (path.resolve(config.project.rootPath) !== snapshot.rootPath) {
-    throw new Error("Grape config root path does not match the current repository path.");
-  }
+  const { layout, config } = ensureConfiguredLocalProjectLayout(snapshot.rootPath);
   const taskId = taskIdFor(input.task, taskType, requestedRiskOverlays);
   const sessionId = input.sessionId ?? sessionIdFor(snapshot.repoId, snapshot.branch, taskId);
   assertSafeId("session id", sessionId);

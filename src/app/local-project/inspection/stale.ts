@@ -8,7 +8,7 @@ import type {
   ContextSessionRecord,
   SessionEventRecord
 } from "../../../core/storage/index.js";
-import { ensureLocalProjectLayout, readLocalProjectConfig } from "../setup/config.js";
+import { ensureConfiguredLocalProjectLayout } from "../setup/configured-layout.js";
 import { withMigratedLocalDatabase } from "../setup/storage.js";
 
 export interface LocalStaleItemSummary {
@@ -50,12 +50,7 @@ export function listLocalStaleItems(input: ListLocalStaleItemsInput): ListLocalS
     createdAt: input.now ?? new Date().toISOString(),
     gitBinary: input.gitBinary
   });
-  const layout = ensureLocalProjectLayout(snapshot.rootPath);
-  const config = readLocalProjectConfig(layout.configPath);
-  if (!config) throw new Error("Grape config is missing. Run grape init --connect.");
-  if (path.resolve(config.project.rootPath) !== snapshot.rootPath) {
-    throw new Error("Grape config root path does not match the current repository path.");
-  }
+  const { layout } = ensureConfiguredLocalProjectLayout(snapshot.rootPath);
 
   return withMigratedLocalDatabase({
     databasePath: layout.databasePath,

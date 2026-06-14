@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 
+import { hashStableParts } from "../../../core/evidence/evidence-hash.js";
 import { riskOverlays, taskTypes, type RiskOverlay, type TaskType } from "../../../shared/index.js";
 
 export function parseTaskType(value: string | undefined): TaskType {
@@ -41,15 +42,4 @@ export function assertSafeId(label: string, value: string): void {
 
 export function sha256(input: string): string {
   return createHash("sha256").update(input).digest("hex");
-}
-
-function hashStableParts(parts: readonly string[]): string {
-  const hash = createHash("sha256");
-  for (const part of parts) {
-    hash.update(String(part.length));
-    hash.update(":");
-    hash.update(part);
-    hash.update("\n");
-  }
-  return hash.digest("hex");
 }

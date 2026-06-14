@@ -4,7 +4,7 @@ import { collectRepoSnapshotEvidence } from "../../../core/evidence/index.js";
 import { createGitRepoSnapshot } from "../../../core/git/index.js";
 import { scanArtifactTextForSecrets } from "../../../core/security/index.js";
 import type { SourceRecord } from "../../../core/storage/index.js";
-import { ensureLocalProjectLayout, readLocalProjectConfig } from "../setup/config.js";
+import { ensureConfiguredLocalProjectLayout } from "../setup/configured-layout.js";
 import { readLocalSourceExcerpts } from "../source-excerpts/index.js";
 
 export interface LocalRuleSummary {
@@ -43,12 +43,7 @@ export function listLocalRules(input: ListLocalRulesInput): ListLocalRulesResult
     createdAt: input.now ?? new Date().toISOString(),
     gitBinary: input.gitBinary
   });
-  const layout = ensureLocalProjectLayout(snapshot.rootPath);
-  const config = readLocalProjectConfig(layout.configPath);
-  if (!config) throw new Error("Grape config is missing. Run grape init --connect.");
-  if (path.resolve(config.project.rootPath) !== snapshot.rootPath) {
-    throw new Error("Grape config root path does not match the current repository path.");
-  }
+  const { layout, config } = ensureConfiguredLocalProjectLayout(snapshot.rootPath);
 
   const evidence = collectRepoSnapshotEvidence({
     projectId: config.project.projectId,

@@ -6,7 +6,7 @@ import {
   createEvidenceStorageRepositories,
   createProofStorageRepositories
 } from "../../../core/storage/index.js";
-import { ensureLocalProjectLayout, readLocalProjectConfig } from "../setup/config.js";
+import { ensureConfiguredLocalProjectLayout } from "../setup/configured-layout.js";
 import { resolveLocalCurrentValidClaims } from "./claim-resolution.js";
 import { withMigratedLocalDatabase } from "../setup/storage.js";
 import type { ListLocalClaimsInput, ListLocalClaimsResult } from "../types.js";
@@ -15,12 +15,7 @@ export function listLocalClaims(input: ListLocalClaimsInput): ListLocalClaimsRes
   const now = input.now ?? new Date().toISOString();
   const rootPath = path.resolve(input.rootPath);
   const snapshot = createGitRepoSnapshot({ rootPath, createdAt: now, gitBinary: input.gitBinary });
-  const layout = ensureLocalProjectLayout(snapshot.rootPath);
-  const config = readLocalProjectConfig(layout.configPath);
-  if (!config) throw new Error("Grape config is missing. Run grape init --connect.");
-  if (path.resolve(config.project.rootPath) !== snapshot.rootPath) {
-    throw new Error("Grape config root path does not match the current repository path.");
-  }
+  const { layout } = ensureConfiguredLocalProjectLayout(snapshot.rootPath);
 
   return withMigratedLocalDatabase({
     databasePath: layout.databasePath,
