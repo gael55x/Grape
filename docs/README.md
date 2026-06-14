@@ -2,10 +2,11 @@
 
 This folder contains committed documentation for Grape.
 
-Grape 1.0 beta (`grape-context@1.0.0-beta.0`) is published on npm under the `beta` dist-tag. User-facing install and session docs live in the root [`README.md`](../README.md) and [`v1/interfaces/`](v1/interfaces/). Grape includes benchmark fixtures and scripts for local comparison. Post-beta benchmark validation compares the published npm install with naive and search baselines on named fixtures; current results support beta fixture evidence, not production performance or external superiority claims.
+Grape 1.0 beta (`grape-context@beta` on npm) is published on npm under the `beta` dist-tag. End users start at the root [`README.md`](../README.md) and [`v1/interfaces/getting-started.md`](v1/interfaces/getting-started.md). Implementer docs live under [`v1/interfaces/`](v1/interfaces/). Grape includes benchmark fixtures and scripts for local comparison. Post-beta benchmark validation compares the published npm install with naive and search baselines on named fixtures; current results support beta fixture evidence, not production performance or external superiority claims.
 
 ## Active Docs
 
+- [Getting started](v1/interfaces/getting-started.md)
 - [V1 documentation](v1/README.md)
 - [V1 canonical implementation contract](v1/SPEC.md)
 

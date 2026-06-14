@@ -8,7 +8,7 @@ It **compiles** safe, current, task-specific `ContextArtifact` objects from repo
 
 Compression is cache, not truth. Proofs gate durable claims. Git branch/worktree and dependency hashes drive invalidation. See [`decisions/adr-0010-context-transport-protocol.md`](decisions/adr-0010-context-transport-protocol.md) and the root [`ROADMAP.md`](../../ROADMAP.md).
 
-**Published npm today:** `grape-context@1.0.0-beta.0` on `latest` and `beta`. The `alpha` dist-tag still points at `0.1.0-alpha.3`. Install and session setup: root [`README.md`](../../README.md) and [`interfaces/agent-sessions.md`](interfaces/agent-sessions.md). Alpha-era docs: [`legacy/alpha/README.md`](legacy/alpha/README.md).
+**Published npm today:** `grape-context@beta` on `latest` and `beta`. The `alpha` dist-tag still points at `0.1.0-alpha.3`. Install and session setup: root [`README.md`](../../README.md), [`interfaces/getting-started.md`](interfaces/getting-started.md), and [`interfaces/agent-sessions.md`](interfaces/agent-sessions.md). Alpha-era docs: [`legacy/alpha/README.md`](legacy/alpha/README.md).
 
 ## Structure
 
@@ -70,6 +70,7 @@ docs/v1/
 | Contracts | `contracts/transport-stability.md` | Beta transport/schema stability boundary, warning taxonomy, and compatibility rules. | MCP request/response fields are added, reclassified, or removed. | Stable vs experimental fields remain clear. |
 | Contracts | `contracts/context-artifact.md` | Context artifact schema, sections, dependency manifest, output rules. | Artifact schema or sections change. | Artifact changes include manifest and tests. |
 | Contracts | `contracts/context-diff.md` | Session-scoped diff protocol, sent ledger, omitted restore, invalidation. | Diff/session behavior changes. | The change remains session-scoped. |
+| Interfaces | `interfaces/getting-started.md` | End-user onboarding: install, MCP setup, first workflow, common errors. | Onboarding flow or install guidance changes. | Commands match real CLI and MCP behavior. |
 | Interfaces | `interfaces/agent-sessions.md` | Agent-facing session/task identity contract, recovery paths, and beta install notes. | Session identity guidance, setup handoff, or mismatch recovery changes. | Continued turns keep stable task/session identity. |
 | Interfaces | `interfaces/mcp-tools.md` | MCP tool contracts and safety boundaries. | MCP tools change. | Write tools cannot promote durable truth. |
 | Interfaces | `interfaces/cli.md` | CLI commands, outputs, exit codes, inspection workflows. | CLI behavior changes. | CLI is adapter-only. |

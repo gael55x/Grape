@@ -43,9 +43,31 @@ npm install -g grape-context@beta
 
 Run `grape doctor --privacy` after setup to review local storage, ignored paths, and scanner coverage.
 
-After beta publish, use `grape-context@1.0.0-beta.0` or `@beta` in that reinstall command instead.
-
 After `grape init --connect`, the intended path is a normal MCP-capable coding agent calling `grape_get_context`. Manual CLI commands such as `grape compile`, `grape sessions`, `grape stale`, and `grape omitted` are debugging and fallback surfaces.
+
+## MCP client configuration
+
+Print a client-ready config from your repository:
+
+```bash
+grape mcp --print-config
+```
+
+Minimal stdio example (replace `<repo-root>` with your repository path):
+
+```json
+{
+  "mcpServers": {
+    "grape": {
+      "command": "grape",
+      "args": ["mcp", "--stdio", "--repo", "<repo-root>"],
+      "cwd": "<repo-root>"
+    }
+  }
+}
+```
+
+The `cwd` and `--repo` path must point at the same repository root. See [`getting-started.md`](getting-started.md) for the full onboarding path.
 
 ## Stable Identity Rules
 
@@ -85,7 +107,7 @@ grape compile --task "Plan a safe refactor of checkout discount behavior" --sess
 Reusing a session with a different task fails with a message like:
 
 ```text
-context session task mismatch; choose a different --session
+context session checkout-discount-review task mismatch: reuse the same --task and --task-type, or choose a new --session.
 ```
 
 The CLI returns exit code `6` for this mismatch. Exit code `2` remains the unsafe compile bucket for cases such as missing high-risk exact context or token budgets below required context.

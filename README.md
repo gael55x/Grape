@@ -77,8 +77,24 @@ Requirements:
 Install Grape:
 
 ```bash
-npm install -g grape-context
+npm install -g grape-context@beta
 ```
+
+Verify the install:
+
+```bash
+grape help
+grape doctor
+```
+
+## Quick start
+
+1. Install: `npm install -g grape-context@beta`
+2. Initialize: `grape init --connect` (from your repository root)
+3. Connect MCP: `grape mcp --print-config` and add Grape to your coding agent
+4. Agent loop: call `grape_get_context` each turn with a stable `sessionId` and stable task text
+
+Full walkthrough: [Getting started](docs/v1/interfaces/getting-started.md).
 
 Initialize it inside a repository:
 
@@ -118,19 +134,25 @@ Agent calls grape_get_context again
 Grape sends only the useful delta and invalidates stale context
 ```
 
-Manual CLI usage is available for debugging:
+Manual CLI usage is available for debugging and fallback:
 
 ```bash
+grape sync
 grape compile --task "Explain the files I need to edit"
+grape diff-context --task "Explain the files I need to edit"
 grape status
+grape doctor
 grape sessions
 grape artifacts
+grape run --session <id> -- npm test
 grape omitted --session <id>
 grape stale
 grape conflicts
+grape bench --fixture <name>
+grape mcp --print-config
 ```
 
-See the full [CLI reference](docs/v1/interfaces/cli.md) and [MCP tools](docs/v1/interfaces/mcp-tools.md).
+See [Getting started](docs/v1/interfaces/getting-started.md), the full [CLI reference](docs/v1/interfaces/cli.md), and [MCP tools](docs/v1/interfaces/mcp-tools.md).
 
 ## Why this matters
 
