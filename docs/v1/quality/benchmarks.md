@@ -90,6 +90,8 @@ npm run bench:comparators   # skips unavailable external tools
 
 `npm run bench` builds `dist/`, runs `npm pack`, installs the tarball, and runs all fixtures through the **installed** `grape` binary. This exercises the beta candidate artifact from the current git tree.
 
+Current Graphify comparator rows measure one-shot CLI orientation only. They do not measure Graphify's full MCP, update, hook, IDE, or multi-turn assistant workflow. Graphify is strongest at building a queryable repo knowledge graph. Grape is strongest at preserving safe context continuity across agent turns with session diff, restore, invalidation, and proof-backed excerpts.
+
 Post-beta baseline harness (published npm registry package):
 
 ```bash
@@ -97,7 +99,7 @@ npm run bench:post-beta
 npm run bench:post-beta:local
 ```
 
-`npm run bench:post-beta` records `artifactIdentity: npm:grape-context@1.0.0-beta.0` from a registry install. `npm run bench:post-beta:local` records `artifactIdentity: local-candidate:<git commit>` from a packed install for post-fix comparison only.
+`npm run bench:post-beta` installs `grape-context@beta` from the registry and records the resolved package version in `artifactIdentity`. `npm run bench:post-beta:local` records `artifactIdentity: local-candidate:<git commit>` from a packed install for post-fix comparison only.
 
 The uncapped mode measures maximum recall. The budgeted mode caps each baseline to the same case budget so the benchmark can compare context selection under equal pressure.
 

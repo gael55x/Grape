@@ -140,7 +140,7 @@ Before adding V1 scope, confirm the work improves at least one of:
 - **Beta candidate bar (current target):** `npm run beta:check` green locally and in CI, plus human MCP client trials from [`beta-trial-checklist.md`](beta-trial-checklist.md) when release policy requires IDE UI proof.
 - **Full product bar (not V1):** broad durable retrieval, multi-fixture gold labels, observed-run result-to-behavior workflows, optional graph-memory parity with dedicated memory products.
 
-Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations uses the built-in `node:sqlite` runtime path to avoid native package compilation; the published `grape-context` package (`1.0.0-beta.0` on npm `beta`) requires Node.js 22.13+.
+Project Skeleton And Tooling added package scripts, a pinned TypeScript dev dependency, `package-lock.json`, CI, TypeScript typechecking, Node behavioral tests, import-boundary checks, and empty source ownership modules. SQLite Schema And Migrations uses the built-in `node:sqlite` runtime path to avoid native package compilation; the published `grape-context@beta` package requires Node.js 22.13+.
 
 ## Documentation Foundation Exit Criteria
 

@@ -6,6 +6,22 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ## Unreleased
 
+### Added
+
+- Added `grape --version` and `grape version` for install verification.
+- Added command-specific `--help` output for public CLI commands.
+
+### Fixed
+
+- Improved first-run errors for non-Git directories and empty Git repositories.
+- Fixed privacy doctor output so normal diagnostic wording is not redacted as a secret.
+- Added next-step guidance to empty inspection command output.
+
+### Changed
+
+- Clarified install verification, MCP setup, second-turn context behavior, local `.grape/` storage, and Graphify comparator scope in public docs.
+- Made package checks reject README links that would break in the npm package.
+
 ## 1.0.0-beta.3 - 2026-06-14
 
 ### Added

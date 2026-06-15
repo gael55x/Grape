@@ -8,6 +8,8 @@ Grape includes benchmark fixtures and scripts for local comparison.
 
 The harness measures transport behavior (omission, invalidation, restore) on named fixtures. It also compares against fair baselines (naive full context, manual `rg`, packed tarball install) and records partial external comparator runs where installable (Graphify orientation, chum-mem when Docker available).
 
+Current Graphify rows measure one-shot CLI orientation only. They do not measure Graphify's full MCP, update, hook, IDE, or multi-turn assistant workflow. Graphify is strongest at building a queryable repo knowledge graph. Grape is strongest at preserving safe context continuity across agent turns with session diff, restore, invalidation, and proof-backed excerpts.
+
 ## What this is not
 
 - Not marketing benchmark claims
@@ -45,7 +47,7 @@ npm run bench:comparators      # probe external tools (skips unavailable)
 node benchmarks/scripts/naive-baseline.mjs clean-typescript-app
 ```
 
-`npm run bench:post-beta` installs `grape-context` from the npm registry into a fresh consumer workspace and records `artifactIdentity: npm:grape-context@1.0.0-beta.0`. `npm run bench:post-beta:local` installs a packed tarball from the current git commit for before/after comparison. These runs measure file-level recall, known-noise ratio, span checks, runtime, and rough serialized output size. They do not prove token-size savings against naive or search baselines.
+`npm run bench:post-beta` installs `grape-context@beta` from the npm registry into a fresh consumer workspace and records the resolved package version in `artifactIdentity`. `npm run bench:post-beta:local` installs a packed tarball from the current git commit for before/after comparison. These runs measure file-level recall, known-noise ratio, span checks, runtime, and rough serialized output size. They do not prove token-size savings against naive or search baselines.
 
 The uncapped mode measures maximum recall. The budgeted mode caps each baseline to the same case budget so the benchmark can compare context selection under equal pressure.
 
@@ -65,5 +67,6 @@ npm run beta:check
 2. Do not optimize Grape before collecting the first baseline on a branch.
 3. Record environment metadata (git commit, package version, Node, OS) on every run.
 4. Separate **local source checkout** runs from **packed tarball** runs (`npm run e2e:alpha`, `npm run install:check`).
+5. Do not claim Grape beats Graphify broadly unless a fair multi-turn comparator has committed, reproducible evidence.
 
 See [`../../../docs/v1/legacy/alpha/benchmark-readiness-report.md`](../../../docs/v1/legacy/alpha/benchmark-readiness-report.md).

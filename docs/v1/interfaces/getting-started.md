@@ -22,8 +22,8 @@ Use Grape when an AI coding agent works across many turns on the same repository
 
 ```bash
 npm install -g grape-context@beta
+grape --version
 grape help
-grape doctor
 ```
 
 If install resolves an older package, clear the npm cache and reinstall:
@@ -42,6 +42,12 @@ grape init --connect
 ```
 
 This creates local state under `.grape/`, captures the first Git snapshot, and prints MCP setup guidance.
+
+Run setup diagnostics after initialization:
+
+```bash
+grape doctor
+```
 
 Review local privacy settings:
 
@@ -77,6 +83,18 @@ The `cwd` and `--repo` path must point at the same repository root.
 
 Primary tool: `grape_get_context`. See [`mcp-tools.md`](mcp-tools.md) for the full tool list.
 
+Generic placement guidance:
+
+- Put this JSON in the MCP server configuration for your coding agent or editor.
+- Use the repository root for both `cwd` and `--repo`.
+- Grape's stdio MCP behavior is verified by automated JSON-RPC smoke tests. Specific IDE UI placement is not verified by those tests unless a human client trial records it.
+
+Copy-ready agent instruction:
+
+```text
+At the start of each repo task turn, call grape_get_context with a stable sessionId and the current task. Treat INVALIDATE_PREVIOUS entries as stale and unsafe. If context is omitted, restore it by token only when needed. For security, auth, payments, data deletion, or deployment tasks, rely on exact proof-backed excerpts rather than summaries.
+```
+
 ## Normal agent loop
 
 On each turn, the agent calls `grape_get_context` with:
@@ -88,6 +106,8 @@ On each turn, the agent calls `grape_get_context` with:
 Read `NEW` and `PINNED` items first. Handle `OMIT_UNCHANGED`, `RESTORE_AVAILABLE`, and `INVALIDATE_PREVIOUS` before trusting prior context.
 
 Session rules and recovery paths: [`agent-sessions.md`](agent-sessions.md).
+
+Reset a session only when the agent lost prior context for the same task. Start a new session when the task changes.
 
 ## CLI fallback workflow
 
@@ -132,10 +152,45 @@ After MCP `grape_get_context`:
 - compact pack items for agent transport
 - `recoveryGuidance` when Grape cannot compile safely
 
+## What happens on the second turn
+
+On the first turn, Grape sends the context needed for the task and records what the agent saw.
+
+On later turns in the same session, Grape sends only what is new, changed, pinned, stale, or restorable. If a file, rule, dependency, branch, or worktree state changes, Grape tells the agent which previous context must stop being trusted.
+
+- `OMIT_UNCHANGED` means this exact session already received unchanged, safe-to-omit context.
+- `RESTORE_AVAILABLE` gives the agent a token to fetch omitted context only if needed.
+- `INVALIDATE_PREVIOUS` means prior context is stale and unsafe to keep using.
+- high-risk tasks require exact source, config, or rule evidence instead of summaries.
+
+## What Grape stores locally
+
+Grape stores local runtime state under `.grape/`:
+
+- `.grape/config.json` for project setup
+- `.grape/grape.db` for SQLite state, sessions, ledgers, proofs, source metadata, and scan diagnostics
+- `.grape/artifacts/` for generated JSON and Markdown context artifacts
+- restore metadata for omitted context
+- proof and excerpt metadata for exact source or rule spans
+- observed command and test evidence from `grape run` and `grape test`, stored as hashes and metadata instead of raw stdout or stderr bodies
+
+Grape does not send repository content, artifacts, proofs, summaries, embeddings, or telemetry to a remote Grape service by default. Your MCP client or coding agent may still forward returned context to its model provider.
+
+Manual cleanup while `grape purge` is deferred:
+
+```bash
+rm -rf .grape
+grape init --connect
+```
+
+This removes local Grape state for that repository. It does not change source files or Git history.
+
 ## Common errors
 
 | Symptom | What to do |
 |---|---|
+| `No Git repository found.` | Run Grape from a Git worktree, or pass `--repo <repo-root>`. |
+| `This Git repository has no commits yet.` | Create an initial commit, then rerun `grape init --connect`. |
 | `Grape config is missing` | Run `grape init --connect` from the repository root. |
 | `context session task mismatch` | Reuse the same `--task` and `--task-type`, or choose a new `--session`. |
 | Context session not found (run/test) | Run `grape compile --task "<task>" --session <id>` first, or list sessions with `grape sessions`. |

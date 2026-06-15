@@ -8,6 +8,10 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- Added public CLI install-verification and help hardening: `grape --version`, `grape version`, command-specific `--help`, MCP-first top-level help wording, and next-step guidance for empty inspection outputs.
+- Improved first-run recovery wording for non-Git directories and empty Git repositories.
+- Clarified end-user onboarding around MCP setup, stable `sessionId`, second-turn diff value, `.grape/` local storage, downstream model-provider caveats, and Graphify comparator scope.
+- Added a package check that rejects README links which would break after npm packaging.
 - CI `beta-smoke` runs `npm run benchmark:run`, `npm run e2e:alpha`, and `npm run beta:client-trial` after the cross-platform `npm run check` matrix.
 - `npm run beta:check` now includes `npm run beta:client-trial` after `check`, `benchmark:run`, and `e2e:alpha`.
 - Moved `grape bench` default tasks into fixture metadata, required `benchmarkTask` in fixture checks, and added polyglot fallback plus monorepo-lite to the scripted no-change benchmark suite.
