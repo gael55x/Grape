@@ -54,7 +54,8 @@ function detectImportEdges(
         input.snapshotId,
         parsed.moduleNode.symbolId,
         "imports",
-        toSymbolId ?? toRef
+        toSymbolId ?? toRef,
+        bindingSignature(candidate.bindings)
       ]).slice(0, 24)}`,
       projectId: input.projectId,
       repoId: input.repoId,
@@ -71,6 +72,7 @@ function detectImportEdges(
         specifier: candidate.specifier,
         targetPath,
         bindings: candidate.bindings,
+        bindingSignature: bindingSignature(candidate.bindings),
         dynamic: candidate.dynamic,
         extractor: parsed.ast ? "typescript_ast" : "regex_basic"
       },
@@ -94,7 +96,8 @@ function detectReExportEdges(
         input.snapshotId,
         parsed.moduleNode.symbolId,
         "exports",
-        toSymbolId ?? toRef
+        toSymbolId ?? toRef,
+        bindingSignature(candidate.bindings)
       ]).slice(0, 24)}`,
       projectId: input.projectId,
       repoId: input.repoId,
@@ -111,6 +114,7 @@ function detectReExportEdges(
         specifier: candidate.specifier,
         targetPath,
         bindings: candidate.bindings,
+        bindingSignature: bindingSignature(candidate.bindings),
         extractor: "typescript_ast"
       },
       createdAt: input.createdAt
@@ -135,7 +139,9 @@ function detectCallEdges(
         fromSymbol.symbolId,
         "calls",
         targetSymbol?.symbolId ?? toRef,
-        String(call.line)
+        String(call.line),
+        String(call.column),
+        call.expression
       ]).slice(0, 24)}`,
       projectId: input.projectId,
       repoId: input.repoId,
@@ -152,6 +158,7 @@ function detectCallEdges(
         name: call.name,
         expression: call.expression,
         line: call.line,
+        column: call.column,
         extractor: "typescript_ast"
       },
       createdAt: input.createdAt
@@ -233,6 +240,10 @@ function symbolLookupFor(nodes: readonly FileIndexNode[]): SymbolLookup {
     byName.set(node.name, [...(byName.get(node.name) ?? []), node]);
   }
   return { byPathAndName, byName };
+}
+
+function bindingSignature(bindings: readonly { readonly localName: string; readonly importedName: string }[]): string {
+  return JSON.stringify(bindings.map((binding) => [binding.localName, binding.importedName]));
 }
 
 function containingSymbol(parsed: ParsedFileIndex, call: AstCallCandidate): FileIndexNode | undefined {

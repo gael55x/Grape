@@ -85,8 +85,10 @@ function withGitRepo(fn) {
       path.join(dir, "src", "app.ts"),
       [
         "import { Calculator, calculateDiscount } from './lib';",
+        "import { calculate_discount_alias } from './lib';",
         "import outside from '../../../outside';",
         "const localValue = calculateDiscount();",
+        "const trimmedOutput = init.stdout?.trim() || init.stderr?.trim();",
         "export const loadUser = async () => localValue;",
         "export function runApp() {",
         "  const calculator = new Calculator();",
@@ -252,6 +254,16 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
             edge.fromSymbolId === runAppSymbol?.symbolId &&
             edge.toSymbolId === calculateDiscountSymbol?.symbolId
         )
+      );
+      assert.equal(new Set(edges.map((edge) => edge.edgeId)).size, edges.length);
+      assert.equal(
+        edges.filter(
+          (edge) =>
+            edge.edgeType === "calls" &&
+            edge.toRef === "trim" &&
+            JSON.parse(edge.metadataJson).line === 5
+        ).length,
+        2
       );
 
       const persistedText = JSON.stringify({ nodes, edges });

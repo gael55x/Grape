@@ -34,6 +34,7 @@ export interface AstCallCandidate {
   readonly name: string;
   readonly expression: string;
   readonly line: number;
+  readonly column: number;
 }
 
 export interface TypeScriptAstIndexResult {
@@ -206,11 +207,12 @@ function callCandidate(sourceFile: ts.SourceFile, node: ts.Node): AstCallCandida
   if (!ts.isCallExpression(node)) return undefined;
   const name = callName(node.expression);
   if (!name) return undefined;
-  const { startLine } = lineRange(sourceFile, node);
+  const start = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
   return {
     name,
     expression: node.expression.getText(sourceFile),
-    line: startLine
+    line: start.line + 1,
+    column: start.character + 1
   };
 }
 
