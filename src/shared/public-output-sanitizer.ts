@@ -53,13 +53,28 @@ function sanitizeString(
 
   let sanitized = replaceKnownRootPath(value, options);
   sanitized = sanitized
-    .replace(secretAssignmentPattern, `$1$2${redactedSecretLabel}$4`)
+    .replace(secretAssignmentPattern, redactSecretAssignment)
     .replace(commonSecretTokenPattern, redactedSecretLabel)
     .replace(credentialedUrlPattern, `<redacted-secret-url>@`)
     .replace(windowsAbsolutePathPattern, genericLocalPathLabel)
     .replace(posixLocalPathPattern, (_match, prefix: string) => `${prefix}${genericLocalPathLabel}`);
 
   return sanitized;
+}
+
+function redactSecretAssignment(
+  match: string,
+  prefix: string,
+  quote: string,
+  value: string,
+  closingQuote: string
+): string {
+  if (isPlainDiagnosticValue(prefix, value, quote)) return match;
+  return `${prefix}${quote}${redactedSecretLabel}${closingQuote}`;
+}
+
+function isPlainDiagnosticValue(prefix: string, value: string, quote: string): boolean {
+  return quote === "" && /artifact_secret_scan\s*:\s*$/i.test(prefix) && /^[A-Z][a-z]{2,20}$/.test(value);
 }
 
 function replaceKnownRootPath(value: string, options: PublicOutputSanitizerOptions): string {

@@ -127,6 +127,16 @@ export function recoveryGuidanceForErrorMessage(message: string): readonly strin
   if (message.includes("git snapshot failed") || message.includes("No readable Git repository")) {
     guidance.add("Run Grape from a Git worktree, or pass --repo <repo-root>.");
   }
+  if (message.includes("not a git repository") || message.includes("not in a git directory")) {
+    guidance.add("Run Grape from a Git worktree, or pass --repo <repo-root>.");
+  }
+  if (
+    message.includes("ambiguous argument 'HEAD'") ||
+    message.includes("Needed a single revision") ||
+    message.includes("does not have any commits yet")
+  ) {
+    guidance.add("Create an initial commit, then rerun grape init --connect.");
+  }
   if (message.includes("secret") || message.includes("blocked redaction") || message.includes("privacy")) {
     guidance.add("Move secrets out of indexed files or add private paths to .grapeignore, then rerun grape doctor.");
   }

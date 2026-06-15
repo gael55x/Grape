@@ -28,7 +28,6 @@ The stability boundary is enforced through TypeScript types, this document, and 
 | `grape omitted --session <id> --token <restoreToken>` | Stable |
 | `grape claims` | Stable |
 | `grape proofs` | Stable |
-| `grape rules` | Stable |
 | `grape mcp --stdio --repo <path>` | Stable |
 
 ### MCP tools
@@ -56,7 +55,7 @@ The stability boundary is enforced through TypeScript types, this document, and 
 |-------|--------|-------|
 | `query` | **Stable** | Required. Non-empty task query string. |
 | `sessionId` | **Stable** | One of `sessionId` or `agentSessionId` required for session tracking. |
-| `agentSessionId` | Accepted advisory | Optional alias for `sessionId`. Identity is not persisted in compile output. Not required for beta clients. |
+| `agentSessionId` | Accepted advisory | Compatibility input used to derive a Grape session when `sessionId` is omitted. Identity is not persisted in compile output. Prefer explicit `sessionId` for beta clients. |
 | `agentName` | Accepted advisory | Optional metadata. Not persisted in compile output. Not required for beta clients. |
 | `taskType` | **Stable** | Optional. One of `bug_fix`, `security_fix`, `refactor`, `migration`, `feature`, `test_repair`, `analysis`. Defaults to `analysis`. |
 | `files` | **Stable** | Optional explicit source file seeds. |
@@ -199,7 +198,7 @@ These surfaces are implemented and tested but may change shape before stable 1.0
 These surfaces are accepted for caller metadata and session compatibility, but are not persisted as independent compiled artifact fields:
 
 - `agentName`: accepted in request; not persisted; not reflected in compile output.
-- `agentSessionId`: accepted as an alias for `sessionId` for session tracking. Identity is not independently tracked in compile output. Full inspection output may include a debug-only advisory warning.
+- `agentSessionId`: accepted for compatibility when a client cannot provide `sessionId`. Grape derives the session from `agentName`, `agentSessionId`, and exact `query`. Identity is not independently tracked in compile output. Full inspection output may include a debug-only advisory warning.
 
 ## Reserved / Legacy-Compatible
 

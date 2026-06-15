@@ -1,6 +1,6 @@
 # Beta Trial Checklist
 
-Use this checklist for human MCP client trials on the published `1.0.0-beta.0` beta transport slice.
+Use this checklist for human MCP client trials on the published `grape-context@beta` transport slice.
 
 Automated `npm run beta:client-trial` already proves packaged-install MCP stdio transport, including omission, restore, invalidation, reset, branch change, redaction, and ignored secret-looking file rejection. Run it locally or rely on CI `beta-smoke`. It does not replace this checklist when release policy requires a real Cursor, Claude Code, or equivalent IDE client configuration.
 
@@ -28,7 +28,7 @@ Run at least these repos before beta:
 npm install -g grape-context@beta
 ```
 
-Or pin the exact prerelease: `npm install -g grape-context@1.0.0-beta.0`.
+Use `npm install -g grape-context@beta` for the published beta package.
 
 - `grape help` exits `0`.
 - `grape doctor --json` exits `0` or returns clear setup recovery guidance.

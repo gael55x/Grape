@@ -30,7 +30,7 @@ Grape uses this checklist before recommending an npm **prerelease** (not stable 
 
 ## Prerelease version policy
 
-- Prefer `1.0.0-beta.0` with the `beta` dist-tag when transport contract is frozen per `transport-stability.md`
+- Prefer the `beta` dist-tag when transport contract is frozen per `transport-stability.md`
 - Otherwise `0.x` beta with `beta` dist-tag
 - Never republish an existing version
 - Never claim stable `1.0.0` from benchmark evidence alone

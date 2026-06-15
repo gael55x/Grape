@@ -62,7 +62,10 @@ function renderConflicts(result: ListLocalConflictsResult): string {
     `Branch: ${result.branch}`,
     result.warnings.length > 0 ? `Warnings: ${result.warnings.join(", ")}` : "Warnings: none",
     "",
-    ...result.conflicts.map(renderConflict)
+    ...result.conflicts.map(renderConflict),
+    ...(result.conflicts.length === 0
+      ? ["No open claim conflicts found. Run grape compile after rule or source changes to refresh conflict detection."]
+      : [])
   ].join("\n");
 }
 

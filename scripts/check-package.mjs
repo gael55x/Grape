@@ -5,6 +5,7 @@ import { commandForPlatform, spawnFailureMessage, spawnOptionsForPlatform } from
 
 const root = process.cwd();
 const packageJson = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
+const readme = readFileSync(path.join(root, "README.md"), "utf8");
 
 assert(packageJson.private !== true, "package.json must not be private for the documented global install path");
 assert(packageJson.bin?.grape === "dist/cli/index.js", "package.json bin.grape must point at dist/cli/index.js");
@@ -77,10 +78,29 @@ for (const file of packedFiles) {
   assert(!/(^|\/)\.env(?:\.|$)/i.test(file), `npm package includes env-like file ${file}`);
 }
 
+assertPackageReadmeLinks(readme);
+
 console.log(`package ok: ${packResult.filename}`);
 
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
   }
+}
+
+function assertPackageReadmeLinks(markdown) {
+  const localLinkPattern = /(?:\]\(|href="|src=")(?!https?:|#)([^)"#]+)(?:\)|")/g;
+  const allowedLocalLinks = new Set(["LICENSE", "./LICENSE"]);
+  const failures = [];
+  for (const match of markdown.matchAll(localLinkPattern)) {
+    const target = match[1];
+    if (allowedLocalLinks.has(target)) continue;
+    if (packedFiles.has(target)) continue;
+    failures.push(target);
+  }
+
+  assert(
+    failures.length === 0,
+    `README.md has package-broken relative links: ${failures.join(", ")}`
+  );
 }

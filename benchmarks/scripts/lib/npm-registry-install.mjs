@@ -1,4 +1,4 @@
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -11,36 +11,14 @@ import {
 } from "../../../scripts/platform-command.mjs";
 import { npmEnv } from "./tarball-install.mjs";
 
-const PUBLISHED_VERSION = "1.0.0-beta.0";
 const PACKAGE_NAME = "grape-context";
+const PACKAGE_SPEC = `${PACKAGE_NAME}@beta`;
 
 export function resolvePublishedInstallSpec() {
-  let latestVersion = PUBLISHED_VERSION;
-  try {
-    latestVersion = execFileSync("npm", ["view", PACKAGE_NAME, "version", "--json"], {
-      encoding: "utf8"
-    }).trim();
-    if (latestVersion.startsWith('"')) {
-      latestVersion = JSON.parse(latestVersion);
-    }
-  } catch {
-    latestVersion = PUBLISHED_VERSION;
-  }
-
-  if (latestVersion === PUBLISHED_VERSION) {
-    return {
-      installArgs: [PACKAGE_NAME],
-      distTag: "latest",
-      installCommand: `npm install ${PACKAGE_NAME}`,
-      artifactIdentity: `npm:${PACKAGE_NAME}@${PUBLISHED_VERSION}`
-    };
-  }
-
   return {
-    installArgs: [`${PACKAGE_NAME}@beta`],
+    installArgs: [PACKAGE_SPEC],
     distTag: "beta",
-    installCommand: `npm install ${PACKAGE_NAME}@beta`,
-    artifactIdentity: `npm:${PACKAGE_NAME}@${PUBLISHED_VERSION}`
+    installCommand: `npm install ${PACKAGE_SPEC}`
   };
 }
 
@@ -97,7 +75,7 @@ export function installPublishedBeta(options = {}) {
     installedVersion: installedPackage.version,
     distTag: spec.distTag,
     installCommand: spec.installCommand,
-    artifactIdentity: spec.artifactIdentity,
+    artifactIdentity: `npm:${PACKAGE_NAME}@${installedPackage.version}`,
     artifactMode: "published-beta",
     installSource: "npm-registry",
     cleanup() {

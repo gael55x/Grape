@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/grape-nw.png" alt="Grape logo" width="128" />
+  <img src="https://raw.githubusercontent.com/gael55x/Grape/main/docs/assets/grape-nw.png" alt="Grape logo" width="128" />
 </p>
 
 <h1 align="center">Grape</h1>
@@ -9,13 +9,13 @@
 </p>
 
 <p align="center">
-  <a href="docs/README.md"><strong>Documentation</strong></a>
+  <a href="https://github.com/gael55x/Grape/blob/main/docs/README.md"><strong>Documentation</strong></a>
   ·
-  <a href="docs/v1/architecture/overview.md"><strong>Architecture</strong></a>
+  <a href="https://github.com/gael55x/Grape/blob/main/docs/v1/architecture/overview.md"><strong>Architecture</strong></a>
   ·
-  <a href="ROADMAP.md"><strong>Roadmap</strong></a>
+  <a href="https://github.com/gael55x/Grape/blob/main/ROADMAP.md"><strong>Roadmap</strong></a>
   ·
-  <a href="CONTRIBUTING.md"><strong>Contributing</strong></a>
+  <a href="https://github.com/gael55x/Grape/blob/main/CONTRIBUTING.md"><strong>Contributing</strong></a>
 </p>
 
 <p align="center">
@@ -83,8 +83,8 @@ npm install -g grape-context@beta
 Verify the install:
 
 ```bash
+grape --version
 grape help
-grape doctor
 ```
 
 ## Quick start
@@ -92,9 +92,9 @@ grape doctor
 1. Install: `npm install -g grape-context@beta`
 2. Initialize: `grape init --connect` (from your repository root)
 3. Connect MCP: `grape mcp --print-config` and add Grape to your coding agent
-4. Agent loop: call `grape_get_context` each turn with a stable `sessionId` and stable task text
+4. Agent loop: use your MCP-capable agent normally. The agent should call `grape_get_context` each turn with a stable `sessionId` and stable task text.
 
-Full walkthrough: [Getting started](docs/v1/interfaces/getting-started.md).
+Full walkthrough: [Getting started](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/getting-started.md).
 
 Initialize it inside a repository:
 
@@ -107,6 +107,7 @@ This creates local Grape state, captures the initial repository snapshot, and pr
 Check local privacy settings:
 
 ```bash
+grape doctor
 grape doctor --privacy
 ```
 
@@ -122,6 +123,12 @@ grape_get_context
 
 The agent can then request task-specific repository context without manually rebuilding the same prompt every turn.
 
+Copy-ready agent instruction:
+
+```text
+At the start of each repo task turn, call grape_get_context with a stable sessionId and the current task. Treat INVALIDATE_PREVIOUS entries as stale and unsafe. If context is omitted, restore it by token only when needed. For security, auth, payments, data deletion, or deployment tasks, rely on exact proof-backed excerpts rather than summaries.
+```
+
 A typical loop looks like this:
 
 ```text
@@ -133,6 +140,22 @@ Repo changes
 Agent calls grape_get_context again
 Grape sends only the useful delta and invalidates stale context
 ```
+
+## What happens on the second turn
+
+On the first turn, Grape sends the context needed for the task and records what the agent saw.
+
+On later turns in the same session, Grape sends only what is new, changed, pinned, stale, or restorable. If a file, rule, dependency, branch, or worktree state changes, Grape tells the agent which previous context must stop being trusted.
+
+That is Grape's main difference from repo graph tools. Graph tools help agents find repo structure. Grape helps agents carry repo context safely across turns.
+
+Second-turn behavior:
+
+* `OMIT_UNCHANGED` means this exact session already received unchanged, safe-to-omit context.
+* `RESTORE_AVAILABLE` gives the agent a token to fetch omitted context only if needed.
+* `INVALIDATE_PREVIOUS` tells the agent a prior context item is stale and unsafe to keep using.
+* `PINNED` context is resent when safety policy requires it.
+* high-risk tasks such as security, auth, payments, data deletion, or deployment require exact source, config, or rule evidence instead of summaries.
 
 Manual CLI usage is available for debugging and fallback:
 
@@ -152,7 +175,7 @@ grape bench --fixture <name>
 grape mcp --print-config
 ```
 
-See [Getting started](docs/v1/interfaces/getting-started.md), the full [CLI reference](docs/v1/interfaces/cli.md), and [MCP tools](docs/v1/interfaces/mcp-tools.md).
+See [Getting started](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/getting-started.md), the full [CLI reference](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/cli.md), and [MCP tools](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/mcp-tools.md).
 
 ## Why this matters
 
@@ -191,6 +214,28 @@ Grape also:
 * prevents summaries from becoming durable proof
 
 Repository content is still untrusted input. Source files, comments, docs, tests, and fixtures can contain prompt-injection text or private implementation details. Review context before forwarding it to an LLM, and keep real secrets in ignored files.
+
+## What Grape stores locally
+
+Grape stores local runtime state under `.grape/`:
+
+* `.grape/config.json` for local project setup
+* `.grape/grape.db` for SQLite state, sessions, ledgers, proofs, source metadata, and scan diagnostics
+* `.grape/artifacts/` for generated JSON and Markdown context artifacts
+* restore metadata for omitted context
+* proof and excerpt metadata for accepted exact source or rule spans
+* observed command and test evidence from `grape run` and `grape test`, stored as hashes and metadata instead of raw stdout or stderr bodies
+
+Grape does not send repository content, artifacts, proofs, summaries, embeddings, or telemetry to a remote Grape service by default. Your MCP client or coding agent may still forward returned context to its model provider. Treat Grape output like any other repo context you give an AI tool.
+
+Safe manual cleanup while `grape purge` is deferred:
+
+```bash
+rm -rf .grape
+grape init --connect
+```
+
+This removes local Grape state for that repository. It does not change source files or Git history.
 
 ## How Grape works
 
@@ -304,7 +349,7 @@ That supports the core beta transport claim on these fixtures: Grape can omit un
 
 Post-beta baselines help answer whether Grape finds the right files and where known-irrelevant paths enter the compiled output. They do not prove token-size savings against naive or search, production readiness, or superiority over external tools.
 
-See [Benchmarks](docs/v1/quality/benchmarks.md) for commands, fixture names, result files, and caveats.
+See [Benchmarks](https://github.com/gael55x/Grape/blob/main/docs/v1/quality/benchmarks.md) for commands, fixture names, result files, and caveats.
 
 ## Project status
 
@@ -379,28 +424,28 @@ npm run global:smoke
 
 Start here:
 
-* [Documentation index](docs/README.md)
-* [V1 documentation](docs/v1/README.md)
-* [Implementation contract](docs/v1/SPEC.md)
-* [Architecture overview](docs/v1/architecture/overview.md)
-* [State machine](docs/v1/architecture/state-machine.md)
-* [Invariants](docs/v1/architecture/invariants.md)
-* [Roadmap](ROADMAP.md)
-* [Contributing](CONTRIBUTING.md)
+* [Documentation index](https://github.com/gael55x/Grape/blob/main/docs/README.md)
+* [V1 documentation](https://github.com/gael55x/Grape/blob/main/docs/v1/README.md)
+* [Implementation contract](https://github.com/gael55x/Grape/blob/main/docs/v1/SPEC.md)
+* [Architecture overview](https://github.com/gael55x/Grape/blob/main/docs/v1/architecture/overview.md)
+* [State machine](https://github.com/gael55x/Grape/blob/main/docs/v1/architecture/state-machine.md)
+* [Invariants](https://github.com/gael55x/Grape/blob/main/docs/v1/architecture/invariants.md)
+* [Roadmap](https://github.com/gael55x/Grape/blob/main/ROADMAP.md)
+* [Contributing](https://github.com/gael55x/Grape/blob/main/CONTRIBUTING.md)
 
 Core references:
 
-* [Trust model](docs/v1/core/trust-model.md)
-* [Context artifact](docs/v1/contracts/context-artifact.md)
-* [Context diff](docs/v1/contracts/context-diff.md)
-* [Agent sessions](docs/v1/interfaces/agent-sessions.md)
-* [Compression](docs/v1/core/compression.md)
-* [Storage](docs/v1/core/storage.md)
-* [Security](docs/v1/core/security.md)
-* [MCP tools](docs/v1/interfaces/mcp-tools.md)
-* [CLI](docs/v1/interfaces/cli.md)
-* [Testing](docs/v1/quality/testing.md)
-* [Benchmarks](docs/v1/quality/benchmarks.md)
+* [Trust model](https://github.com/gael55x/Grape/blob/main/docs/v1/core/trust-model.md)
+* [Context artifact](https://github.com/gael55x/Grape/blob/main/docs/v1/contracts/context-artifact.md)
+* [Context diff](https://github.com/gael55x/Grape/blob/main/docs/v1/contracts/context-diff.md)
+* [Agent sessions](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/agent-sessions.md)
+* [Compression](https://github.com/gael55x/Grape/blob/main/docs/v1/core/compression.md)
+* [Storage](https://github.com/gael55x/Grape/blob/main/docs/v1/core/storage.md)
+* [Security](https://github.com/gael55x/Grape/blob/main/docs/v1/core/security.md)
+* [MCP tools](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/mcp-tools.md)
+* [CLI](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/cli.md)
+* [Testing](https://github.com/gael55x/Grape/blob/main/docs/v1/quality/testing.md)
+* [Benchmarks](https://github.com/gael55x/Grape/blob/main/docs/v1/quality/benchmarks.md)
 
 ## Contributing
 
@@ -410,9 +455,9 @@ Contributions should preserve the implementation contract and avoid expanding th
 
 Before contributing, read:
 
-* [Contributing guide](CONTRIBUTING.md)
-* [Invariants](docs/v1/architecture/invariants.md)
-* [Roadmap](ROADMAP.md)
+* [Contributing guide](https://github.com/gael55x/Grape/blob/main/CONTRIBUTING.md)
+* [Invariants](https://github.com/gael55x/Grape/blob/main/docs/v1/architecture/invariants.md)
+* [Roadmap](https://github.com/gael55x/Grape/blob/main/ROADMAP.md)
 
 Implementation standards:
 

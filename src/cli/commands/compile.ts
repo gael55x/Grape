@@ -3,7 +3,16 @@ import { recoveryGuidanceForErrorMessage } from "../../app/local-project/setup/r
 import { compileSuccessTitle } from "../../shared/trust-wording.js";
 import type { ContextPackItemShape } from "../../shared/index.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, renderProblems, repoOutputOptions, write, writeError, writeJson } from "../render.js";
+import {
+  errorMessage,
+  formatCommandFailure,
+  humanizeCliWarning,
+  renderProblems,
+  repoOutputOptions,
+  write,
+  writeError,
+  writeJson
+} from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 
 export async function runCompile(parsed: ParsedArgs): Promise<number> {
@@ -91,7 +100,7 @@ export async function runCompileLike(
       `Omitted unchanged: ${result.omittedItemCount}`,
       result.budget.status !== "not_requested" ? `Token budget: ${result.budget.status}` : undefined,
       result.sessionResetId ? `Session reset: ${result.sessionResetId}` : undefined,
-      `Warnings: ${result.warnings.length === 0 ? "none" : result.warnings.join(", ")}`,
+      `Warnings: ${result.warnings.length === 0 ? "none" : result.warnings.map(humanizeCliWarning).join(", ")}`,
       result.databaseBackupPath ? `Database backup: ${result.databaseBackupPath}` : undefined,
       ...renderProblems("Recovery", result.recoveryGuidance),
       ...(explainItems ? renderPackExplain(explainItems) : []),
@@ -105,9 +114,8 @@ export async function runCompileLike(
   } catch (error) {
     const message = errorMessage(error);
     const outputOptions = repoOutputOptions(repoPath(parsed));
-    writeError(`grape ${output.commandLabel} failed: ${message}`, outputOptions);
     const guidance = recoveryGuidanceForErrorMessage(message);
-    if (guidance.length > 0) writeError(renderProblems("Recovery", guidance).join("\n"), outputOptions);
+    writeError(formatCommandFailure(output.commandLabel, error, guidance), outputOptions);
     return compileErrorExitCode(error);
   }
 }
@@ -171,7 +179,7 @@ export function renderPackExplain(items: readonly PackExplainItem[]): string[] {
         `  - ${item.itemId} [${item.diffState}] ${item.reason}` +
         (item.restoreToken ? ` restore=${item.restoreToken}` : "") +
         (item.invalidatesSentItemId ? ` invalidates=${item.invalidatesSentItemId}` : "") +
-        (item.warnings.length > 0 ? ` warnings=${item.warnings.join(",")}` : "")
+        (item.warnings.length > 0 ? ` warnings=${item.warnings.map(humanizeCliWarning).join(",")}` : "")
     )
   ];
 }

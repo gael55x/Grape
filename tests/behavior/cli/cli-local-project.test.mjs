@@ -109,6 +109,115 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.match(result.stdout, /grape mcp --stdio/);
   assert.match(result.stdout, /--environment-scope <env>/);
   assert.match(result.stdout, /--feature-flags <flags>/);
+  assert.match(result.stdout, /Primary workflow:/);
+  assert.match(result.stdout, /grape mcp --print-config/);
+  assert.match(result.stdout, /stable sessionId/);
+});
+
+test("cli version commands print the installed package version", () => {
+  const expectedVersion = JSON.parse(readFileSync(path.join(process.cwd(), "package.json"), "utf8")).version;
+  for (const args of [["--version"], ["version"]]) {
+    const result = spawnSync(process.execPath, [cliPath, ...args], {
+      encoding: "utf8"
+    });
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stderr, "");
+    assert.equal(result.stdout.trim(), `grape-context ${expectedVersion}`);
+  }
+});
+
+test("cli public commands render command-specific help", () => {
+  const commands = [
+    "status",
+    "doctor",
+    "compile",
+    "diff-context",
+    "mcp",
+    "bench",
+    "omitted",
+    "run",
+    "test",
+    "artifacts",
+    "sessions",
+    "stale",
+    "claims",
+    "conflicts",
+    "proofs",
+    "sync"
+  ];
+
+  for (const command of commands) {
+    const result = spawnSync(process.execPath, [cliPath, command, "--help"], {
+      encoding: "utf8"
+    });
+
+    assert.equal(result.status, 0, `${command}: ${result.stderr}`);
+    assert.equal(result.stderr, "");
+    assert.match(result.stdout, /Usage:/, command);
+  }
+});
+
+test("cli inspection commands include next steps when local ledgers are empty", () => {
+  withGitRepo((repoPath) => {
+    const init = runCli(repoPath, ["init", "--connect"]);
+    assert.equal(init.status, 0, init.stderr);
+
+    const artifacts = runCli(repoPath, ["artifacts"]);
+    assert.equal(artifacts.status, 0, artifacts.stderr);
+    assert.match(artifacts.stdout, /Context artifacts: 0/);
+    assert.match(artifacts.stdout, /Run grape compile --task/);
+
+    const sessions = runCli(repoPath, ["sessions"]);
+    assert.equal(sessions.status, 0, sessions.stderr);
+    assert.match(sessions.stdout, /Context sessions: 0/);
+    assert.match(sessions.stdout, /stable sessionId/);
+
+    const stale = runCli(repoPath, ["stale"]);
+    assert.equal(stale.status, 0, stale.stderr);
+    assert.match(stale.stdout, /Stale context items: 0/);
+    assert.match(stale.stdout, /No emitted invalidations yet/);
+  });
+});
+
+test("cli init and compile explain non-git directories", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "grape-cli-non-git-"));
+  try {
+    const init = runCli(dir, ["init", "--connect"], dir);
+    assert.equal(init.status, 4);
+    assert.match(init.stderr, /No Git repository found/);
+    assert.match(init.stderr, /Run Grape from a Git worktree, or pass --repo <repo-root>/);
+    assert.doesNotMatch(init.stderr, /fatal: not a git repository/);
+
+    const compile = runCli(dir, ["compile", "--task", "probe", "--session", "probe"], dir);
+    assert.equal(compile.status, 4);
+    assert.match(compile.stderr, /No Git repository found/);
+    assert.match(compile.stderr, /Run Grape from a Git worktree, or pass --repo <repo-root>/);
+    assert.doesNotMatch(compile.stderr, /fatal: not a git repository/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("cli init and compile explain empty git repositories", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "grape-cli-empty-git-"));
+  try {
+    execGit(dir, ["init", "-b", "main"]);
+
+    const init = runCli(dir, ["init", "--connect"], dir);
+    assert.equal(init.status, 4);
+    assert.match(init.stderr, /This Git repository has no commits yet/);
+    assert.match(init.stderr, /Create an initial commit, then rerun grape init --connect/);
+    assert.doesNotMatch(init.stderr, /ambiguous argument 'HEAD'/);
+
+    const compile = runCli(dir, ["compile", "--task", "probe", "--session", "probe"], dir);
+    assert.equal(compile.status, 4);
+    assert.match(compile.stderr, /This Git repository has no commits yet/);
+    assert.match(compile.stderr, /Create an initial commit, then rerun grape init --connect/);
+    assert.doesNotMatch(compile.stderr, /ambiguous argument 'HEAD'/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test("cli compile applies caller environment scope to compiled artifacts", () => {

@@ -92,6 +92,17 @@ Sanitization is a final public-output boundary, not permission to store unsafe r
 
 V1 must not send repository content, proofs, artifacts, embeddings, telemetry, or summaries to a remote service by default. Any future remote behavior requires V1.1/V2 scope, opt-in config, security docs, and an ADR.
 
+This local-first rule covers Grape's own behavior. The user's MCP client, editor, or coding agent may forward returned context to its model provider. Grape output should be treated like any other repository context given to an AI tool.
+
+Manual cleanup while `grape purge` is deferred:
+
+```bash
+rm -rf .grape
+grape init --connect
+```
+
+This removes local Grape state for that repository and recreates setup state. It does not change source files or Git history.
+
 ## Logging Rules
 
 - Logs use structured event names and IDs.

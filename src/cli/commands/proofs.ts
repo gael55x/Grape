@@ -50,7 +50,10 @@ function renderProofs(result: ListLocalProofsResult): string {
         `  Excerpt hash: ${proof.excerptHash}`,
         `  Claim: ${proof.claimId ?? "none"}`
       ].join("\n")
-    )
+    ),
+    ...(result.proofs.length === 0
+      ? ["Run grape compile --task \"<task>\" --session <id> first to create proof metadata when exact source evidence is available."]
+      : [])
   ].join("\n");
 }
 

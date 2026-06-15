@@ -36,22 +36,61 @@ const STATUS_WARNING_LABELS: Readonly<Record<string, string>> = {
 };
 
 export function humanizeStatusWarning(code: string): string {
-  return STATUS_WARNING_LABELS[code] ?? code;
+  return humanizeCliWarning(STATUS_WARNING_LABELS[code] ?? code);
+}
+
+export function humanizeCliWarning(code: string): string {
+  if (code === "repository_artifact_uses_lightweight_index") {
+    return "Using lightweight source indexing. Graph coverage may be partial.";
+  }
+  if (code.startsWith("current_valid_Unknown scope is not current-valid:")) {
+    return "Some claims were excluded because their scope could not be proven current. Use grape claims --active --json for details.";
+  }
+  return code;
 }
 
 export function formatCommandFailure(command: string, error: unknown, guidance?: readonly string[]): string {
-  const message = errorMessage(error);
+  const message = humanizeCommandErrorMessage(errorMessage(error));
   if (!guidance || guidance.length === 0) return `grape ${command} failed: ${message}`;
   return [`grape ${command} failed: ${message}`, "", "Recovery:", ...guidance.map((line) => `  ${line}`)].join("\n");
 }
 
+export function humanizeCommandErrorMessage(message: string): string {
+  if (isNotGitRepositoryMessage(message)) {
+    return "No Git repository found.";
+  }
+  if (isEmptyGitRepositoryMessage(message)) {
+    return "This Git repository has no commits yet.";
+  }
+  return message;
+}
+
+function isNotGitRepositoryMessage(message: string): boolean {
+  return message.includes("not a git repository") || message.includes("not in a git directory");
+}
+
+function isEmptyGitRepositoryMessage(message: string): boolean {
+  return (
+    message.includes("ambiguous argument 'HEAD'") ||
+    message.includes("Needed a single revision") ||
+    message.includes("does not have any commits yet")
+  );
+}
+
 export function helpText(): string {
   return [
-    "Grape - local-first context compiler for AI coding agents",
+    "Grape - session-safe context transport for AI coding agents",
     "",
     "Usage:",
+    "  grape --version             Print the installed package version",
+    "  grape version               Print the installed package version",
     "  grape init                  Initialize local .grape state without MCP guidance",
     "  grape init --connect        Initialize local .grape state and show MCP guidance",
+    "  grape mcp --print-config    Print MCP client configuration",
+    "  grape mcp --stdio           Serve MCP tools over stdio",
+    "  grape status                Inspect local project/bootstrap state",
+    "  grape doctor                Run setup and privacy diagnostics",
+    "  grape doctor --privacy      Run privacy-focused diagnostics",
     "  grape sync                  Refresh local snapshot, evidence, and file index",
     "  grape compile --task <text> Compile a task context pack",
     "  grape diff-context --task <text> Compile and diff a task context pack",
@@ -68,14 +107,20 @@ export function helpText(): string {
     "                              Mark a conflict as manually resolved",
     "  grape proofs               Inspect persisted proof rows",
     "  grape omitted --session <id> Inspect or restore omitted context",
-    "  grape status                Inspect local project/bootstrap state",
-    "  grape doctor                Run setup and privacy diagnostics",
-    "  grape doctor --privacy      Run privacy-focused diagnostics",
-    "  grape mcp --print-config    Print MCP client configuration",
-    "  grape mcp --stdio           Serve MCP tools over stdio",
     "  grape help                  Show this help",
     "",
-    "Workflow: init --connect -> status/doctor -> compile --task -> run/test --session",
+    "Primary workflow:",
+    "  grape init --connect",
+    "  grape mcp --print-config",
+    "  Use your MCP-capable agent normally. The agent should call grape_get_context each turn with a stable sessionId.",
+    "",
+    "CLI fallback:",
+    "  grape compile --task <text> --session <id>",
+    "  grape diff-context --task <text> --session <id> --explain",
+    "  grape run --session <id> -- <cmd...>",
+    "  grape test --session <id> -- <cmd...>",
+    "",
+    "Run grape <command> --help for command-specific usage.",
     "",
     "Options:",
     "  --repo <path>               Run against a repository path",
@@ -109,6 +154,147 @@ export function initHelpText(): string {
     "and prints MCP connection guidance."
   ].join("\n");
 }
+
+export function commandHelpText(command: string): string | undefined {
+  return COMMAND_HELP[command];
+}
+
+const COMMAND_HELP: Readonly<Record<string, string>> = {
+  init: [
+    "Usage:",
+    "  grape init --connect [--repo <path>] [--json]",
+    "  grape init [--repo <path>] [--json]",
+    "",
+    "Creates or repairs local .grape state, applies SQLite migrations, captures the first Git snapshot, and prints MCP setup guidance when --connect is present.",
+    "",
+    "Recovery:",
+    "  Run from a Git worktree with at least one commit, or pass --repo <repo-root>."
+  ].join("\n"),
+  status: [
+    "Usage:",
+    "  grape status [--repo <path>] [--json]",
+    "",
+    "Inspects local Grape setup, Git state, scan diagnostics, session freshness, and refresh recommendations.",
+    "",
+    "Recovery:",
+    "  If setup is missing or stale, run grape init --connect from the repository root."
+  ].join("\n"),
+  doctor: [
+    "Usage:",
+    "  grape doctor [--repo <path>] [--json]",
+    "  grape doctor --privacy [--repo <path>] [--json]",
+    "",
+    "Runs setup diagnostics. Use --privacy after init to inspect local-first behavior, .grape exclusion, ignored/private inputs, and artifact secret-scan coverage."
+  ].join("\n"),
+  sync: [
+    "Usage:",
+    "  grape sync [--repo <path>] [--json]",
+    "",
+    "Refreshes local snapshot, evidence, and lightweight index without sending a context pack."
+  ].join("\n"),
+  compile: [
+    "Usage:",
+    "  grape compile --task <text> [--session <id>] [--repo <path>] [--json]",
+    "",
+    "Compiles a task-specific context artifact and returns the session-scoped context pack diff.",
+    "",
+    "Common options:",
+    "  --session <id>              Reuse a context session",
+    "  --reset-session             Force full resend for the same task/session",
+    "  --task-type <type>          bug_fix, security_fix, refactor, migration, feature, test_repair, analysis",
+    "  --risk <a,b>                Add risk overlays",
+    "  --token-budget <tokens>     Check whether optional context fits the budget",
+    "",
+    "Recovery:",
+    "  Keep --task and --session stable for continued turns. Use a new session for a new task."
+  ].join("\n"),
+  "diff-context": [
+    "Usage:",
+    "  grape diff-context --task <text> [--session <id>] [--explain] [--repo <path>] [--json]",
+    "",
+    "Runs the same compile-plus-diff path as grape compile, labeled for scripts and agents that want the diff operation by name.",
+    "",
+    "Use --explain to show why each pack item is NEW, PINNED, OMIT_UNCHANGED, RESTORE_AVAILABLE, CHANGED, or INVALIDATE_PREVIOUS."
+  ].join("\n"),
+  mcp: [
+    "Usage:",
+    "  grape mcp --print-config [--repo <path>]",
+    "  grape mcp --stdio [--repo <path>]",
+    "",
+    "Prints MCP client JSON or serves Grape tools over stdio.",
+    "",
+    "Primary agent tool:",
+    "  grape_get_context",
+    "",
+    "Agent instruction:",
+    "  At the start of each repo task turn, call grape_get_context with a stable sessionId and the current task. Treat INVALIDATE_PREVIOUS entries as stale and unsafe. Restore omitted context by token only when needed."
+  ].join("\n"),
+  bench: [
+    "Usage:",
+    "  grape bench --fixture <name> [--fixture-path <path>] [--task <text>] [--repo <path>] [--json]",
+    "",
+    "Runs a scripted fixture benchmark for transport behavior. Normal projects need --fixture-path unless they contain tests/fixtures/<name>.",
+    "",
+    "This is a maintainer benchmark workflow, not a general repo analysis command."
+  ].join("\n"),
+  omitted: [
+    "Usage:",
+    "  grape omitted --session <id> [--repo <path>] [--json]",
+    "  grape omitted --session <id> --token <restoreToken> [--repo <path>] [--json]",
+    "",
+    "Lists omitted context for a session or restores one omitted item after dependency checks."
+  ].join("\n"),
+  run: [
+    "Usage:",
+    "  grape run --session <id> [--repo <path>] [--json] -- <cmd...>",
+    "",
+    "Runs a local command from the repository root and records Grape-observed trusted command evidence without storing raw stdout or stderr."
+  ].join("\n"),
+  test: [
+    "Usage:",
+    "  grape test --session <id> [--test-framework <name>] [--repo <path>] [--json] -- <cmd...>",
+    "",
+    "Runs a local test command and records Grape-observed trusted test evidence without storing raw stdout or stderr."
+  ].join("\n"),
+  artifacts: [
+    "Usage:",
+    "  grape artifacts [--session <id>] [--repo <path>] [--json]",
+    "  grape artifacts --artifact <id> [--repo <path>] [--json]",
+    "",
+    "Lists stored context artifacts or inspects one artifact's metadata, files, warnings, unsafe reasons, and dependency rows."
+  ].join("\n"),
+  sessions: [
+    "Usage:",
+    "  grape sessions [--repo <path>] [--json]",
+    "",
+    "Lists context sessions, branch/head state, sent and omitted ledger counts, and session events."
+  ].join("\n"),
+  stale: [
+    "Usage:",
+    "  grape stale [--session <id>] [--repo <path>] [--json]",
+    "",
+    "Lists emitted INVALIDATE_PREVIOUS rows for prior context that became stale."
+  ].join("\n"),
+  claims: [
+    "Usage:",
+    "  grape claims --active [--repo <path>] [--json]",
+    "",
+    "Lists current-valid durable claims and proof refs without raw proof excerpts or source bodies."
+  ].join("\n"),
+  conflicts: [
+    "Usage:",
+    "  grape conflicts [--repo <path>] [--json]",
+    "  grape conflicts --resolve <edgeId> --as coexists_with|variant_of [--repo <path>] [--json]",
+    "",
+    "Lists open claim conflict edges or records a local manual conflict resolution."
+  ].join("\n"),
+  proofs: [
+    "Usage:",
+    "  grape proofs [--proof <id>] [--source <sourceId>] [--repo <path>] [--json]",
+    "",
+    "Lists persisted proof metadata without raw proof excerpts or source bodies."
+  ].join("\n")
+};
 
 export function write(message: string, options?: PublicOutputSanitizerOptions): void {
   process.stdout.write(`${sanitizePublicText(message, options)}\n`);

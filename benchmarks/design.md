@@ -9,7 +9,7 @@
 | Restore when context unchanged? | Turn-2 `RESTORE_AVAILABLE` + smoke scripts | Measured on named fixtures |
 | Stale context rejected after file changes? | `stale-source-typescript-app`, `branch-switch-typescript-app` | Measured on named fixtures |
 | Context useful for coding agents, not just smaller? | Task prompts + usefulness score (1-5) | Partial. Harness scores only; human or agent eval deferred |
-| Value vs Graphify/chum-mem? | `run-comparator.mjs` + capability matrix | Partial. Graphify orientation when CLI installed |
+| Value vs Graphify/chum-mem? | `run-comparator.mjs` + capability matrix | Partial. Current Graphify probe measures one-shot CLI orientation only when CLI is installed |
 | Where competitors beat Grape on their wedge? | Competitor analysis in readiness report | Documented. Semantic memory, broad graphs, cloud scale |
 
 ## Correctness questions
@@ -79,7 +79,23 @@ Cold vs warm: current harness uses fresh temp repos per fixture (cold compile). 
 
 ## Invalid comparisons to avoid
 
-- Token reduction vs Graphify (no session diff)
+- Token reduction vs Graphify from the current comparator. It does not measure Graphify's MCP, update, hook, IDE, or multi-turn assistant workflow.
 - Proof coverage vs Mem0 (different trust model)
 - MCP transport vs LangChain memory module (not a product)
 - Source checkout `grape bench` vs npm-installed competitor without labeling target
+
+## Future fair Graphify comparator
+
+The current Graphify probe is useful only for structural orientation. It runs `graphify update` and a single `graphify query` against a fixture graph. It must not be described as a full Graphify product comparison.
+
+A fair multi-turn comparator should use the same repo and task across both tools and include:
+
+- first context request
+- second same-session continuation
+- mid-session source edit
+- branch or dependency change
+- task wording drift
+- omitted context restore or equivalent recovery path
+- high-risk auth, security, payments, data deletion, or deployment task
+
+Measure stale assumptions, unnecessary rereads, token volume, context correctness, agent success, and recovery quality. Do not claim that Grape beats Graphify broadly unless that scenario has committed, reproducible evidence.

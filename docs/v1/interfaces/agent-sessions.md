@@ -20,17 +20,12 @@ Grape does **not** run as a daemon that observes every agent turn automatically.
 
 The beta transport slice requires Node.js 22.13 or newer.
 
-**Published beta (`1.0.0-beta.0` on npm `beta`):**
+**Published beta package:**
 
 ```bash
 npm install -g grape-context@beta
-grape init --connect
-```
-
-To pin the exact prerelease:
-
-```bash
-npm install -g grape-context@1.0.0-beta.0
+grape --version
+grape help
 grape init --connect
 ```
 
@@ -69,9 +64,18 @@ Minimal stdio example (replace `<repo-root>` with your repository path):
 
 The `cwd` and `--repo` path must point at the same repository root. See [`getting-started.md`](getting-started.md) for the full onboarding path.
 
+Put this JSON in the MCP server configuration for your coding agent or editor. Grape's automated trial verifies stdio JSON-RPC behavior, not every editor's UI placement. Treat client-specific UI steps as verified only when a human client trial records them.
+
+Copy-ready agent instruction:
+
+```text
+At the start of each repo task turn, call grape_get_context with a stable sessionId and the current task. Treat INVALIDATE_PREVIOUS entries as stale and unsafe. If context is omitted, restore it by token only when needed. For security, auth, payments, data deletion, or deployment tasks, rely on exact proof-backed excerpts rather than summaries.
+```
+
 ## Stable Identity Rules
 
 - A Grape session is scoped to one local project, repo, task id, and task type.
+- Prefer explicit `sessionId` for beta clients.
 - The task id is derived from the exact task text, task type, and risk overlays.
 - Reusing an explicit session with different task wording is a task mismatch, not a follow-up turn.
 - CLI calls without `--session` derive the session from repo id, branch, and task id; use an explicit `--session` when one logical agent session must continue across a branch switch.
@@ -149,6 +153,8 @@ Compatibility pattern:
 
 When `sessionId` is omitted, Grape derives the session from `agentName`, `agentSessionId`, and the exact `query`. Changing the query text changes the derived Grape session. That protects diff safety, but it means arbitrary follow-up phrasing will not collapse into the same sent ledger unless the client supplies a stable explicit `sessionId`.
 
+Do not treat `agentSessionId` as a direct alias for `sessionId`. It is compatibility input for deriving a Grape session when a client cannot provide an explicit `sessionId`.
+
 ## JSON-RPC Stdio Framing
 
 `grape mcp --stdio` speaks framed JSON-RPC over stdio. Each request must be sent as UTF-8 JSON preceded by a `Content-Length` header and a blank line:
@@ -182,8 +188,9 @@ Use the byte length of the JSON body, not the character count. Grape writes resp
 | Agent lost earlier context | Reuse the same task/session and pass `--reset-session` or `resetSession: true`. |
 | Second turn sends a full pack unexpectedly | Confirm the exact task/query, task type, risk overlays, branch, and explicit `sessionId` are stable. |
 | Restore returns `stale` | Call `grape_get_context` again for current context; do not reuse the old omitted body. |
+| Prior context is invalidated | Treat `INVALIDATE_PREVIOUS` entries as higher priority than prior notes, summaries, or chat memory. |
 | MCP client hangs or parse fails | Verify `Content-Length` is the UTF-8 byte length and the blank line separates headers from JSON. |
-| Installed CLI appears to be an older package | Run `npm cache clean --force`, reinstall `grape-context@beta` or `@1.0.0-beta.0`, and check `grape help` from the active shell path. |
+| Installed CLI appears to be an older package | Run `grape --version`, clear the npm cache if needed, reinstall `grape-context@beta`, and check `grape help` from the active shell path. |
 
 ## Related Contracts
 

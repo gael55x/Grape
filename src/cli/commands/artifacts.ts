@@ -1,5 +1,5 @@
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, repoOutputOptions, write, writeError, writeJson } from "../render.js";
+import { errorMessage, humanizeCliWarning, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 
 export async function runArtifacts(parsed: ParsedArgs): Promise<number> {
@@ -29,7 +29,7 @@ export async function runArtifacts(parsed: ParsedArgs): Promise<number> {
         `Created: ${result.createdAt}`,
         `Artifact hash: ${result.artifactHash}`,
         `Dependency manifest: ${result.dependencyManifestHash}`,
-        `Warnings: ${result.warnings.length === 0 ? "none" : result.warnings.join(", ")}`,
+        `Warnings: ${result.warnings.length === 0 ? "none" : result.warnings.map(humanizeCliWarning).join(", ")}`,
         `Unsafe reasons: ${result.unsafeReasons.length === 0 ? "none" : result.unsafeReasons.join(", ")}`,
         "",
         "Files:",
@@ -51,13 +51,20 @@ export async function runArtifacts(parsed: ParsedArgs): Promise<number> {
       return exitCodes.ok;
     }
 
+    const emptyHint = result.artifacts.length === 0
+      ? [
+          "Run grape compile --task \"<task>\" --session <id> first.",
+          "Then rerun grape artifacts to inspect generated JSON and Markdown artifact refs."
+        ]
+      : [];
     write([
       `Context artifacts: ${result.artifacts.length}`,
       "",
       ...result.artifacts.map(
         (artifact) =>
           `${artifact.artifactId}  ${artifact.sessionId}  ${artifact.taskType}  ${artifact.createdAt}`
-      )
+      ),
+      ...emptyHint
     ].join("\n"), outputOptions);
     return exitCodes.ok;
   } catch (error) {

@@ -44,7 +44,7 @@ For continued-turn behavior, task/session identity, mismatch recovery, and publi
 
 | Group | Commands |
 |---|---|
-| Everyday | `grape help`, `grape status`, `grape doctor`, `grape doctor --privacy` |
+| Everyday | `grape help`, `grape --version`, `grape version`, `grape status`, `grape doctor`, `grape doctor --privacy` |
 | Setup / MCP | `grape init --connect`, `grape sync`, `grape mcp --print-config`, `grape mcp --stdio` |
 | Fallback compile | `grape compile`, `grape diff-context` |
 | Observed runs | `grape run --session <id> -- <cmd...>`, `grape test --session <id> -- <cmd...>` |
@@ -67,7 +67,7 @@ These commands are not removed from V1.0. They remain planned command surfaces, 
 
 Implemented command groups:
 
-- everyday: `grape help`, `grape status`, `grape doctor`, `grape doctor --privacy`
+- everyday: `grape help`, `grape --version`, `grape version`, `grape status`, `grape doctor`, `grape doctor --privacy`
 - setup/MCP: `grape init --connect`, `grape sync`, `grape mcp`, `grape mcp --print-config`, `grape mcp --stdio`
 - fallback compile: `grape compile --task <text>`, `grape diff-context --task <text>`
 - observed runs: `grape run --session <id> -- <cmd...>`, `grape test --session <id> -- <cmd...>`
@@ -85,6 +85,8 @@ Still part of V1.0, but deferred from the current beta transport slice:
 The current implementation includes the first CLI setup/debugging slice:
 
 - `grape help`
+- `grape --version`
+- `grape version`
 - `grape init --connect`
 - `grape sync`
 - `grape compile --task <text>`
@@ -150,7 +152,7 @@ When `--reset-session` is supplied for an existing compile session, `grape compi
 
 `grape mcp --print-config` prints the V1 MCP connection shape for stdio clients, including `--repo <root>` and `cwd` guidance so MCP clients do not accidentally launch Grape against their own working directory. `grape mcp --stdio` serves the first MCP adapter with `grape_get_context`, `grape_get_artifact`, `grape_get_claims`, `grape_get_proofs`, `grape_get_rules`, `grape_get_omitted_item`, `grape_get_stale_items`, `grape_get_conflicts`, `grape_get_status`, `grape_record_candidate`, `grape_record_command_result`, `grape_record_test_result`, `grape_record_user_decision`, and `grape_request_user_confirmation`; the context tool reuses the local compile service and returns compact `agent_pack` transport by default: preview context-pack items with full hashes and artifact refs. Full context-pack item bodies and embedded artifacts require `outputMode: "full"` or `grape_get_artifact`; inline inspection Markdown and the experimental adjacency graph require `outputMode: "full"`. The write tools record temporary agent-reported evidence or confirmation requests only and do not promote durable claims. Use the local CLI runner commands, not MCP writes, when command/test evidence must be Grape-observed.
 
-All implemented commands support `--repo <path>` where relevant and `--json` for machine-readable output. Public stdout/stderr and JSON output are sanitized by default: absolute local paths, private workspace names, usernames embedded in local paths, API keys, tokens, private-key-looking values, and sensitive object-field values are redacted or replaced with placeholders. Unsupported options fail with a usage error instead of being silently ignored; privacy export and purge workflows remain deferred until their data contracts exist.
+All implemented commands support command-specific `--help`. Storage-backed commands support `--repo <path>` where relevant and `--json` for machine-readable output. Public stdout/stderr and JSON output are sanitized by default: absolute local paths, private workspace names, usernames embedded in local paths, API keys, tokens, private-key-looking values, and sensitive object-field values are redacted or replaced with placeholders. Unsupported options fail with a usage error instead of being silently ignored; privacy export and purge workflows remain deferred until their data contracts exist.
 
 Runtime compatibility is checked before storage-backed commands import SQLite-backed application services. `grape help`, `grape init --help`, top-level `-h`/`--help`, `grape mcp`, and `grape mcp --print-config` remain available on older Node runtimes so setup guidance can still render. Commands that need local storage, including `init`, `sync`, `status`, `doctor`, `compile`, `diff-context`, inspection commands, benchmarks, and `mcp --stdio`, require Node.js 22.13 or newer in the published package. If the runtime is too old, the CLI fails before bootstrap with recovery guidance. `grape doctor --json` can still return a minimal machine-readable `node_runtime` failure without importing storage modules.
 

@@ -38,7 +38,13 @@ function renderStaleItems(result: ListLocalStaleItemsResult): string {
     `Stale context items: ${result.staleItems.length}${filter}`,
     `Sessions inspected: ${result.inspectedSessionCount}`,
     "",
-    ...result.staleItems.map(renderStaleItem)
+    ...result.staleItems.map(renderStaleItem),
+    ...(result.staleItems.length === 0
+      ? [
+          "No emitted invalidations yet.",
+          "Run the same task/session after a branch, source, rule, or dependency change to see stale-context rows."
+        ]
+      : [])
   ].join("\n");
 }
 
