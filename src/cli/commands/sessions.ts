@@ -19,6 +19,11 @@ export async function runSessions(parsed: ParsedArgs): Promise<number> {
       return exitCodes.ok;
     }
 
+    const emptyHint = result.sessions.length === 0
+      ? [
+          "Run grape compile --task \"<task>\" --session <id>, or use MCP grape_get_context with a stable sessionId."
+        ]
+      : [];
     write([
       `Context sessions: ${result.sessions.length}`,
       "",
@@ -37,7 +42,8 @@ export async function runSessions(parsed: ParsedArgs): Promise<number> {
           `  Updated: ${session.updatedAt}`,
           session.lastEventReason ? `  Last event: ${session.lastEventReason}` : undefined
         ].filter((line): line is string => Boolean(line)).join("\n")
-      )
+      ),
+      ...emptyHint
     ].join("\n"), outputOptions);
     return exitCodes.ok;
   } catch (error) {

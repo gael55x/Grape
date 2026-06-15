@@ -31,12 +31,19 @@ export async function runOmitted(parsed: ParsedArgs): Promise<number> {
       return exitCodes.ok;
     }
 
+    const emptyHint = result.omittedItems.length === 0
+      ? [
+          "Run the same grape compile or grape_get_context task twice with the same session first.",
+          "Omitted context appears only after Grape can prove unchanged context was already sent to this session."
+        ]
+      : [];
     write([
       `Omitted context for session ${result.sessionId}: ${result.omittedItems.length}`,
       "",
       ...result.omittedItems.map(
         (item) => `${item.restoreId}  ${item.sectionId}  ${item.reasonOmitted}  ${item.tokenCount} tokens`
-      )
+      ),
+      ...emptyHint
     ].join("\n"), outputOptions);
     return exitCodes.ok;
   } catch (error) {

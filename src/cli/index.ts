@@ -19,6 +19,7 @@ import { checkCliNodeRuntime } from "./runtime-guard.js";
 import {
   errorMessage,
   formatCommandFailure,
+  commandHelpText,
   helpText,
   humanizeStatusWarning,
   initHelpText,
@@ -31,6 +32,7 @@ import {
   writeJson
 } from "./render.js";
 import { isCliEntrypoint } from "./entrypoint.js";
+import { PACKAGE_VERSION } from "../shared/package-version.js";
 
 const emitWarning = process.emitWarning;
 // The published package requires Node 22.13+ so node:sqlite is available without flags.
@@ -60,6 +62,22 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
     case "-h":
       write(helpText());
       return exitCodes.ok;
+    case "--version":
+    case "-v":
+    case "version":
+      write(`grape-context ${PACKAGE_VERSION}`);
+      return exitCodes.ok;
+  }
+
+  if (parsed.flags.has("--help")) {
+    const commandHelp = commandHelpText(parsed.command);
+    if (commandHelp) {
+      write(commandHelp);
+      return exitCodes.ok;
+    }
+  }
+
+  switch (parsed.command) {
     case "init":
       return runInit(parsed);
     case "sync":
@@ -305,6 +323,9 @@ async function runMcp(parsed: ParsedArgs): Promise<number> {
     "Available now:",
     "  grape mcp --print-config",
     "  grape mcp --stdio",
+    "",
+    "Most users should run grape mcp --print-config and paste the JSON into their MCP client config.",
+    "Then use the coding agent normally. The agent should call grape_get_context each turn with a stable sessionId.",
     "",
     "Tools:",
     "  grape_get_context",

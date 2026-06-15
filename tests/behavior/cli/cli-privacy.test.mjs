@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { sanitizePublicOutput } from "../../../.tmp/build/src/shared/index.js";
+import { sanitizePublicOutput, sanitizePublicText } from "../../../.tmp/build/src/shared/index.js";
 
 const cliPath = path.join(process.cwd(), ".tmp/build/src/cli/index.js");
 
@@ -72,6 +72,16 @@ test("cli doctor --privacy reports privacy diagnostics without secret contents",
     assert.equal(checks.get("ignored_private_inputs")?.status, "pass");
     assert.equal(doctor.checks.some((check) => check.message.includes("SECRET=")), false);
   });
+});
+
+test("public output sanitizer keeps privacy doctor diagnostic labels readable", () => {
+  const output = sanitizePublicText(
+    "PASS artifact_secret_scan: Compile output is blocked if the artifact-level secret scan finds raw secret-looking content."
+  );
+
+  assert.equal(output.includes("<redacted-secret> output"), false);
+  assert.match(output, /artifact_secret_scan: Compile output/);
+  assert.equal(sanitizePublicText("SERVICE_API_KEY=service-secret-value").includes("service-secret-value"), false);
 });
 
 test("public output sanitizer redacts repo paths, local paths, and secret-looking values", () => {

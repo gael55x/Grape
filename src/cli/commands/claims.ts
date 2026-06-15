@@ -1,6 +1,6 @@
 import { verificationStatusLabel } from "../../shared/trust-wording.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
-import { errorMessage, repoOutputOptions, write, writeError, writeJson } from "../render.js";
+import { errorMessage, humanizeCliWarning, repoOutputOptions, write, writeError, writeJson } from "../render.js";
 import { exitCodes } from "../exit-codes.js";
 import type { ListLocalClaimsResult } from "../../app/local-project/index.js";
 
@@ -37,7 +37,7 @@ function renderClaims(result: ListLocalClaimsResult): string {
   return [
     `Active claims: ${result.claims.length}`,
     `Rejected by current-valid filter: ${result.rejectedCount}`,
-    result.warnings.length > 0 ? `Warnings: ${result.warnings.join(", ")}` : "Warnings: none",
+    result.warnings.length > 0 ? `Warnings: ${result.warnings.map(humanizeCliWarning).join(", ")}` : "Warnings: none",
     "",
     ...result.claims.map((claim) =>
       [
@@ -46,7 +46,10 @@ function renderClaims(result: ListLocalClaimsResult): string {
         `  Claim: ${claim.claimText}`,
         `  Proofs: ${claim.proofRefs.length > 0 ? claim.proofRefs.join(", ") : "none"}`
       ].join("\n")
-    )
+    ),
+    ...(result.claims.length === 0
+      ? ["Run grape compile --task \"<task>\" --session <id> first to create proof-backed local claims when available."]
+      : [])
   ].join("\n");
 }
 
