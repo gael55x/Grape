@@ -202,6 +202,9 @@ Current implementation:
 - Durable claim generators append narrow negative disclaimers for observed runs,
   manifest dependencies, symbol declarations, source excerpts, and repository
   rules. Observed failure span links keep explicit no-causality wording.
+- Project-rule claim wording checks only the generated Grape prefix. The exact
+  repository rule text remains proof-backed source evidence, so a rule may quote
+  or prohibit an overclaim phrase without making Grape assert that phrase.
 - Context artifact active-claim sections render as
   `Scoped Proof-Backed Claims (Current-Valid)` with a scope footer.
 - MCP `grape_record_candidate` rejects forbidden trust wording before persisting
