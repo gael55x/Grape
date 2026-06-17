@@ -8,6 +8,14 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## 1.0.0-beta.8 - 2026-06-17
+
+### Added
+
 - Added actual MCP client config auto-wiring for Cursor and Claude Desktop through `grape mcp --install --client cursor` and `grape mcp --install --client claude`, with `--dry-run` previews, `--force` conflict replacement for `mcpServers.grape` only, and manual `grape mcp --print-config` fallback for other clients.
 
 ### Fixed
