@@ -1,16 +1,20 @@
 # Getting Started with Grape
 
-Grape is a local-first context compiler and transport layer for AI coding agents on Git repositories. It compiles task-specific context from repo state, tracks what each agent session already received, and sends only the useful delta on later turns.
+Grape is for the moment when an agent is deep in a repo and starts losing the thread.
 
-Grape is not a chatbot and does not send your repository to a remote Grape service by default.
+Instead of pasting the same files and rules into every prompt, you let the agent ask Grape for the current task context. Grape reads the local repo, remembers what that same agent session already received, and sends the next safe delta. If a file, branch, dependency, or task changes, Grape marks the old context stale instead of pretending it is still useful.
 
-## When to use Grape
+Grape is local-first. It is not a chatbot, and it does not send your repository to a remote Grape service by default.
+
+## When Grape Helps
 
 Use Grape when an AI coding agent works across many turns on the same repository and you want:
 
 - dependency-tracked context artifacts instead of rereading the same files every turn
 - session-scoped diffs (`NEW`, `CHANGED`, `PINNED`, `OMIT_UNCHANGED`, `RESTORE_AVAILABLE`, `INVALIDATE_PREVIOUS`)
 - local privacy controls and proof-backed excerpts
+
+Skip Grape for a one-line edit where the agent already has the whole file in view. It is most useful when the task spans files, sessions, branches, or repeated turns.
 
 ## Requirements
 
@@ -59,16 +63,19 @@ Grape adds `.grape/` to `.git/info/exclude` so local runtime state stays out of 
 
 ## Connect Your Coding Agent With MCP
 
-Grape works best when your coding agent can call MCP tools during a task.
+MCP is the normal path. After this step, the agent can call Grape during the task instead of asking you to paste context.
 
-Choose the client you use:
+Choose the client you actually use:
 
 - Cursor: run `grape mcp --install --client cursor` from the repository root.
 - Claude Desktop: run `grape mcp --install --client claude` from the repository root.
 
-Then restart or reload the MCP client if it does not pick up config changes automatically. Ask the agent to call `grape_get_context` at the start of each repo task, and keep the same `sessionId` and task text for continued turns on the same task.
+Then restart or reload the MCP client if it does not pick up config changes automatically. Ask the agent to call `grape_get_context` at the start of each repo task. Keep the same `sessionId` and task text for continued turns on the same task.
 
-Cursor auto-install writes project-local `.cursor/mcp.json`. Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely.
+Grape only writes known MCP config files:
+
+- Cursor auto-install writes project-local `.cursor/mcp.json`.
+- Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely.
 
 Preview the config without writing:
 
@@ -79,7 +86,7 @@ grape mcp --install --client claude --dry-run
 
 If an existing `mcpServers.grape` entry differs, Grape refuses to replace it unless you pass `--force`. It preserves unrelated MCP server entries.
 
-Other clients remain manual unless their config paths can be handled safely.
+Other clients remain manual unless their config paths can be handled safely. That is intentional. Grape should not guess where to write global editor config.
 
 Manual fallback:
 
@@ -105,7 +112,7 @@ The `cwd` and `--repo` path must point at the same repository root.
 
 The auto-install commands are separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write Cursor or Claude Desktop config files.
 
-What this does:
+What the client runs:
 
 - The MCP client starts `grape mcp --stdio --repo <repo-root>`.
 - The client and Grape exchange one JSON-RPC object per line over stdio.
@@ -136,9 +143,17 @@ Quick checks if a client does not connect:
 
 Grape's automated packaged beta trial verifies installed CLI and stdio MCP behavior. A specific editor UI is verified only when a human client trial records it.
 
-## Normal agent loop
+## Normal Agent Loop
 
-On each turn, the agent calls `grape_get_context` with:
+The useful loop is simple:
+
+1. The user gives the agent a repo task.
+2. The agent calls `grape_get_context`.
+3. Grape returns current task context and diff state.
+4. The agent edits or investigates.
+5. On the next turn, the agent calls `grape_get_context` again with the same `sessionId` and task text.
+
+On each call, the agent sends:
 
 - `query`: the current task text (keep wording stable for continued turns)
 - `sessionId`: a stable ID for this agent session, or `agentName` plus `agentSessionId`

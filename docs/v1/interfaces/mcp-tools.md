@@ -18,7 +18,9 @@ For stable agent session identity, task mismatch recovery, JSON-RPC framing exam
 
 ## Start Here For Integration
 
-Most MCP users do not need every tool contract on first setup. Use this short path first:
+If you only want Grape connected to a coding agent, start here and come back to the schema details later.
+
+The goal is small: let the agent call `grape_get_context` from the repo it is editing, without making you copy JSON by hand.
 
 1. Install Grape and initialize the repo with `grape init --connect`.
 2. If you use Cursor, run `grape mcp --install --client cursor`.
@@ -27,17 +29,21 @@ Most MCP users do not need every tool contract on first setup. Use this short pa
 5. Make sure the client sends one JSON-RPC object per line over stdio.
 6. Have the agent call `grape_get_context` with a stable `sessionId` and task `query`.
 
-Cursor auto-install writes project-local `.cursor/mcp.json`. Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely. Other clients remain on the manual path:
+Cursor auto-install writes project-local `.cursor/mcp.json`. Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely.
+
+Grape does not silently touch unsupported client config files. Other clients remain on the manual path:
 
 ```bash
 grape mcp --print-config
 ```
 
-Use `--dry-run` to preview the target path and final JSON without writing. If an existing `mcpServers.grape` entry differs, Grape requires `--force` before replacing only that entry.
+Use `--dry-run` to preview the target path and final JSON without writing. If an existing `mcpServers.grape` entry differs, Grape requires `--force` before replacing only that entry. It preserves unrelated MCP servers.
 
 This auto-install behavior is separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write client config files.
 
 The default response mode is `agent_pack`. It is the normal mode for coding agents because it returns compact previews, diff state, restore IDs, invalidation IDs, artifact refs, warnings, and recovery guidance. Use `outputMode: "full"` only for inspection or compatibility.
+
+In normal use, the agent should not ask you to paste a fresh repo summary every turn. It should call Grape, read the returned diff states, and keep going with the current task.
 
 Minimum useful `grape_get_context` arguments:
 
