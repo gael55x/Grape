@@ -4,6 +4,7 @@ import {
   sanitizePublicText,
   type PublicOutputSanitizerOptions
 } from "../shared/index.js";
+import { styleHumanOutput } from "./style.js";
 
 export function renderProblems(label: string, values: readonly string[]): string[] {
   if (values.length === 0) return [];
@@ -317,16 +318,16 @@ const COMMAND_HELP: Readonly<Record<string, string>> = {
 };
 
 export function write(message: string, options?: PublicOutputSanitizerOptions): void {
-  process.stdout.write(`${sanitizePublicText(message, options)}\n`);
+  process.stdout.write(`${styleHumanOutput(sanitizePublicText(message, options), { stream: "stdout" })}\n`);
 }
 
 export function writeJson(value: unknown, options?: PublicOutputSanitizerOptions): void {
   const outputOptions = optionsWithValueRootAlias(value, options);
-  write(JSON.stringify(sanitizePublicOutput(value, outputOptions), null, 2), outputOptions);
+  process.stdout.write(`${sanitizePublicText(JSON.stringify(sanitizePublicOutput(value, outputOptions), null, 2), outputOptions)}\n`);
 }
 
 export function writeError(message: string, options?: PublicOutputSanitizerOptions): void {
-  process.stderr.write(`${sanitizePublicText(message, options)}\n`);
+  process.stderr.write(`${styleHumanOutput(sanitizePublicText(message, options), { stream: "stderr" })}\n`);
 }
 
 export function errorMessage(error: unknown): string {

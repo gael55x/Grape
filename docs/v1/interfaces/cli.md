@@ -38,6 +38,12 @@ Public CLI JSON uses the V1 `ContextArtifact` envelope and compiles repository-d
 
 For continued-turn behavior, task/session identity, mismatch recovery, and published-package install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
 
+## Human Output Styling
+
+Human CLI output may use ANSI styling in interactive terminals. Grape uses its logo colors for emphasis: grape purple for product names and commands, and leaf green for section labels and successful actions. Errors still use red, and warnings use yellow.
+
+JSON output from `--json` commands and `grape mcp --print-config` stays plain text so scripts can parse it. `NO_COLOR` disables ANSI styling, and `FORCE_COLOR=1` enables it for human output.
+
 ## Command Status
 
 ### Implemented
