@@ -49,6 +49,18 @@ export async function runStdioMcpServer(options: StdioMcpServerOptions): Promise
     });
 
     input.on("end", () => {
+      try {
+        const messages = parser.flush();
+        for (const message of messages) {
+          queue = queue.then(() => handleParsedMessage(message, options.rootPath, output));
+        }
+      } catch (parseError) {
+        writeResponse(
+          output,
+          errorResponse(null, jsonRpcErrors.parse, parseError instanceof Error ? parseError.message : String(parseError))
+        );
+      }
+
       queue
         .then(() => resolve(0))
         .catch((serverError: unknown) => {

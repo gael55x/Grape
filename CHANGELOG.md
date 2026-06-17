@@ -6,6 +6,15 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ## Unreleased
 
+### Fixed
+
+- Fixed MCP stdio transport to use newline-delimited JSON-RPC messages instead of `Content-Length` header framing, restoring compatibility with real MCP clients such as Claude Code and Cursor.
+
+### Changed
+
+- Expanded the packaged beta client trial to cover installed CLI core workflows plus MCP session workflows, and added cross-platform CI coverage for Ubuntu, macOS, and Windows.
+- Simplified MCP setup docs with a clearer integration path, session rules, stdio transport notes, and troubleshooting checks.
+
 ## 1.0.0-beta.6 - 2026-06-17
 
 ### Added

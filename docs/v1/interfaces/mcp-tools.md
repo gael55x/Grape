@@ -16,6 +16,49 @@ For the beta transport/schema stability boundary, including stable, experimental
 
 For stable agent session identity, task mismatch recovery, JSON-RPC framing examples, and published-package install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
 
+## Start Here For Integration
+
+Most MCP users do not need every tool contract on first setup. Use this short path first:
+
+1. Install Grape and initialize the repo with `grape init --connect`.
+2. Run `grape mcp --print-config`.
+3. Paste the printed JSON into the MCP client config.
+4. Make sure the client launches `grape mcp --stdio --repo <repo-root>`.
+5. Make sure the client sends one JSON-RPC object per line over stdio.
+6. Have the agent call `grape_get_context` with a stable `sessionId` and task `query`.
+
+The default response mode is `agent_pack`. It is the normal mode for coding agents because it returns compact previews, diff state, restore IDs, invalidation IDs, artifact refs, warnings, and recovery guidance. Use `outputMode: "full"` only for inspection or compatibility.
+
+Minimum useful `grape_get_context` arguments:
+
+```json
+{
+  "query": "Explain checkout discount behavior and related tests",
+  "sessionId": "checkout-discount-review"
+}
+```
+
+Better task-scoped call when the client or agent knows relevant files:
+
+```json
+{
+  "query": "Explain checkout discount behavior and related tests",
+  "sessionId": "checkout-discount-review",
+  "files": ["src/checkout/discount.ts"],
+  "tests": ["tests/checkout/discount.test.ts"]
+}
+```
+
+Core agent rules:
+
+- Read `NEW`, `CHANGED`, and `PINNED` context for the current turn.
+- Treat `INVALIDATE_PREVIOUS` as stale context that must not be reused.
+- Use `grape_get_omitted_item` only when a `RESTORE_AVAILABLE` body is needed.
+- Keep the same `sessionId` and `query` for continued turns on the same task.
+- Use `resetSession: true` only when the agent lost prior context for the same task.
+
+The rest of this file is the detailed tool contract for implementers and reviewers.
+
 ## Update Triggers
 
 - a tool is added, removed, or changed
@@ -88,7 +131,7 @@ The current implementation includes the first stdio MCP server:
 }
 ```
 
-`grape mcp --stdio` implements framed JSON-RPC stdio handling for `initialize`, `tools/list`, `tools/call`, and `ping`. Messages use UTF-8 JSON bodies with `Content-Length: <byte-length>` headers and a blank line before the JSON body. The implemented Grape tools are:
+`grape mcp --stdio` implements MCP stdio JSON-RPC handling for `initialize`, `tools/list`, `tools/call`, and `ping`. Each input and output message is one UTF-8 JSON-RPC object on a single newline-delimited line. `Content-Length` header framing is rejected because MCP stdio clients send JSON lines. The implemented Grape tools are:
 
 - `grape_get_context`
 - `grape_get_artifact`

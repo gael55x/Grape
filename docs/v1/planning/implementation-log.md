@@ -22,6 +22,13 @@ Keep entries simple:
 
 ## Entries
 
+### 2026-06-17 - MCP Stdio JSON Lines Compatibility
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: changed `grape mcp --stdio` from `Content-Length` header framing to MCP newline-delimited JSON-RPC messages, updated the packaged MCP smoke helpers and behavior tests, expanded the packaged beta client trial to cover installed CLI core workflows plus MCP session workflows, and added a cross-platform packaged beta client trial job for Ubuntu, macOS, and Windows.
+- Tests or checks run: focused MCP behavior tests, typecheck, and packaged beta client trial.
+- Risks or follow-ups: run a human Claude Code or Cursor client trial before broad beta promotion.
+
 ### 2026-05-23 - Documentation Foundation Complete
 
 - Author/agent: Gaille Amolong / Codex
@@ -186,7 +193,7 @@ Keep entries simple:
 ### 2026-05-26 - MCP Get Context Foundation
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: added the first MCP stdio adapter with framed JSON-RPC handling, `initialize`, `tools/list`, `tools/call`, `grape_get_context`, and `grape_get_status`. The MCP adapter is thin: `grape_get_context` calls the local compile service and returns structured context-pack items plus Markdown, while `grape_get_status` calls the local status service.
+- Summary: added the first MCP stdio adapter with stdio JSON-RPC handling, `initialize`, `tools/list`, `tools/call`, `grape_get_context`, and `grape_get_status`. The MCP adapter is thin: `grape_get_context` calls the local compile service and returns structured context-pack items plus Markdown, while `grape_get_status` calls the local status service.
 - Checks run: `npm run typecheck`; `npm run build:test`; focused CLI/MCP behavior tests.
 - Risks/follow-ups: this is not the complete V1 MCP surface. The current `grape_get_context` path requires `sessionId` or `agentSessionId` to preserve session-scoped diffing and still needs the final ContextArtifact schema plus restricted write tools. Later slices added seed-aware source retrieval and token-budget evaluation.
 

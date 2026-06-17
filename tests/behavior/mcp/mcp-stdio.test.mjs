@@ -58,9 +58,8 @@ function switchToFeatureBranch(repoPath) {
   ]);
 }
 
-function requestFrame(message) {
-  const body = Buffer.from(JSON.stringify(message), "utf8");
-  return Buffer.concat([Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "utf8"), body]);
+function requestLine(message) {
+  return Buffer.from(`${JSON.stringify(message)}\n`, "utf8");
 }
 
 function runMcp(repoPath, messages) {
@@ -78,7 +77,7 @@ function runCliJson(repoPath, args) {
 }
 
 function runMcpFrom(repoPath, messages, cwd) {
-  const input = Buffer.concat(messages.map(requestFrame));
+  const input = Buffer.concat(messages.map(requestLine));
   const result = spawnSync(process.execPath, [cliPath, "mcp", "--stdio", "--repo", repoPath], {
     cwd,
     input,
@@ -86,7 +85,7 @@ function runMcpFrom(repoPath, messages, cwd) {
   });
   assert.equal(result.status, 0, result.stderr.toString("utf8"));
   assert.equal(result.stderr.toString("utf8"), "");
-  return parseFrames(result.stdout);
+  return parseJsonLines(result.stdout);
 }
 
 function stripCliOnlyStatusFields(status) {
@@ -98,23 +97,12 @@ function sha256(text) {
   return createHash("sha256").update(text).digest("hex");
 }
 
-function parseFrames(buffer) {
-  const messages = [];
-  let rest = Buffer.from(buffer);
-  while (rest.length > 0) {
-    const headerEnd = rest.indexOf("\r\n\r\n");
-    assert.notEqual(headerEnd, -1, `missing MCP frame header in ${rest.toString("utf8")}`);
-    const header = rest.subarray(0, headerEnd).toString("utf8");
-    const match = /^Content-Length:\s*(\d+)$/im.exec(header);
-    assert.ok(match, `missing content length in ${header}`);
-    const length = Number.parseInt(match[1], 10);
-    const bodyStart = headerEnd + 4;
-    const bodyEnd = bodyStart + length;
-    assert.ok(rest.length >= bodyEnd, "incomplete MCP body");
-    messages.push(JSON.parse(rest.subarray(bodyStart, bodyEnd).toString("utf8")));
-    rest = rest.subarray(bodyEnd);
-  }
-  return messages;
+function parseJsonLines(buffer) {
+  const text = Buffer.from(buffer).toString("utf8");
+  return text
+    .split(/\r?\n/)
+    .filter((line) => line.length > 0)
+    .map((line) => JSON.parse(line));
 }
 
 test("mcp stdio lists implemented Grape tools", () => {
@@ -1420,24 +1408,24 @@ test("mcp grape_get_status matches cli status JSON without CLI-only path fields"
   });
 });
 
-test("mcp stdio rejects oversized frames", () => {
+test("mcp stdio rejects oversized message lines", () => {
   const cwd = mkdtempSync(path.join(tmpdir(), "grape-mcp-oversized-"));
   try {
     const result = spawnSync(process.execPath, [cliPath, "mcp", "--stdio", "--repo", cwd], {
       cwd,
-      input: Buffer.from("Content-Length: 4194305\r\n\r\n", "utf8")
+      input: Buffer.concat([Buffer.alloc(4 * 1024 * 1024 + 1, "x"), Buffer.from("\n", "utf8")])
     });
 
     assert.equal(result.status, 0, result.stderr.toString("utf8"));
-    const responses = parseFrames(result.stdout);
+    const responses = parseJsonLines(result.stdout);
     assert.equal(responses[0].error.code, -32700);
-    assert.match(responses[0].error.message, /maximum frame size/);
+    assert.match(responses[0].error.message, /maximum line size/);
   } finally {
     rmSync(cwd, { recursive: true, force: true });
   }
 });
 
-test("mcp stdio rejects malformed Content-Length headers", () => {
+test("mcp stdio rejects Content-Length header framing", () => {
   const cwd = mkdtempSync(path.join(tmpdir(), "grape-mcp-malformed-frame-"));
   try {
     const result = spawnSync(process.execPath, [cliPath, "mcp", "--stdio", "--repo", cwd], {
@@ -1446,9 +1434,9 @@ test("mcp stdio rejects malformed Content-Length headers", () => {
     });
 
     assert.equal(result.status, 0, result.stderr.toString("utf8"));
-    const responses = parseFrames(result.stdout);
+    const responses = parseJsonLines(result.stdout);
     assert.equal(responses[0].error.code, -32700);
-    assert.match(responses[0].error.message, /invalid Content-Length/);
+    assert.match(responses[0].error.message, /newline-delimited JSON/);
   } finally {
     rmSync(cwd, { recursive: true, force: true });
   }

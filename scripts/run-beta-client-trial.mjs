@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { encodeMcpFrame } from "./mcp-smoke-session.mjs";
+import { encodeMcpMessage } from "./mcp-smoke-session.mjs";
 import {
   commandForPlatform,
   installedPackageBinTarget,
@@ -62,14 +62,25 @@ try {
   bootstrapConsumerRepo(consumerRepo);
   logStep("created trial repo");
   installPackedPackage(consumerRepo, path.join(packDir, tarballs[0]));
-  logStep("installed packed package");
+  logStep("installed packed package with npm install");
+  commitConsumerRepo(consumerRepo);
+  logStep("committed consumer npm install state");
 
   const grapeCli = installedPackageBinTarget(consumerRepo, sourcePackage.name, sourcePackage.bin.grape);
   assert(existsSync(grapeCli), `installed package is missing ${sourcePackage.bin.grape}`);
 
-  runInstalledCli(grapeCli, consumerRepo, ["help"], "grape help");
-  runInstalledCli(grapeCli, consumerRepo, ["init", "--connect"], "grape init --connect");
-  logStep("initialized Grape in trial repo");
+  const npxVersion = runNpmExecGrape(consumerRepo, ["--version"], "npm exec grape --version");
+  assert(npxVersion.stdout.trim() === `${sourcePackage.name} ${sourcePackage.version}`, "npm exec grape --version must match package metadata");
+  const help = runNpmExecGrape(consumerRepo, ["help"], "npm exec grape help");
+  assert(help.stdout.includes("grape init --connect"), "npm exec grape help must point to init/connect");
+  assert(help.stdout.includes("grape mcp --print-config"), "npm exec grape help must point to MCP config");
+  const initConnect = runNpmExecGrape(consumerRepo, ["init", "--connect"], "npm exec grape init --connect");
+  assert(initConnect.stdout.includes("MCP integration:"), "npm exec grape init --connect must print MCP integration guidance");
+  assert(initConnect.stdout.includes("grape mcp --print-config"), "npm exec grape init --connect must point to the MCP config command");
+  logStep("ran npm exec grape init --connect");
+
+  runCliCoreTrial(grapeCli, consumerRepo);
+  logStep("completed CLI core workflow trial");
 
   await runMcpBetaTrial({
     command: process.execPath,
@@ -89,6 +100,19 @@ function bootstrapConsumerRepo(repoPath) {
   mkdirSync(path.join(repoPath, "src"), { recursive: true });
   mkdirSync(path.join(repoPath, "private"), { recursive: true });
   writeFileSync(path.join(repoPath, "README.md"), "# beta client trial\n");
+  writeFileSync(
+    path.join(repoPath, "package.json"),
+    JSON.stringify(
+      {
+        name: "grape-beta-client-trial",
+        version: "0.0.0",
+        private: true,
+        type: "module"
+      },
+      null,
+      2
+    ) + "\n"
+  );
   writeFileSync(path.join(repoPath, ".gitignore"), "node_modules/\n.env\n");
   writeFileSync(path.join(repoPath, ".aiignore"), "private/\nignored-output.log\n");
   writeFileSync(
@@ -117,16 +141,6 @@ function bootstrapConsumerRepo(repoPath) {
   writeFileSync(path.join(repoPath, "ignored-output.log"), "password=secret-beta-client-trial-value\n");
 
   runGit(repoPath, ["init", "-b", "main"]);
-  runGit(repoPath, ["add", ".gitignore", ".aiignore", "README.md", "src/billing.js", "src/billing.test.js"]);
-  runGit(repoPath, [
-    "-c",
-    "user.name=Grape Beta Trial",
-    "-c",
-    "user.email=grape@example.test",
-    "commit",
-    "-m",
-    "initial beta trial fixture"
-  ]);
 }
 
 function installPackedPackage(repoPath, tarballPath) {
@@ -148,6 +162,142 @@ function installPackedPackage(repoPath, tarballPath) {
   const installedPackage = JSON.parse(readFileSync(packageJsonPath, "utf8"));
   assert(installedPackage.name === sourcePackage.name, `installed package name must be ${sourcePackage.name}`);
   assert(installedPackage.version === sourcePackage.version, `installed package version must be ${sourcePackage.version}`);
+}
+
+function commitConsumerRepo(repoPath) {
+  runGit(repoPath, ["add", ".gitignore", ".aiignore", "README.md", "package.json", "package-lock.json", "src/billing.js", "src/billing.test.js"]);
+  runGit(repoPath, [
+    "-c",
+    "user.name=Grape Beta Trial",
+    "-c",
+    "user.email=grape@example.test",
+    "commit",
+    "-m",
+    "initial beta trial fixture"
+  ]);
+}
+
+function runCliCoreTrial(grapeCli, repoPath) {
+  const version = runInstalledCli(grapeCli, repoPath, ["--version"], "grape --version");
+  assert(version.stdout.trim() === `${sourcePackage.name} ${sourcePackage.version}`, "grape --version must match package metadata");
+
+  const mcpConfig = parseInstalledCliJson(grapeCli, repoPath, ["mcp", "--print-config"], "grape mcp --print-config");
+  assert(mcpConfig.grapeMcp?.command === "grape", "mcp config must include the grape command");
+  assert(
+    Array.isArray(mcpConfig.grapeMcp?.args) && mcpConfig.grapeMcp.args.includes("--stdio"),
+    "mcp config must include stdio args"
+  );
+
+  const status = parseInstalledCliJson(grapeCli, repoPath, ["status", "--json"], "grape status --json");
+  assert(status.initialized === true, "status must report initialized project");
+  assert(status.configPresent === true, "status must report config present");
+  assert(status.databaseExists === true, "status must report database present");
+
+  const doctor = parseInstalledCliJson(grapeCli, repoPath, ["doctor", "--json"], "grape doctor --json");
+  assert(doctor.overallStatus !== "fail", "doctor must not fail after init");
+
+  const privacyDoctor = parseInstalledCliJson(grapeCli, repoPath, ["doctor", "--privacy", "--json"], "grape doctor --privacy --json");
+  assert(privacyDoctor.overallStatus !== "fail", "privacy doctor must not fail with ignored secret-looking files");
+
+  const sync = parseInstalledCliJson(grapeCli, repoPath, ["sync", "--json"], "grape sync --json");
+  assert(sync.dirtyWorktree === false, "sync must start from a clean committed repo");
+
+  const task = "CLI core workflow billing change";
+  const sessionId = "beta-cli-core-session";
+  const compileArgs = ["compile", "--task", task, "--session", sessionId, "--json"];
+  const first = parseInstalledCliJson(grapeCli, repoPath, compileArgs, "grape compile first turn");
+  assert(first.contextPackItems.some((item) => item.state === "NEW"), "first compile must send NEW context");
+  assert(typeof first.artifactId === "string" && first.artifactId.length > 0, "first compile must return an artifactId");
+
+  const second = parseInstalledCliJson(grapeCli, repoPath, compileArgs, "grape compile second turn");
+  assert(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), "second compile must omit unchanged context");
+  const restorable = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE");
+  assert(restorable?.restoreId, "second compile must expose a restore token");
+
+  const omittedList = parseInstalledCliJson(
+    grapeCli,
+    repoPath,
+    ["omitted", "--session", sessionId, "--json"],
+    "grape omitted --json"
+  );
+  assert(
+    omittedList.omittedItems.some((item) => item.restoreId === restorable.restoreId),
+    "omitted list must include the restore token from second compile"
+  );
+
+  const restored = parseInstalledCliJson(
+    grapeCli,
+    repoPath,
+    ["omitted", "--session", sessionId, "--token", restorable.restoreId, "--json"],
+    "grape omitted restore"
+  );
+  assert(restored.status === "restored", "CLI omitted restore must return restored status");
+  assert(typeof restored.body === "string" && restored.body.length > 0, "CLI omitted restore must return a body");
+
+  const diff = parseInstalledCliJson(
+    grapeCli,
+    repoPath,
+    ["diff-context", "--task", task, "--session", sessionId, "--explain", "--json"],
+    "grape diff-context --explain"
+  );
+  assert(Array.isArray(diff.contextPackItems), "diff-context must return contextPackItems");
+  assert(diff.contextPackItems.length > 0, "diff-context must return a non-empty pack");
+
+  const sessions = parseInstalledCliJson(grapeCli, repoPath, ["sessions", "--json"], "grape sessions --json");
+  assert(sessions.sessions.some((session) => session.sessionId === sessionId), "sessions must include the CLI session");
+
+  const artifacts = parseInstalledCliJson(grapeCli, repoPath, ["artifacts", "--session", sessionId, "--json"], "grape artifacts --json");
+  assert(artifacts.artifacts.some((artifact) => artifact.artifactId === first.artifactId), "artifacts must include first compile artifact");
+
+  const artifact = parseInstalledCliJson(
+    grapeCli,
+    repoPath,
+    ["artifacts", "--artifact", first.artifactId, "--json"],
+    "grape artifacts --artifact --json"
+  );
+  assert(artifact.artifactId === first.artifactId, "artifact inspection must return the requested artifact");
+  assert(artifact.artifactFiles?.jsonExists === true, "artifact inspection must report JSON artifact present");
+
+  const claims = parseInstalledCliJson(grapeCli, repoPath, ["claims", "--active", "--json"], "grape claims --active --json");
+  assert(Array.isArray(claims.claims), "claims inspection must return a claims array");
+
+  const proofs = parseInstalledCliJson(grapeCli, repoPath, ["proofs", "--json"], "grape proofs --json");
+  assert(Array.isArray(proofs.proofs), "proof inspection must return a proofs array");
+
+  writeFileSync(
+    path.join(repoPath, "src", "billing.js"),
+    [
+      "export function calculateTotal(subtotal, member) {",
+      "  const discount = member ? 0.12 : 0;",
+      "  return Math.round(subtotal * (1 - discount));",
+      "}",
+      ""
+    ].join("\n")
+  );
+
+  const dirtyCompile = parseInstalledCliJson(grapeCli, repoPath, compileArgs, "grape compile dirty turn");
+  assert(dirtyCompile.dirtyWorktree === true, "dirty compile must report dirty worktree");
+  assert(
+    dirtyCompile.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"),
+    "dirty source edit must invalidate previous CLI context"
+  );
+
+  const dirtyStatus = parseInstalledCliJson(grapeCli, repoPath, ["status", "--json"], "grape status dirty --json");
+  assert(dirtyStatus.dirtyWorktree === true, "status must report dirty worktree after source edit");
+
+  const stale = parseInstalledCliJson(grapeCli, repoPath, ["stale", "--session", sessionId, "--json"], "grape stale --json");
+  assert(stale.staleItems.length > 0, "stale inspection must list invalidated context after dirty compile");
+
+  runGit(repoPath, ["add", "src/billing.js"]);
+  runGit(repoPath, [
+    "-c",
+    "user.name=Grape Beta Trial",
+    "-c",
+    "user.email=grape@example.test",
+    "commit",
+    "-m",
+    "cli core workflow change"
+  ]);
 }
 
 async function runMcpBetaTrial(input) {
@@ -330,7 +480,7 @@ function createMcpClient(input) {
 
   child.stdout.on("data", (chunk) => {
     stdoutBuffer = Buffer.concat([stdoutBuffer, Buffer.from(chunk)]);
-    const parsed = drainMcpFrames(stdoutBuffer);
+    const parsed = drainMcpMessages(stdoutBuffer);
     stdoutBuffer = parsed.rest;
     for (const message of parsed.messages) {
       const waiter = pending.get(message.id);
@@ -353,7 +503,7 @@ function createMcpClient(input) {
       });
     },
     notify(method, params) {
-      child.stdin.write(encodeMcpFrame({
+      child.stdin.write(encodeMcpMessage({
         jsonrpc: "2.0",
         method,
         ...(params === undefined ? {} : { params })
@@ -389,7 +539,7 @@ function sendMcpRequest(child, pending, request) {
         resolve(message);
       }
     });
-    child.stdin.write(encodeMcpFrame(request), (error) => {
+    child.stdin.write(encodeMcpMessage(request), (error) => {
       if (!error) return;
       clearTimeout(timeout);
       pending.delete(request.id);
@@ -398,21 +548,16 @@ function sendMcpRequest(child, pending, request) {
   });
 }
 
-function drainMcpFrames(buffer) {
+function drainMcpMessages(buffer) {
   const messages = [];
   let rest = Buffer.from(buffer);
   while (rest.length > 0) {
-    const headerEnd = rest.indexOf("\r\n\r\n");
-    if (headerEnd < 0) break;
-    const header = rest.subarray(0, headerEnd).toString("utf8");
-    const match = /^Content-Length:\s*(\d+)$/im.exec(header);
-    if (!match) break;
-    const length = Number.parseInt(match[1], 10);
-    const bodyStart = headerEnd + 4;
-    const bodyEnd = bodyStart + length;
-    if (rest.length < bodyEnd) break;
-    messages.push(JSON.parse(rest.subarray(bodyStart, bodyEnd).toString("utf8")));
-    rest = rest.subarray(bodyEnd);
+    const newline = rest.indexOf(0x0a);
+    if (newline < 0) break;
+    const rawLine = rest.subarray(0, newline);
+    const line = rawLine.length > 0 && rawLine[rawLine.length - 1] === 0x0d ? rawLine.subarray(0, rawLine.length - 1) : rawLine;
+    messages.push(JSON.parse(line.toString("utf8")));
+    rest = rest.subarray(newline + 1);
   }
   return { messages, rest };
 }
@@ -430,6 +575,30 @@ function runInstalledCli(grapeCli, repoPath, args, label) {
   assertNoLeaks(label, result.stdout, repoPath);
   assertNoLeaks(`${label} stderr`, result.stderr, repoPath);
   return result;
+}
+
+function runNpmExecGrape(repoPath, args, label) {
+  const result = spawnSync(commandForPlatform("npm"), ["exec", "--", "grape", ...args], spawnOptionsForPlatform({
+    cwd: repoPath,
+    encoding: "utf8",
+    maxBuffer: 16 * 1024 * 1024,
+    env: envWithSqliteNodeOptions(npmEnv()),
+    shell: false,
+    timeout: commandTimeoutMs
+  }));
+  assert(result.status === 0, `${label} failed: ${result.stderr.trim() || result.error?.message}`);
+  assertNoLeaks(label, result.stdout, repoPath);
+  assertNoLeaks(`${label} stderr`, result.stderr, repoPath);
+  return result;
+}
+
+function parseInstalledCliJson(grapeCli, repoPath, args, label) {
+  const result = runInstalledCli(grapeCli, repoPath, args, label);
+  try {
+    return JSON.parse(result.stdout);
+  } catch (error) {
+    throw new Error(`${label} did not return valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 function runGit(repoPath, args) {

@@ -44,38 +44,27 @@ function execGit(repoPath, args) {
   }).trim();
 }
 
-function requestFrame(message) {
-  const body = Buffer.from(JSON.stringify(message), "utf8");
-  return Buffer.concat([Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "utf8"), body]);
+function requestLine(message) {
+  return Buffer.from(`${JSON.stringify(message)}\n`, "utf8");
 }
 
-function parseFrames(buffer) {
-  const messages = [];
-  let rest = Buffer.from(buffer);
-  while (rest.length > 0) {
-    const headerEnd = rest.indexOf("\r\n\r\n");
-    assert.notEqual(headerEnd, -1, `missing MCP frame header`);
-    const header = rest.subarray(0, headerEnd).toString("utf8");
-    const match = /^Content-Length:\s*(\d+)$/im.exec(header);
-    assert.ok(match, `missing content length`);
-    const length = Number.parseInt(match[1], 10);
-    const bodyStart = headerEnd + 4;
-    const bodyEnd = bodyStart + length;
-    messages.push(JSON.parse(rest.subarray(bodyStart, bodyEnd).toString("utf8")));
-    rest = rest.subarray(bodyEnd);
-  }
-  return messages;
+function parseJsonLines(buffer) {
+  return Buffer.from(buffer)
+    .toString("utf8")
+    .split(/\r?\n/)
+    .filter((line) => line.length > 0)
+    .map((line) => JSON.parse(line));
 }
 
 function runMcp(repoPath, messages) {
-  const input = Buffer.concat(messages.map(requestFrame));
+  const input = Buffer.concat(messages.map(requestLine));
   const result = spawnSync(process.execPath, [cliPath, "mcp", "--stdio", "--repo", repoPath], {
     cwd: repoPath,
     input,
     encoding: "buffer"
   });
   assert.equal(result.status, 0, result.stderr.toString("utf8"));
-  return parseFrames(result.stdout);
+  return parseJsonLines(result.stdout);
 }
 
 function getContextResponse(repoPath, extraArgs = {}) {
