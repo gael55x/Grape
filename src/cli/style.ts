@@ -8,8 +8,8 @@ export interface CliStyleOptions {
 const ANSI = {
   reset: "\u001b[0m",
   bold: "\u001b[1m",
-  grape: "\u001b[38;2;139;44;246m",
-  leaf: "\u001b[38;2;63;221;38m",
+  grape: "\u001b[38;2;165;139;204m",
+  leaf: "\u001b[38;2;74;222;128m",
   red: "\u001b[31m",
   yellow: "\u001b[33m"
 } as const;
@@ -40,7 +40,7 @@ function styleLine(line: string, stream: CliOutputStream): string {
   if (/^(Wrote|Updated)\b/.test(line)) return paint(line, "leaf", "bold");
   if (/^Dry run:/.test(line) || /already configured/.test(line)) return paint(line, "grape", "bold");
   if (isSectionHeading(line)) return paint(line, "leaf", "bold");
-  if (/^\s+grape\b/.test(line)) return line.replace(/grape.*/, (match) => paint(match, "grape"));
+  if (/^\s+grape\b/.test(line)) return styleCommandLine(line);
   if (/^\s+[A-Z][A-Za-z /-]+:/.test(line)) return colorLabel(line);
 
   return line
@@ -51,8 +51,17 @@ function styleLine(line: string, stream: CliOutputStream): string {
 
 function styleErrorLine(line: string): string {
   if (isSectionHeading(line) || /^\s*Recovery:/.test(line)) return paint(line, "leaf", "bold");
-  if (/^\s+grape\b/.test(line)) return line.replace(/grape.*/, (match) => paint(match, "grape"));
+  if (/^\s+grape\b/.test(line)) return styleCommandLine(line);
   return paint(line, "red");
+}
+
+function styleCommandLine(line: string): string {
+  const helpRow = /^(\s*)(grape\b.*?)(\s{2,})(\S.*)$/.exec(line);
+  if (helpRow) {
+    return `${helpRow[1]}${paint(helpRow[2], "grape")}${helpRow[3]}${helpRow[4]}`;
+  }
+
+  return line.replace(/grape.*/, (match) => paint(match, "grape"));
 }
 
 function colorLabel(line: string): string {

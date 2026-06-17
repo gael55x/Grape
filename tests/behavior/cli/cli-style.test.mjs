@@ -34,8 +34,18 @@ test("styleHumanOutput applies Grape colors when color is enabled", () => {
   });
 
   assert.match(styled, ansiPattern);
-  assert.match(styled, /\u001b\[38;2;139;44;246m/);
-  assert.match(styled, /\u001b\[38;2;63;221;38m/);
+  assert.match(styled, /\u001b\[38;2;165;139;204m/);
+  assert.match(styled, /\u001b\[38;2;74;222;128m/);
+});
+
+test("styleHumanOutput keeps help descriptions plain", () => {
+  const styled = styleHumanOutput("  grape --version          Print the installed package version", {
+    color: true,
+    stream: "stdout"
+  });
+
+  assert.match(styled, /\u001b\[38;2;165;139;204mgrape --version\u001b\[0m          Print/);
+  assert.doesNotMatch(styled, /Print the installed package version\u001b\[0m/);
 });
 
 test("styleHumanOutput returns plain text when color is disabled", () => {
