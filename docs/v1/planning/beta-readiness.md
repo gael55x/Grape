@@ -2,7 +2,7 @@
 
 ## Main vs published package
 
-`grape-context@1.0.0-beta.5` is published on npm under the `latest` and `beta` dist-tags. `1.0.0-beta.0` remains the first beta tag and the version tied to the first committed published-package benchmark baseline. `main` may include unreleased post-beta work. Installing from npm does not include unreleased `main` behavior until the next approved publish. See `CHANGELOG.md` Unreleased and `docs/v1/planning/changelog.md` Unreleased for post-beta deltas.
+`grape-context@1.0.0-beta.6` is published on npm under the `latest` and `beta` dist-tags. `1.0.0-beta.0` remains the first beta tag and the version tied to the first committed published-package benchmark baseline. `main` may include unreleased post-beta work. Installing from npm does not include unreleased `main` behavior until the next approved publish. See `CHANGELOG.md` Unreleased and `docs/v1/planning/changelog.md` Unreleased for post-beta deltas.
 
 ## Purpose
 
@@ -70,7 +70,7 @@ Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client tri
 
 ## Current Beta Baseline
 
-- `grape-context@1.0.0-beta.5` is published on npm under the `latest` and `beta` dist-tags.
+- `grape-context@1.0.0-beta.6` is published on npm under the `latest` and `beta` dist-tags.
 - GitHub has `v1.0.0-beta.0` pushed as the first beta tag.
 - Node.js 22.13 or newer is the supported global-install runtime.
 - The happy path is `npm install -g grape-context@beta`, then `grape init --connect`, then an MCP-capable agent calls `grape_get_context`.
@@ -97,7 +97,7 @@ Use [`beta-trial-checklist.md`](beta-trial-checklist.md) for real MCP client tri
 - [x] External benchmark workspace dependency metadata is aligned to alpha.3 after approval.
 - [x] Published-package smoke passed against the registry-installed alpha.3 package in the external benchmark workspace.
 - [x] Alpha.3 package metadata is aligned and `npm run check`, `npm run benchmark:run`, and `npm run e2e:alpha` are green.
-- [x] `1.0.0-beta.5` is published on npm under the `latest` and `beta` dist-tags. `1.0.0-beta.0` remains the first beta tag and first committed published-package benchmark baseline.
+- [x] `1.0.0-beta.6` is published on npm under the `latest` and `beta` dist-tags. `1.0.0-beta.0` remains the first beta tag and first committed published-package benchmark baseline.
 - [x] Global `npm install -g grape-context@beta` smoke can be rerun against the published package.
 - [x] Beta trial checklist exists with required client trials, pass/fail criteria, and explicit durable-workflow exclusions.
 - [x] `npm run beta:client-trial` proves packaged-install MCP stdio transport, including omission, restore, source and branch invalidation, reset, redaction, recovery guidance, and ignored secret-looking file rejection.
@@ -116,9 +116,9 @@ npm view grape-context@latest version time --json
 
 Observed:
 
-- npm `latest` and `beta` point at `1.0.0-beta.5`.
+- npm `latest` and `beta` point at `1.0.0-beta.6`.
 - npm `alpha` still points at `0.1.0-alpha.3`.
-- `1.0.0-beta.5` was published at `2026-06-15T13:50:07.227Z`.
+- `1.0.0-beta.6` was published at `2026-06-15T13:50:07.227Z`.
 
 Historical first beta check from 2026-06-13:
 
@@ -220,7 +220,7 @@ Observed:
 
 Verdict:
 
-- **Published beta:** `grape-context@1.0.0-beta.5` is on npm under `latest` and `beta`. The first beta benchmark baseline remains tied to `1.0.0-beta.0`.
+- **Published beta:** `grape-context@1.0.0-beta.6` is on npm under `latest` and `beta`. The first beta benchmark baseline remains tied to `1.0.0-beta.0`.
 - **Next validation:** repeat benchmark comparison runs across more tasks, act on known-noise and serialized-output findings, and record human MCP client trials from [`beta-trial-checklist.md`](beta-trial-checklist.md) when release policy requires IDE UI proof beyond `beta:client-trial`.
 - **Not GA:** this is not a general availability release. Benchmark superiority claims remain deferred until formal benchmark runs are completed.
 

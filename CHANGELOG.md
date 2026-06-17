@@ -6,6 +6,8 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ## Unreleased
 
+## 1.0.0-beta.6 - 2026-06-17
+
 ### Added
 
 - Added `grape --version` and `grape version` for install verification.
