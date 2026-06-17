@@ -185,13 +185,16 @@ function bootstrapGitRepo(repoPath) {
 }
 
 function npmEnv() {
-  return {
+  const env = {
     ...process.env,
+    FORCE_COLOR: "0",
     npm_config_audit: "false",
     npm_config_cache: npmCacheDir,
     npm_config_fund: "false",
     npm_config_update_notifier: "false"
   };
+  delete env.NO_COLOR;
+  return env;
 }
 
 function claudeDryRunEnv(repoPath) {

@@ -30,10 +30,16 @@ if (testFiles.length === 0) {
   process.exit(1);
 }
 
+const testEnv = { ...process.env, FORCE_COLOR: "0" };
+delete testEnv.NO_COLOR;
+
 const result = spawnSync(
   process.execPath,
   ["--no-warnings", "--test", "--test-concurrency=1", ...testFiles],
-  { stdio: "inherit" },
+  {
+    stdio: "inherit",
+    env: testEnv
+  },
 );
 
 process.exit(result.status ?? (result.signal ? 1 : 0));
