@@ -76,7 +76,15 @@ try {
   assert(help.stdout.includes("grape mcp --print-config"), "npm exec grape help must point to MCP config");
   const initConnect = runNpmExecGrape(consumerRepo, ["init", "--connect"], "npm exec grape init --connect");
   assert(initConnect.stdout.includes("MCP integration:"), "npm exec grape init --connect must print MCP integration guidance");
-  assert(initConnect.stdout.includes("grape mcp --print-config"), "npm exec grape init --connect must point to the MCP config command");
+  assert(
+    initConnect.stdout.includes("grape mcp --install --client cursor"),
+    "npm exec grape init --connect must point to the Cursor MCP install command"
+  );
+  assert(
+    initConnect.stdout.includes("grape mcp --install --client claude"),
+    "npm exec grape init --connect must point to the Claude Desktop MCP install command"
+  );
+  assert(initConnect.stdout.includes("grape mcp --print-config"), "npm exec grape init --connect must keep the manual MCP config fallback");
   logStep("ran npm exec grape init --connect");
 
   runCliCoreTrial(grapeCli, consumerRepo);

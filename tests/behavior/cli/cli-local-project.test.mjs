@@ -105,11 +105,15 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.match(result.stdout, /grape status/);
   assert.match(result.stdout, /grape doctor/);
   assert.match(result.stdout, /grape doctor --privacy/);
+  assert.match(result.stdout, /grape mcp --install --client cursor/);
+  assert.match(result.stdout, /grape mcp --install --client claude/);
   assert.match(result.stdout, /grape mcp --print-config/);
   assert.match(result.stdout, /grape mcp --stdio/);
   assert.match(result.stdout, /--environment-scope <env>/);
   assert.match(result.stdout, /--feature-flags <flags>/);
   assert.match(result.stdout, /Primary workflow:/);
+  assert.match(result.stdout, /grape mcp --install --client cursor/);
+  assert.match(result.stdout, /grape mcp --install --client claude/);
   assert.match(result.stdout, /grape mcp --print-config/);
   assert.match(result.stdout, /stable sessionId/);
 });
@@ -171,6 +175,9 @@ test("cli inspection commands include next steps when local ledgers are empty", 
     const sessions = runCli(repoPath, ["sessions"]);
     assert.equal(sessions.status, 0, sessions.stderr);
     assert.match(sessions.stdout, /Context sessions: 0/);
+    assert.match(sessions.stdout, /Continuity:/);
+    assert.match(sessions.stdout, /Sent ledger items: 0/);
+    assert.match(sessions.stdout, /Evidence appears after a second turn reuses the same session/);
     assert.match(sessions.stdout, /stable sessionId/);
 
     const stale = runCli(repoPath, ["stale"]);
@@ -873,6 +880,10 @@ test("cli init --connect reports bootstrap project detection without durable rul
     const init = runCli(repoPath, ["init", "--connect"]);
     assert.equal(init.status, 0, init.stderr);
     assert.match(init.stdout, /MCP integration:/);
+    assert.match(init.stdout, /Install MCP client config:/);
+    assert.match(init.stdout, /Cursor: grape mcp --install --client cursor/);
+    assert.match(init.stdout, /Claude Desktop: grape mcp --install --client claude/);
+    assert.match(init.stdout, /Manual fallback: grape mcp --print-config/);
     assert.match(init.stdout, /Agent instruction block/);
     assert.match(init.stdout, /grape_get_context/);
     assert.match(init.stdout, /stable session identity/i);
@@ -1096,9 +1107,14 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     ]);
     const sessions = runCliJson(repoPath, ["sessions"]);
     assert.equal(sessions.sessions.length, 1);
+    assert.equal(sessions.continuity.sessionCount, 1);
     assert.equal(sessions.sessions[0].sessionId, "session-test");
     assert.equal(sessions.sessions[0].artifactCount, 1);
     assert.equal(sessions.sessions[0].sentItemCount > 0, true);
+    assert.equal(sessions.sessions[0].activeSentItemCount > 0, true);
+    assert.equal(sessions.sessions[0].omittedTokenCount, 0);
+    assert.equal(sessions.sessions[0].restorableOmittedItemCount, 0);
+    assert.equal(sessions.sessions[0].invalidatedSentItemCount, 0);
     assert.equal(sessions.sessions[0].packItemCount > 0, true);
     const stale = runCliJson(repoPath, ["stale"]);
     assert.equal(stale.inspectedSessionCount, 1);
@@ -1166,6 +1182,17 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     );
 
     const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE").restoreId;
+    const continuity = runCliJson(repoPath, ["sessions"]);
+    assert.equal(continuity.continuity.omittedItemCount > 0, true);
+    assert.equal(continuity.continuity.restorableOmittedItemCount > 0, true);
+    assert.equal(continuity.continuity.omittedTokenCount > 0, true);
+    assert.equal(continuity.continuity.invalidatedSentItemCount > 0, true);
+    const sessionContinuity = continuity.sessions.find((session) => session.sessionId === "session-test");
+    assert.equal(sessionContinuity?.omittedItemCount > 0, true);
+    assert.equal(sessionContinuity?.restorableOmittedItemCount > 0, true);
+    assert.equal(sessionContinuity?.omittedTokenCount > 0, true);
+    assert.equal(sessionContinuity?.invalidatedSentItemCount > 0, true);
+
     const omitted = runCliJson(repoPath, ["omitted", "--session", "session-test"]);
     assert.equal(omitted.omittedItems.some((item) => item.restoreId === restoreToken), true);
 
@@ -1240,6 +1267,14 @@ test("cli compile human output shows restore and invalidation counts", () => {
     assert.match(second.stdout, /Omitted unchanged: [1-9]\d*/);
     assert.match(second.stdout, /Restore available: [1-9]\d*/);
     assert.match(second.stdout, /Invalidated previous: [1-9]\d*/);
+
+    const sessions = runCli(repoPath, ["sessions"]);
+    assert.equal(sessions.status, 0, sessions.stderr);
+    assert.match(sessions.stdout, /Continuity:/);
+    assert.match(sessions.stdout, /Omitted\/restorable items: [1-9]\d*\/[1-9]\d*/);
+    assert.match(sessions.stdout, /Restorable omitted tokens: [1-9]\d*/);
+    assert.match(sessions.stdout, /Stale invalidations: [1-9]\d*/);
+    assert.match(sessions.stdout, /omitted rows show context Grape did not resend/);
   });
 });
 

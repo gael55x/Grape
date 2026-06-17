@@ -115,6 +115,11 @@ function renderMcpInstallResult(
     readonly clientLabel: string;
     readonly targetPath: string;
     readonly serverName: string;
+    readonly serverConfig: {
+      readonly command: string;
+      readonly args: readonly string[];
+      readonly cwd: string;
+    };
     readonly finalConfig: Record<string, unknown>;
     readonly status: "created" | "updated" | "already_configured" | "dry_run";
     readonly change: "create" | "update" | "none";
@@ -140,9 +145,18 @@ function renderMcpInstallResult(
 
   write([
     statusLine,
+    `Client: ${result.clientLabel}`,
     `Target: ${result.targetPath}`,
     `Server entry: mcpServers.${result.serverName}`,
+    `Server command: ${result.serverConfig.command} ${result.serverConfig.args.join(" ")}`,
+    `Working directory: ${result.serverConfig.cwd}`,
     changeLine,
+    "",
+    "Next:",
+    `  Restart or reload ${result.clientLabel} so it reads the MCP config.`,
+    "  Verify the connection by listing MCP tools or calling grape_get_status.",
+    "  Ask the agent to call grape_get_context with a stable sessionId for each continued repo task.",
+    "  Manual fallback: grape mcp --print-config",
     "",
     result.dryRun || result.wrote ? "Final JSON:" : "Existing JSON:",
     JSON.stringify(result.finalConfig, null, 2)

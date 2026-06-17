@@ -288,7 +288,7 @@ const COMMAND_HELP: Readonly<Record<string, string>> = {
     "Usage:",
     "  grape sessions [--repo <path>] [--json]",
     "",
-    "Lists context sessions, branch/head state, sent and omitted ledger counts, and session events."
+    "Lists context sessions plus continuity evidence: sent ledger items, active sent items, omitted/restorable context, omitted token counts, stale invalidations, and session events."
   ].join("\n"),
   stale: [
     "Usage:",
