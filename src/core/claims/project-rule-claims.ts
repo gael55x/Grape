@@ -152,9 +152,9 @@ export function createProjectRuleClaimDraft(input: {
 }
 
 function projectRuleClaimText(rule: ProjectRuleLine): string {
-  const claimText = `${TRUST_WORDING_DISCLAIMERS.repositoryRulePrefix} Project rule from ${rule.sourceRef} line ${rule.line}: ${rule.ruleText}`;
-  assertConservativeTrustWording(claimText, "project_rule_claim_text");
-  return claimText;
+  const generatedPrefix = `${TRUST_WORDING_DISCLAIMERS.repositoryRulePrefix} Project rule from ${rule.sourceRef} line ${rule.line}:`;
+  assertConservativeTrustWording(generatedPrefix, "project_rule_claim_text");
+  return `${generatedPrefix} ${rule.ruleText}`;
 }
 
 export function evaluateProjectRuleClaimGate(input: {

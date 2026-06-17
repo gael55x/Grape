@@ -167,6 +167,26 @@ test("durable claim generators avoid forbidden root-cause and fix-proof wording"
   assert.match(rule.claimText, /Repository rule text \(not Grape enforcement\)/i);
   assertNoForbiddenPhrases(rule.claimText);
 
+  const negativeBenchmarkRule = createProjectRuleClaimDraft({
+    branch: "main",
+    commit: "a".repeat(40),
+    worktreeHash: "b".repeat(64),
+    rule: {
+      sourceId: "source:rule",
+      sourceRef: "AGENTS.md",
+      sourceHash: "c".repeat(64),
+      sourceScope: "committed",
+      sourceExcerptProofId: "proof:rule",
+      sourceExcerptHash: "d".repeat(64),
+      line: 2,
+      ruleText: "Do not claim benchmark-proven savings without committed benchmark artifacts.",
+      ruleHash: "f".repeat(64),
+      parser: "deterministic_rule_line_v1"
+    }
+  });
+  assert.match(negativeBenchmarkRule.claimText, /Repository rule text \(not Grape enforcement\)/i);
+  assert.match(negativeBenchmarkRule.claimText, /Do not claim benchmark-proven savings/);
+
   const failureLink = createObservedTestFailureRelationClaimDraft({
     sourceId: "source:test",
     sourceRef: "test-run:fail",
