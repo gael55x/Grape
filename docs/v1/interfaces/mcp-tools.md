@@ -21,11 +21,21 @@ For stable agent session identity, task mismatch recovery, JSON-RPC framing exam
 Most MCP users do not need every tool contract on first setup. Use this short path first:
 
 1. Install Grape and initialize the repo with `grape init --connect`.
-2. Run `grape mcp --print-config`.
-3. Paste the printed JSON into the MCP client config.
+2. If you use Cursor, run `grape mcp --install --client cursor`.
+3. If you use Claude Desktop, run `grape mcp --install --client claude`.
 4. Make sure the client launches `grape mcp --stdio --repo <repo-root>`.
 5. Make sure the client sends one JSON-RPC object per line over stdio.
 6. Have the agent call `grape_get_context` with a stable `sessionId` and task `query`.
+
+Cursor auto-install writes project-local `.cursor/mcp.json`. Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely. Other clients remain on the manual path:
+
+```bash
+grape mcp --print-config
+```
+
+Use `--dry-run` to preview the target path and final JSON without writing. If an existing `mcpServers.grape` entry differs, Grape requires `--force` before replacing only that entry.
+
+This auto-install behavior is separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write client config files.
 
 The default response mode is `agent_pack`. It is the normal mode for coding agents because it returns compact previews, diff state, restore IDs, invalidation IDs, artifact refs, warnings, and recovery guidance. Use `outputMode: "full"` only for inspection or compatibility.
 
@@ -97,6 +107,13 @@ Restricted write tools:
 - `grape_request_user_confirmation`
 
 ## Current Implementation Status
+
+The setup CLI now supports real client config installation for the two clients with safe paths in this slice:
+
+- `grape mcp --install --client cursor` writes `.cursor/mcp.json` in the current repository.
+- `grape mcp --install --client claude` writes Claude Desktop `claude_desktop_config.json` when the platform path can be resolved.
+
+Both commands merge `mcpServers.grape`, preserve unrelated entries, refuse invalid JSON, and require `--force` before replacing a conflicting existing Grape entry.
 
 The current implementation includes the first stdio MCP server:
 
@@ -651,4 +668,4 @@ npm run beta:check
 - branch switch invalidation
 - rejection of ignored `.env`, private, and ignore-listed secret-looking files in output
 
-This trial exercises MCP over stdio from an installed package. A literal Cursor or Claude Code UI configuration trial is still a separate human step when release policy requires it. See [`beta-trial-checklist.md`](../planning/beta-trial-checklist.md).
+This trial exercises Cursor and Claude Desktop install dry-runs plus MCP over stdio from an installed package. A literal Cursor, Claude Desktop, or Claude Code UI configuration trial is still a separate human step when release policy requires it. See [`beta-trial-checklist.md`](../planning/beta-trial-checklist.md).

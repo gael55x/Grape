@@ -36,7 +36,29 @@ Use `npm install -g grape-context@beta` for the published beta package.
 
 ## MCP Client Setup
 
-For each client, configure Grape through stdio using the target repository as `--repo` or `cwd`.
+For Cursor, run:
+
+```bash
+grape mcp --install --client cursor
+```
+
+Confirm the trial repo now has `.cursor/mcp.json` with `mcpServers.grape`.
+
+For Claude Desktop, run:
+
+```bash
+grape mcp --install --client claude
+```
+
+Confirm Claude Desktop config has `mcpServers.grape` in `claude_desktop_config.json`. If the platform path cannot be resolved safely, record that and use the manual fallback:
+
+```bash
+grape mcp --print-config
+```
+
+The auto-install path is separate from the 1.0.0-beta.7 stdio framing fix. Beta.7 made stdio connect correctly, but it did not write client config files.
+
+For each client, verify Grape starts through stdio using the target repository as `--repo` and `cwd`.
 
 - Client can start `grape mcp --stdio --repo <target-repo>`.
 - Client receives `initialize` response.

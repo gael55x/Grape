@@ -10,7 +10,8 @@ Grape only saves tokens when it can prove that the current request belongs to th
 
 | If you are... | Do this |
 |---|---|
-| Setting up an MCP client | Use `grape mcp --print-config` and keep `cwd` plus `--repo` on the same repository root. |
+| Setting up Cursor or Claude Desktop | Use `grape mcp --install --client cursor` or `grape mcp --install --client claude`; keep `cwd` plus `--repo` on the same repository root. |
+| Setting up another MCP client | Use `grape mcp --print-config` and paste the manual config. |
 | Building or debugging stdio transport | Send one compact JSON-RPC object per line. Do not send `Content-Length` headers. |
 | Calling `grape_get_context` | Pass a stable `sessionId` and stable `query` for continued turns on the same task. |
 | Starting a new task | Use a new `sessionId`, or change the task text intentionally. |
@@ -54,7 +55,16 @@ After `grape init --connect`, the intended path is a normal MCP-capable coding a
 
 ## MCP client configuration
 
-Print a client-ready config from the repository root:
+Use auto-install first for supported clients:
+
+```bash
+grape mcp --install --client cursor
+grape mcp --install --client claude
+```
+
+Cursor writes project-local `.cursor/mcp.json`. Claude Desktop writes `claude_desktop_config.json` when Grape can resolve the platform path safely. Use `--dry-run` to preview without writing and `--force` only to replace a conflicting existing `mcpServers.grape` entry.
+
+Manual fallback for other MCP clients:
 
 ```bash
 grape mcp --print-config
@@ -77,6 +87,8 @@ Minimal stdio example (replace `<repo-root>` with your repository path):
 The `cwd` and `--repo` path must point at the same repository root. See [`getting-started.md`](getting-started.md) for the full onboarding path and troubleshooting checklist.
 
 Put this JSON in the MCP server configuration for your coding agent or editor. Grape's automated trial verifies stdio JSON-RPC behavior, not every editor's UI placement. Treat client-specific UI steps as verified only when a human client trial records them.
+
+The auto-install commands are separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made the stdio server connect correctly; it did not write Cursor or Claude Desktop config.
 
 Copy-ready agent instruction:
 

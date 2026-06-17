@@ -61,15 +61,27 @@ Grape adds `.grape/` to `.git/info/exclude` so local runtime state stays out of 
 
 Grape works best when your coding agent can call MCP tools during a task.
 
-Use this path first:
+Choose the client you use:
 
-1. Run `grape mcp --print-config` from the repository root.
-2. Paste the JSON into your MCP client configuration.
-3. Restart or reload the MCP client if it does not pick up config changes automatically.
-4. Ask the agent to call `grape_get_context` at the start of each repo task.
-5. Keep the same `sessionId` and task text for continued turns on the same task.
+- Cursor: run `grape mcp --install --client cursor` from the repository root.
+- Claude Desktop: run `grape mcp --install --client claude` from the repository root.
 
-Print a client-ready config:
+Then restart or reload the MCP client if it does not pick up config changes automatically. Ask the agent to call `grape_get_context` at the start of each repo task, and keep the same `sessionId` and task text for continued turns on the same task.
+
+Cursor auto-install writes project-local `.cursor/mcp.json`. Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely.
+
+Preview the config without writing:
+
+```bash
+grape mcp --install --client cursor --dry-run
+grape mcp --install --client claude --dry-run
+```
+
+If an existing `mcpServers.grape` entry differs, Grape refuses to replace it unless you pass `--force`. It preserves unrelated MCP server entries.
+
+Other clients remain manual unless their config paths can be handled safely.
+
+Manual fallback:
 
 ```bash
 grape mcp --print-config
@@ -90,6 +102,8 @@ Typical stdio MCP entry:
 ```
 
 The `cwd` and `--repo` path must point at the same repository root.
+
+The auto-install commands are separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write Cursor or Claude Desktop config files.
 
 What this does:
 
@@ -112,6 +126,8 @@ At the start of each repo task turn, call grape_get_context with a stable sessio
 Quick checks if a client does not connect:
 
 - Run `grape --version` in the same shell or environment the client uses.
+- For Cursor, confirm `.cursor/mcp.json` contains `mcpServers.grape`.
+- For Claude Desktop, confirm `claude_desktop_config.json` contains `mcpServers.grape`.
 - Confirm `grape mcp --print-config` points at the intended repo.
 - Confirm `cwd` and `--repo` are the same repository root.
 - Confirm the client sends one JSON-RPC object per line over stdio.
