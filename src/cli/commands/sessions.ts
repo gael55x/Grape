@@ -27,6 +27,16 @@ export async function runSessions(parsed: ParsedArgs): Promise<number> {
     write([
       `Context sessions: ${result.sessions.length}`,
       "",
+      "Continuity:",
+      `  Sent ledger items: ${result.continuity.sentItemCount}`,
+      `  Active sent items: ${result.continuity.activeSentItemCount}`,
+      `  Omitted/restorable items: ${result.continuity.omittedItemCount}/${result.continuity.restorableOmittedItemCount}`,
+      `  Restorable omitted tokens: ${result.continuity.omittedTokenCount}`,
+      `  Stale invalidations: ${result.continuity.invalidatedSentItemCount}`,
+      result.continuity.omittedItemCount > 0 || result.continuity.invalidatedSentItemCount > 0
+        ? "  Evidence: omitted rows show context Grape did not resend; invalidations show stale context Grape blocked."
+        : "  Evidence appears after a second turn reuses the same session or after stale context is invalidated.",
+      "",
       ...result.sessions.map((session) =>
         [
           `${session.sessionId}  ${session.status}/${session.lockStatus}`,
@@ -35,7 +45,11 @@ export async function runSessions(parsed: ParsedArgs): Promise<number> {
           [
             `Artifacts: ${session.artifactCount}`,
             `Sent: ${session.sentItemCount}`,
+            `Active sent: ${session.activeSentItemCount}`,
             `Omitted: ${session.omittedItemCount}`,
+            `Restorable: ${session.restorableOmittedItemCount}`,
+            `Omitted tokens: ${session.omittedTokenCount}`,
+            `Invalidated: ${session.invalidatedSentItemCount}`,
             `Pack items: ${session.packItemCount}`,
             `Events: ${session.eventCount}`
           ].join("  "),

@@ -2,6 +2,8 @@
 
 Grape is for the moment when an agent is deep in a repo and starts losing the thread.
 
+Agents can already read files. The product problem is that they keep doing it again after every chat reset, client switch, handoff, or long-running task turn. That repeated rereading burns tool calls, context window, and time, and it can leave the agent working from stale assumptions.
+
 Instead of pasting the same files and rules into every prompt, you let the agent ask Grape for the current task context. Grape reads the local repo, remembers what that same agent session already received, and sends the next safe delta. If a file, branch, dependency, or task changes, Grape marks the old context stale instead of pretending it is still useful.
 
 Grape is local-first. It is not a chatbot, and it does not send your repository to a remote Grape service by default.
@@ -65,7 +67,7 @@ Grape adds `.grape/` to `.git/info/exclude` so local runtime state stays out of 
 
 MCP is the normal path. After this step, the agent can call Grape during the task instead of asking you to paste context.
 
-Choose the client you actually use:
+Choose the client you actually use when your installed build supports the safe installer:
 
 - Cursor: run `grape mcp --install --client cursor` from the repository root.
 - Claude Desktop: run `grape mcp --install --client claude` from the repository root.
@@ -86,7 +88,7 @@ grape mcp --install --client claude --dry-run
 
 If an existing `mcpServers.grape` entry differs, Grape refuses to replace it unless you pass `--force`. It preserves unrelated MCP server entries.
 
-Other clients remain manual unless their config paths can be handled safely. That is intentional. Grape should not guess where to write global editor config.
+Other clients remain manual unless their config paths can be handled safely. That is intentional. Grape should not guess where to write global editor config. If a published beta build does not recognize `grape mcp --install`, use the manual fallback until the next build that includes client auto-install is published.
 
 Manual fallback:
 

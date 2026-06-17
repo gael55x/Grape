@@ -11,7 +11,11 @@ export interface LocalSessionSummary {
   readonly updatedAt: string;
   readonly artifactCount: number;
   readonly sentItemCount: number;
+  readonly activeSentItemCount: number;
   readonly omittedItemCount: number;
+  readonly restorableOmittedItemCount: number;
+  readonly omittedTokenCount: number;
+  readonly invalidatedSentItemCount: number;
   readonly packItemCount: number;
   readonly eventCount: number;
   readonly lastEventReason?: string;
@@ -24,6 +28,16 @@ export interface ListLocalSessionsInput {
 
 export interface ListLocalSessionsResult {
   readonly rootPath: string;
+  readonly continuity: {
+    readonly sessionCount: number;
+    readonly sentItemCount: number;
+    readonly activeSentItemCount: number;
+    readonly omittedItemCount: number;
+    readonly restorableOmittedItemCount: number;
+    readonly omittedTokenCount: number;
+    readonly invalidatedSentItemCount: number;
+    readonly packItemCount: number;
+  };
   readonly sessions: readonly LocalSessionSummary[];
 }
 

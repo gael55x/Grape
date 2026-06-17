@@ -117,7 +117,12 @@ test("cursor MCP install dry-run prints target and final JSON without writing", 
     assert.equal(result.status, 0, result.stderr);
     assert.equal(result.stderr, "");
     assert.match(result.stdout, /Dry run: no changes written/);
+    assert.match(result.stdout, /Client: Cursor/);
     assert.match(result.stdout, /Target: <repo-root>[\\/]\.cursor[\\/]mcp\.json/);
+    assert.match(result.stdout, /Server command: grape mcp --stdio --repo <repo-root>/);
+    assert.match(result.stdout, /Restart or reload Cursor/);
+    assert.match(result.stdout, /Verify the connection by listing MCP tools or calling grape_get_status/);
+    assert.match(result.stdout, /Manual fallback: grape mcp --print-config/);
     assert.match(result.stdout, /"mcpServers"/);
     assert.match(result.stdout, /"grape"/);
     assert.equal(existsSync(cursorConfigPath(rootPath)), false);
@@ -130,6 +135,8 @@ test("cursor MCP install creates project-local config", () => {
 
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /Wrote Grape MCP server config for Cursor/);
+    assert.match(result.stdout, /Server entry: mcpServers\.grape/);
+    assert.match(result.stdout, /Ask the agent to call grape_get_context with a stable sessionId/);
     const config = readJson(cursorConfigPath(rootPath));
     assertGrapeServer(config, rootPath);
   });
@@ -224,7 +231,11 @@ test("claude MCP install dry-run prints target and final JSON without writing", 
     assert.equal(result.status, 0, result.stderr);
     assert.equal(result.stderr, "");
     assert.match(result.stdout, /Dry run: no changes written/);
+    assert.match(result.stdout, /Client: Claude Desktop/);
     assert.match(result.stdout, /Target:/);
+    assert.match(result.stdout, /Server command: grape mcp --stdio --repo <repo-root>/);
+    assert.match(result.stdout, /Restart or reload Claude Desktop/);
+    assert.match(result.stdout, /Manual fallback: grape mcp --print-config/);
     assert.match(result.stdout, /"mcpServers"/);
     assert.match(result.stdout, /"grape"/);
     assert.equal(existsSync(configPath), false);
