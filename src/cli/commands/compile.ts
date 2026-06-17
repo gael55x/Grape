@@ -81,6 +81,7 @@ export async function runCompileLike(
     const outputOptions = repoOutputOptions(rootPath, [result.rootPath]);
 
     const explainItems = output.explain ? buildPackExplainItems(result) : undefined;
+    const stateCounts = countPackStates(result.contextPackItems);
 
     if (parsed.flags.has("--json")) {
       writeJson(explainItems ? { ...result, packExplain: explainItems } : result, outputOptions);
@@ -98,6 +99,8 @@ export async function runCompileLike(
       `Pack items: ${result.contextPackItems.length}`,
       `Sent items: ${result.sentItemCount}`,
       `Omitted unchanged: ${result.omittedItemCount}`,
+      `Restore available: ${stateCounts.RESTORE_AVAILABLE}`,
+      `Invalidated previous: ${stateCounts.INVALIDATE_PREVIOUS}`,
       result.budget.status !== "not_requested" ? `Token budget: ${result.budget.status}` : undefined,
       result.sessionResetId ? `Session reset: ${result.sessionResetId}` : undefined,
       `Warnings: ${result.warnings.length === 0 ? "none" : result.warnings.map(humanizeCliWarning).join(", ")}`,
@@ -118,6 +121,25 @@ export async function runCompileLike(
     writeError(formatCommandFailure(output.commandLabel, error, guidance), outputOptions);
     return compileErrorExitCode(error);
   }
+}
+
+function countPackStates(
+  items: readonly ContextPackItemShape[]
+): Record<ContextPackItemShape["state"], number> {
+  const counts: Record<ContextPackItemShape["state"], number> = {
+    NEW: 0,
+    CHANGED: 0,
+    PINNED: 0,
+    OMIT_UNCHANGED: 0,
+    RESTORE_AVAILABLE: 0,
+    INVALIDATE_PREVIOUS: 0
+  };
+
+  for (const item of items) {
+    counts[item.state] += 1;
+  }
+
+  return counts;
 }
 
 export interface PackExplainItem {

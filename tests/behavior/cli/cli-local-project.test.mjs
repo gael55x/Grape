@@ -1203,6 +1203,46 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
   });
 });
 
+test("cli compile human output shows restore and invalidation counts", () => {
+  withGitRepo((repoPath) => {
+    writeFileSync(path.join(repoPath, "AGENTS.md"), "Prefer focused tests for changed behavior.\n");
+    execGit(repoPath, ["add", "AGENTS.md"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add project rules"
+    ]);
+
+    const first = runCli(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository entry points",
+      "--session",
+      "human-summary-session"
+    ]);
+    assert.equal(first.status, 0, first.stderr);
+    assert.match(first.stdout, /Omitted unchanged: 0/);
+    assert.match(first.stdout, /Restore available: 0/);
+    assert.match(first.stdout, /Invalidated previous: 0/);
+
+    const second = runCli(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository entry points",
+      "--session",
+      "human-summary-session"
+    ]);
+    assert.equal(second.status, 0, second.stderr);
+    assert.match(second.stdout, /Omitted unchanged: [1-9]\d*/);
+    assert.match(second.stdout, /Restore available: [1-9]\d*/);
+    assert.match(second.stdout, /Invalidated previous: [1-9]\d*/);
+  });
+});
+
 test("cli compile uses task retrieval to prioritize matching exact source evidence", () => {
   withGitRepo((repoPath) => {
     mkdirSync(path.join(repoPath, "src"));
