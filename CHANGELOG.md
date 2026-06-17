@@ -16,9 +16,12 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ### Changed
 
+- Updated `grape init --connect` and `grape mcp --install` output so the MCP-first setup path points to explicit Cursor and Claude Desktop install commands, restart/reload guidance, connection verification, and the manual `grape mcp --print-config` fallback.
+- Added continuity evidence to `grape sessions`, including active sent ledger counts, omitted/restorable item counts, omitted token counts, and stale invalidation counts.
 - Expanded the packaged beta client trial to cover installed CLI core workflows plus MCP session workflows, and added cross-platform CI coverage for Ubuntu, macOS, and Windows.
 - Simplified MCP setup docs with a clearer integration path, session rules, stdio transport notes, and troubleshooting checks.
 - Clarified that the 1.0.0-beta.7 stdio framing fix made MCP connect correctly but did not write Cursor or Claude Desktop config files.
+- Clarified product framing around read amplification, context continuity, and stale-context guardrails so Grape is not presented as another repo reader.
 
 ## 1.0.0-beta.6 - 2026-06-17
 

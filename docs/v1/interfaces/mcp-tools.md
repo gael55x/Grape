@@ -23,15 +23,15 @@ If you only want Grape connected to a coding agent, start here and come back to 
 The goal is small: let the agent call `grape_get_context` from the repo it is editing, without making you copy JSON by hand.
 
 1. Install Grape and initialize the repo with `grape init --connect`.
-2. If you use Cursor, run `grape mcp --install --client cursor`.
-3. If you use Claude Desktop, run `grape mcp --install --client claude`.
+2. If you use Cursor and your installed build supports the safe installer, run `grape mcp --install --client cursor`.
+3. If you use Claude Desktop and your installed build supports the safe installer, run `grape mcp --install --client claude`.
 4. Make sure the client launches `grape mcp --stdio --repo <repo-root>`.
 5. Make sure the client sends one JSON-RPC object per line over stdio.
 6. Have the agent call `grape_get_context` with a stable `sessionId` and task `query`.
 
 Cursor auto-install writes project-local `.cursor/mcp.json`. Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely.
 
-Grape does not silently touch unsupported client config files. Other clients remain on the manual path:
+Grape does not silently touch unsupported client config files. Other clients, and published beta builds that do not recognize `grape mcp --install`, remain on the manual path:
 
 ```bash
 grape mcp --print-config

@@ -10,7 +10,7 @@ This page is the practical contract for agents, MCP clients, and CLI users that 
 
 | If you are... | Do this |
 |---|---|
-| Setting up Cursor or Claude Desktop | Use `grape mcp --install --client cursor` or `grape mcp --install --client claude`; keep `cwd` plus `--repo` on the same repository root. |
+| Setting up Cursor or Claude Desktop | When the installed build supports it, use `grape mcp --install --client cursor` or `grape mcp --install --client claude`; keep `cwd` plus `--repo` on the same repository root. |
 | Setting up another MCP client | Use `grape mcp --print-config` and paste the manual config. |
 | Building or debugging stdio transport | Send one compact JSON-RPC object per line. Do not send `Content-Length` headers. |
 | Calling `grape_get_context` | Pass a stable `sessionId` and stable `query` for continued turns on the same task. |
@@ -55,7 +55,7 @@ After `grape init --connect`, the intended path is a normal MCP-capable coding a
 
 ## MCP Client Configuration
 
-Use auto-install first for the clients Grape can write safely:
+Use auto-install first for the clients Grape can write safely when your installed build supports it:
 
 ```bash
 grape mcp --install --client cursor
@@ -64,7 +64,7 @@ grape mcp --install --client claude
 
 Cursor writes project-local `.cursor/mcp.json`. Claude Desktop writes `claude_desktop_config.json` when Grape can resolve the platform path safely. Use `--dry-run` when you want to see the exact file and JSON first. Use `--force` only to replace a conflicting existing `mcpServers.grape` entry.
 
-Manual fallback for other MCP clients:
+Manual fallback for other MCP clients, or for published beta builds that do not recognize `grape mcp --install`:
 
 ```bash
 grape mcp --print-config

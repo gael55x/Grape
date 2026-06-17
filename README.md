@@ -27,9 +27,11 @@
 
 
 
-**Stop making agents rediscover your codebase.** 
+**Stop making agents rediscover the same repo context every chat.**
 
-AI coding agents are powerful, but they waste context.
+AI coding agents are powerful, and they can already read files in the current repo. That is not the hard part.
+
+The hard part is read amplification. Agents reread the same files, rules, decisions, and failure context across chats, tools, clients, and long-running tasks.
 
 They reread the same files.
 They rediscover the same project rules.
@@ -37,15 +39,17 @@ They forget what changed between turns.
 They keep stale assumptions after branch switches and file edits.
 They burn tool calls rebuilding context they already had.
 
-Grape gives coding agents a local context layer for real repositories.
+Grape is not a repo reader. It is a repo-backed context continuity and guardrail layer for coding agents.
 
 It compiles the useful parts of your repo into dependency-tracked context artifacts, remembers what a specific agent session has already seen, and sends only what is new, changed, pinned, restorable, or stale.
 
-The result is cleaner agent context, safer omission, and fewer repeated “let me inspect the repo again” loops.
+The value is not the first read. The value is avoiding repeated rereads and stale assumptions after the first turn.
 
 ## What Grape does
 
 Grape sits between your repository and your AI coding agent.
+
+MCP clients can read files, but they do not automatically preserve task-safe context across chats, tools, clients, and handoffs. Grape gives those clients a stable local surface for session ledgers, restore tokens, invalidation warnings, and proof-backed excerpts.
 
 It helps the agent answer three questions every turn:
 
@@ -91,7 +95,7 @@ grape help
 
 1. Install: `npm install -g grape-context@beta`
 2. Initialize: `grape init --connect` (from your repository root)
-3. Connect MCP: `grape mcp --install --client cursor` or `grape mcp --install --client claude`
+3. Connect MCP: `grape mcp --install --client cursor` or `grape mcp --install --client claude` when your installed build supports it
 4. Agent loop: the agent calls `grape_get_context` each turn with a stable `sessionId` and stable task text
 
 Full walkthrough: [Getting started](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/getting-started.md).
@@ -115,7 +119,7 @@ grape doctor --privacy
 
 Grape works best through MCP.
 
-For Cursor, write the project-local MCP config:
+For Cursor, write the project-local MCP config when your installed build supports the safe installer:
 
 ```bash
 grape mcp --install --client cursor
@@ -123,7 +127,7 @@ grape mcp --install --client cursor
 
 This writes or merges `.cursor/mcp.json`.
 
-For Claude Desktop, write the global Claude Desktop MCP config when Grape can resolve the platform path safely:
+For Claude Desktop, write the global Claude Desktop MCP config when your installed build supports the safe installer and Grape can resolve the platform path safely:
 
 ```bash
 grape mcp --install --client claude
@@ -140,7 +144,7 @@ grape mcp --install --client claude --dry-run
 
 If an existing `mcpServers.grape` entry differs, Grape refuses to replace it unless you pass `--force`. Unrelated MCP servers are preserved.
 
-For other MCP clients, use the manual config fallback:
+For other MCP clients, or for published beta builds that do not recognize `grape mcp --install`, use the manual config fallback:
 
 ```bash
 grape mcp --print-config
@@ -224,6 +228,8 @@ grape conflicts
 grape bench --fixture <name>
 grape mcp --print-config
 ```
+
+Use `grape sessions` after repeated MCP or CLI turns to see local continuity evidence: what was sent, what was omitted with restore handles, and what stale context was invalidated.
 
 See [Getting started](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/getting-started.md), the full [CLI reference](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/cli.md), and [MCP tools](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/mcp-tools.md).
 
