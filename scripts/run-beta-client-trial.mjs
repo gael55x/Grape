@@ -62,14 +62,22 @@ try {
   bootstrapConsumerRepo(consumerRepo);
   logStep("created trial repo");
   installPackedPackage(consumerRepo, path.join(packDir, tarballs[0]));
-  logStep("installed packed package");
+  logStep("installed packed package with npm install");
+  commitConsumerRepo(consumerRepo);
+  logStep("committed consumer npm install state");
 
   const grapeCli = installedPackageBinTarget(consumerRepo, sourcePackage.name, sourcePackage.bin.grape);
   assert(existsSync(grapeCli), `installed package is missing ${sourcePackage.bin.grape}`);
 
-  runInstalledCli(grapeCli, consumerRepo, ["help"], "grape help");
-  runInstalledCli(grapeCli, consumerRepo, ["init", "--connect"], "grape init --connect");
-  logStep("initialized Grape in trial repo");
+  const npxVersion = runNpmExecGrape(consumerRepo, ["--version"], "npm exec grape --version");
+  assert(npxVersion.stdout.trim() === `${sourcePackage.name} ${sourcePackage.version}`, "npm exec grape --version must match package metadata");
+  const help = runNpmExecGrape(consumerRepo, ["help"], "npm exec grape help");
+  assert(help.stdout.includes("grape init --connect"), "npm exec grape help must point to init/connect");
+  assert(help.stdout.includes("grape mcp --print-config"), "npm exec grape help must point to MCP config");
+  const initConnect = runNpmExecGrape(consumerRepo, ["init", "--connect"], "npm exec grape init --connect");
+  assert(initConnect.stdout.includes("MCP integration:"), "npm exec grape init --connect must print MCP integration guidance");
+  assert(initConnect.stdout.includes("grape mcp --print-config"), "npm exec grape init --connect must point to the MCP config command");
+  logStep("ran npm exec grape init --connect");
 
   runCliCoreTrial(grapeCli, consumerRepo);
   logStep("completed CLI core workflow trial");
@@ -92,6 +100,19 @@ function bootstrapConsumerRepo(repoPath) {
   mkdirSync(path.join(repoPath, "src"), { recursive: true });
   mkdirSync(path.join(repoPath, "private"), { recursive: true });
   writeFileSync(path.join(repoPath, "README.md"), "# beta client trial\n");
+  writeFileSync(
+    path.join(repoPath, "package.json"),
+    JSON.stringify(
+      {
+        name: "grape-beta-client-trial",
+        version: "0.0.0",
+        private: true,
+        type: "module"
+      },
+      null,
+      2
+    ) + "\n"
+  );
   writeFileSync(path.join(repoPath, ".gitignore"), "node_modules/\n.env\n");
   writeFileSync(path.join(repoPath, ".aiignore"), "private/\nignored-output.log\n");
   writeFileSync(
@@ -120,22 +141,12 @@ function bootstrapConsumerRepo(repoPath) {
   writeFileSync(path.join(repoPath, "ignored-output.log"), "password=secret-beta-client-trial-value\n");
 
   runGit(repoPath, ["init", "-b", "main"]);
-  runGit(repoPath, ["add", ".gitignore", ".aiignore", "README.md", "src/billing.js", "src/billing.test.js"]);
-  runGit(repoPath, [
-    "-c",
-    "user.name=Grape Beta Trial",
-    "-c",
-    "user.email=grape@example.test",
-    "commit",
-    "-m",
-    "initial beta trial fixture"
-  ]);
 }
 
 function installPackedPackage(repoPath, tarballPath) {
   const install = spawnSync(
     commandForPlatform("npm"),
-    ["install", "--no-save", "--package-lock=false", tarballPath],
+    ["install", tarballPath],
     spawnOptionsForPlatform({
       cwd: repoPath,
       encoding: "utf8",
@@ -151,6 +162,19 @@ function installPackedPackage(repoPath, tarballPath) {
   const installedPackage = JSON.parse(readFileSync(packageJsonPath, "utf8"));
   assert(installedPackage.name === sourcePackage.name, `installed package name must be ${sourcePackage.name}`);
   assert(installedPackage.version === sourcePackage.version, `installed package version must be ${sourcePackage.version}`);
+}
+
+function commitConsumerRepo(repoPath) {
+  runGit(repoPath, ["add", ".gitignore", ".aiignore", "README.md", "package.json", "package-lock.json", "src/billing.js", "src/billing.test.js"]);
+  runGit(repoPath, [
+    "-c",
+    "user.name=Grape Beta Trial",
+    "-c",
+    "user.email=grape@example.test",
+    "commit",
+    "-m",
+    "initial beta trial fixture"
+  ]);
 }
 
 function runCliCoreTrial(grapeCli, repoPath) {
@@ -540,6 +564,21 @@ function drainMcpMessages(buffer) {
 
 function runInstalledCli(grapeCli, repoPath, args, label) {
   const result = spawnSync(process.execPath, [grapeCli, ...args], spawnOptionsForPlatform({
+    cwd: repoPath,
+    encoding: "utf8",
+    maxBuffer: 16 * 1024 * 1024,
+    env: envWithSqliteNodeOptions(npmEnv()),
+    shell: false,
+    timeout: commandTimeoutMs
+  }));
+  assert(result.status === 0, `${label} failed: ${result.stderr.trim() || result.error?.message}`);
+  assertNoLeaks(label, result.stdout, repoPath);
+  assertNoLeaks(`${label} stderr`, result.stderr, repoPath);
+  return result;
+}
+
+function runNpmExecGrape(repoPath, args, label) {
+  const result = spawnSync(commandForPlatform("npm"), ["exec", "--", "grape", ...args], spawnOptionsForPlatform({
     cwd: repoPath,
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
