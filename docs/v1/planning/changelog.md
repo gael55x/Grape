@@ -8,6 +8,9 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- Switched MCP stdio transport from `Content-Length` header framing to newline-delimited JSON-RPC messages so `grape mcp --stdio` matches real MCP clients such as Claude Code and Cursor.
+- Expanded the packaged beta client trial to cover installed CLI core workflows plus MCP session workflows, and added cross-platform CI coverage for Ubuntu, macOS, and Windows.
+- Simplified MCP setup docs across README, getting started, agent sessions, and MCP tool reference so developers see the install, config, session, transport, and troubleshooting path before the detailed contract.
 - Added public CLI install-verification and help hardening: `grape --version`, `grape version`, command-specific `--help`, MCP-first top-level help wording, and next-step guidance for empty inspection outputs.
 - Improved first-run recovery wording for non-Git directories and empty Git repositories.
 - Clarified end-user onboarding around MCP setup, stable `sessionId`, second-turn diff value, `.grape/` local storage, downstream model-provider caveats, and Graphify comparator scope.
@@ -112,7 +115,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added the first persisted file-indexing foundation with module/symbol nodes and `contains`/`imports` edges for allowed snapshot files.
 - Added a repository-derived artifact compiler foundation that builds deterministic in-memory context artifacts from persisted snapshots, source evidence, and file relationship indexes.
 - Added `grape compile --task <text>` as a CLI fallback path that auto-bootstraps local state, compiles a repository-derived context pack, persists session diff rows, writes artifact JSON/Markdown files, and applies a basic artifact secret scan. Later slices changed the public JSON to a V1 `ContextArtifact` output with an internal repository backing file for restore.
-- Added the first stdio MCP adapter with framed JSON-RPC handling, `tools/list`, `grape_get_context`, and `grape_get_status`, reusing local-project app services instead of duplicating compile/status logic. The adapter requires session identity for context diffing, supports `--repo` launch, returns repo-relative artifact refs, applies seed refs to risk detection, and rejects oversized frames. Later slices added seed-aware source retrieval and token-budget evaluation.
+- Added the first stdio MCP adapter with stdio JSON-RPC handling, `tools/list`, `grape_get_context`, and `grape_get_status`, reusing local-project app services instead of duplicating compile/status logic. The adapter requires session identity for context diffing, supports `--repo` launch, returns repo-relative artifact refs, applies seed refs to risk detection, and rejects oversized messages. Later slices added seed-aware source retrieval and token-budget evaluation.
 - Added CLI and MCP omitted-context restore lookup: `grape omitted --session <id>` lists omitted rows, `grape omitted --session <id> --token <restoreToken>` restores current omitted sections, and `grape_get_omitted_item` exposes the same restore path over stdio while rejecting stale dependencies and tampered/redaction-blocked artifact output.
 - Added CLI and MCP artifact inspection: `grape artifacts`, `grape artifacts --artifact <id>`, and `grape_get_artifact` expose stored artifact metadata, dependency rows, warnings, unsafe reasons, and repo-relative public file refs.
 - Added branch-switch invalidation for explicit session reuse: CLI and MCP context compilation now update session compile state under lock, record `branch_changed` session invalidation events, and emit `INVALIDATE_PREVIOUS` instead of omitting previous-branch context.

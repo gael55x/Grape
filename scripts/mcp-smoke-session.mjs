@@ -1,13 +1,12 @@
 import { spawn } from "node:child_process";
 import { spawnOptionsForPlatform } from "./platform-command.mjs";
 
-export function encodeMcpFrame(message) {
-  const body = Buffer.from(JSON.stringify(message), "utf8");
-  return Buffer.concat([Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "utf8"), body]);
+export function encodeMcpMessage(message) {
+  return Buffer.from(`${JSON.stringify(message)}\n`, "utf8");
 }
 
-export function parseMcpFrames(buffer) {
-  return drainMcpFrames(buffer).messages;
+export function parseMcpMessages(buffer) {
+  return drainMcpMessages(buffer).messages;
 }
 
 export async function runMcpContextRestoreSession({
@@ -35,7 +34,7 @@ export async function runMcpContextRestoreSession({
 
   child.stdout.on("data", (chunk) => {
     stdoutBuffer = Buffer.concat([stdoutBuffer, Buffer.from(chunk)]);
-    const parsed = drainMcpFrames(stdoutBuffer);
+    const parsed = drainMcpMessages(stdoutBuffer);
     stdoutBuffer = parsed.rest;
     for (const message of parsed.messages) {
       const waiter = pending.get(message.id);
@@ -73,7 +72,7 @@ export async function runMcpContextRestoreSession({
     assert(!initialize.error, `mcp initialize failed: ${JSON.stringify(initialize.error)}`);
     assert(initialize.result?.capabilities?.tools, "mcp initialize must advertise tool capabilities");
 
-    child.stdin.write(encodeMcpFrame({ jsonrpc: "2.0", method: "notifications/initialized" }));
+    child.stdin.write(encodeMcpMessage({ jsonrpc: "2.0", method: "notifications/initialized" }));
 
     const tools = await sendMcpRequest(
       child,
@@ -121,21 +120,16 @@ export async function runMcpContextRestoreSession({
   }
 }
 
-function drainMcpFrames(buffer) {
+function drainMcpMessages(buffer) {
   const messages = [];
   let rest = Buffer.from(buffer);
   while (rest.length > 0) {
-    const headerEnd = rest.indexOf("\r\n\r\n");
-    if (headerEnd < 0) break;
-    const header = rest.subarray(0, headerEnd).toString("utf8");
-    const match = /^Content-Length:\s*(\d+)$/im.exec(header);
-    if (!match) break;
-    const length = Number.parseInt(match[1], 10);
-    const bodyStart = headerEnd + 4;
-    const bodyEnd = bodyStart + length;
-    if (rest.length < bodyEnd) break;
-    messages.push(JSON.parse(rest.subarray(bodyStart, bodyEnd).toString("utf8")));
-    rest = rest.subarray(bodyEnd);
+    const newline = rest.indexOf(0x0a);
+    if (newline < 0) break;
+    const rawLine = rest.subarray(0, newline);
+    const line = rawLine.length > 0 && rawLine[rawLine.length - 1] === 0x0d ? rawLine.subarray(0, rawLine.length - 1) : rawLine;
+    messages.push(JSON.parse(line.toString("utf8")));
+    rest = rest.subarray(newline + 1);
   }
   return { messages, rest };
 }
@@ -173,7 +167,7 @@ function sendMcpRequest(child, pending, request, label, timeoutMs) {
         resolve(message);
       }
     });
-    child.stdin.write(encodeMcpFrame(request), (error) => {
+    child.stdin.write(encodeMcpMessage(request), (error) => {
       if (!error) return;
       clearTimeout(timeout);
       pending.delete(request.id);

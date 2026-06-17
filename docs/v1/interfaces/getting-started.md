@@ -57,15 +57,25 @@ grape doctor --privacy
 
 Grape adds `.grape/` to `.git/info/exclude` so local runtime state stays out of Git.
 
-## Connect your coding agent (MCP)
+## Connect Your Coding Agent With MCP
 
-Grape works best through MCP. Print a client-ready config:
+Grape works best when your coding agent can call MCP tools during a task.
+
+Use this path first:
+
+1. Run `grape mcp --print-config` from the repository root.
+2. Paste the JSON into your MCP client configuration.
+3. Restart or reload the MCP client if it does not pick up config changes automatically.
+4. Ask the agent to call `grape_get_context` at the start of each repo task.
+5. Keep the same `sessionId` and task text for continued turns on the same task.
+
+Print a client-ready config:
 
 ```bash
 grape mcp --print-config
 ```
 
-A typical stdio MCP entry (replace `<repo-root>` with your repository path):
+Typical stdio MCP entry:
 
 ```json
 {
@@ -81,19 +91,34 @@ A typical stdio MCP entry (replace `<repo-root>` with your repository path):
 
 The `cwd` and `--repo` path must point at the same repository root.
 
-Primary tool: `grape_get_context`. See [`mcp-tools.md`](mcp-tools.md) for the full tool list.
+What this does:
 
-Generic placement guidance:
+- The MCP client starts `grape mcp --stdio --repo <repo-root>`.
+- The client and Grape exchange one JSON-RPC object per line over stdio.
+- The agent calls `grape_get_context` to get task-specific context.
+- Grape tracks what that same session already received.
+- Later calls send only new, changed, pinned, invalidated, or restorable context.
 
-- Put this JSON in the MCP server configuration for your coding agent or editor.
-- Use the repository root for both `cwd` and `--repo`.
-- Grape's stdio MCP behavior is verified by automated JSON-RPC smoke tests. Specific IDE UI placement is not verified by those tests unless a human client trial records it.
+Do not configure `Content-Length` framing. MCP stdio uses newline-delimited JSON messages.
 
-Copy-ready agent instruction:
+Primary tool: `grape_get_context`. See [`mcp-tools.md`](mcp-tools.md) for the full tool reference.
+
+Copy-ready instruction for the agent:
 
 ```text
 At the start of each repo task turn, call grape_get_context with a stable sessionId and the current task. Treat INVALIDATE_PREVIOUS entries as stale and unsafe. If context is omitted, restore it by token only when needed. For security, auth, payments, data deletion, or deployment tasks, rely on exact proof-backed excerpts rather than summaries.
 ```
+
+Quick checks if a client does not connect:
+
+- Run `grape --version` in the same shell or environment the client uses.
+- Confirm `grape mcp --print-config` points at the intended repo.
+- Confirm `cwd` and `--repo` are the same repository root.
+- Confirm the client sends one JSON-RPC object per line over stdio.
+- Confirm no wrapper script prints banners, logs, or prompts to stdout.
+- Run `grape doctor` and `grape doctor --privacy` from the repository root.
+
+Grape's automated packaged beta trial verifies installed CLI and stdio MCP behavior. A specific editor UI is verified only when a human client trial records it.
 
 ## Normal agent loop
 

@@ -6,6 +6,18 @@ Define how an AI agent, CLI user, or MCP client must identify a Grape context se
 
 Grape only saves tokens when it can prove that the current request belongs to the same repository, task, branch/worktree scope, and session ledger as earlier turns. Session identity is therefore part of the safety contract, not a convenience label.
 
+## Integration Rules At A Glance
+
+| If you are... | Do this |
+|---|---|
+| Setting up an MCP client | Use `grape mcp --print-config` and keep `cwd` plus `--repo` on the same repository root. |
+| Building or debugging stdio transport | Send one compact JSON-RPC object per line. Do not send `Content-Length` headers. |
+| Calling `grape_get_context` | Pass a stable `sessionId` and stable `query` for continued turns on the same task. |
+| Starting a new task | Use a new `sessionId`, or change the task text intentionally. |
+| Continuing after the agent lost context | Keep the same `sessionId` and `query`, then pass `resetSession: true`. |
+| Seeing `INVALIDATE_PREVIOUS` | Stop using the prior context item. Ask Grape for current context again if needed. |
+| Seeing `RESTORE_AVAILABLE` | Call `grape_get_omitted_item` only when the omitted body is needed. |
+
 ## MCP-driven session tracking (what “background” means)
 
 Grape does **not** run as a daemon that observes every agent turn automatically. After MCP setup, **agent-called** session tracking is real: when the agent calls `grape_get_context` each turn with **stable session identity**, Grape maintains durable sent/omitted/restore/invalidation ledgers without manual `grape compile` or `grape diff-context` commands.
@@ -42,7 +54,7 @@ After `grape init --connect`, the intended path is a normal MCP-capable coding a
 
 ## MCP client configuration
 
-Print a client-ready config from your repository:
+Print a client-ready config from the repository root:
 
 ```bash
 grape mcp --print-config
@@ -62,7 +74,7 @@ Minimal stdio example (replace `<repo-root>` with your repository path):
 }
 ```
 
-The `cwd` and `--repo` path must point at the same repository root. See [`getting-started.md`](getting-started.md) for the full onboarding path.
+The `cwd` and `--repo` path must point at the same repository root. See [`getting-started.md`](getting-started.md) for the full onboarding path and troubleshooting checklist.
 
 Put this JSON in the MCP server configuration for your coding agent or editor. Grape's automated trial verifies stdio JSON-RPC behavior, not every editor's UI placement. Treat client-specific UI steps as verified only when a human client trial records them.
 
@@ -120,7 +132,7 @@ The CLI returns exit code `6` for this mismatch. Exit code `2` remains the unsaf
 
 `grape_get_context` requires either an explicit `sessionId` or an `agentSessionId`.
 
-Preferred beta pattern:
+Preferred call shape:
 
 ```json
 {
@@ -155,17 +167,15 @@ When `sessionId` is omitted, Grape derives the session from `agentName`, `agentS
 
 Do not treat `agentSessionId` as a direct alias for `sessionId`. It is compatibility input for deriving a Grape session when a client cannot provide an explicit `sessionId`.
 
-## JSON-RPC Stdio Framing
+## Stdio Transport
 
-`grape mcp --stdio` speaks framed JSON-RPC over stdio. Each request must be sent as UTF-8 JSON preceded by a `Content-Length` header and a blank line:
+`grape mcp --stdio` follows the MCP stdio transport contract. Each message is one UTF-8 JSON-RPC request, response, or notification on a single line. Messages are delimited by newlines and must not contain embedded newlines:
 
 ```text
-Content-Length: <byte-length>
-
 {"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"grape_get_context","arguments":{"query":"Explain checkout discount behavior and related tests","sessionId":"checkout-discount-review"}}}
 ```
 
-Use the byte length of the JSON body, not the character count. Grape writes responses with CRLF header separators and accepts CRLF or LF separators on input. The current frame-size guard is 4 MiB.
+Grape writes each response as one compact JSON object followed by `\n` and accepts LF or CRLF line endings on input. The current message-line size guard is 4 MiB. `Content-Length` header framing belongs to other protocols such as LSP and is rejected with a parse error.
 
 ## Diff State Meanings
 
@@ -189,7 +199,7 @@ Use the byte length of the JSON body, not the character count. Grape writes resp
 | Second turn sends a full pack unexpectedly | Confirm the exact task/query, task type, risk overlays, branch, and explicit `sessionId` are stable. |
 | Restore returns `stale` | Call `grape_get_context` again for current context; do not reuse the old omitted body. |
 | Prior context is invalidated | Treat `INVALIDATE_PREVIOUS` entries as higher priority than prior notes, summaries, or chat memory. |
-| MCP client hangs or parse fails | Verify `Content-Length` is the UTF-8 byte length and the blank line separates headers from JSON. |
+| MCP client hangs or parse fails | Verify the client sends one compact JSON-RPC object per line over stdio, with no `Content-Length` headers and no extra stdout text. |
 | Installed CLI appears to be an older package | Run `grape --version`, clear the npm cache if needed, reinstall `grape-context@beta`, and check `grape help` from the active shell path. |
 
 ## Related Contracts

@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { encodeMcpFrame, parseMcpFrames } from "./mcp-smoke-session.mjs";
+import { encodeMcpMessage, parseMcpMessages } from "./mcp-smoke-session.mjs";
 import {
   commandForPlatform,
   installedPackageBinTarget,
@@ -176,7 +176,7 @@ function assertInstalledPackageMetadata(consumerRepo) {
 
 function runMcpInstalledSmoke(grapeCli, repoPath) {
   const input = Buffer.concat([
-    encodeMcpFrame({
+    encodeMcpMessage({
       jsonrpc: "2.0",
       id: 1,
       method: "initialize",
@@ -186,13 +186,13 @@ function runMcpInstalledSmoke(grapeCli, repoPath) {
         clientInfo: { name: "grape-e2e-alpha", version: sourcePackage.version }
       }
     }),
-    encodeMcpFrame({ jsonrpc: "2.0", method: "notifications/initialized" }),
-    encodeMcpFrame({
+    encodeMcpMessage({ jsonrpc: "2.0", method: "notifications/initialized" }),
+    encodeMcpMessage({
       jsonrpc: "2.0",
       id: 2,
       method: "tools/list"
     }),
-    encodeMcpFrame({
+    encodeMcpMessage({
       jsonrpc: "2.0",
       id: 3,
       method: "tools/call",
@@ -201,7 +201,7 @@ function runMcpInstalledSmoke(grapeCli, repoPath) {
         arguments: { query: "e2e mcp smoke", sessionId: "e2e-alpha-mcp" }
       }
     }),
-    encodeMcpFrame({
+    encodeMcpMessage({
       jsonrpc: "2.0",
       id: 4,
       method: "tools/call",
@@ -222,7 +222,7 @@ function runMcpInstalledSmoke(grapeCli, repoPath) {
   }));
   if (result.status !== 0) throw new Error(result.stderr.toString("utf8").trim() || "installed grape mcp failed");
 
-  const messages = parseMcpFrames(result.stdout);
+  const messages = parseMcpMessages(result.stdout);
   const byId = new Map(messages.map((message) => [message.id, message]));
   if (!byId.get(1)?.result?.capabilities?.tools) throw new Error("mcp initialize missing tool capabilities");
 

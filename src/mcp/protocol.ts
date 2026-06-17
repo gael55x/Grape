@@ -36,8 +36,7 @@ export const jsonRpcErrors = {
 const defaultMaxMcpFrameBytes = 4 * 1024 * 1024;
 
 export function encodeMcpMessage(message: unknown): Buffer {
-  const body = Buffer.from(JSON.stringify(message), "utf8");
-  return Buffer.concat([Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "utf8"), body]);
+  return Buffer.from(`${JSON.stringify(message)}\n`, "utf8");
 }
 
 export function successResponse(id: JsonRpcId, result: unknown): JsonRpcResponse {
@@ -74,68 +73,57 @@ export class McpMessageBuffer {
 
   append(chunk: Buffer): unknown[] {
     this.#buffer = Buffer.concat([this.#buffer, chunk]);
-    if (this.#buffer.length > this.#maxFrameBytes) {
-      this.reset();
-      throw new Error("MCP message exceeds maximum frame size");
-    }
+    return this.#drainDelimitedLines();
+  }
+
+  flush(): unknown[] {
+    if (this.#buffer.length === 0) return [];
+    const line = this.#buffer;
+    this.#buffer = Buffer.alloc(0);
+    return [this.#parseLine(line)];
+  }
+
+  #drainDelimitedLines(): unknown[] {
     const messages: unknown[] = [];
 
     while (true) {
-      const header = findHeader(this.#buffer);
-      if (!header) break;
+      const newline = this.#buffer.indexOf(0x0a);
+      if (newline < 0) break;
 
-      const headerText = this.#buffer.subarray(0, header.end).toString("utf8");
-      const contentLength = readContentLength(headerText);
-      if (contentLength === undefined) {
-        this.reset();
-        throw new Error("MCP message is missing Content-Length header");
-      }
-      if (contentLength === null) {
-        this.reset();
-        throw new Error("MCP message has invalid Content-Length header");
-      }
-      if (contentLength > this.#maxFrameBytes) {
-        this.reset();
-        throw new Error("MCP message exceeds maximum frame size");
-      }
+      const line = this.#buffer.subarray(0, newline);
+      this.#buffer = this.#buffer.subarray(newline + 1);
+      messages.push(this.#parseLine(line));
+    }
 
-      const messageStart = header.end + header.separatorLength;
-      const messageEnd = messageStart + contentLength;
-      if (this.#buffer.length < messageEnd) break;
-
-      const body = this.#buffer.subarray(messageStart, messageEnd).toString("utf8");
-      this.#buffer = this.#buffer.subarray(messageEnd);
-      messages.push(JSON.parse(body));
+    if (this.#buffer.length > this.#maxFrameBytes) {
+      this.reset();
+      throw new Error("MCP message exceeds maximum line size");
     }
 
     return messages;
   }
 
+  #parseLine(rawLine: Buffer): unknown {
+    const line = rawLine.length > 0 && rawLine[rawLine.length - 1] === 0x0d ? rawLine.subarray(0, rawLine.length - 1) : rawLine;
+    if (line.length > this.#maxFrameBytes) {
+      this.reset();
+      throw new Error("MCP message exceeds maximum line size");
+    }
+    const text = line.toString("utf8");
+    if (text.trim() === "") {
+      this.reset();
+      throw new Error("MCP stdio message line is empty");
+    }
+    if (/^content-length\s*:/i.test(text)) {
+      this.reset();
+      throw new Error("MCP stdio uses newline-delimited JSON messages, not Content-Length headers");
+    }
+    return JSON.parse(text);
+  }
+
   reset(): void {
     this.#buffer = Buffer.alloc(0);
   }
-}
-
-function findHeader(buffer: Buffer): { readonly end: number; readonly separatorLength: number } | undefined {
-  const crlf = buffer.indexOf("\r\n\r\n");
-  if (crlf >= 0) return { end: crlf, separatorLength: 4 };
-  const lf = buffer.indexOf("\n\n");
-  if (lf >= 0) return { end: lf, separatorLength: 2 };
-  return undefined;
-}
-
-function readContentLength(headerText: string): number | null | undefined {
-  for (const line of headerText.split(/\r?\n/)) {
-    const separator = line.indexOf(":");
-    if (separator < 0) continue;
-    const name = line.slice(0, separator).trim().toLowerCase();
-    if (name !== "content-length") continue;
-    const rawValue = line.slice(separator + 1).trim();
-    if (!/^\d+$/.test(rawValue)) return null;
-    const parsed = Number.parseInt(rawValue, 10);
-    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-  }
-  return undefined;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

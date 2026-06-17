@@ -240,7 +240,7 @@ function runMcpTool(repoPath, name, args) {
 }
 
 function runMcp(repoPath, messages) {
-  const input = Buffer.concat(messages.map(encodeMcpFrame));
+  const input = Buffer.concat(messages.map(encodeMcpMessage));
   const result = spawnSync(process.execPath, [cliPath, "mcp", "--stdio", "--repo", repoPath], {
     cwd: repoPath,
     input,
@@ -248,31 +248,19 @@ function runMcp(repoPath, messages) {
     maxBuffer: 16 * 1024 * 1024
   });
   assert.equal(result.status, 0, result.stderr.toString("utf8"));
-  return parseMcpFrames(result.stdout);
+  return parseMcpMessages(result.stdout);
 }
 
-function encodeMcpFrame(message) {
-  const body = Buffer.from(JSON.stringify(message), "utf8");
-  return Buffer.concat([Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "utf8"), body]);
+function encodeMcpMessage(message) {
+  return Buffer.from(`${JSON.stringify(message)}\n`, "utf8");
 }
 
-function parseMcpFrames(buffer) {
-  const messages = [];
-  let rest = Buffer.from(buffer);
-  while (rest.length > 0) {
-    const headerEnd = rest.indexOf("\r\n\r\n");
-    if (headerEnd < 0) break;
-    const header = rest.subarray(0, headerEnd).toString("utf8");
-    const match = /^Content-Length:\s*(\d+)$/im.exec(header);
-    assert.ok(match, `invalid MCP response header: ${header}`);
-    const length = Number.parseInt(match[1], 10);
-    const bodyStart = headerEnd + 4;
-    const bodyEnd = bodyStart + length;
-    assert.ok(rest.length >= bodyEnd, "incomplete MCP response frame");
-    messages.push(JSON.parse(rest.subarray(bodyStart, bodyEnd).toString("utf8")));
-    rest = rest.subarray(bodyEnd);
-  }
-  return messages;
+function parseMcpMessages(buffer) {
+  return Buffer.from(buffer)
+    .toString("utf8")
+    .split(/\r?\n/)
+    .filter((line) => line.length > 0)
+    .map((line) => JSON.parse(line));
 }
 
 function execGit(repoPath, args) {
