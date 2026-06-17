@@ -571,7 +571,7 @@ function runInstalledCli(grapeCli, repoPath, args, label) {
     shell: false,
     timeout: commandTimeoutMs
   }));
-  assert(result.status === 0, `${label} failed: ${result.stderr.trim() || result.error?.message}`);
+  assert(result.status === 0, `${label} failed: ${spawnFailureMessage(result)}`);
   assertNoLeaks(label, result.stdout, repoPath);
   assertNoLeaks(`${label} stderr`, result.stderr, repoPath);
   return result;
@@ -583,10 +583,9 @@ function runNpmExecGrape(repoPath, args, label) {
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
     env: envWithSqliteNodeOptions(npmEnv()),
-    shell: false,
     timeout: commandTimeoutMs
   }));
-  assert(result.status === 0, `${label} failed: ${result.stderr.trim() || result.error?.message}`);
+  assert(result.status === 0, `${label} failed: ${spawnFailureMessage(result)}`);
   assertNoLeaks(label, result.stdout, repoPath);
   assertNoLeaks(`${label} stderr`, result.stderr, repoPath);
   return result;
