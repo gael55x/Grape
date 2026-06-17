@@ -680,7 +680,7 @@ Basic install must not require local native compilation. If SQLite or parser pac
 
 The published package must contain the compiled `grape` CLI entrypoint and runtime storage migrations needed by local bootstrap. Package verification must fail if build output, SQL migrations, or the documented binary entrypoint would be missing from `npm install -g grape-context`.
 
-The CLI must keep static setup guidance available even when the local Node runtime is below the storage requirement. `grape help`, command-specific `--help`, `grape mcp`, and `grape mcp --print-config` can run without importing SQLite-backed services. Storage-backed commands must fail before importing `node:sqlite` on unsupported runtimes and must return clear recovery guidance.
+The CLI must keep static setup guidance available even when the local Node runtime is below the storage requirement. `grape help`, command-specific `--help`, `grape mcp`, `grape mcp --install`, and `grape mcp --print-config` can run without importing SQLite-backed services. Storage-backed commands must fail before importing `node:sqlite` on unsupported runtimes and must return clear recovery guidance.
 
 ### 9.2 Default config
 
@@ -2974,9 +2974,13 @@ Setup/MCP:
 ```bash
 grape init --connect
 grape mcp
+grape mcp --install --client cursor
+grape mcp --install --client claude
 grape mcp --print-config
 grape mcp --stdio
 ```
+
+`grape mcp --install --client cursor` writes project-local `.cursor/mcp.json`. `grape mcp --install --client claude` writes Claude Desktop `claude_desktop_config.json` only when the platform path can be resolved safely. Both install commands preserve unrelated config, fail safely on invalid JSON, require `--force` before replacing a conflicting existing `mcpServers.grape` entry, and keep `grape mcp --print-config` as the manual fallback for other clients.
 
 Manual fallback:
 
@@ -3791,6 +3795,8 @@ Build:
 - read inspection tools
 - command/test result recording
 - safe write boundaries
+- `grape mcp --install --client cursor`
+- `grape mcp --install --client claude`
 - `grape mcp --print-config`
 
 ### Bootstrap mode

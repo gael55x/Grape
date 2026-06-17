@@ -6,6 +6,7 @@ import { runClaims } from "./commands/claims.js";
 import { runCompile } from "./commands/compile.js";
 import { runConflicts } from "./commands/conflicts.js";
 import { runDiffContext } from "./commands/diff-context.js";
+import { runMcp } from "./commands/mcp.js";
 import { runOmitted } from "./commands/omitted.js";
 import { runObservedCommand } from "./commands/observed-run.js";
 import { runProofs } from "./commands/proofs.js";
@@ -297,58 +298,6 @@ async function runDoctor(parsed: ParsedArgs): Promise<number> {
     );
     return exitCodes.stale;
   }
-}
-
-async function runMcp(parsed: ParsedArgs): Promise<number> {
-  const usageError = rejectUnsupportedFlags(parsed, new Set(["--print-config", "--stdio", "--repo"]));
-  if (usageError) return usageError;
-
-  if (parsed.flags.has("--print-config")) {
-    const { mcpConnectionGuide } = await import("../app/local-project/setup/mcp-guide.js");
-    const rootPath = repoPath(parsed);
-    writeJson({
-      grapeMcp: mcpConnectionGuide(rootPath)
-    }, repoOutputOptions(rootPath));
-    return exitCodes.ok;
-  }
-
-  if (parsed.flags.has("--stdio")) {
-    const { runStdioMcpServer } = await import("../mcp/index.js");
-    return runStdioMcpServer({ rootPath: repoPath(parsed) });
-  }
-
-  write([
-    "Grape MCP",
-    "",
-    "Available now:",
-    "  grape mcp --print-config",
-    "  grape mcp --stdio",
-    "",
-    "Most users should run grape mcp --print-config and paste the JSON into their MCP client config.",
-    "Then use the coding agent normally. The agent should call grape_get_context each turn with a stable sessionId.",
-    "",
-    "Tools:",
-    "  grape_get_context",
-    "  grape_get_artifact",
-    "  grape_get_claims",
-    "  grape_get_proofs",
-    "  grape_get_rules",
-    "  grape_get_omitted_item",
-    "  grape_get_stale_items",
-    "  grape_get_conflicts",
-    "  grape_get_status",
-    "  grape_record_candidate",
-    "  grape_record_command_result",
-    "  grape_record_test_result",
-    "  grape_record_user_decision",
-    "  grape_request_user_confirmation",
-    "",
-    "Next:",
-    "  grape mcp --print-config",
-    "  grape status",
-    "  grape doctor"
-  ].join("\n"));
-  return exitCodes.ok;
 }
 
 function rejectUnsupportedFlags(parsed: ParsedArgs, allowed: ReadonlySet<string>): number | undefined {

@@ -1,15 +1,24 @@
 import { sessionIdentityRequirement } from "../../../core/sessions/index.js";
-import type { McpConnectionGuide } from "./setup-types.js";
+import type { McpConnectionGuide, McpServerConfig } from "./setup-types.js";
+
+export function mcpServerConfig(rootPath = process.cwd()): McpServerConfig {
+  return {
+    command: "grape",
+    args: ["mcp", "--stdio", "--repo", rootPath],
+    cwd: rootPath
+  };
+}
 
 export function mcpConnectionGuide(rootPath = process.cwd()): McpConnectionGuide {
-  const mcpCommand = `grape mcp --stdio --repo ${rootPath}`;
+  const serverConfig = mcpServerConfig(rootPath);
+  const mcpCommand = `${serverConfig.command} ${serverConfig.args.join(" ")}`;
   return {
     status: "implemented",
     implemented: true,
     serverName: "grape",
-    command: "grape",
-    args: ["mcp", "--stdio", "--repo", rootPath],
-    cwd: rootPath,
+    command: serverConfig.command,
+    args: serverConfig.args,
+    cwd: serverConfig.cwd,
     transport: "stdio",
     tools: [
       "grape_get_context",

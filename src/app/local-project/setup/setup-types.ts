@@ -160,3 +160,9 @@ export interface McpConnectionGuide {
   readonly primaryTool: "grape_get_context";
   readonly agentInstructionBlock: string;
 }
+
+export interface McpServerConfig {
+  readonly command: "grape";
+  readonly args: readonly string[];
+  readonly cwd: string;
+}

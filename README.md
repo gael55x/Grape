@@ -91,7 +91,7 @@ grape help
 
 1. Install: `npm install -g grape-context@beta`
 2. Initialize: `grape init --connect` (from your repository root)
-3. Connect MCP: `grape mcp --print-config` and paste the JSON into your coding agent
+3. Connect MCP: `grape mcp --install --client cursor` or `grape mcp --install --client claude`
 4. Agent loop: the agent calls `grape_get_context` each turn with a stable `sessionId` and stable task text
 
 Full walkthrough: [Getting started](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/getting-started.md).
@@ -115,19 +115,46 @@ grape doctor --privacy
 
 Grape works best through MCP.
 
-First connect the MCP server:
+For Cursor, write the project-local MCP config:
+
+```bash
+grape mcp --install --client cursor
+```
+
+This writes or merges `.cursor/mcp.json`.
+
+For Claude Desktop, write the global Claude Desktop MCP config when Grape can resolve the platform path safely:
+
+```bash
+grape mcp --install --client claude
+```
+
+This writes or merges `claude_desktop_config.json`.
+
+Preview either change without writing:
+
+```bash
+grape mcp --install --client cursor --dry-run
+grape mcp --install --client claude --dry-run
+```
+
+If an existing `mcpServers.grape` entry differs, Grape refuses to replace it unless you pass `--force`. Unrelated MCP servers are preserved.
+
+For other MCP clients, use the manual config fallback:
 
 ```bash
 grape mcp --print-config
 ```
 
-Paste the printed JSON into your MCP client config. The client should launch:
+Paste the printed JSON into your MCP client config. Auto-install and manual config both launch:
 
 ```bash
 grape mcp --stdio --repo <repo-root>
 ```
 
 Use the repository root for both `cwd` and `--repo`. MCP stdio messages are newline-delimited JSON-RPC objects. Do not use `Content-Length` header framing.
+
+The auto-install commands are separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write Cursor or Claude Desktop config files.
 
 After setup, your MCP-capable coding agent calls:
 
@@ -146,6 +173,8 @@ At the start of each repo task turn, call grape_get_context with a stable sessio
 If the client does not connect:
 
 * run `grape --version` in the same environment the client uses
+* for Cursor, check `.cursor/mcp.json`
+* for Claude Desktop, check `claude_desktop_config.json`
 * confirm `cwd` and `--repo` point at the same repository root
 * confirm no wrapper script prints banners or logs to stdout
 * run `grape doctor` and `grape doctor --privacy`
@@ -433,7 +462,7 @@ npm run beta:check
 
 `npm run check` covers documentation structure, fixtures, in-memory context loop checks, architecture boundaries, storage migrations, TypeScript typechecking, package dry-run contents, and behavior tests.
 
-`npm run beta:check` runs the local check suite, benchmark fixtures, and packaged beta client trial. The packaged trial validates installed CLI core workflows and stdio MCP behavior from an installed package. It is not a replacement for a human Cursor or Claude Code UI trial when release policy requires one.
+`npm run beta:check` runs the local check suite, benchmark fixtures, and packaged beta client trial. The packaged trial validates installed CLI core workflows, Cursor and Claude Desktop install dry-runs, and stdio MCP behavior from an installed package. It is not a replacement for a human Cursor, Claude Desktop, or Claude Code UI trial when release policy requires one.
 
 After installing the published package globally, run:
 

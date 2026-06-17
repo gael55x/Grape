@@ -61,12 +61,12 @@ try {
   const grapeCli = installedPackageBinTarget(consumerRepo, sourcePackage.name, sourcePackage.bin.grape);
   assert(existsSync(grapeCli), `installed package is missing ${sourcePackage.bin.grape}`);
 
-  const spawnGrape = (args) =>
+  const spawnGrape = (args, extraEnv = {}) =>
     spawnSync(process.execPath, [grapeCli, ...args], spawnOptionsForPlatform({
       cwd: consumerRepo,
       encoding: "utf8",
       maxBuffer: 16 * 1024 * 1024,
-      env: envWithSqliteNodeOptions(npmEnv()),
+      env: envWithSqliteNodeOptions({ ...npmEnv(), ...extraEnv }),
       shell: false
     }));
 
@@ -76,6 +76,19 @@ try {
 
   const init = spawnGrape(["init", "--connect"]);
   assert(init.status === 0, `grape init failed: ${init.stderr.trim()}`);
+
+  const cursorDryRun = spawnGrape(["mcp", "--install", "--client", "cursor", "--dry-run"]);
+  assert(cursorDryRun.status === 0, `cursor MCP install dry-run failed: ${cursorDryRun.stderr.trim()}`);
+  assert(cursorDryRun.stdout.includes("Dry run: no changes written."), "cursor MCP install dry-run must not write");
+  assert(cursorDryRun.stdout.includes("mcpServers"), "cursor MCP install dry-run must print final MCP JSON");
+
+  const claudeDryRun = spawnGrape(
+    ["mcp", "--install", "--client", "claude", "--dry-run"],
+    claudeDryRunEnv(consumerRepo)
+  );
+  assert(claudeDryRun.status === 0, `claude MCP install dry-run failed: ${claudeDryRun.stderr.trim()}`);
+  assert(claudeDryRun.stdout.includes("Dry run: no changes written."), "claude MCP install dry-run must not write");
+  assert(claudeDryRun.stdout.includes("mcpServers"), "claude MCP install dry-run must print final MCP JSON");
 
   const compileArgs = ["compile", "--task", "install smoke", "--session", "install-smoke-cli", "--json"];
   const compile1 = spawnGrape(compileArgs);
@@ -178,6 +191,24 @@ function npmEnv() {
     npm_config_cache: npmCacheDir,
     npm_config_fund: "false",
     npm_config_update_notifier: "false"
+  };
+}
+
+function claudeDryRunEnv(repoPath) {
+  if (process.platform === "win32") {
+    return {
+      APPDATA: path.join(repoPath, ".claude-appdata"),
+      USERPROFILE: path.join(repoPath, ".claude-home")
+    };
+  }
+  if (process.platform === "linux") {
+    return {
+      HOME: path.join(repoPath, ".claude-home"),
+      XDG_CONFIG_HOME: path.join(repoPath, ".claude-xdg")
+    };
+  }
+  return {
+    HOME: path.join(repoPath, ".claude-home")
   };
 }
 

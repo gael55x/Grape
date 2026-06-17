@@ -6,6 +6,10 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ## Unreleased
 
+### Added
+
+- Added actual MCP client config auto-wiring for Cursor and Claude Desktop through `grape mcp --install --client cursor` and `grape mcp --install --client claude`, with `--dry-run` previews, `--force` conflict replacement for `mcpServers.grape` only, and manual `grape mcp --print-config` fallback for other clients.
+
 ### Fixed
 
 - Fixed MCP stdio transport to use newline-delimited JSON-RPC messages instead of `Content-Length` header framing, restoring compatibility with real MCP clients such as Claude Code and Cursor.
@@ -14,6 +18,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 - Expanded the packaged beta client trial to cover installed CLI core workflows plus MCP session workflows, and added cross-platform CI coverage for Ubuntu, macOS, and Windows.
 - Simplified MCP setup docs with a clearer integration path, session rules, stdio transport notes, and troubleshooting checks.
+- Clarified that the 1.0.0-beta.7 stdio framing fix made MCP connect correctly but did not write Cursor or Claude Desktop config files.
 
 ## 1.0.0-beta.6 - 2026-06-17
 

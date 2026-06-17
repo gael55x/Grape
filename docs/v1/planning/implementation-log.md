@@ -22,6 +22,13 @@ Keep entries simple:
 
 ## Entries
 
+### 2026-06-17 - MCP Client Config Auto-Wiring
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: added actual Cursor and Claude Desktop MCP client config installation through `grape mcp --install --client cursor` and `grape mcp --install --client claude`. Cursor writes project-local `.cursor/mcp.json`; Claude Desktop writes `claude_desktop_config.json` only when the platform path can be resolved safely. The flow supports dry-run previews, preserves unrelated config, refuses invalid JSON, treats identical Grape entries as already configured, and requires `--force` before replacing a conflicting existing `mcpServers.grape` entry. This is separate from the 1.0.0-beta.7 stdio framing fix, which did not write client config files.
+- Tests or checks run: focused MCP client install behavior tests before the full validation gate.
+- Risks or follow-ups: Cline, Continue, generic VS Code, and other clients remain on `grape mcp --print-config` until their config paths can be handled safely.
+
 ### 2026-06-17 - MCP Stdio JSON Lines Compatibility
 
 - Author/agent: Gaille Amolong / Codex

@@ -1,16 +1,17 @@
 # Agent Session Contract
 
-## Purpose
+If one thing has to be stable, make it the session.
 
-Define how an AI agent, CLI user, or MCP client must identify a Grape context session during the 1.0 beta transport slice.
+Grape only saves context safely when it can prove the current request belongs to the same repository, task, branch or worktree scope, and session ledger as earlier turns. A session is not just a label for analytics. It is how Grape decides whether an old context item can be omitted, restored, or must be invalidated.
 
-Grape only saves tokens when it can prove that the current request belongs to the same repository, task, branch/worktree scope, and session ledger as earlier turns. Session identity is therefore part of the safety contract, not a convenience label.
+This page is the practical contract for agents, MCP clients, and CLI users that want continued turns to work without stale context.
 
 ## Integration Rules At A Glance
 
 | If you are... | Do this |
 |---|---|
-| Setting up an MCP client | Use `grape mcp --print-config` and keep `cwd` plus `--repo` on the same repository root. |
+| Setting up Cursor or Claude Desktop | Use `grape mcp --install --client cursor` or `grape mcp --install --client claude`; keep `cwd` plus `--repo` on the same repository root. |
+| Setting up another MCP client | Use `grape mcp --print-config` and paste the manual config. |
 | Building or debugging stdio transport | Send one compact JSON-RPC object per line. Do not send `Content-Length` headers. |
 | Calling `grape_get_context` | Pass a stable `sessionId` and stable `query` for continued turns on the same task. |
 | Starting a new task | Use a new `sessionId`, or change the task text intentionally. |
@@ -18,7 +19,7 @@ Grape only saves tokens when it can prove that the current request belongs to th
 | Seeing `INVALIDATE_PREVIOUS` | Stop using the prior context item. Ask Grape for current context again if needed. |
 | Seeing `RESTORE_AVAILABLE` | Call `grape_get_omitted_item` only when the omitted body is needed. |
 
-## MCP-driven session tracking (what “background” means)
+## MCP-driven session tracking (what "background" means)
 
 Grape does **not** run as a daemon that observes every agent turn automatically. After MCP setup, **agent-called** session tracking is real: when the agent calls `grape_get_context` each turn with **stable session identity**, Grape maintains durable sent/omitted/restore/invalidation ledgers without manual `grape compile` or `grape diff-context` commands.
 
@@ -52,9 +53,18 @@ Run `grape doctor --privacy` after setup to review local storage, ignored paths,
 
 After `grape init --connect`, the intended path is a normal MCP-capable coding agent calling `grape_get_context`. Manual CLI commands such as `grape compile`, `grape sessions`, `grape stale`, and `grape omitted` are debugging and fallback surfaces.
 
-## MCP client configuration
+## MCP Client Configuration
 
-Print a client-ready config from the repository root:
+Use auto-install first for the clients Grape can write safely:
+
+```bash
+grape mcp --install --client cursor
+grape mcp --install --client claude
+```
+
+Cursor writes project-local `.cursor/mcp.json`. Claude Desktop writes `claude_desktop_config.json` when Grape can resolve the platform path safely. Use `--dry-run` when you want to see the exact file and JSON first. Use `--force` only to replace a conflicting existing `mcpServers.grape` entry.
+
+Manual fallback for other MCP clients:
 
 ```bash
 grape mcp --print-config
@@ -76,7 +86,9 @@ Minimal stdio example (replace `<repo-root>` with your repository path):
 
 The `cwd` and `--repo` path must point at the same repository root. See [`getting-started.md`](getting-started.md) for the full onboarding path and troubleshooting checklist.
 
-Put this JSON in the MCP server configuration for your coding agent or editor. Grape's automated trial verifies stdio JSON-RPC behavior, not every editor's UI placement. Treat client-specific UI steps as verified only when a human client trial records them.
+Put this JSON in the MCP server configuration for your coding agent or editor. Grape's automated trial verifies stdio JSON-RPC behavior and installed-package dry-runs, not every editor's UI placement. Treat client-specific UI steps as verified only when a human client trial records them.
+
+The auto-install commands are separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made the stdio server connect correctly; it did not write Cursor or Claude Desktop config.
 
 Copy-ready agent instruction:
 
@@ -85,6 +97,8 @@ At the start of each repo task turn, call grape_get_context with a stable sessio
 ```
 
 ## Stable Identity Rules
+
+The short version: same task, same session. New task, new session.
 
 - A Grape session is scoped to one local project, repo, task id, and task type.
 - Prefer explicit `sessionId` for beta clients.
