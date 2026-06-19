@@ -70,11 +70,11 @@ To add repository guidance for agents, run `grape mcp --print-agents-snippet` an
 For Codex plugin setup, this repo ships `plugins/grape` and `.agents/plugins/marketplace.json`:
 
 ```bash
-codex plugin marketplace add .agents/plugins
+codex plugin marketplace add .
 codex plugin add grape@grape-local
 ```
 
-The plugin exposes `grape mcp --stdio` and a Grape skill. It assumes `grape` is on `PATH`. Use the direct Codex installer when you need `.codex/config.toml` to pin the repository working directory.
+Run those commands from the repository root. The plugin exposes `grape mcp --stdio` and a Grape skill. It assumes `grape` is on `PATH`. Use the direct Codex installer when you need `.codex/config.toml` to pin the repository working directory.
 
 Manual fallback for other MCP clients, or for published beta builds that do not recognize `grape mcp --install`:
 

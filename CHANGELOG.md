@@ -12,6 +12,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added MCP `initialize` instructions so Codex-style clients receive Grape session, invalidation, and restore guidance from the server.
 - Added `grape mcp --print-agents-snippet` to print path-neutral AGENTS.md guidance without editing files.
 - Added a repo-local Codex plugin in `plugins/grape` with Grape MCP config, a Grape skill, and a marketplace entry in `.agents/plugins/marketplace.json`.
+- Added `npm run codex:check` to verify Grape's local Codex setup without touching the normal Codex config.
 
 ### Fixed
 

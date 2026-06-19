@@ -164,11 +164,18 @@ Review the snippet before adding it to your repository rules. Grape does not edi
 Grape also ships a repo-local Codex plugin in `plugins/grape` with a marketplace file at `.agents/plugins/marketplace.json`:
 
 ```bash
-codex plugin marketplace add .agents/plugins
+codex plugin marketplace add .
 codex plugin add grape@grape-local
 ```
 
-The plugin exposes `grape mcp --stdio` and a Grape skill for Codex. It assumes the `grape` command is on `PATH`. Use `grape mcp --install --client codex` when you need project-local `.codex/config.toml` with an exact working directory. The plugin does not ship hooks.
+Run those commands from the repository root. The plugin exposes `grape mcp --stdio` and a Grape skill for Codex. It assumes the `grape` command is on `PATH`. Use `grape mcp --install --client codex` when you need project-local `.codex/config.toml` with an exact working directory. The plugin does not ship hooks.
+
+To verify the local Codex path without touching your normal Codex config:
+
+```bash
+npm run build
+npm run codex:check
+```
 
 For other MCP clients, or for published beta builds that do not recognize `grape mcp --install`, use the manual config fallback:
 

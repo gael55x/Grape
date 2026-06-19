@@ -49,11 +49,13 @@ Review the snippet before adding it to AGENTS.md. Grape does not edit AGENTS.md 
 For Codex plugin setup, use the repo-local plugin:
 
 ```bash
-codex plugin marketplace add .agents/plugins
+codex plugin marketplace add .
 codex plugin add grape@grape-local
 ```
 
-The plugin lives in `plugins/grape`, exposes `grape mcp --stdio`, and includes the Grape skill. It assumes `grape` is on `PATH`. It does not ship hooks. Use `grape mcp --install --client codex` when the project needs `.codex/config.toml` with an exact working directory.
+Run those commands from the repository root. The plugin lives in `plugins/grape`, exposes `grape mcp --stdio`, and includes the Grape skill. It assumes `grape` is on `PATH`. It does not ship hooks. Use `grape mcp --install --client codex` when the project needs `.codex/config.toml` with an exact working directory.
+
+Run `npm run build` and `npm run codex:check` to verify the local Codex path. The check uses temp repositories and an isolated Codex home.
 
 Use `--dry-run` to preview the target path and final JSON without writing. If an existing `mcpServers.grape` entry differs, Grape requires `--force` before replacing only that entry. It preserves unrelated MCP servers.
 
