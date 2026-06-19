@@ -181,7 +181,8 @@ function runGit(repoPath, args) {
   const result = spawnSync(commandForPlatform("git"), args, spawnOptionsForPlatform({
     cwd: repoPath,
     encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"]
+    stdio: ["ignore", "pipe", "pipe"],
+    shell: false
   }));
   assert(result.status === 0, `git ${args.join(" ")} failed: ${spawnFailureMessage(result)}`);
 }
