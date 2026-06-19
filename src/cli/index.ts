@@ -189,6 +189,7 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
             "Install MCP client config:",
             "  Cursor: grape mcp --install --client cursor",
             "  Claude Desktop: grape mcp --install --client claude",
+            "  Codex: grape mcp --install --client codex",
             "  Preview first: add --dry-run",
             "  Manual fallback: grape mcp --print-config",
             "",
@@ -203,6 +204,7 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
             "Next:",
             "  grape mcp --install --client cursor",
             "  grape mcp --install --client claude",
+            "  grape mcp --install --client codex",
             "  grape mcp --print-config",
             "  grape status",
             "  grape doctor"

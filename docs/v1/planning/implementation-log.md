@@ -22,6 +22,14 @@ Keep entries simple:
 
 ## Entries
 
+### 2026-06-19 - Codex MCP Setup Slice
+
+- Author/agent: Gaille Amolong / Codex
+- Principles used: no explicit canonical four-principle list was found in root instructions, AGENTS.md, architecture docs, contributor docs, maintainer docs, or design principles during the first release audit. This slice used the fallback principles from the 1.0 mandate: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
+- Summary: added Codex-native MCP setup through `grape mcp --install --client codex`, which writes project-local `.codex/config.toml` by adding or replacing only `[mcp_servers.grape]`. The installer preserves unrelated TOML, refuses malformed table headers, treats identical Grape entries as already configured, requires `--force` for conflicting Grape entries, and prints a `codex mcp add grape -- ...` fallback command. MCP `initialize` now returns path-neutral server instructions for session identity, invalidation, and omitted restore behavior.
+- Tests or checks run: focused MCP client install behavior tests, focused MCP stdio behavior test, docs checks, typecheck, and package check before committing this slice.
+- Risks or follow-ups: the Codex plugin, AGENTS.md snippet generator, packaged smoke coverage for Codex install, and broader local Codex workflow verification remain separate Phase 1 slices.
+
 ### 2026-06-17 - MCP Client Config Auto-Wiring
 
 - Author/agent: Gaille Amolong / Codex

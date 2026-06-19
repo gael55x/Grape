@@ -121,6 +121,9 @@ test("mcp stdio lists implemented Grape tools", () => {
     assert.equal(responses[0].result.serverInfo.name, "grape");
     assert.notEqual(responses[0].result.serverInfo.version, "0.0.0");
     assert.equal(responses[0].result.serverInfo.version, readPackageVersion());
+    assert.match(responses[0].result.instructions, /context continuity and safety layer/);
+    assert.match(responses[0].result.instructions, /call grape_get_context/);
+    assert.doesNotMatch(responses[0].result.instructions, new RegExp(escapeRegExp(repoPath)));
     assert.deepEqual(
       responses[1].result.tools.map((tool) => tool.name),
       [
@@ -150,6 +153,10 @@ test("mcp stdio lists implemented Grape tools", () => {
     assert.match(commandTool.inputSchema.properties.command.description, /not persisted/);
   });
 });
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 test("mcp grape_get_conflicts returns conflict inspection without root paths", () => {
   withGitRepo((repoPath) => {

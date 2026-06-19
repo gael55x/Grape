@@ -5,12 +5,12 @@ import path from "node:path";
 import { mcpServerConfig } from "./mcp-guide.js";
 import type { McpServerConfig } from "./setup-types.js";
 
-export type McpInstallClient = "cursor" | "claude";
+export type McpInstallClient = "cursor" | "claude" | "codex";
 export type McpInstallStatus = "created" | "updated" | "already_configured" | "dry_run";
 export type McpInstallChange = "create" | "update" | "none";
 
 export const unsupportedAutoInstallMessage =
-  "Auto-install is currently supported for Cursor and Claude Desktop only. Use `grape mcp --print-config` for manual setup.";
+  "Auto-install is currently supported for Cursor, Claude Desktop, and Codex only. Use `grape mcp --print-config` for manual setup.";
 
 export class McpClientConfigInstallError extends Error {
   constructor(
@@ -36,6 +36,7 @@ export interface McpClientConfigInstallInput {
   readonly env?: NodeJS.ProcessEnv;
   readonly homeDir?: string;
   readonly claudeConfigPath?: string;
+  readonly codexConfigPath?: string;
 }
 
 export interface ClaudeConfigPathInput {
@@ -61,7 +62,10 @@ export interface McpClientConfigInstallResult {
   readonly targetPath: string;
   readonly serverName: "grape";
   readonly serverConfig: McpServerConfig;
-  readonly finalConfig: Record<string, unknown>;
+  readonly finalConfig: Record<string, unknown> | string;
+  readonly finalConfigText?: string;
+  readonly configFormat: "json" | "toml";
+  readonly fallbackCommand?: string;
   readonly targetExisted: boolean;
   readonly dryRun: boolean;
   readonly wrote: boolean;
@@ -78,9 +82,20 @@ export function installMcpClientConfig(
     platform: input.platform,
     env: input.env,
     homeDir: input.homeDir,
-    claudeConfigPath: input.claudeConfigPath
+    claudeConfigPath: input.claudeConfigPath,
+    codexConfigPath: input.codexConfigPath
   });
   const serverConfig = mcpServerConfig(rootPath);
+  if (input.client === "codex") {
+    return installCodexClientConfig({
+      rootPath,
+      targetPath,
+      serverConfig,
+      dryRun: input.dryRun === true,
+      force: input.force === true
+    });
+  }
+
   const existing = readClientConfig(targetPath, input.client);
   const merged = mergeGrapeServerConfig({
     existingConfig: existing.config,
@@ -103,6 +118,7 @@ export function installMcpClientConfig(
     serverName: "grape",
     serverConfig,
     finalConfig: merged.finalConfig,
+    configFormat: "json",
     targetExisted: existing.existed,
     dryRun,
     wrote: !dryRun && merged.change !== "none",
@@ -151,10 +167,12 @@ export function resolveClaudeDesktopConfigPath(
 interface ResolveConfigPathInput extends ClaudeConfigPathInput {
   readonly rootPath: string;
   readonly claudeConfigPath?: string;
+  readonly codexConfigPath?: string;
 }
 
 function resolveMcpClientConfigPath(client: McpInstallClient, input: ResolveConfigPathInput): string {
   if (client === "cursor") return path.join(input.rootPath, ".cursor", "mcp.json");
+  if (client === "codex") return input.codexConfigPath ?? path.join(input.rootPath, ".codex", "config.toml");
 
   const resolved = input.claudeConfigPath
     ? { status: "resolved" as const, configPath: input.claudeConfigPath }
@@ -255,7 +273,173 @@ function unsupportedClaudePath(reason: string): ClaudeConfigPathResult {
 }
 
 function clientLabel(client: McpInstallClient): string {
-  return client === "cursor" ? "Cursor" : "Claude Desktop";
+  if (client === "cursor") return "Cursor";
+  if (client === "claude") return "Claude Desktop";
+  return "Codex";
+}
+
+interface InstallCodexInput {
+  readonly rootPath: string;
+  readonly targetPath: string;
+  readonly serverConfig: McpServerConfig;
+  readonly dryRun: boolean;
+  readonly force: boolean;
+}
+
+function installCodexClientConfig(input: InstallCodexInput): McpClientConfigInstallResult {
+  const targetExisted = existsSync(input.targetPath);
+  const existingText = targetExisted ? readFileSync(input.targetPath, "utf8") : "";
+  validateConservativeCodexToml(existingText, input.targetPath, input.serverConfig);
+  const merged = mergeCodexGrapeServerConfig({
+    existingText,
+    targetPath: input.targetPath,
+    serverConfig: input.serverConfig,
+    force: input.force
+  });
+
+  if (!input.dryRun && merged.change !== "none") {
+    mkdirSync(path.dirname(input.targetPath), { recursive: true });
+    writeFileSync(input.targetPath, merged.finalText);
+  }
+
+  return {
+    client: "codex",
+    clientLabel: "Codex",
+    targetPath: input.targetPath,
+    serverName: "grape",
+    serverConfig: input.serverConfig,
+    finalConfig: merged.finalText,
+    finalConfigText: merged.finalText,
+    configFormat: "toml",
+    fallbackCommand: codexMcpAddCommand(input.serverConfig),
+    targetExisted,
+    dryRun: input.dryRun,
+    wrote: !input.dryRun && merged.change !== "none",
+    status: input.dryRun ? "dry_run" : merged.change === "none" ? "already_configured" : targetExisted ? "updated" : "created",
+    change: merged.change
+  };
+}
+
+interface MergeCodexInput {
+  readonly existingText: string;
+  readonly targetPath: string;
+  readonly serverConfig: McpServerConfig;
+  readonly force: boolean;
+}
+
+interface MergeCodexResult {
+  readonly finalText: string;
+  readonly change: McpInstallChange;
+}
+
+function mergeCodexGrapeServerConfig(input: MergeCodexInput): MergeCodexResult {
+  const block = renderCodexMcpServerToml(input.serverConfig);
+  const existing = input.existingText;
+  if (existing.trim() === "") return { finalText: block, change: "create" };
+
+  const match = findCodexGrapeServerBlock(existing);
+  if (!match) return { finalText: appendTomlBlock(existing, block), change: "update" };
+
+  const currentBlock = existing.slice(match.start, match.end);
+  if (normalizeTomlBlock(currentBlock) === normalizeTomlBlock(block)) {
+    return { finalText: existing, change: "none" };
+  }
+
+  if (!input.force) {
+    throw new McpClientConfigInstallError(
+      `Existing Grape MCP server entry in ${input.targetPath} differs from the current Codex config. Re-run with --force to replace only [mcp_servers.grape], or run ${codexMcpAddCommand(input.serverConfig)} manually after reviewing your Codex config.`,
+      "conflicting_grape_entry"
+    );
+  }
+
+  return {
+    finalText: `${existing.slice(0, match.start)}${block}${existing.slice(match.end)}`,
+    change: "update"
+  };
+}
+
+function validateConservativeCodexToml(text: string, targetPath: string, serverConfig: McpServerConfig): void {
+  for (const [index, line] of text.split(/\r?\n/).entries()) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith("[")) continue;
+    if (!/^\[+[^\]\r\n]+\]+[ \t]*(?:#.*)?$/.test(trimmed)) {
+      throw new McpClientConfigInstallError(
+        `Existing Codex config at ${targetPath} has a malformed TOML table header on line ${index + 1}. Grape will not modify it automatically. Run ${codexMcpAddCommand(serverConfig)} after fixing the file, or use grape mcp --print-config for manual setup.`,
+        "invalid_config_shape"
+      );
+    }
+  }
+}
+
+interface TomlBlockMatch {
+  readonly start: number;
+  readonly end: number;
+}
+
+function findCodexGrapeServerBlock(text: string): TomlBlockMatch | undefined {
+  const headerPattern = /^[ \t]*\[([^\]\r\n]+)\][ \t]*(?:#.*)?$/gm;
+  const headers: { readonly name: string; readonly start: number }[] = [];
+  let header: RegExpExecArray | null;
+  while ((header = headerPattern.exec(text)) !== null) {
+    headers.push({ name: normalizeTomlTableName(header[1]), start: header.index });
+  }
+
+  const exactHeaders = headers.filter((item) => item.name === "mcp_servers.grape");
+  if (exactHeaders.length > 1) {
+    throw new McpClientConfigInstallError(
+      "Existing Codex config contains multiple [mcp_servers.grape] tables. Grape will not guess which one to replace. Use grape mcp --print-config or codex mcp add for manual setup.",
+      "invalid_config_shape"
+    );
+  }
+  if (exactHeaders.length === 0) return undefined;
+
+  const start = exactHeaders[0].start;
+  const following = headers.find((item) => item.start > start && !isCodexGrapeTable(item.name));
+  return { start, end: following?.start ?? text.length };
+}
+
+function isCodexGrapeTable(name: string): boolean {
+  return name === "mcp_servers.grape" || name.startsWith("mcp_servers.grape.");
+}
+
+function normalizeTomlTableName(raw: string): string {
+  return raw.trim().replace(/\s+/g, "").replace(/"grape"/g, "grape").replace(/'grape'/g, "grape");
+}
+
+function renderCodexMcpServerToml(serverConfig: McpServerConfig): string {
+  return [
+    "[mcp_servers.grape]",
+    `command = ${tomlString(serverConfig.command)}`,
+    `args = ${tomlArray(serverConfig.args)}`,
+    `cwd = ${tomlString(serverConfig.cwd)}`,
+    ""
+  ].join("\n");
+}
+
+function appendTomlBlock(existingText: string, block: string): string {
+  const separator = existingText.endsWith("\n\n") ? "" : existingText.endsWith("\n") ? "\n" : "\n\n";
+  return `${existingText}${separator}${block}`;
+}
+
+function normalizeTomlBlock(value: string): string {
+  return value.trim().replace(/\r\n/g, "\n");
+}
+
+function tomlString(value: string): string {
+  return JSON.stringify(value);
+}
+
+function tomlArray(values: readonly string[]): string {
+  return `[${values.map(tomlString).join(", ")}]`;
+}
+
+function codexMcpAddCommand(serverConfig: McpServerConfig): string {
+  return `codex mcp add grape -- ${serverConfig.command} ${serverConfig.args.map(shellQuote).join(" ")}`;
+}
+
+function shellQuote(value: string): string {
+  if (/^[A-Za-z0-9_./:=,@%+-]+$/.test(value)) return value;
+  return `'${value.replace(/'/g, "'\"'\"'")}'`;
 }
 
 function deepEqual(left: unknown, right: unknown): boolean {

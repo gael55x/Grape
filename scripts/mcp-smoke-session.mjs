@@ -71,6 +71,10 @@ export async function runMcpContextRestoreSession({
     );
     assert(!initialize.error, `mcp initialize failed: ${JSON.stringify(initialize.error)}`);
     assert(initialize.result?.capabilities?.tools, "mcp initialize must advertise tool capabilities");
+    assert(
+      initialize.result?.instructions?.includes("call grape_get_context"),
+      "mcp initialize must advertise Grape MCP usage instructions"
+    );
 
     child.stdin.write(encodeMcpMessage({ jsonrpc: "2.0", method: "notifications/initialized" }));
 

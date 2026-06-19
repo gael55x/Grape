@@ -25,11 +25,12 @@ The goal is small: let the agent call `grape_get_context` from the repo it is ed
 1. Install Grape and initialize the repo with `grape init --connect`.
 2. If you use Cursor and your installed build supports the safe installer, run `grape mcp --install --client cursor`.
 3. If you use Claude Desktop and your installed build supports the safe installer, run `grape mcp --install --client claude`.
-4. Make sure the client launches `grape mcp --stdio --repo <repo-root>`.
-5. Make sure the client sends one JSON-RPC object per line over stdio.
-6. Have the agent call `grape_get_context` with a stable `sessionId` and task `query`.
+4. If you use Codex and your installed build supports the safe installer, run `grape mcp --install --client codex`.
+5. Make sure the client launches `grape mcp --stdio --repo <repo-root>`.
+6. Make sure the client sends one JSON-RPC object per line over stdio.
+7. Have the agent call `grape_get_context` with a stable `sessionId` and task `query`.
 
-Cursor auto-install writes project-local `.cursor/mcp.json`. Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely.
+Cursor auto-install writes project-local `.cursor/mcp.json`. Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely. Codex auto-install writes project-local `.codex/config.toml` for trusted Codex projects.
 
 Grape does not silently touch unsupported client config files. Other clients, and published beta builds that do not recognize `grape mcp --install`, remain on the manual path:
 
@@ -118,8 +119,9 @@ The setup CLI now supports real client config installation for the two clients w
 
 - `grape mcp --install --client cursor` writes `.cursor/mcp.json` in the current repository.
 - `grape mcp --install --client claude` writes Claude Desktop `claude_desktop_config.json` when the platform path can be resolved.
+- `grape mcp --install --client codex` writes `.codex/config.toml` in the current repository.
 
-Both commands merge `mcpServers.grape`, preserve unrelated entries, refuse invalid JSON, and require `--force` before replacing a conflicting existing Grape entry.
+Cursor and Claude merge `mcpServers.grape`. Codex merges `[mcp_servers.grape]`. The installers preserve unrelated entries, refuse invalid JSON or malformed Codex table headers, and require `--force` before replacing a conflicting existing Grape entry.
 
 The current implementation includes the first stdio MCP server:
 
@@ -154,7 +156,7 @@ The current implementation includes the first stdio MCP server:
 }
 ```
 
-`grape mcp --stdio` implements MCP stdio JSON-RPC handling for `initialize`, `tools/list`, `tools/call`, and `ping`. Each input and output message is one UTF-8 JSON-RPC object on a single newline-delimited line. `Content-Length` header framing is rejected because MCP stdio clients send JSON lines. The implemented Grape tools are:
+`grape mcp --stdio` implements MCP stdio JSON-RPC handling for `initialize`, `tools/list`, `tools/call`, and `ping`. Each input and output message is one UTF-8 JSON-RPC object on a single newline-delimited line. `Content-Length` header framing is rejected because MCP stdio clients send JSON lines. The `initialize` response includes MCP server instructions that tell Codex-style clients to call `grape_get_context`, keep stable session identity, invalidate stale context, and restore omitted context only when needed. The implemented Grape tools are:
 
 - `grape_get_context`
 - `grape_get_artifact`

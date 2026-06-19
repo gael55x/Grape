@@ -95,7 +95,7 @@ grape help
 
 1. Install: `npm install -g grape-context@beta`
 2. Initialize: `grape init --connect` (from your repository root)
-3. Connect MCP: `grape mcp --install --client cursor` or `grape mcp --install --client claude` when your installed build supports it
+3. Connect MCP: `grape mcp --install --client cursor`, `grape mcp --install --client claude`, or `grape mcp --install --client codex` when your installed build supports it
 4. Agent loop: the agent calls `grape_get_context` each turn with a stable `sessionId` and stable task text
 
 Full walkthrough: [Getting started](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/getting-started.md).
@@ -135,14 +135,23 @@ grape mcp --install --client claude
 
 This writes or merges `claude_desktop_config.json`.
 
-Preview either change without writing:
+For Codex, write the project-local Codex MCP config when your installed build supports the safe installer:
+
+```bash
+grape mcp --install --client codex
+```
+
+This writes or merges `.codex/config.toml` for trusted Codex projects. It preserves unrelated TOML and refuses to replace an existing `[mcp_servers.grape]` table unless you pass `--force`.
+
+Preview any change without writing:
 
 ```bash
 grape mcp --install --client cursor --dry-run
 grape mcp --install --client claude --dry-run
+grape mcp --install --client codex --dry-run
 ```
 
-If an existing `mcpServers.grape` entry differs, Grape refuses to replace it unless you pass `--force`. Unrelated MCP servers are preserved.
+If an existing Grape MCP entry differs, Grape refuses to replace it unless you pass `--force`. Unrelated MCP servers are preserved.
 
 For other MCP clients, or for published beta builds that do not recognize `grape mcp --install`, use the manual config fallback:
 
@@ -158,7 +167,7 @@ grape mcp --stdio --repo <repo-root>
 
 Use the repository root for both `cwd` and `--repo`. MCP stdio messages are newline-delimited JSON-RPC objects. Do not use `Content-Length` header framing.
 
-The auto-install commands are separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write Cursor or Claude Desktop config files.
+The auto-install commands are separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write Cursor, Claude Desktop, or Codex config files.
 
 After setup, your MCP-capable coding agent calls:
 

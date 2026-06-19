@@ -42,6 +42,10 @@ function cursorConfigPath(rootPath) {
   return path.join(rootPath, ".cursor", "mcp.json");
 }
 
+function codexConfigPath(rootPath) {
+  return path.join(rootPath, ".codex", "config.toml");
+}
+
 function writeJson(filePath, value) {
   mkdirSync(path.dirname(filePath), { recursive: true });
   writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
@@ -53,6 +57,14 @@ function readJson(filePath) {
 
 function assertGrapeServer(config, rootPath) {
   assert.deepEqual(config.mcpServers.grape, expectedServer(rootPath));
+}
+
+function assertCodexGrapeServer(toml, rootPath) {
+  const expected = expectedServer(rootPath);
+  assert.match(toml, /\[mcp_servers\.grape\]/);
+  assert.match(toml, new RegExp(`command = ${escapeRegExp(JSON.stringify(expected.command))}`));
+  assert.match(toml, new RegExp(`args = ${escapeRegExp(JSON.stringify(expected.args).replace(/,/g, ", "))}`));
+  assert.match(toml, new RegExp(`cwd = ${escapeRegExp(JSON.stringify(expected.cwd))}`));
 }
 
 function claudeEnvAndPath(basePath) {
@@ -89,6 +101,7 @@ test("cli help exposes MCP client install flags", () => {
   assert.equal(help.status, 0, help.stderr);
   assert.match(help.stdout, /grape mcp --install --client cursor/);
   assert.match(help.stdout, /grape mcp --install --client claude/);
+  assert.match(help.stdout, /grape mcp --install --client codex/);
   assert.match(help.stdout, /--client <name>/);
   assert.match(help.stdout, /--dry-run/);
   assert.match(help.stdout, /--force/);
@@ -97,7 +110,8 @@ test("cli help exposes MCP client install flags", () => {
   assert.equal(mcpHelp.status, 0, mcpHelp.stderr);
   assert.match(mcpHelp.stdout, /grape mcp --install --client cursor/);
   assert.match(mcpHelp.stdout, /grape mcp --install --client claude/);
-  assert.match(mcpHelp.stdout, /--dry-run prints the target path and final JSON/);
+  assert.match(mcpHelp.stdout, /grape mcp --install --client codex/);
+  assert.match(mcpHelp.stdout, /--dry-run prints the target path and final config/);
 });
 
 test("cli rejects unsupported MCP auto-install clients with manual fallback guidance", () => {
@@ -349,6 +363,110 @@ test("claude MCP install fails safely when config path is uncertain", () => {
         }),
       /Use `grape mcp --print-config` for manual setup/
     );
+  });
+});
+
+test("codex MCP install dry-run prints target and final TOML without writing", () => {
+  withTempDir("grape-mcp-install-codex-dry-", (rootPath) => {
+    const result = runCli(rootPath, ["mcp", "--install", "--client", "codex", "--dry-run"]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stderr, "");
+    assert.match(result.stdout, /Dry run: no changes written/);
+    assert.match(result.stdout, /Client: Codex/);
+    assert.match(result.stdout, /Target: <repo-root>[\\/]\.codex[\\/]config\.toml/);
+    assert.match(result.stdout, /Server command: grape mcp --stdio --repo <repo-root>/);
+    assert.match(result.stdout, /CLI fallback: codex mcp add grape -- grape mcp --stdio --repo <repo-root>/);
+    assert.match(result.stdout, /Final TOML:/);
+    assert.match(result.stdout, /\[mcp_servers\.grape\]/);
+    assert.equal(existsSync(codexConfigPath(rootPath)), false);
+  });
+});
+
+test("codex MCP install creates project-local config", () => {
+  withTempDir("grape-mcp-install-codex-fresh-", (rootPath) => {
+    const result = runCli(rootPath, ["mcp", "--install", "--client", "codex"]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /Wrote Grape MCP server config for Codex/);
+    assert.match(result.stdout, /Server entry: \[mcp_servers\.grape\]/);
+    assert.match(result.stdout, /Final TOML:/);
+    const toml = readFileSync(codexConfigPath(rootPath), "utf8");
+    assertCodexGrapeServer(toml, rootPath);
+  });
+});
+
+test("codex MCP install preserves unrelated TOML and appends Grape server", () => {
+  withTempDir("grape-mcp-install-codex-merge-", (rootPath) => {
+    const targetPath = codexConfigPath(rootPath);
+    mkdirSync(path.dirname(targetPath), { recursive: true });
+    writeFileSync(targetPath, "model = \"gpt-5.4\"\n\n[mcp_servers.docs]\ncommand = \"docs-server\"\nargs = [\"serve\"]\n");
+
+    const result = runCli(rootPath, ["mcp", "--install", "--client", "codex"]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /Updated Grape MCP server config for Codex/);
+    const toml = readFileSync(targetPath, "utf8");
+    assert.match(toml, /model = "gpt-5\.4"/);
+    assert.match(toml, /\[mcp_servers\.docs\]/);
+    assertCodexGrapeServer(toml, rootPath);
+  });
+});
+
+test("codex MCP install reports identical config as already configured", () => {
+  withTempDir("grape-mcp-install-codex-identical-", (rootPath) => {
+    const targetPath = codexConfigPath(rootPath);
+    mkdirSync(path.dirname(targetPath), { recursive: true });
+    writeFileSync(targetPath, [
+      "[mcp_servers.grape]",
+      "command = \"grape\"",
+      `args = ["mcp", "--stdio", "--repo", ${JSON.stringify(realpathSync(rootPath))}]`,
+      `cwd = ${JSON.stringify(realpathSync(rootPath))}`,
+      ""
+    ].join("\n"));
+
+    const result = runCli(rootPath, ["mcp", "--install", "--client", "codex"]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /already configured/);
+    assertCodexGrapeServer(readFileSync(targetPath, "utf8"), rootPath);
+  });
+});
+
+test("codex MCP install refuses conflicting Grape table unless forced", () => {
+  withTempDir("grape-mcp-install-codex-conflict-", (rootPath) => {
+    const targetPath = codexConfigPath(rootPath);
+    const existing = "[mcp_servers.docs]\ncommand = \"docs-server\"\n\n[mcp_servers.grape]\ncommand = \"old-grape\"\nargs = []\n";
+    mkdirSync(path.dirname(targetPath), { recursive: true });
+    writeFileSync(targetPath, existing);
+
+    const refused = runCli(rootPath, ["mcp", "--install", "--client", "codex"]);
+    assert.equal(refused.status, 1);
+    assert.match(refused.stderr, /differs from the current Codex config/);
+    assert.equal(readFileSync(targetPath, "utf8"), existing);
+
+    const forced = runCli(rootPath, ["mcp", "--install", "--client", "codex", "--force"]);
+    assert.equal(forced.status, 0, forced.stderr);
+    assert.match(forced.stdout, /Updated Grape MCP server config for Codex/);
+    const toml = readFileSync(targetPath, "utf8");
+    assert.match(toml, /\[mcp_servers\.docs\]/);
+    assert.doesNotMatch(toml, /old-grape/);
+    assertCodexGrapeServer(toml, rootPath);
+  });
+});
+
+test("codex MCP install fails safely on malformed TOML header without overwriting", () => {
+  withTempDir("grape-mcp-install-codex-invalid-", (rootPath) => {
+    const targetPath = codexConfigPath(rootPath);
+    const invalidToml = "[mcp_servers.grape\ncommand = \"old-grape\"\n";
+    mkdirSync(path.dirname(targetPath), { recursive: true });
+    writeFileSync(targetPath, invalidToml);
+
+    const result = runCli(rootPath, ["mcp", "--install", "--client", "codex"]);
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /malformed TOML table header/);
+    assert.equal(readFileSync(targetPath, "utf8"), invalidToml);
   });
 });
 

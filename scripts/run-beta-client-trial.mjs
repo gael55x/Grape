@@ -84,6 +84,10 @@ try {
     initConnect.stdout.includes("grape mcp --install --client claude"),
     "npm exec grape init --connect must point to the Claude Desktop MCP install command"
   );
+  assert(
+    initConnect.stdout.includes("grape mcp --install --client codex"),
+    "npm exec grape init --connect must point to the Codex MCP install command"
+  );
   assert(initConnect.stdout.includes("grape mcp --print-config"), "npm exec grape init --connect must keep the manual MCP config fallback");
   logStep("ran npm exec grape init --connect");
 
@@ -214,6 +218,16 @@ function runCliCoreTrial(grapeCli, repoPath) {
   assert(claudeDryRun.stdout.includes("Dry run: no changes written."), "claude install dry-run must not write");
   assert(claudeDryRun.stdout.includes("mcpServers"), "claude install dry-run must print final MCP JSON");
 
+  const codexDryRun = runInstalledCli(
+    grapeCli,
+    repoPath,
+    ["mcp", "--install", "--client", "codex", "--dry-run"],
+    "grape mcp --install --client codex --dry-run"
+  );
+  assert(codexDryRun.stdout.includes("Dry run: no changes written."), "codex install dry-run must not write");
+  assert(codexDryRun.stdout.includes("[mcp_servers.grape]"), "codex install dry-run must print final MCP TOML");
+  assert(codexDryRun.stdout.includes("codex mcp add grape"), "codex install dry-run must print a codex mcp add fallback");
+
   const status = parseInstalledCliJson(grapeCli, repoPath, ["status", "--json"], "grape status --json");
   assert(status.initialized === true, "status must report initialized project");
   assert(status.configPresent === true, "status must report config present");
@@ -338,6 +352,10 @@ async function runMcpBetaTrial(input) {
       clientInfo: { name: "grape-beta-client-trial", version: sourcePackage.version }
     });
     assert(initialize.result?.capabilities?.tools, "initialize must advertise tool capabilities");
+    assert(
+      initialize.result?.instructions?.includes("call grape_get_context"),
+      "initialize must advertise Grape MCP usage instructions"
+    );
     client.notify("notifications/initialized");
 
     const tools = await client.request("tools/list");

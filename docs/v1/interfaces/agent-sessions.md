@@ -60,9 +60,10 @@ Use auto-install first for the clients Grape can write safely when your installe
 ```bash
 grape mcp --install --client cursor
 grape mcp --install --client claude
+grape mcp --install --client codex
 ```
 
-Cursor writes project-local `.cursor/mcp.json`. Claude Desktop writes `claude_desktop_config.json` when Grape can resolve the platform path safely. Use `--dry-run` when you want to see the exact file and JSON first. Use `--force` only to replace a conflicting existing `mcpServers.grape` entry.
+Cursor writes project-local `.cursor/mcp.json`. Claude Desktop writes `claude_desktop_config.json` when Grape can resolve the platform path safely. Codex writes project-local `.codex/config.toml` for trusted Codex projects. Use `--dry-run` when you want to see the exact file and config first. Use `--force` only to replace a conflicting existing Grape MCP entry.
 
 Manual fallback for other MCP clients, or for published beta builds that do not recognize `grape mcp --install`:
 

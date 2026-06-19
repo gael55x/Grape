@@ -1,5 +1,6 @@
 import type { Readable, Writable } from "node:stream";
 
+import { grapeMcpInstructions } from "../app/local-project/setup/mcp-guide.js";
 import { PACKAGE_VERSION } from "../shared/package-version.js";
 import {
   McpMessageBuffer,
@@ -94,7 +95,8 @@ async function dispatchRequest(request: JsonRpcRequest, rootPath: string): Promi
         return respondIfNeeded(id, {
           protocolVersion: requestedProtocolVersion(request.params),
           capabilities: { tools: {} },
-          serverInfo: { name: "grape", version: PACKAGE_VERSION }
+          serverInfo: { name: "grape", version: PACKAGE_VERSION },
+          instructions: grapeMcpInstructions
         });
       case "notifications/initialized":
       case "$/cancelRequest":

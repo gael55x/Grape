@@ -1,6 +1,16 @@
 import { sessionIdentityRequirement } from "../../../core/sessions/index.js";
 import type { McpConnectionGuide, McpServerConfig } from "./setup-types.js";
 
+export const grapeMcpInstructions = [
+  "Grape is the context continuity and safety layer for this repository, not a graph replacement.",
+  "At the start of each coding task turn, call grape_get_context with the current task and a stable sessionId.",
+  "Read NEW, CHANGED, and PINNED items before acting.",
+  "Treat INVALIDATE_PREVIOUS items as stale context that must not be reused.",
+  "Use grape_get_omitted_item only when a RESTORE_AVAILABLE item body is needed.",
+  "Keep the same sessionId and query for continued turns on the same task.",
+  "Use resetSession only when prior agent context was lost."
+].join("\n");
+
 export function mcpServerConfig(rootPath = process.cwd()): McpServerConfig {
   return {
     command: "grape",

@@ -90,6 +90,12 @@ try {
   assert(claudeDryRun.stdout.includes("Dry run: no changes written."), "claude MCP install dry-run must not write");
   assert(claudeDryRun.stdout.includes("mcpServers"), "claude MCP install dry-run must print final MCP JSON");
 
+  const codexDryRun = spawnGrape(["mcp", "--install", "--client", "codex", "--dry-run"]);
+  assert(codexDryRun.status === 0, `codex MCP install dry-run failed: ${codexDryRun.stderr.trim()}`);
+  assert(codexDryRun.stdout.includes("Dry run: no changes written."), "codex MCP install dry-run must not write");
+  assert(codexDryRun.stdout.includes("[mcp_servers.grape]"), "codex MCP install dry-run must print final MCP TOML");
+  assert(codexDryRun.stdout.includes("codex mcp add grape"), "codex MCP install dry-run must print a codex mcp add fallback");
+
   const compileArgs = ["compile", "--task", "install smoke", "--session", "install-smoke-cli", "--json"];
   const compile1 = spawnGrape(compileArgs);
   assert(compile1.status === 0, `first grape compile failed: ${compile1.stderr.trim() || compile1.error?.message}`);

@@ -46,10 +46,11 @@ export async function runMcp(parsed: ParsedArgs): Promise<number> {
     "Available now:",
     "  grape mcp --install --client cursor",
     "  grape mcp --install --client claude",
+    "  grape mcp --install --client codex",
     "  grape mcp --print-config",
     "  grape mcp --stdio",
     "",
-    "Most users should run grape mcp --install --client cursor or grape mcp --install --client claude.",
+    "Most users should run grape mcp --install --client cursor, grape mcp --install --client claude, or grape mcp --install --client codex.",
     "Use grape mcp --print-config when your MCP client is not supported by auto-install.",
     "Then use the coding agent normally. The agent should call grape_get_context each turn with a stable sessionId.",
     "",
@@ -72,6 +73,7 @@ export async function runMcp(parsed: ParsedArgs): Promise<number> {
     "Next:",
     "  grape mcp --install --client cursor",
     "  grape mcp --install --client claude",
+    "  grape mcp --install --client codex",
     "  grape mcp --print-config",
     "  grape status",
     "  grape doctor"
@@ -88,8 +90,8 @@ async function runMcpInstall(parsed: ParsedArgs): Promise<number> {
     McpClientConfigInstallError
   } = await import("../../app/local-project/setup/mcp-client-config.js");
 
-  if (client !== "cursor" && client !== "claude") {
-    writeError(client ? unsupportedAutoInstallMessage : "grape mcp --install requires --client cursor or --client claude.");
+  if (client !== "cursor" && client !== "claude" && client !== "codex") {
+    writeError(client ? unsupportedAutoInstallMessage : "grape mcp --install requires --client cursor, --client claude, or --client codex.");
     if (!client) writeError(unsupportedAutoInstallMessage);
     return exitCodes.usage;
   }
@@ -120,7 +122,10 @@ function renderMcpInstallResult(
       readonly args: readonly string[];
       readonly cwd: string;
     };
-    readonly finalConfig: Record<string, unknown>;
+    readonly finalConfig: Record<string, unknown> | string;
+    readonly finalConfigText?: string;
+    readonly configFormat?: "json" | "toml";
+    readonly fallbackCommand?: string;
     readonly status: "created" | "updated" | "already_configured" | "dry_run";
     readonly change: "create" | "update" | "none";
     readonly wrote: boolean;
@@ -147,7 +152,7 @@ function renderMcpInstallResult(
     statusLine,
     `Client: ${result.clientLabel}`,
     `Target: ${result.targetPath}`,
-    `Server entry: mcpServers.${result.serverName}`,
+    `Server entry: ${result.configFormat === "toml" ? `[mcp_servers.${result.serverName}]` : `mcpServers.${result.serverName}`}`,
     `Server command: ${result.serverConfig.command} ${result.serverConfig.args.join(" ")}`,
     `Working directory: ${result.serverConfig.cwd}`,
     changeLine,
@@ -156,9 +161,16 @@ function renderMcpInstallResult(
     `  Restart or reload ${result.clientLabel} so it reads the MCP config.`,
     "  Verify the connection by listing MCP tools or calling grape_get_status.",
     "  Ask the agent to call grape_get_context with a stable sessionId for each continued repo task.",
+    result.fallbackCommand ? `  CLI fallback: ${result.fallbackCommand}` : undefined,
     "  Manual fallback: grape mcp --print-config",
     "",
-    result.dryRun || result.wrote ? "Final JSON:" : "Existing JSON:",
-    JSON.stringify(result.finalConfig, null, 2)
-  ].join("\n"), repoOutputOptions(rootPath));
+    result.dryRun || result.wrote
+      ? result.configFormat === "toml"
+        ? "Final TOML:"
+        : "Final JSON:"
+      : result.configFormat === "toml"
+        ? "Existing TOML:"
+        : "Existing JSON:",
+    result.configFormat === "toml" ? result.finalConfigText ?? String(result.finalConfig) : JSON.stringify(result.finalConfig, null, 2)
+  ].filter((line): line is string => line !== undefined).join("\n"), repoOutputOptions(rootPath));
 }
