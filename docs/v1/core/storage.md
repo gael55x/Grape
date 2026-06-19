@@ -123,6 +123,8 @@ Migration `0004_compression_cache.sql` adds the first deterministic compression 
 
 The current implementation writes `symbol_outline` records from the deterministic symbol index, `rule_digest` records from verified active rule excerpt proofs, and `context_pack_summary` records from the session-scoped sent ledger after durable pack persistence. Compression repositories persist derived cache records only; they do not decide compiler policy, trust, proof validity, or whether a summary can replace context.
 
+Compiled artifact dependency manifests reference compression artifacts by output hash and compact scope only. They include aggregate `inputHash`, `inputCount`, `policyHash`, and `scopeHash`, then point detailed input lookup back to `compression_inputs`. They do not duplicate every compression input ref or input hash inside artifact JSON, Markdown metadata, MCP payloads, or context-pack item refs.
+
 Migration `0005_context_performance_indexes.sql` adds performance indexes only:
 
 - `context_pack_items(session_id, diff_state, invalidates_sent_item_id)` supports invalidation-ref queries without loading every pack row.

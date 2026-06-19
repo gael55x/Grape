@@ -30,6 +30,14 @@ Keep entries simple:
 - Tests or checks run: focused MCP client install behavior tests, focused MCP stdio behavior test, AGENTS snippet output tests, Codex plugin structure check, isolated Codex workflow check, docs checks, typecheck, package check, install smoke, and full `npm run check` before committing these slices.
 - Risks or follow-ups: keep Codex workflow verification current as Codex plugin commands evolve.
 
+### 2026-06-19 - Compression Dependency Scope Slimming
+
+- Author/agent: Gaille Amolong / Codex
+- Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
+- Summary: compacted compression artifact dependency scope in compiled context artifacts. Public artifact dependency rows now carry aggregate `inputHash`, `inputCount`, policy/scope hashes, output hash, and a pointer to `compression_inputs` instead of duplicating every compression input ref and hash into artifact JSON, Markdown metadata, MCP payloads, and context-pack item refs.
+- Tests or checks run: large compression dependency scope regression test plus the standard local gates for the slice.
+- Risks or follow-ups: retention and compaction still need explicit limits for old artifacts, snapshots, FTS rows, compression inputs, and invalidated records.
+
 ### 2026-06-17 - MCP Client Config Auto-Wiring
 
 - Author/agent: Gaille Amolong / Codex

@@ -207,7 +207,7 @@ This is still narrower than the final broad durable-claim retrieval system. It u
 - Dependency hashes must be recalculated before diff generation.
 - Any dependency hash mismatch makes the artifact `context_artifact_dirty`.
 - If a dirty artifact was previously sent, the diff engine must emit `INVALIDATE_PREVIOUS`.
-- Compression artifacts listed as dependencies must include their own input hashes.
+- Compression artifacts listed as dependencies must include compact dependency scope: compression type, output hash, aggregate `inputHash`, `inputCount`, `policyHash`, and `scopeHash`. They must not copy the full compression input list into public artifact scope. Detailed input refs and hashes stay in the local `compression_inputs` table.
 
 ## Output Rules
 

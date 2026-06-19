@@ -123,10 +123,11 @@ export function dependencyManifest(
       hash: artifact.outputHash,
       scope: {
         ...baseScope,
+        dependencyScopeVersion: 1,
         compressionType: artifact.type,
+        inputCount: artifact.inputRefs.length,
         inputHash: artifact.inputHash,
-        inputRefs: artifact.inputRefs,
-        inputHashes: artifact.inputHashes,
+        inputDetails: "compression_inputs",
         policyHash: artifact.policyHash,
         scopeHash: artifact.scopeHash
       }

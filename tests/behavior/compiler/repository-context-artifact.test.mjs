@@ -696,8 +696,89 @@ test("repository artifact compiler renders compression artifacts as non-proof or
       assert.deepEqual(compressionSection?.proofRefs, []);
       assert.equal(compressionDependency?.kind, "compression_artifact");
       assert.equal(compressionDependency?.hash, "2".repeat(64));
+      assert.equal(compressionDependency?.scope.dependencyScopeVersion, 1);
+      assert.equal(compressionDependency?.scope.inputCount, 1);
+      assert.equal(compressionDependency?.scope.inputHash, "e".repeat(64));
+      assert.equal(compressionDependency?.scope.inputDetails, "compression_inputs");
+      assert.equal(Object.hasOwn(compressionDependency?.scope ?? {}, "inputRefs"), false);
+      assert.equal(Object.hasOwn(compressionDependency?.scope ?? {}, "inputHashes"), false);
       assert.deepEqual(contextArtifact.compressionArtifactRefs, ["compression:symbol_outline:abc"]);
       assert.deepEqual(contextArtifact.compressionArtifactsUsed, ["compression:symbol_outline:abc"]);
+    });
+  });
+});
+
+test("repository artifact compiler keeps compression dependency scope compact for large input sets", () => {
+  withGitRepo((repoPath) => {
+    withMigratedDatabase((database, repositories, evidenceRepositories, indexingRepositories) => {
+      const snapshotResult = persistGitRepoSnapshot({
+        database,
+        repositories,
+        evidenceRepositories,
+        indexingRepositories,
+        rootPath: repoPath,
+        projectId: "project-1",
+        repoId: "repo-1",
+        now
+      });
+      const inputRefs = Array.from({ length: 2_500 }, (_, index) => `symbol:${String(index).padStart(4, "0")}`);
+      const inputHashes = inputRefs.map((_, index) => index.toString(16).padStart(64, "0"));
+
+      const artifact = compileFromSnapshot(repoPath, snapshotResult, evidenceRepositories, indexingRepositories, {
+        compressionArtifacts: [
+          {
+            compressionId: "compression:symbol_outline:large",
+            type: "symbol_outline",
+            summaryText: "Large deterministic symbol outline only.",
+            inputRefs,
+            inputHashes,
+            inputHash: "e".repeat(64),
+            policyHash: "f".repeat(64),
+            scopeHash: "1".repeat(64),
+            outputHash: "2".repeat(64)
+          }
+        ]
+      });
+      const compressionDependency = artifact.dependencyManifest.dependencies.find(
+        (dependency) => dependency.ref === "compression:symbol_outline:large"
+      );
+      assert.ok(compressionDependency);
+      const scopeJson = JSON.stringify(compressionDependency.scope);
+
+      assert.equal(compressionDependency.scope.inputCount, inputRefs.length);
+      assert.equal(compressionDependency.scope.inputHash, "e".repeat(64));
+      assert.equal(compressionDependency.scope.inputDetails, "compression_inputs");
+      assert.equal(Object.hasOwn(compressionDependency.scope, "inputRefs"), false);
+      assert.equal(Object.hasOwn(compressionDependency.scope, "inputHashes"), false);
+      assert.ok(scopeJson.length < 700, `compression dependency scope should stay compact, got ${scopeJson.length}`);
+
+      const contextArtifact = buildContextArtifact({
+        artifact,
+        projectId: "project-1",
+        repoSnapshotId: snapshotResult.snapshotId,
+        worktreeStateId: snapshotResult.worktreeStateId,
+        dirtyWorktree: false,
+        budget: {
+          status: "not_requested",
+          estimatedPackTokens: 100,
+          requiredContextTokens: 20,
+          omittedDueToBudget: [],
+          warnings: [],
+          unsafeReasons: []
+        },
+        tokenCost: 100
+      });
+      const publicInputRef = contextArtifact.inputRefs.find(
+        (inputRef) => inputRef.ref === "compression:symbol_outline:large"
+      );
+
+      assert.ok(publicInputRef);
+      assert.equal(Object.hasOwn(publicInputRef.scope, "inputRefs"), false);
+      assert.equal(Object.hasOwn(publicInputRef.scope, "inputHashes"), false);
+      assert.ok(
+        JSON.stringify(publicInputRef).length < 900,
+        "public compression input ref should not expand with input count"
+      );
     });
   });
 });

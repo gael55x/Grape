@@ -1822,7 +1822,8 @@ Summaries cannot supersede claims.
 Summaries cannot promote scratch/session memory into durable memory.
 Summaries cannot appear in a `Proof`.
 Summaries cannot replace active contradictions, stale warnings, missing verification warnings, pinned invariants, or required exact spans.
-Summaries must list input refs and input hashes.
+Compression cache rows must store detailed input refs and input hashes.
+Artifact dependency manifests must use compact compression scope with aggregate `inputHash` and `inputCount`.
 Summaries must be listed in the artifact dependency manifest when used.
 If an input hash changes, the summary becomes stale.
 If stale compression was previously sent, the next diff must emit `INVALIDATE_PREVIOUS`.
@@ -2038,7 +2039,8 @@ Compression cannot answer:
 Hard rules:
 
 - Any active `RiskOverlay` means required context cannot be summary-only.
-- Any compressed section must list its source input hashes.
+- Compression cache storage must track source input hashes.
+- Artifact dependency manifests must not inline the full compression input list.
 - If any source input hash changes, the compression artifact is stale.
 - The compiler must prefer exact source spans over compression when any risk overlay is active.
 - Compression is a budget optimization, not a trust source.
