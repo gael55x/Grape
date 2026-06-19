@@ -91,6 +91,14 @@ grape mcp --install --client codex --dry-run
 
 If an existing Grape MCP entry differs, Grape refuses to replace it unless you pass `--force`. It preserves unrelated MCP server entries.
 
+Print a path-neutral AGENTS.md snippet when you want checked-in agent guidance:
+
+```bash
+grape mcp --print-agents-snippet
+```
+
+Review the snippet before adding it to your repository rules. Grape does not edit AGENTS.md automatically.
+
 Other clients remain manual unless their config paths can be handled safely. That is intentional. Grape should not guess where to write global editor config. If a published beta build does not recognize `grape mcp --install`, use the manual fallback until the next build that includes client auto-install is published.
 
 Manual fallback:

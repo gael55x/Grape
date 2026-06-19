@@ -38,6 +38,14 @@ Grape does not silently touch unsupported client config files. Other clients, an
 grape mcp --print-config
 ```
 
+To add repository guidance for agents, print a path-neutral AGENTS.md snippet:
+
+```bash
+grape mcp --print-agents-snippet
+```
+
+Review the snippet before adding it to AGENTS.md. Grape does not edit AGENTS.md automatically.
+
 Use `--dry-run` to preview the target path and final JSON without writing. If an existing `mcpServers.grape` entry differs, Grape requires `--force` before replacing only that entry. It preserves unrelated MCP servers.
 
 This auto-install behavior is separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write client config files.
@@ -120,6 +128,7 @@ The setup CLI now supports real client config installation for the two clients w
 - `grape mcp --install --client cursor` writes `.cursor/mcp.json` in the current repository.
 - `grape mcp --install --client claude` writes Claude Desktop `claude_desktop_config.json` when the platform path can be resolved.
 - `grape mcp --install --client codex` writes `.codex/config.toml` in the current repository.
+- `grape mcp --print-agents-snippet` prints AGENTS.md setup guidance without writing files.
 
 Cursor and Claude merge `mcpServers.grape`. Codex merges `[mcp_servers.grape]`. The installers preserve unrelated entries, refuse invalid JSON or malformed Codex table headers, and require `--force` before replacing a conflicting existing Grape entry.
 

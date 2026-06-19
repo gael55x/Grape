@@ -153,6 +153,14 @@ grape mcp --install --client codex --dry-run
 
 If an existing Grape MCP entry differs, Grape refuses to replace it unless you pass `--force`. Unrelated MCP servers are preserved.
 
+To add project guidance for agents, print a path-neutral AGENTS.md snippet:
+
+```bash
+grape mcp --print-agents-snippet
+```
+
+Review the snippet before adding it to your repository rules. Grape does not edit AGENTS.md automatically.
+
 For other MCP clients, or for published beta builds that do not recognize `grape mcp --install`, use the manual config fallback:
 
 ```bash

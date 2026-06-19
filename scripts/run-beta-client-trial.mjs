@@ -228,6 +228,15 @@ function runCliCoreTrial(grapeCli, repoPath) {
   assert(codexDryRun.stdout.includes("[mcp_servers.grape]"), "codex install dry-run must print final MCP TOML");
   assert(codexDryRun.stdout.includes("codex mcp add grape"), "codex install dry-run must print a codex mcp add fallback");
 
+  const agentsSnippet = runInstalledCli(
+    grapeCli,
+    repoPath,
+    ["mcp", "--print-agents-snippet"],
+    "grape mcp --print-agents-snippet"
+  );
+  assert(agentsSnippet.stdout.includes("call `grape_get_context`"), "AGENTS snippet must mention grape_get_context");
+  assert(agentsSnippet.stdout.includes("`INVALIDATE_PREVIOUS`"), "AGENTS snippet must mention invalidation handling");
+
   const status = parseInstalledCliJson(grapeCli, repoPath, ["status", "--json"], "grape status --json");
   assert(status.initialized === true, "status must report initialized project");
   assert(status.configPresent === true, "status must report config present");

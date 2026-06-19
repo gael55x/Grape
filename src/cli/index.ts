@@ -191,6 +191,7 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
             "  Claude Desktop: grape mcp --install --client claude",
             "  Codex: grape mcp --install --client codex",
             "  Preview first: add --dry-run",
+            "  AGENTS.md snippet: grape mcp --print-agents-snippet",
             "  Manual fallback: grape mcp --print-config",
             "",
             "Agent instruction block:",
@@ -205,6 +206,7 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
             "  grape mcp --install --client cursor",
             "  grape mcp --install --client claude",
             "  grape mcp --install --client codex",
+            "  grape mcp --print-agents-snippet",
             "  grape mcp --print-config",
             "  grape status",
             "  grape doctor"

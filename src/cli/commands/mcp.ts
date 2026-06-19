@@ -3,17 +3,22 @@ import { errorMessage, repoOutputOptions, write, writeError, writeJson } from ".
 import { exitCodes } from "../exit-codes.js";
 
 export async function runMcp(parsed: ParsedArgs): Promise<number> {
-  const flag = unsupportedFlag(parsed, new Set(["--print-config", "--stdio", "--install", "--repo", "--dry-run", "--force"]));
+  const flag = unsupportedFlag(parsed, new Set(["--print-config", "--print-agents-snippet", "--stdio", "--install", "--repo", "--dry-run", "--force"]));
   if (flag) {
     writeError(`Unsupported option for grape mcp: ${flag}`);
     writeError("Run grape help for supported options.");
     return exitCodes.usage;
   }
 
-  const actionCount = [parsed.flags.has("--print-config"), parsed.flags.has("--stdio"), parsed.flags.has("--install")]
+  const actionCount = [
+    parsed.flags.has("--print-config"),
+    parsed.flags.has("--print-agents-snippet"),
+    parsed.flags.has("--stdio"),
+    parsed.flags.has("--install")
+  ]
     .filter(Boolean).length;
   if (actionCount > 1) {
-    writeError("Choose only one MCP action: --print-config, --install, or --stdio.");
+    writeError("Choose only one MCP action: --print-config, --print-agents-snippet, --install, or --stdio.");
     return exitCodes.usage;
   }
 
@@ -28,6 +33,12 @@ export async function runMcp(parsed: ParsedArgs): Promise<number> {
     writeJson({
       grapeMcp: mcpConnectionGuide(rootPath)
     }, repoOutputOptions(rootPath));
+    return exitCodes.ok;
+  }
+
+  if (parsed.flags.has("--print-agents-snippet")) {
+    const { agentsSetupSnippet } = await import("../../app/local-project/setup/mcp-guide.js");
+    write(agentsSetupSnippet());
     return exitCodes.ok;
   }
 
@@ -47,6 +58,7 @@ export async function runMcp(parsed: ParsedArgs): Promise<number> {
     "  grape mcp --install --client cursor",
     "  grape mcp --install --client claude",
     "  grape mcp --install --client codex",
+    "  grape mcp --print-agents-snippet",
     "  grape mcp --print-config",
     "  grape mcp --stdio",
     "",
@@ -74,6 +86,7 @@ export async function runMcp(parsed: ParsedArgs): Promise<number> {
     "  grape mcp --install --client cursor",
     "  grape mcp --install --client claude",
     "  grape mcp --install --client codex",
+    "  grape mcp --print-agents-snippet",
     "  grape mcp --print-config",
     "  grape status",
     "  grape doctor"

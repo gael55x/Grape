@@ -65,6 +65,8 @@ grape mcp --install --client codex
 
 Cursor writes project-local `.cursor/mcp.json`. Claude Desktop writes `claude_desktop_config.json` when Grape can resolve the platform path safely. Codex writes project-local `.codex/config.toml` for trusted Codex projects. Use `--dry-run` when you want to see the exact file and config first. Use `--force` only to replace a conflicting existing Grape MCP entry.
 
+To add repository guidance for agents, run `grape mcp --print-agents-snippet` and review the printed AGENTS.md block before adding it to your rules. Grape does not edit AGENTS.md automatically.
+
 Manual fallback for other MCP clients, or for published beta builds that do not recognize `grape mcp --install`:
 
 ```bash

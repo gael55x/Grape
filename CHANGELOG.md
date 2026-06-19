@@ -10,6 +10,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 - Added `grape mcp --install --client codex` for project-local Codex MCP config in `.codex/config.toml`.
 - Added MCP `initialize` instructions so Codex-style clients receive Grape session, invalidation, and restore guidance from the server.
+- Added `grape mcp --print-agents-snippet` to print path-neutral AGENTS.md guidance without editing files.
 
 ### Fixed
 

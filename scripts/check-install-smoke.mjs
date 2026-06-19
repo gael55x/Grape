@@ -96,6 +96,11 @@ try {
   assert(codexDryRun.stdout.includes("[mcp_servers.grape]"), "codex MCP install dry-run must print final MCP TOML");
   assert(codexDryRun.stdout.includes("codex mcp add grape"), "codex MCP install dry-run must print a codex mcp add fallback");
 
+  const agentsSnippet = spawnGrape(["mcp", "--print-agents-snippet"]);
+  assert(agentsSnippet.status === 0, `AGENTS snippet command failed: ${agentsSnippet.stderr.trim()}`);
+  assert(agentsSnippet.stdout.includes("call `grape_get_context`"), "AGENTS snippet must mention grape_get_context");
+  assert(agentsSnippet.stdout.includes("`INVALIDATE_PREVIOUS`"), "AGENTS snippet must mention invalidation handling");
+
   const compileArgs = ["compile", "--task", "install smoke", "--session", "install-smoke-cli", "--json"];
   const compile1 = spawnGrape(compileArgs);
   assert(compile1.status === 0, `first grape compile failed: ${compile1.stderr.trim() || compile1.error?.message}`);

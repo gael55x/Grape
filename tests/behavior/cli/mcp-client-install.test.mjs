@@ -102,6 +102,7 @@ test("cli help exposes MCP client install flags", () => {
   assert.match(help.stdout, /grape mcp --install --client cursor/);
   assert.match(help.stdout, /grape mcp --install --client claude/);
   assert.match(help.stdout, /grape mcp --install --client codex/);
+  assert.match(help.stdout, /grape mcp --print-agents-snippet/);
   assert.match(help.stdout, /--client <name>/);
   assert.match(help.stdout, /--dry-run/);
   assert.match(help.stdout, /--force/);
@@ -111,6 +112,7 @@ test("cli help exposes MCP client install flags", () => {
   assert.match(mcpHelp.stdout, /grape mcp --install --client cursor/);
   assert.match(mcpHelp.stdout, /grape mcp --install --client claude/);
   assert.match(mcpHelp.stdout, /grape mcp --install --client codex/);
+  assert.match(mcpHelp.stdout, /grape mcp --print-agents-snippet/);
   assert.match(mcpHelp.stdout, /--dry-run prints the target path and final config/);
 });
 
@@ -121,6 +123,30 @@ test("cli rejects unsupported MCP auto-install clients with manual fallback guid
     assert.equal(result.status, 1);
     assert.equal(result.stdout, "");
     assert.match(result.stderr, new RegExp(escapeRegExp(unsupportedAutoInstallMessage)));
+  });
+});
+
+test("mcp --print-agents-snippet prints path-neutral setup guidance", () => {
+  withTempDir("grape-mcp-agents-snippet-", (rootPath) => {
+    const result = runCli(rootPath, ["mcp", "--print-agents-snippet"]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stderr, "");
+    assert.match(result.stdout, /## Grape Context/);
+    assert.match(result.stdout, /call `grape_get_context`/);
+    assert.match(result.stdout, /stable `sessionId`/);
+    assert.match(result.stdout, /`INVALIDATE_PREVIOUS`/);
+    assert.match(result.stdout, /not as a full code graph replacement/);
+    assert.doesNotMatch(result.stdout, new RegExp(escapeRegExp(rootPath)));
+  });
+});
+
+test("mcp action flags are mutually exclusive with agents snippet output", () => {
+  withTempDir("grape-mcp-agents-snippet-exclusive-", (rootPath) => {
+    const result = runCli(rootPath, ["mcp", "--print-config", "--print-agents-snippet"]);
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Choose only one MCP action/);
   });
 });
 

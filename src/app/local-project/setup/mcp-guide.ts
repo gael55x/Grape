@@ -11,6 +11,22 @@ export const grapeMcpInstructions = [
   "Use resetSession only when prior agent context was lost."
 ].join("\n");
 
+export function agentsSetupSnippet(): string {
+  return [
+    "## Grape Context",
+    "",
+    "Use Grape MCP for coding-agent context continuity in this repository.",
+    "",
+    "- At the start of each task turn, call `grape_get_context` with the current task and a stable `sessionId`.",
+    "- Keep the same `sessionId` and task wording for continued turns on the same task.",
+    "- Read `NEW`, `CHANGED`, and `PINNED` context before editing.",
+    "- Treat `INVALIDATE_PREVIOUS` as stale context that must not be reused.",
+    "- Use `grape_get_omitted_item` only when a `RESTORE_AVAILABLE` body is needed.",
+    "- Use `resetSession` only when prior agent context was lost.",
+    "- Treat Grape as the context continuity and safety layer, not as a full code graph replacement."
+  ].join("\n");
+}
+
 export function mcpServerConfig(rootPath = process.cwd()): McpServerConfig {
   return {
     command: "grape",

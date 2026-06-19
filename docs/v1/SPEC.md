@@ -2977,11 +2977,14 @@ grape mcp
 grape mcp --install --client cursor
 grape mcp --install --client claude
 grape mcp --install --client codex
+grape mcp --print-agents-snippet
 grape mcp --print-config
 grape mcp --stdio
 ```
 
 `grape mcp --install --client cursor` writes project-local `.cursor/mcp.json`. `grape mcp --install --client claude` writes Claude Desktop `claude_desktop_config.json` only when the platform path can be resolved safely. `grape mcp --install --client codex` writes project-local `.codex/config.toml` for trusted Codex projects. Install commands preserve unrelated config, fail safely on invalid JSON or malformed Codex table headers, require `--force` before replacing a conflicting existing Grape MCP entry, and keep `grape mcp --print-config` as the manual fallback for other clients.
+
+`grape mcp --print-agents-snippet` prints path-neutral AGENTS.md setup guidance. It does not edit AGENTS.md.
 
 Manual fallback:
 
@@ -3799,6 +3802,7 @@ Build:
 - `grape mcp --install --client cursor`
 - `grape mcp --install --client claude`
 - `grape mcp --install --client codex`
+- `grape mcp --print-agents-snippet`
 - `grape mcp --print-config`
 
 ### Bootstrap mode
