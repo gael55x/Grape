@@ -1,6 +1,9 @@
 import path from "node:path";
 
 export function commandForPlatform(command, platform = process.platform) {
+  if (platform === "win32" && command === "git") {
+    return "git";
+  }
   return platform === "win32" ? `${command}.cmd` : command;
 }
 
