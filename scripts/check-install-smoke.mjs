@@ -58,6 +58,7 @@ try {
   assert(install.status === 0, `npm install failed: ${spawnFailureMessage(install)}`);
 
   assertInstalledPackageMetadata(consumerRepo);
+  assertInstalledPackagePluginFiles(consumerRepo);
   const grapeCli = installedPackageBinTarget(consumerRepo, sourcePackage.name, sourcePackage.bin.grape);
   assert(existsSync(grapeCli), `installed package is missing ${sourcePackage.bin.grape}`);
 
@@ -236,6 +237,18 @@ function assertInstalledPackageMetadata(consumerRepo) {
     installedPackage.engines?.node === sourcePackage.engines?.node,
     `installed package Node engine must be ${sourcePackage.engines?.node}`
   );
+}
+
+function assertInstalledPackagePluginFiles(consumerRepo) {
+  const packageRoot = path.join(consumerRepo, "node_modules", ...sourcePackage.name.split("/"));
+  for (const file of [
+    ".agents/plugins/marketplace.json",
+    "plugins/grape/.codex-plugin/plugin.json",
+    "plugins/grape/.mcp.json",
+    "plugins/grape/skills/grape/SKILL.md"
+  ]) {
+    assert(existsSync(path.join(packageRoot, file)), `installed package is missing ${file}`);
+  }
 }
 
 function assert(condition, message) {

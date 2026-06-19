@@ -17,6 +17,10 @@ const migrationFiles = readdirSync(path.join(root, "src", "core", "storage", "mi
 
 const requiredFiles = [
   "dist/cli/index.js",
+  ".agents/plugins/marketplace.json",
+  "plugins/grape/.codex-plugin/plugin.json",
+  "plugins/grape/.mcp.json",
+  "plugins/grape/skills/grape/SKILL.md",
   ...migrationFiles.map((file) => `dist/core/storage/migrations/${file}`)
 ];
 

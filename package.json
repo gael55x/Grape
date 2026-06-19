@@ -17,6 +17,8 @@
   },
   "files": [
     "dist/",
+    "plugins/",
+    ".agents/plugins/marketplace.json",
     "README.md",
     "CHANGELOG.md"
   ],
@@ -33,7 +35,8 @@
     "architecture:check": "node scripts/check-architecture-boundaries.mjs",
     "storage:check": "node scripts/check-storage-migrations.mjs",
     "typecheck": "tsc --noEmit",
-    "package:check": "npm run build && node scripts/check-package.mjs",
+    "plugin:check": "node scripts/check-codex-plugin.mjs",
+    "package:check": "npm run build && npm run plugin:check && node scripts/check-package.mjs",
     "install:check": "node scripts/check-install-smoke.mjs",
     "global:smoke": "node scripts/check-global-install-smoke.mjs",
     "bench": "node benchmarks/scripts/run-benchmarks.mjs",

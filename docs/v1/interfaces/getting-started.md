@@ -99,6 +99,15 @@ grape mcp --print-agents-snippet
 
 Review the snippet before adding it to your repository rules. Grape does not edit AGENTS.md automatically.
 
+Codex plugin setup is also available from this repo:
+
+```bash
+codex plugin marketplace add .agents/plugins
+codex plugin add grape@grape-local
+```
+
+The plugin lives in `plugins/grape`. It exposes `grape mcp --stdio` and a Grape skill. It assumes `grape` is on `PATH`. Use `grape mcp --install --client codex` when you need `.codex/config.toml` with an exact working directory. The plugin does not ship hooks.
+
 Other clients remain manual unless their config paths can be handled safely. That is intentional. Grape should not guess where to write global editor config. If a published beta build does not recognize `grape mcp --install`, use the manual fallback until the next build that includes client auto-install is published.
 
 Manual fallback:

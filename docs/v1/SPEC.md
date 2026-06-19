@@ -2986,6 +2986,8 @@ grape mcp --stdio
 
 `grape mcp --print-agents-snippet` prints path-neutral AGENTS.md setup guidance. It does not edit AGENTS.md.
 
+The repository includes a Codex plugin at `plugins/grape` and a repo-local marketplace file at `.agents/plugins/marketplace.json`. The plugin exposes `grape mcp --stdio` and a Grape skill. It does not include hooks. Install it with `codex plugin marketplace add .agents/plugins` followed by `codex plugin add grape@grape-local`. The plugin assumes `grape` is on `PATH`; use `grape mcp --install --client codex` when the project needs `.codex/config.toml` with an exact working directory.
+
 Manual fallback:
 
 ```bash
@@ -3804,6 +3806,7 @@ Build:
 - `grape mcp --install --client codex`
 - `grape mcp --print-agents-snippet`
 - `grape mcp --print-config`
+- repo-local Codex plugin at `plugins/grape`
 
 ### Bootstrap mode
 

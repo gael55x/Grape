@@ -1,0 +1,39 @@
+{
+  "name": "grape",
+  "version": "0.1.0",
+  "description": "Use Grape MCP from Codex for repository context continuity.",
+  "author": {
+    "name": "Grape"
+  },
+  "homepage": "https://graperoot.dev/",
+  "repository": "https://github.com/gael55x/Grape",
+  "license": "MIT",
+  "keywords": [
+    "grape",
+    "codex",
+    "mcp",
+    "context",
+    "coding-agents"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Grape",
+    "shortDescription": "Use local context continuity in Codex",
+    "longDescription": "Grape gives Codex a local MCP server for repeated-turn repository context. It tracks what was sent, what changed, what can be omitted, what can be restored, and what should be invalidated.",
+    "developerName": "Grape",
+    "category": "Engineering",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://graperoot.dev/",
+    "defaultPrompt": [
+      "Use Grape context before editing this repo",
+      "Check what changed since my last Codex turn",
+      "Restore omitted context only if needed"
+    ],
+    "brandColor": "#44624A",
+    "screenshots": []
+  }
+}
