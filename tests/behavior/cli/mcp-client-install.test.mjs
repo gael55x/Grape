@@ -402,7 +402,7 @@ test("codex MCP install dry-run prints target and final TOML without writing", (
     assert.match(result.stdout, /Client: Codex/);
     assert.match(result.stdout, /Target: <repo-root>[\\/]\.codex[\\/]config\.toml/);
     assert.match(result.stdout, /Server command: grape mcp --stdio --repo <repo-root>/);
-    assert.match(result.stdout, /CLI fallback: codex mcp add grape -- grape mcp --stdio --repo <repo-root>/);
+    assert.match(result.stdout, /CLI fallback: codex mcp add grape -- grape mcp --stdio --repo '?<repo-root>'?/);
     assert.match(result.stdout, /Final TOML:/);
     assert.match(result.stdout, /\[mcp_servers\.grape\]/);
     assert.equal(existsSync(codexConfigPath(rootPath)), false);
