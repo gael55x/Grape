@@ -12,6 +12,10 @@ import {
   createIndexingStorageRepositories,
   createStorageRepositories
 } from "../../../.tmp/build/src/core/storage/index.js";
+import {
+  defaultLocalProjectRetentionPolicy,
+  readLocalProjectConfig
+} from "../../../.tmp/build/src/app/local-project/setup/config.js";
 
 const cliPath = path.join(process.cwd(), ".tmp/build/src/cli/index.js");
 
@@ -805,7 +809,10 @@ test("cli init --connect bootstraps local .grape state and keeps it out of git s
     assert.match(init.stdout, /Grape initialized/);
     assert.match(init.stdout, /Scan diagnostics:/);
     assert.match(init.stdout, /Rejection reasons: binary=1/);
-    assert.equal(existsSync(path.join(repoPath, ".grape", "config.json")), true);
+    const configPath = path.join(repoPath, ".grape", "config.json");
+    assert.equal(existsSync(configPath), true);
+    const config = JSON.parse(readFileSync(configPath, "utf8"));
+    assert.deepEqual(config.retention, defaultLocalProjectRetentionPolicy);
     assert.equal(existsSync(path.join(repoPath, ".grape", "grape.db")), true);
     assert.match(readFileSync(path.join(repoPath, ".git", "info", "exclude"), "utf8"), /\.grape\//);
     assert.equal(execGit(repoPath, ["status", "--porcelain=v1"]), "");
@@ -834,6 +841,24 @@ test("cli init --connect bootstraps local .grape state and keeps it out of git s
     assert.equal(subdirStatus.status, 0, subdirStatus.stderr);
     assert.equal(subdirStatus.stderr, "");
     assert.equal(JSON.parse(subdirStatus.stdout).initialized, true);
+  });
+});
+
+test("local project config fills retention defaults for older schema-one configs", () => {
+  withGitRepo((repoPath) => {
+    const init = runCli(repoPath, ["init", "--connect"]);
+    assert.equal(init.status, 0, init.stderr);
+    const configPath = path.join(repoPath, ".grape", "config.json");
+    const rawConfig = JSON.parse(readFileSync(configPath, "utf8"));
+    delete rawConfig.retention;
+    writeFileSync(configPath, `${JSON.stringify(rawConfig, null, 2)}\n`);
+
+    const config = readLocalProjectConfig(configPath);
+    assert.deepEqual(config.retention, defaultLocalProjectRetentionPolicy);
+
+    const status = runCliJson(repoPath, ["status"]);
+    assert.equal(status.databaseReady, true);
+    assert.deepEqual(status.errors, []);
   });
 });
 

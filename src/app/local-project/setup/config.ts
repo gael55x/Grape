@@ -13,6 +13,20 @@ export interface LocalProjectPaths {
   readonly tmp: string;
 }
 
+export interface LocalRetentionLimit {
+  readonly maxAgeDays: number;
+  readonly maxRows: number;
+}
+
+export interface LocalProjectRetentionPolicy {
+  readonly contextArtifacts: LocalRetentionLimit;
+  readonly snapshots: LocalRetentionLimit;
+  readonly ftsRows: LocalRetentionLimit;
+  readonly compressionInputs: LocalRetentionLimit;
+  readonly derivedMetadata: LocalRetentionLimit;
+  readonly invalidatedRecords: LocalRetentionLimit;
+}
+
 export interface LocalProjectConfig {
   readonly schemaVersion: 1;
   readonly runtime: "node";
@@ -56,6 +70,7 @@ export interface LocalProjectConfig {
     readonly secretScan: boolean;
     readonly redactEnvValues: boolean;
   };
+  readonly retention: LocalProjectRetentionPolicy;
   readonly platform: {
     readonly normalizePaths: boolean;
     readonly followSymlinks: boolean;
@@ -98,6 +113,15 @@ const localDirectories = [
   ".grape/cache/compression/module_outlines",
   ".grape/tmp"
 ] as const;
+
+export const defaultLocalProjectRetentionPolicy: LocalProjectRetentionPolicy = {
+  contextArtifacts: { maxAgeDays: 30, maxRows: 500 },
+  snapshots: { maxAgeDays: 30, maxRows: 200 },
+  ftsRows: { maxAgeDays: 30, maxRows: 250000 },
+  compressionInputs: { maxAgeDays: 30, maxRows: 250000 },
+  derivedMetadata: { maxAgeDays: 30, maxRows: 250000 },
+  invalidatedRecords: { maxAgeDays: 14, maxRows: 50000 }
+};
 
 export function ensureLocalProjectLayout(rootPath: string): LocalProjectLayout {
   const normalizedRoot = path.resolve(rootPath);
@@ -208,6 +232,7 @@ export function defaultLocalProjectConfig(input: {
       secretScan: true,
       redactEnvValues: true
     },
+    retention: defaultLocalProjectRetentionPolicy,
     platform: {
       normalizePaths: true,
       followSymlinks: false
@@ -236,7 +261,7 @@ export function readLocalProjectConfig(configPath: string): LocalProjectConfig |
     throw new Error("Grape config is missing project identity.");
   }
 
-  return parsed as LocalProjectConfig;
+  return normalizeLocalProjectConfig(parsed);
 }
 
 export function isRepairableLocalProjectConfigError(error: unknown): boolean {
@@ -298,4 +323,41 @@ function uniqueConfigBackupPath(configPath: string, now: string): string {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function normalizeLocalProjectConfig(parsed: Partial<LocalProjectConfig>): LocalProjectConfig {
+  return {
+    ...parsed,
+    retention: normalizeRetentionPolicy(parsed.retention)
+  } as LocalProjectConfig;
+}
+
+function normalizeRetentionPolicy(
+  policy: Partial<LocalProjectRetentionPolicy> | undefined
+): LocalProjectRetentionPolicy {
+  return {
+    contextArtifacts: retentionLimit("contextArtifacts", policy?.contextArtifacts, defaultLocalProjectRetentionPolicy.contextArtifacts),
+    snapshots: retentionLimit("snapshots", policy?.snapshots, defaultLocalProjectRetentionPolicy.snapshots),
+    ftsRows: retentionLimit("ftsRows", policy?.ftsRows, defaultLocalProjectRetentionPolicy.ftsRows),
+    compressionInputs: retentionLimit("compressionInputs", policy?.compressionInputs, defaultLocalProjectRetentionPolicy.compressionInputs),
+    derivedMetadata: retentionLimit("derivedMetadata", policy?.derivedMetadata, defaultLocalProjectRetentionPolicy.derivedMetadata),
+    invalidatedRecords: retentionLimit("invalidatedRecords", policy?.invalidatedRecords, defaultLocalProjectRetentionPolicy.invalidatedRecords)
+  };
+}
+
+function retentionLimit(
+  label: keyof LocalProjectRetentionPolicy,
+  value: Partial<LocalRetentionLimit> | undefined,
+  fallback: LocalRetentionLimit
+): LocalRetentionLimit {
+  const maxAgeDays = value?.maxAgeDays ?? fallback.maxAgeDays;
+  const maxRows = value?.maxRows ?? fallback.maxRows;
+  if (!isPositiveInteger(maxAgeDays) || !isPositiveInteger(maxRows)) {
+    throw new Error(`Grape retention config for ${label} must use positive integer maxAgeDays and maxRows.`);
+  }
+  return { maxAgeDays, maxRows };
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value > 0;
 }

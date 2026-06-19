@@ -103,6 +103,8 @@ grape init --connect
 
 This removes local Grape state for that repository and recreates setup state. It does not change source files or Git history.
 
+New local configs include retention defaults for context artifacts, snapshots, FTS rows, compression inputs, derived metadata, and invalidated records. Existing schema-1 configs without the retention block still read with those defaults. Until `grape compact` is implemented, these values are documented limits for cleanup policy, not background deletion.
+
 ## Logging Rules
 
 - Logs use structured event names and IDs.

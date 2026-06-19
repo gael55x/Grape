@@ -88,6 +88,21 @@ Do not implement the full table set as the next storage step. The first persiste
 
 Tables outside this subset stay documented for V1, but they require explicit implementation need before code is added.
 
+## Retention Defaults
+
+New `.grape/config.json` files include a `retention` block. Existing schema-1 configs that do not have this block are still valid; runtime reads fill these defaults in memory:
+
+| Data class | Default age | Default row/count cap |
+|---|---:|---:|
+| Context artifacts | 30 days | 500 rows |
+| Snapshots | 30 days | 200 rows |
+| FTS rows | 30 days | 250000 rows |
+| Compression inputs | 30 days | 250000 rows |
+| Derived metadata | 30 days | 250000 rows |
+| Historical or invalidated records | 14 days | 50000 rows |
+
+These values are retention policy inputs. They are not an automatic deletion claim until the local compaction command enforces them. Invalid edited retention values fail closed instead of being silently ignored.
+
 ## Indexing Foundation Storage Extension
 
 Migration `0002_indexing_foundation.sql` implements the first indexing-specific tables after source ingestion made file relationship tracking possible:

@@ -3021,6 +3021,8 @@ Still part of V1.0, but not implemented in the current beta transport slice:
 - `grape export`: exports local Grape data only after a privacy-preserving export contract exists.
 - `grape purge`: purges local Grape data only after a scoped purge contract and user-confirmation flow exist.
 
+New local config files include retention defaults for context artifacts, snapshots, FTS rows, compression inputs, derived metadata, and invalidated records. Existing schema-1 configs without that block remain valid and read with the same defaults. These values are policy inputs until `grape compact` or `grape purge` enforces them.
+
 Do not ship `grape ask` in V1. It makes Grape look like another coding assistant.
 
 ---

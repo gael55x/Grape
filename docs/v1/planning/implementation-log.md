@@ -34,9 +34,9 @@ Keep entries simple:
 
 - Author/agent: Gaille Amolong / Codex
 - Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
-- Summary: compacted compression artifact dependency scope in compiled context artifacts. Public artifact dependency rows now carry aggregate `inputHash`, `inputCount`, policy/scope hashes, output hash, and a pointer to `compression_inputs` instead of duplicating every compression input ref and hash into artifact JSON, Markdown metadata, MCP payloads, and context-pack item refs.
+- Summary: compacted compression artifact dependency scope in compiled context artifacts. Public artifact dependency rows now carry aggregate `inputHash`, `inputCount`, policy/scope hashes, output hash, and a pointer to `compression_inputs` instead of duplicating every compression input ref and hash into artifact JSON, Markdown metadata, MCP payloads, and context-pack item refs. Added local retention defaults to `.grape/config.json` and backward-compatible default filling for older schema-1 configs without the retention block.
 - Tests or checks run: large compression dependency scope regression test plus the standard local gates for the slice.
-- Risks or follow-ups: retention and compaction still need explicit limits for old artifacts, snapshots, FTS rows, compression inputs, and invalidated records.
+- Risks or follow-ups: the compaction command still needs to enforce the configured limits for old artifacts, snapshots, FTS rows, compression inputs, and invalidated records.
 
 ### 2026-06-17 - MCP Client Config Auto-Wiring
 
