@@ -44,7 +44,15 @@ Keep entries simple:
 - Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
 - Summary: added `grape compact` as a preview-first local maintenance command for context artifact and compression cache retention. The command deletes nothing unless `--confirm` is passed. It deletes only eligible old context artifact rows, cascaded artifact-owned rows, matching regular artifact files under `.grape/artifacts/`, and eligible unreferenced compression cache rows. It preserves latest-per-session artifacts, active sent context, restorable omitted context, locked sessions, and compression artifacts still referenced by surviving context artifacts.
 - Tests or checks run: focused CLI compact behavior tests and maintenance repository retention tests before broader verification.
-- Risks or follow-ups: snapshot, FTS, derived metadata, invalidated-record, purge, and export lifecycle controls still need separate slices.
+- Risks or follow-ups: snapshot, derived metadata, invalidated-record, purge, and export lifecycle controls still need separate slices.
+
+### 2026-06-20 - FTS Retention Compaction Slice
+
+- Author/agent: Gaille Amolong / Codex
+- Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
+- Summary: extended `grape compact` to enforce the configured FTS row retention. Preview reports eligible old searchable text rows, and `--confirm` deletes only whole snapshot groups from `fts_entries`; SQLite deletes matching `fts_entry_text` rows. The slice preserves FTS rows for the latest repo snapshot and does not delete source records, source files, repo snapshots, claims, proofs, source rejections, audit rows, or the database file.
+- Tests or checks run: focused CLI compact behavior tests, maintenance repository retention tests, docs checks, typecheck, and full `npm run check`.
+- Risks or follow-ups: snapshot, derived metadata, invalidated-record, purge, and export lifecycle controls still need separate slices. FTS compaction can keep rows above the configured cap when the latest repo snapshot alone exceeds the cap.
 
 ### 2026-06-17 - MCP Client Config Auto-Wiring
 

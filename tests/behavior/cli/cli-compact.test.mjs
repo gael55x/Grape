@@ -8,6 +8,8 @@ import test from "node:test";
 
 import {
   createCompressionStorageRepositories,
+  createEvidenceStorageRepositories,
+  createIndexingStorageRepositories,
   createStorageRepositories
 } from "../../../.tmp/build/src/core/storage/index.js";
 import { artifactFileBaseName } from "../../../.tmp/build/src/app/local-project/context/artifact-files.js";
@@ -65,9 +67,10 @@ test("compact help documents preview, confirm, and cleanup scope", () => {
   assert.equal(help.status, 0, help.stderr);
   assert.match(help.stdout, /grape compact --confirm/);
   assert.match(help.stdout, /Without --confirm, no data is deleted/);
-  assert.match(help.stdout, /context artifacts and compression cache rows/);
+  assert.match(help.stdout, /context artifacts, compression cache rows, and FTS rows/);
+  assert.match(help.stdout, /FTS rows only by whole snapshot/);
   assert.match(help.stdout, /preserves compression cache rows still referenced/);
-  assert.match(help.stdout, /does not delete snapshots, FTS rows, claims/);
+  assert.match(help.stdout, /does not delete snapshots, claims/);
 
   const conflict = runCli(process.cwd(), ["compact", "--dry-run", "--confirm"]);
   assert.equal(conflict.status, 1);
@@ -97,10 +100,18 @@ test("compact previews and applies eligible context artifact retention", () => {
     assert.equal(preview.compressionCache.protectedByReason.referenced_by_context_artifact, 1);
     assert.equal(preview.compressionCache.rowCounts.compressionArtifacts, 1);
     assert.equal(preview.compressionCache.rowCounts.compressionInputs, 2);
+    assert.equal(preview.ftsIndex.candidateSnapshots, 1);
+    assert.equal(preview.ftsIndex.candidateRows, 2);
+    assert.equal(preview.ftsIndex.retentionMatchedRows, 2);
+    assert.equal(preview.ftsIndex.deletedRows, 0);
+    assert.equal(preview.ftsIndex.rowCounts.ftsEntries, 2);
+    assert.equal(preview.ftsIndex.rowCounts.ftsEntryText, 2);
     assert.equal(countArtifact(repoPath, seeded.deleteArtifactId), 1);
     assert.equal(everyArtifactFileExists(repoPath, seeded.deleteArtifactId), true);
     assert.equal(countCompressionArtifact(repoPath, seeded.deleteCompressionId), 1);
     assert.equal(countCompressionInputs(repoPath, seeded.deleteCompressionId), 2);
+    assert.equal(countFtsEntries(repoPath, seeded.deleteFtsSnapshotId), 2);
+    assert.equal(countFtsTextRows(repoPath, seeded.deleteFtsSnapshotId), 2);
 
     const apply = runCliJson(repoPath, ["compact", "--confirm"]);
 
@@ -111,12 +122,15 @@ test("compact previews and applies eligible context artifact retention", () => {
     assert.equal(apply.contextArtifacts.deletedArtifacts, 1);
     assert.equal(apply.contextArtifacts.artifactFiles.deletedFiles, 3);
     assert.equal(apply.compressionCache.deletedArtifacts, 1);
+    assert.equal(apply.ftsIndex.deletedRows, 2);
     assert.equal(countArtifact(repoPath, seeded.deleteArtifactId), 0);
     assert.equal(countArtifactDependency(repoPath, seeded.deleteArtifactId), 0);
     assert.equal(countPackItems(repoPath, seeded.deleteArtifactId), 0);
     assert.equal(everyArtifactFileMissing(repoPath, seeded.deleteArtifactId), true);
     assert.equal(countCompressionArtifact(repoPath, seeded.deleteCompressionId), 0);
     assert.equal(countCompressionInputs(repoPath, seeded.deleteCompressionId), 0);
+    assert.equal(countFtsEntries(repoPath, seeded.deleteFtsSnapshotId), 0);
+    assert.equal(countFtsTextRows(repoPath, seeded.deleteFtsSnapshotId), 0);
 
     for (const protectedArtifactId of seeded.protectedArtifactIds) {
       assert.equal(countArtifact(repoPath, protectedArtifactId), 1);
@@ -124,6 +138,32 @@ test("compact previews and applies eligible context artifact retention", () => {
     }
     assert.equal(countCompressionArtifact(repoPath, seeded.protectedCompressionId), 1);
     assert.equal(countCompressionInputs(repoPath, seeded.protectedCompressionId), 1);
+    assert.ok(countFtsEntries(repoPath, identitySnapshotId(repoPath)) > 0);
+  });
+});
+
+test("compact requires confirmation when only FTS rows are eligible", () => {
+  withGitRepo((repoPath) => {
+    runCliJson(repoPath, ["init", "--connect"]);
+    const seeded = seedFtsOnlyRetention(repoPath);
+    const preview = runCliJson(repoPath, ["compact"]);
+
+    assert.equal(preview.confirmationRequired, true);
+    assert.equal(preview.contextArtifacts.candidateArtifacts, 0);
+    assert.equal(preview.compressionCache.candidateArtifacts, 0);
+    assert.equal(preview.ftsIndex.candidateSnapshots, 1);
+    assert.equal(preview.ftsIndex.candidateRows, 2);
+    assert.equal(preview.ftsIndex.retentionMatchedRows, 2);
+    assert.equal(preview.ftsIndex.deletedRows, 0);
+    assert.equal(countFtsEntries(repoPath, seeded.deleteFtsSnapshotId), 2);
+
+    const apply = runCliJson(repoPath, ["compact", "--confirm"]);
+
+    assert.equal(apply.ftsIndex.deletedRows, 2);
+    assert.equal(countFtsEntries(repoPath, seeded.deleteFtsSnapshotId), 0);
+    assert.equal(countFtsTextRows(repoPath, seeded.deleteFtsSnapshotId), 0);
+    assert.equal(countSourceRows(repoPath, seeded.deleteFtsSnapshotId), 2);
+    assert.equal(countSnapshotRows(repoPath, seeded.deleteFtsSnapshotId), 1);
   });
 });
 
@@ -134,8 +174,11 @@ function seedRetentionArtifacts(repoPath) {
     const identity = readIdentity(database);
     const repositories = createStorageRepositories(database);
     const compressionRepositories = createCompressionStorageRepositories(database);
+    const evidenceRepositories = createEvidenceStorageRepositories(database);
+    const indexingRepositories = createIndexingStorageRepositories(database);
     const deleteArtifactId = "artifact:compact-delete-old";
     const deleteCompressionId = "compression:compact-delete-old";
+    const deleteFtsSnapshotId = "snapshot:compact-fts-old";
     const protectedCompressionId = "compression:compact-protected-old";
     const protectedArtifactIds = [
       "artifact:compact-latest-old",
@@ -230,6 +273,15 @@ function seedRetentionArtifacts(repoPath) {
 
     insertCompressionArtifact(compressionRepositories, identity, deleteCompressionId, oldTime, 2);
     insertCompressionArtifact(compressionRepositories, identity, protectedCompressionId, oldTime, 1);
+    insertFtsSnapshot(repositories, identity, deleteFtsSnapshotId, oldTime);
+    insertFtsRows({
+      evidenceRepositories,
+      indexingRepositories,
+      identity,
+      snapshotId: deleteFtsSnapshotId,
+      createdAt: oldTime,
+      count: 2
+    });
     repositories.contextDependencies.insert({
       dependencyId: "dependency:compact-protected-compression",
       artifactId: "artifact:compact-active-old",
@@ -247,7 +299,39 @@ function seedRetentionArtifacts(repoPath) {
       writeArtifactFiles(repoPath, artifactId);
     }
 
-    return { deleteArtifactId, deleteCompressionId, protectedArtifactIds, protectedCompressionId };
+    return {
+      deleteArtifactId,
+      deleteCompressionId,
+      deleteFtsSnapshotId,
+      protectedArtifactIds,
+      protectedCompressionId
+    };
+  } finally {
+    database.close();
+  }
+}
+
+function seedFtsOnlyRetention(repoPath) {
+  const databasePath = path.join(repoPath, ".grape", "grape.db");
+  const database = new DatabaseSync(databasePath);
+  try {
+    const identity = readIdentity(database);
+    const repositories = createStorageRepositories(database);
+    const evidenceRepositories = createEvidenceStorageRepositories(database);
+    const indexingRepositories = createIndexingStorageRepositories(database);
+    const deleteFtsSnapshotId = "snapshot:compact-fts-only-old";
+
+    insertFtsSnapshot(repositories, identity, deleteFtsSnapshotId, oldTime);
+    insertFtsRows({
+      evidenceRepositories,
+      indexingRepositories,
+      identity,
+      snapshotId: deleteFtsSnapshotId,
+      createdAt: oldTime,
+      count: 2
+    });
+
+    return { deleteFtsSnapshotId };
   } finally {
     database.close();
   }
@@ -260,6 +344,26 @@ function readIdentity(database) {
     snapshotId: stringRow(database, "SELECT snapshot_id AS value FROM repo_snapshots LIMIT 1"),
     worktreeStateId: stringRow(database, "SELECT worktree_state_id AS value FROM worktree_states LIMIT 1")
   };
+}
+
+function insertFtsSnapshot(repositories, identity, snapshotId, createdAt) {
+  repositories.repoSnapshots.insert({
+    snapshotId,
+    repoId: identity.repoId,
+    branch: "main",
+    commitSha: "fts-old",
+    worktreeHash: "hash:fts-old",
+    snapshotHash: "hash:fts-old-snapshot",
+    dirtyState: "clean",
+    createdAt
+  });
+  repositories.worktreeStates.insert({
+    worktreeStateId: `${snapshotId}:worktree`,
+    snapshotId,
+    state: "clean",
+    dirtyPathsJson: "[]",
+    createdAt
+  });
 }
 
 function insertSession(repositories, identity, sessionId, lockStatus) {
@@ -283,6 +387,39 @@ function insertSession(repositories, identity, sessionId, lockStatus) {
     createdAt: oldTime,
     updatedAt: oldTime
   });
+}
+
+function insertFtsRows(input) {
+  for (let index = 0; index < input.count; index += 1) {
+    const sourceId = `source:${input.snapshotId}:${index}`;
+    input.evidenceRepositories.sources.insertOrIgnore({
+      sourceId,
+      snapshotId: input.snapshotId,
+      sourceType: "repository_file",
+      sourceRef: `src/compact-fts-${index}.ts`,
+      sourceHash: `hash:compact-fts-source:${index}`,
+      sourceScope: "committed",
+      trustClass: "trusted",
+      privacyStatus: "allowed",
+      redactionStatus: "not_needed",
+      metadataJson: "{}",
+      createdAt: input.createdAt
+    });
+    input.indexingRepositories.ftsEntries.insertOrIgnore({
+      ftsEntryId: `fts:${input.snapshotId}:${index}`,
+      projectId: input.identity.projectId,
+      repoId: input.identity.repoId,
+      snapshotId: input.snapshotId,
+      sourceId,
+      sourceRef: `src/compact-fts-${index}.ts`,
+      sourceType: "repository_file",
+      sourceHash: `hash:compact-fts-source:${index}`,
+      textHash: `hash:compact-fts-text:${index}`,
+      metadataJson: "{}",
+      createdAt: input.createdAt,
+      body: `compact fts body ${index}`
+    });
+  }
 }
 
 function insertArtifact(repositories, identity, artifactId, sessionId, createdAt) {
@@ -375,6 +512,46 @@ function countCompressionArtifact(repoPath, compressionId) {
 
 function countCompressionInputs(repoPath, compressionId) {
   return countRows(repoPath, "compression_inputs", "compression_id", compressionId);
+}
+
+function countFtsEntries(repoPath, snapshotId) {
+  return countRows(repoPath, "fts_entries", "snapshot_id", snapshotId);
+}
+
+function countFtsTextRows(repoPath, snapshotId) {
+  const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
+  try {
+    const row = database
+      .prepare(
+        [
+          "SELECT count(*) AS count",
+          "FROM fts_entry_text text",
+          "JOIN fts_entries entry ON entry.fts_entry_id = text.fts_entry_id",
+          "WHERE entry.snapshot_id = ?"
+        ].join(" ")
+      )
+      .get(snapshotId);
+    return Number(row.count);
+  } finally {
+    database.close();
+  }
+}
+
+function identitySnapshotId(repoPath) {
+  const database = new DatabaseSync(path.join(repoPath, ".grape", "grape.db"));
+  try {
+    return stringRow(database, "SELECT snapshot_id AS value FROM repo_snapshots ORDER BY created_at DESC LIMIT 1");
+  } finally {
+    database.close();
+  }
+}
+
+function countSourceRows(repoPath, snapshotId) {
+  return countRows(repoPath, "sources", "snapshot_id", snapshotId);
+}
+
+function countSnapshotRows(repoPath, snapshotId) {
+  return countRows(repoPath, "repo_snapshots", "snapshot_id", snapshotId);
 }
 
 function countRows(repoPath, tableName, columnName, value) {

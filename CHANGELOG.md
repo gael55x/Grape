@@ -20,7 +20,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 - Compacted compression dependency metadata in public context artifacts and MCP payloads. Detailed compression input refs and hashes remain in local storage for inspection.
 - Added retention defaults to local `.grape/config.json`; older schema-1 configs without the field still read with the same defaults.
-- Added `grape compact` for preview-first context artifact and compression cache retention cleanup. It requires `--confirm` before deleting eligible old artifact rows, regular artifact files, or unreferenced compression cache rows.
+- Added `grape compact` for preview-first context artifact, compression cache, and FTS retention cleanup. It requires `--confirm` before deleting eligible old artifact rows, regular artifact files, unreferenced compression cache rows, or old searchable text rows.
 
 ## 1.0.0-beta.8 - 2026-06-17
 

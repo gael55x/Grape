@@ -101,11 +101,13 @@ New `.grape/config.json` files include a `retention` block. Existing schema-1 co
 | Derived metadata | 30 days | 250000 rows |
 | Historical or invalidated records | 14 days | 50000 rows |
 
-These values are retention policy inputs. They do not run in the background. `grape compact` currently enforces context artifact retention and compression input retention. It requires `--confirm` before deleting rows or artifact files. Other retention classes stay as policy inputs until later compact or purge slices implement them. Invalid edited retention values fail closed instead of being silently ignored.
+These values are retention policy inputs. They do not run in the background. `grape compact` currently enforces context artifact retention, compression input retention, and FTS row retention. It requires `--confirm` before deleting rows or artifact files. Snapshot, derived metadata, and invalidated-record limits stay as policy inputs until later compact or purge slices implement them. Invalid edited retention values fail closed instead of being silently ignored.
 
 Context artifact compaction deletes only eligible old `context_artifacts` rows and their cascaded artifact-owned dependency, sent, omitted, and pack rows. It also removes the matching `.json`, `.md`, and `.repository.json` files under `.grape/artifacts/` when they are regular files. It preserves the latest artifact per session, artifacts with active sent context, artifacts with restorable omitted context, and artifacts in locked or contended sessions.
 
-Compression cache compaction deletes only eligible `compression_artifacts` rows. SQLite cascades their `compression_inputs`. It treats compression input rows as the count cap and preserves compression artifacts still referenced by context artifacts that survive the same compact plan. It does not delete snapshots, sources, FTS rows, claims, proofs, source rejections, audit rows, or the SQLite database file.
+Compression cache compaction deletes only eligible `compression_artifacts` rows. SQLite cascades their `compression_inputs`. It treats compression input rows as the count cap and preserves compression artifacts still referenced by context artifacts that survive the same compact plan.
+
+FTS compaction deletes only eligible `fts_entries` rows by whole snapshot. SQLite cascades matching `fts_entry_text` rows, which contain allowed searchable source text. It preserves the latest repo snapshot's FTS rows so the newest lexical index remains available. If that latest snapshot alone is over the configured row cap, compact reports the protected rows and keeps them. It does not delete source records, source files, repo snapshots, claims, proofs, source rejections, audit rows, or the SQLite database file.
 
 ## Indexing Foundation Storage Extension
 

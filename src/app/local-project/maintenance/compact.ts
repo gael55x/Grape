@@ -5,7 +5,8 @@ import {
   createMaintenanceStorageRepositories,
   runStorageTransaction,
   type CompressionRetentionPlan,
-  type ContextArtifactRetentionPlan
+  type ContextArtifactRetentionPlan,
+  type FtsRetentionPlan
 } from "../../../core/storage/index.js";
 import { artifactFileBaseName } from "../context/artifact-files.js";
 import { ensureConfiguredLocalProjectLayout } from "../setup/configured-layout.js";
@@ -32,6 +33,10 @@ export interface CompactLocalProjectResult {
       readonly maxRows: number;
     };
     readonly compressionInputs: {
+      readonly maxAgeDays: number;
+      readonly maxRows: number;
+    };
+    readonly ftsRows: {
       readonly maxAgeDays: number;
       readonly maxRows: number;
     };
@@ -64,6 +69,20 @@ export interface CompactLocalProjectResult {
     readonly protectedArtifacts: number;
     readonly protectedByReason: Readonly<Record<string, number>>;
     readonly rowCounts: CompressionRetentionPlan["rowCounts"];
+  };
+  readonly ftsIndex: {
+    readonly cutoff: string;
+    readonly totalSnapshots: number;
+    readonly totalRows: number;
+    readonly retentionMatchedSnapshots: number;
+    readonly retentionMatchedRows: number;
+    readonly candidateSnapshots: number;
+    readonly candidateRows: number;
+    readonly deletedRows: number;
+    readonly protectedSnapshots: number;
+    readonly protectedRows: number;
+    readonly protectedByReason: Readonly<Record<string, number>>;
+    readonly rowCounts: FtsRetentionPlan["rowCounts"];
   };
   readonly notes: readonly string[];
 }
@@ -107,14 +126,21 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
         ignoredContextArtifactIds: artifactIds
       });
       const compressionIds = compressionPlan.candidateArtifacts.map((artifact) => artifact.compressionId);
+      const ftsPlan = maintenance.retention.planFtsCompaction({
+        now,
+        limit: config.retention.ftsRows
+      });
+      const ftsSnapshotIds = ftsPlan.candidateSnapshots.map((snapshot) => snapshot.snapshotId);
 
       if (dryRun) {
         return {
           plan,
           compressionPlan,
+          ftsPlan,
           files: summarizeArtifactFiles(fileCandidates),
           deletedArtifacts: 0,
           deletedCompressionArtifacts: 0,
+          deletedFtsRows: 0,
           deletedFiles: 0,
           deletedBytes: 0
         };
@@ -122,15 +148,18 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
 
       const deletion = runStorageTransaction(database, () => ({
         deletedArtifacts: maintenance.retention.deleteContextArtifacts(artifactIds),
-        deletedCompressionArtifacts: maintenance.retention.deleteCompressionArtifacts(compressionIds)
+        deletedCompressionArtifacts: maintenance.retention.deleteCompressionArtifacts(compressionIds),
+        deletedFtsRows: maintenance.retention.deleteFtsSnapshots(ftsSnapshotIds)
       }));
       const fileDeletion = deletePlannedArtifactFiles(fileCandidates);
       return {
         plan,
         compressionPlan,
+        ftsPlan,
         files: summarizeArtifactFiles(fileCandidates),
         deletedArtifacts: deletion.deletedArtifacts,
         deletedCompressionArtifacts: deletion.deletedCompressionArtifacts,
+        deletedFtsRows: deletion.deletedFtsRows,
         deletedFiles: fileDeletion.deletedFiles,
         deletedBytes: fileDeletion.deletedBytes
       };
@@ -146,11 +175,14 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
     applied: !dryRun,
     confirmationRequired:
       dryRun &&
-      (value.plan.candidateArtifacts.length > 0 || value.compressionPlan.candidateArtifacts.length > 0),
+      (value.plan.candidateArtifacts.length > 0 ||
+        value.compressionPlan.candidateArtifacts.length > 0 ||
+        value.ftsPlan.candidateSnapshots.length > 0),
     migrationsApplied: databaseResult.migrationResult.applied.map((migration) => migration.id),
     retention: {
       contextArtifacts: config.retention.contextArtifacts,
-      compressionInputs: config.retention.compressionInputs
+      compressionInputs: config.retention.compressionInputs,
+      ftsRows: config.retention.ftsRows
     },
     contextArtifacts: {
       cutoff: value.plan.cutoff,
@@ -181,10 +213,25 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
       protectedByReason: countCompressionProtectedReasons(value.compressionPlan),
       rowCounts: value.compressionPlan.rowCounts
     },
+    ftsIndex: {
+      cutoff: value.ftsPlan.cutoff,
+      totalSnapshots: value.ftsPlan.totalSnapshots,
+      totalRows: value.ftsPlan.totalRows,
+      retentionMatchedSnapshots: value.ftsPlan.retentionMatchedSnapshots,
+      retentionMatchedRows: value.ftsPlan.retentionMatchedRows,
+      candidateSnapshots: value.ftsPlan.candidateSnapshots.length,
+      candidateRows: value.ftsPlan.candidateSnapshots.reduce((total, snapshot) => total + snapshot.ftsRows, 0),
+      deletedRows: value.deletedFtsRows,
+      protectedSnapshots: value.ftsPlan.protectedSnapshots.length,
+      protectedRows: value.ftsPlan.protectedSnapshots.reduce((total, snapshot) => total + snapshot.ftsRows, 0),
+      protectedByReason: countFtsProtectedReasons(value.ftsPlan),
+      rowCounts: value.ftsPlan.rowCounts
+    },
     notes: compactNotes({
       dryRun,
       candidateArtifacts: value.plan.candidateArtifacts.length,
       candidateCompressionArtifacts: value.compressionPlan.candidateArtifacts.length,
+      candidateFtsSnapshots: value.ftsPlan.candidateSnapshots.length,
       skippedUnsafeFiles: fileSummary.skippedUnsafeFiles
     })
   };
@@ -297,23 +344,38 @@ function countCompressionProtectedReasons(
   return counts;
 }
 
+function countFtsProtectedReasons(plan: FtsRetentionPlan): Readonly<Record<string, number>> {
+  const counts: Record<string, number> = {
+    latest_repo_snapshot: 0
+  };
+  for (const snapshot of plan.protectedSnapshots) {
+    counts[snapshot.protection] = (counts[snapshot.protection] ?? 0) + 1;
+  }
+  return counts;
+}
+
 function compactNotes(input: {
   readonly dryRun: boolean;
   readonly candidateArtifacts: number;
   readonly candidateCompressionArtifacts: number;
+  readonly candidateFtsSnapshots: number;
   readonly skippedUnsafeFiles: number;
 }): readonly string[] {
   const notes: string[] = [];
   if (input.dryRun) {
     notes.push("No data was deleted. Rerun with --confirm to apply this plan.");
   }
-  if (input.candidateArtifacts === 0 && input.candidateCompressionArtifacts === 0) {
-    notes.push("No context artifacts or compression cache rows are eligible for deletion.");
+  if (
+    input.candidateArtifacts === 0 &&
+    input.candidateCompressionArtifacts === 0 &&
+    input.candidateFtsSnapshots === 0
+  ) {
+    notes.push("No context artifacts, compression cache rows, or FTS rows are eligible for deletion.");
   }
   if (input.skippedUnsafeFiles > 0) {
     notes.push("Some artifact files were skipped because they were symlinks or not regular files.");
   }
-  notes.push("This compact run applies context artifact and compression cache retention.");
+  notes.push("This compact run applies context artifact, compression cache, and FTS retention.");
   return notes;
 }
 

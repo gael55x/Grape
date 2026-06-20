@@ -48,6 +48,8 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
   const protectedReasons = result.contextArtifacts.protectedByReason;
   const compressionRows = result.compressionCache.rowCounts;
   const compressionProtectedReasons = result.compressionCache.protectedByReason;
+  const ftsRows = result.ftsIndex.rowCounts;
+  const ftsProtectedReasons = result.ftsIndex.protectedByReason;
   return [
     result.applied ? "Grape compact applied." : "Grape compact preview.",
     "",
@@ -57,6 +59,7 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
     "Retention:",
     `  Context artifacts: ${result.retention.contextArtifacts.maxAgeDays} days, ${result.retention.contextArtifacts.maxRows} rows`,
     `  Compression inputs: ${result.retention.compressionInputs.maxAgeDays} days, ${result.retention.compressionInputs.maxRows} rows`,
+    `  FTS rows: ${result.retention.ftsRows.maxAgeDays} days, ${result.retention.ftsRows.maxRows} rows`,
     `  Cutoff: ${result.contextArtifacts.cutoff}`,
     "",
     "Context artifacts:",
@@ -84,6 +87,21 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
     `  Protected reasons: referenced=${compressionProtectedReasons.referenced_by_context_artifact ?? 0}`,
     `  compression_artifacts: ${compressionRows.compressionArtifacts}`,
     `  compression_inputs: ${compressionRows.compressionInputs}`,
+    "",
+    "FTS index:",
+    `  Cutoff: ${result.ftsIndex.cutoff}`,
+    `  Snapshots with FTS rows: ${result.ftsIndex.totalSnapshots}`,
+    `  Stored FTS rows: ${result.ftsIndex.totalRows}`,
+    `  Matched snapshots: ${result.ftsIndex.retentionMatchedSnapshots}`,
+    `  Matched rows: ${result.ftsIndex.retentionMatchedRows}`,
+    `  Eligible snapshots: ${result.ftsIndex.candidateSnapshots}`,
+    `  Eligible rows: ${result.ftsIndex.candidateRows}`,
+    `  Deleted rows: ${result.ftsIndex.deletedRows}`,
+    `  Protected snapshots: ${result.ftsIndex.protectedSnapshots}`,
+    `  Protected rows: ${result.ftsIndex.protectedRows}`,
+    `  Protected reasons: latest_snapshot=${ftsProtectedReasons.latest_repo_snapshot ?? 0}`,
+    `  fts_entries: ${ftsRows.ftsEntries}`,
+    `  fts_entry_text: ${ftsRows.ftsEntryText}`,
     "",
     "Artifact files:",
     `  Planned files: ${artifactFiles.plannedFiles}`,

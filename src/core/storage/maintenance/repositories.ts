@@ -25,6 +25,13 @@ export type CompressionRetentionReason =
 
 export type CompressionRetentionProtection = "referenced_by_context_artifact";
 
+export type FtsRetentionReason =
+  | "age"
+  | "row_limit"
+  | "age_and_row_limit";
+
+export type FtsRetentionProtection = "latest_repo_snapshot";
+
 export interface ContextArtifactRetentionCandidate {
   readonly artifactId: string;
   readonly sessionId: string;
@@ -85,6 +92,37 @@ export interface CompressionRetentionPlan {
   };
 }
 
+export interface FtsRetentionCandidate {
+  readonly snapshotId: string;
+  readonly repoId: string;
+  readonly indexedAt: string;
+  readonly ftsRows: number;
+  readonly reason: FtsRetentionReason;
+}
+
+export interface FtsRetentionProtectedSnapshot {
+  readonly snapshotId: string;
+  readonly repoId: string;
+  readonly indexedAt: string;
+  readonly ftsRows: number;
+  readonly reason: FtsRetentionReason;
+  readonly protection: FtsRetentionProtection;
+}
+
+export interface FtsRetentionPlan {
+  readonly cutoff: string;
+  readonly totalSnapshots: number;
+  readonly totalRows: number;
+  readonly retentionMatchedSnapshots: number;
+  readonly retentionMatchedRows: number;
+  readonly candidateSnapshots: readonly FtsRetentionCandidate[];
+  readonly protectedSnapshots: readonly FtsRetentionProtectedSnapshot[];
+  readonly rowCounts: {
+    readonly ftsEntries: number;
+    readonly ftsEntryText: number;
+  };
+}
+
 export interface MaintenanceStorageRepositories {
   readonly retention: {
     planContextArtifactCompaction(input: {
@@ -98,6 +136,11 @@ export interface MaintenanceStorageRepositories {
       readonly ignoredContextArtifactIds?: readonly string[];
     }): CompressionRetentionPlan;
     deleteCompressionArtifacts(compressionIds: readonly string[]): number;
+    planFtsCompaction(input: {
+      readonly now: string;
+      readonly limit: StorageRetentionLimit;
+    }): FtsRetentionPlan;
+    deleteFtsSnapshots(snapshotIds: readonly string[]): number;
   };
 }
 
@@ -121,6 +164,16 @@ interface FlaggedCompressionArtifactRow {
   readonly ageExpired: boolean;
   readonly inputRowsExpired: boolean;
   readonly referencedByContextArtifact: boolean;
+}
+
+interface FlaggedFtsSnapshotRow {
+  readonly snapshotId: string;
+  readonly repoId: string;
+  readonly indexedAt: string;
+  readonly ftsRows: number;
+  readonly ageExpired: boolean;
+  readonly rowExpired: boolean;
+  readonly isLatestRepoSnapshot: boolean;
 }
 
 export function createMaintenanceStorageRepositories(database: DatabaseSync): MaintenanceStorageRepositories {
@@ -229,6 +282,59 @@ export function createMaintenanceStorageRepositories(database: DatabaseSync): Ma
           database
             .prepare(`DELETE FROM compression_artifacts WHERE compression_id IN (${placeholders})`)
             .run(...compressionIds).changes
+        );
+      },
+      planFtsCompaction(input) {
+        const cutoff = retentionCutoff(input.now, input.limit.maxAgeDays);
+        const rows = listFlaggedFtsSnapshots(database, {
+          cutoff,
+          maxRows: input.limit.maxRows
+        });
+        const retentionMatched = rows.filter((row) => row.ageExpired || row.rowExpired);
+        const candidateSnapshots: FtsRetentionCandidate[] = [];
+        const protectedSnapshots: FtsRetentionProtectedSnapshot[] = [];
+
+        for (const row of retentionMatched) {
+          const reason = ftsRetentionReason(row);
+          if (row.isLatestRepoSnapshot) {
+            protectedSnapshots.push({
+              snapshotId: row.snapshotId,
+              repoId: row.repoId,
+              indexedAt: row.indexedAt,
+              ftsRows: row.ftsRows,
+              reason,
+              protection: "latest_repo_snapshot"
+            });
+          } else {
+            candidateSnapshots.push({
+              snapshotId: row.snapshotId,
+              repoId: row.repoId,
+              indexedAt: row.indexedAt,
+              ftsRows: row.ftsRows,
+              reason
+            });
+          }
+        }
+
+        const snapshotIds = candidateSnapshots.map((snapshot) => snapshot.snapshotId);
+        return {
+          cutoff,
+          totalSnapshots: rows.length,
+          totalRows: rows.reduce((total, row) => total + row.ftsRows, 0),
+          retentionMatchedSnapshots: retentionMatched.length,
+          retentionMatchedRows: retentionMatched.reduce((total, row) => total + row.ftsRows, 0),
+          candidateSnapshots,
+          protectedSnapshots,
+          rowCounts: ftsCandidateRowCounts(database, snapshotIds)
+        };
+      },
+      deleteFtsSnapshots(snapshotIds) {
+        if (snapshotIds.length === 0) return 0;
+        const placeholders = snapshotIds.map(() => "?").join(", ");
+        return Number(
+          database
+            .prepare(`DELETE FROM fts_entries WHERE snapshot_id IN (${placeholders})`)
+            .run(...snapshotIds).changes
         );
       }
     }
@@ -419,6 +525,82 @@ function compressionRetentionReason(row: FlaggedCompressionArtifactRow): Compres
   return "input_row_limit";
 }
 
+function listFlaggedFtsSnapshots(
+  database: DatabaseSync,
+  input: {
+    readonly cutoff: string;
+    readonly maxRows: number;
+  }
+): FlaggedFtsSnapshotRow[] {
+  return (
+    database
+      .prepare(
+        [
+          "WITH snapshot_fts AS (",
+          "SELECT",
+          "entry.snapshot_id,",
+          "entry.repo_id,",
+          "snapshot.created_at AS snapshot_created_at,",
+          "max(entry.created_at) AS indexed_at,",
+          "count(entry.fts_entry_id) AS fts_rows",
+          "FROM fts_entries entry",
+          "JOIN repo_snapshots snapshot ON snapshot.snapshot_id = entry.snapshot_id",
+          "GROUP BY entry.snapshot_id, entry.repo_id, snapshot.created_at",
+          "),",
+          "ranked_snapshots AS (",
+          "SELECT",
+          "snapshot_fts.*,",
+          [
+            "sum(fts_rows) OVER (",
+            "ORDER BY indexed_at DESC, snapshot_created_at DESC, snapshot_id DESC",
+            "ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW",
+            ") AS retained_rows"
+          ].join(" "),
+          "FROM snapshot_fts",
+          ")",
+          "SELECT",
+          "ranked.snapshot_id,",
+          "ranked.repo_id,",
+          "ranked.indexed_at,",
+          "ranked.fts_rows,",
+          "ranked.indexed_at < ? AS age_expired,",
+          "ranked.retained_rows > ? AS row_expired,",
+          [
+            "NOT EXISTS (",
+            "SELECT 1 FROM repo_snapshots newer",
+            "WHERE newer.repo_id = ranked.repo_id",
+            "AND (",
+            "newer.created_at > ranked.snapshot_created_at",
+            "OR (newer.created_at = ranked.snapshot_created_at AND newer.snapshot_id > ranked.snapshot_id)",
+            ")",
+            ") AS is_latest_repo_snapshot"
+          ].join(" "),
+          "FROM ranked_snapshots ranked",
+          "ORDER BY ranked.indexed_at DESC, ranked.snapshot_created_at DESC, ranked.snapshot_id DESC"
+        ].join(" ")
+      )
+      .all(input.cutoff, input.maxRows) as Array<Record<string, unknown>>
+  ).map(mapFlaggedFtsSnapshotRow);
+}
+
+function mapFlaggedFtsSnapshotRow(row: Record<string, unknown>): FlaggedFtsSnapshotRow {
+  return {
+    snapshotId: stringColumn(row, "snapshot_id"),
+    repoId: stringColumn(row, "repo_id"),
+    indexedAt: stringColumn(row, "indexed_at"),
+    ftsRows: Number(row.fts_rows),
+    ageExpired: boolColumn(row, "age_expired"),
+    rowExpired: boolColumn(row, "row_expired"),
+    isLatestRepoSnapshot: boolColumn(row, "is_latest_repo_snapshot")
+  };
+}
+
+function ftsRetentionReason(row: FlaggedFtsSnapshotRow): FtsRetentionReason {
+  if (row.ageExpired && row.rowExpired) return "age_and_row_limit";
+  if (row.ageExpired) return "age";
+  return "row_limit";
+}
+
 function candidateRowCounts(
   database: DatabaseSync,
   artifactIds: readonly string[]
@@ -456,6 +638,35 @@ function compressionCandidateRowCounts(
   return {
     compressionArtifacts: compressionIds.length,
     compressionInputs: countRowsByArtifactIds(database, "compression_inputs", "compression_id", compressionIds)
+  };
+}
+
+function ftsCandidateRowCounts(
+  database: DatabaseSync,
+  snapshotIds: readonly string[]
+): FtsRetentionPlan["rowCounts"] {
+  if (snapshotIds.length === 0) {
+    return {
+      ftsEntries: 0,
+      ftsEntryText: 0
+    };
+  }
+
+  const placeholders = snapshotIds.map(() => "?").join(", ");
+  const textRow = database
+    .prepare(
+      [
+        "SELECT count(*) AS count",
+        "FROM fts_entry_text text",
+        "JOIN fts_entries entry ON entry.fts_entry_id = text.fts_entry_id",
+        `WHERE entry.snapshot_id IN (${placeholders})`
+      ].join(" ")
+    )
+    .get(...snapshotIds) as Record<string, unknown>;
+
+  return {
+    ftsEntries: countRowsByArtifactIds(database, "fts_entries", "snapshot_id", snapshotIds),
+    ftsEntryText: Number(textRow.count)
   };
 }
 

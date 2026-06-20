@@ -8,6 +8,8 @@ import test from "node:test";
 import {
   applyStorageMigrations,
   createCompressionStorageRepositories,
+  createEvidenceStorageRepositories,
+  createIndexingStorageRepositories,
   createMaintenanceStorageRepositories,
   createStorageRepositories,
   storageMigrationReferences
@@ -18,6 +20,7 @@ const hashB = "b".repeat(64);
 const now = "2026-06-20T00:00:00.000Z";
 const oldTime = "2026-04-01T00:00:00.000Z";
 const newTime = "2026-06-19T00:00:00.000Z";
+const latestTime = "2026-06-20T01:00:00.000Z";
 
 function migrationSources() {
   return storageMigrationReferences.map((migration) => ({
@@ -37,6 +40,8 @@ function withMigratedDatabase(fn) {
     applyStorageMigrations(database, migrationSources(), () => now);
     fn(database, {
       storage: createStorageRepositories(database),
+      evidence: createEvidenceStorageRepositories(database),
+      indexing: createIndexingStorageRepositories(database),
       compression: createCompressionStorageRepositories(database),
       maintenance: createMaintenanceStorageRepositories(database)
     });
@@ -99,6 +104,48 @@ test("maintenance repository plans compression cache compaction conservatively",
   });
 });
 
+test("maintenance repository plans FTS compaction by whole snapshot", () => {
+  withMigratedDatabase((database, repositories) => {
+    insertBaseGraph(repositories.storage);
+    insertSnapshot(repositories.storage, "snapshot-old-a", oldTime);
+    insertSnapshot(repositories.storage, "snapshot-old-b", "2026-04-02T00:00:00.000Z");
+    insertSnapshot(repositories.storage, "snapshot-new", latestTime);
+
+    insertFtsRows(repositories, "snapshot-old-a", oldTime, 2);
+    insertFtsRows(repositories, "snapshot-old-b", "2026-04-02T00:00:00.000Z", 1);
+    insertFtsRows(repositories, "snapshot-new", latestTime, 2);
+
+    const plan = repositories.maintenance.retention.planFtsCompaction({
+      now,
+      limit: { maxAgeDays: 30, maxRows: 1 }
+    });
+
+    assert.equal(plan.totalSnapshots, 3);
+    assert.equal(plan.totalRows, 5);
+    assert.equal(plan.retentionMatchedRows, 5);
+    assert.deepEqual(
+      plan.candidateSnapshots.map((snapshot) => snapshot.snapshotId).sort(),
+      ["snapshot-old-a", "snapshot-old-b"]
+    );
+    assert.equal(plan.rowCounts.ftsEntries, 3);
+    assert.equal(plan.rowCounts.ftsEntryText, 3);
+    assert.equal(plan.protectedSnapshots.length, 1);
+    assert.equal(plan.protectedSnapshots[0].snapshotId, "snapshot-new");
+    assert.equal(plan.protectedSnapshots[0].protection, "latest_repo_snapshot");
+    assert.equal(plan.protectedSnapshots[0].reason, "row_limit");
+
+    assert.equal(
+      repositories.maintenance.retention.deleteFtsSnapshots(["snapshot-old-a"]),
+      2
+    );
+    assert.equal(countRows(database, "fts_entries", "snapshot_id", "snapshot-old-a"), 0);
+    assert.equal(countRowsByJoin(database, "snapshot-old-a"), 0);
+    assert.equal(countRows(database, "sources", "snapshot_id", "snapshot-old-a"), 2);
+    assert.equal(countRows(database, "repo_snapshots", "snapshot_id", "snapshot-old-a"), 1);
+    assert.equal(countRows(database, "fts_entries", "snapshot_id", "snapshot-new"), 2);
+  });
+});
+
 function insertBaseGraph(repositories) {
   repositories.projects.insert({
     projectId: "project-1",
@@ -135,6 +182,26 @@ function insertBaseGraph(repositories) {
   });
 }
 
+function insertSnapshot(repositories, snapshotId, createdAt) {
+  repositories.repoSnapshots.insert({
+    snapshotId,
+    repoId: "repo-1",
+    branch: "main",
+    commitSha: `commit:${snapshotId}`,
+    worktreeHash: hashA,
+    snapshotHash: hashB,
+    dirtyState: "clean",
+    createdAt
+  });
+  repositories.worktreeStates.insert({
+    worktreeStateId: `${snapshotId}:worktree`,
+    snapshotId,
+    state: "clean",
+    dirtyPathsJson: "[]",
+    createdAt
+  });
+}
+
 function insertSession(repositories, sessionId) {
   repositories.contextSessions.insert({
     sessionId,
@@ -155,6 +222,39 @@ function insertSession(repositories, sessionId) {
     createdAt: now,
     updatedAt: now
   });
+}
+
+function insertFtsRows(repositories, snapshotId, createdAt, count) {
+  for (let index = 0; index < count; index += 1) {
+    const sourceId = `source:${snapshotId}:${index}`;
+    repositories.evidence.sources.insertOrIgnore({
+      sourceId,
+      snapshotId,
+      sourceType: "repository_file",
+      sourceRef: `src/${snapshotId}-${index}.ts`,
+      sourceHash: `hash:source:${snapshotId}:${index}`,
+      sourceScope: "committed",
+      trustClass: "trusted",
+      privacyStatus: "allowed",
+      redactionStatus: "not_needed",
+      metadataJson: "{}",
+      createdAt
+    });
+    repositories.indexing.ftsEntries.insertOrIgnore({
+      ftsEntryId: `fts:${snapshotId}:${index}`,
+      projectId: "project-1",
+      repoId: "repo-1",
+      snapshotId,
+      sourceId,
+      sourceRef: `src/${snapshotId}-${index}.ts`,
+      sourceType: "repository_file",
+      sourceHash: `hash:source:${snapshotId}:${index}`,
+      textHash: `hash:text:${snapshotId}:${index}`,
+      metadataJson: "{}",
+      createdAt,
+      body: `searchable text ${snapshotId} ${index}`
+    });
+  }
 }
 
 function insertArtifact(repositories, artifactId, sessionId, createdAt) {
@@ -218,5 +318,19 @@ function countRows(database, tableName, columnName, value) {
   const row = database
     .prepare(`SELECT count(*) AS count FROM ${tableName} WHERE ${columnName} = ?`)
     .get(value);
+  return Number(row.count);
+}
+
+function countRowsByJoin(database, snapshotId) {
+  const row = database
+    .prepare(
+      [
+        "SELECT count(*) AS count",
+        "FROM fts_entry_text text",
+        "JOIN fts_entries entry ON entry.fts_entry_id = text.fts_entry_id",
+        "WHERE entry.snapshot_id = ?"
+      ].join(" ")
+    )
+    .get(snapshotId);
   return Number(row.count);
 }

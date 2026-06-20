@@ -30,7 +30,7 @@ Before editing security-sensitive code, agents must verify:
 |---|---|
 | Git/local ignore filtering, snapshot rejection, artifact secret scan, `.grape/` exclusion | **Implemented** |
 | Ignored/private read approval workflow (`audit_events`, scoped approval) | **Partial** (doctor/status diagnostics; full approval UX deferred) |
-| `grape compact` artifact retention cleanup | **Partial** (context artifact and compression cache retention only; confirm required) |
+| `grape compact` artifact retention cleanup | **Partial** (context artifact, compression cache, and FTS retention only; confirm required) |
 | `grape export` / `grape purge` privacy workflows | **Deferred** (specified in CLI contract; no runnable command yet) |
 | Complete redaction engine beyond baseline artifact scan | **Partial** |
 
@@ -106,7 +106,7 @@ This removes local Grape state for that repository and recreates setup state. It
 
 New local configs include retention defaults for context artifacts, snapshots, FTS rows, compression inputs, derived metadata, and invalidated records. Existing schema-1 configs without the retention block still read with those defaults. These values are cleanup policy, not background deletion.
 
-`grape compact` now enforces context artifact retention and compression input retention only. It previews by default and requires `--confirm` before it deletes artifact rows, regular files under `.grape/artifacts/`, or unreferenced compression cache rows. It does not delete snapshots, FTS rows, sources, claims, proofs, source rejections, audit rows, or the whole `.grape/` directory.
+`grape compact` now enforces context artifact, compression input, and FTS row retention. It previews by default and requires `--confirm` before it deletes artifact rows, regular files under `.grape/artifacts/`, unreferenced compression cache rows, or old FTS rows. FTS cleanup deletes whole snapshot groups from `fts_entries`; SQLite deletes the matching `fts_entry_text` rows. It preserves FTS rows for the latest repo snapshot and does not delete snapshots, sources, claims, proofs, source rejections, audit rows, or the whole `.grape/` directory.
 
 ## Logging Rules
 
