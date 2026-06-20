@@ -36,7 +36,7 @@ Keep entries simple:
 - Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
 - Summary: compacted compression artifact dependency scope in compiled context artifacts. Public artifact dependency rows now carry aggregate `inputHash`, `inputCount`, policy/scope hashes, output hash, and a pointer to `compression_inputs` instead of duplicating every compression input ref and hash into artifact JSON, Markdown metadata, MCP payloads, and context-pack item refs. Added local retention defaults to `.grape/config.json` and backward-compatible default filling for older schema-1 configs without the retention block.
 - Tests or checks run: large compression dependency scope regression test plus the standard local gates for the slice.
-- Risks or follow-ups: the compaction command still needs to enforce the configured limits for old artifacts, snapshots, FTS rows, compression inputs, and invalidated records.
+- Risks or follow-ups: the compaction command still needs separate slices for snapshot and invalidated-record limits.
 
 ### 2026-06-20 - Context Artifact And Compression Cache Compaction Slice
 
@@ -44,7 +44,7 @@ Keep entries simple:
 - Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
 - Summary: added `grape compact` as a preview-first local maintenance command for context artifact and compression cache retention. The command deletes nothing unless `--confirm` is passed. It deletes only eligible old context artifact rows, cascaded artifact-owned rows, matching regular artifact files under `.grape/artifacts/`, and eligible unreferenced compression cache rows. It preserves latest-per-session artifacts, active sent context, restorable omitted context, locked sessions, and compression artifacts still referenced by surviving context artifacts.
 - Tests or checks run: focused CLI compact behavior tests and maintenance repository retention tests before broader verification.
-- Risks or follow-ups: snapshot, derived metadata, invalidated-record, purge, and export lifecycle controls still need separate slices.
+- Risks or follow-ups: snapshot, invalidated-record, purge, and export lifecycle controls still need separate slices.
 
 ### 2026-06-20 - FTS Retention Compaction Slice
 
@@ -52,7 +52,15 @@ Keep entries simple:
 - Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
 - Summary: extended `grape compact` to enforce the configured FTS row retention. Preview reports eligible old searchable text rows, and `--confirm` deletes only whole snapshot groups from `fts_entries`; SQLite deletes matching `fts_entry_text` rows. The slice preserves FTS rows for the latest repo snapshot and does not delete source records, source files, repo snapshots, claims, proofs, source rejections, audit rows, or the database file.
 - Tests or checks run: focused CLI compact behavior tests, maintenance repository retention tests, docs checks, typecheck, and full `npm run check`.
-- Risks or follow-ups: snapshot, derived metadata, invalidated-record, purge, and export lifecycle controls still need separate slices. FTS compaction can keep rows above the configured cap when the latest repo snapshot alone exceeds the cap.
+- Risks or follow-ups: snapshot, invalidated-record, purge, and export lifecycle controls still need separate slices. FTS compaction can keep rows above the configured cap when the latest repo snapshot alone exceeds the cap.
+
+### 2026-06-20 - Derived Metadata Compaction Slice
+
+- Author/agent: Gaille Amolong / Codex
+- Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
+- Summary: extended `grape compact` to enforce configured derived metadata retention for `symbol_nodes` and `symbol_edges`. Preview reports eligible symbol metadata rows by snapshot, and `--confirm` deletes only whole snapshot groups. The slice preserves symbol metadata for the latest repo snapshot, symbol rows still referenced by surviving context artifact dependencies, and candidate snapshots still referenced by symbol edges from another snapshot. It does not delete source records, source files, repo snapshots, claims, proofs, source rejections, audit rows, or the database file.
+- Tests or checks run: focused CLI compact behavior tests and maintenance repository retention tests before broader verification.
+- Risks or follow-ups: snapshot, invalidated-record, purge, and export lifecycle controls still need separate slices. Symbol metadata compaction can keep rows above the configured cap when the latest repo snapshot or surviving references require protection.
 
 ### 2026-06-17 - MCP Client Config Auto-Wiring
 

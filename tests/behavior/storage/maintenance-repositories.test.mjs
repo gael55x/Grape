@@ -146,6 +146,95 @@ test("maintenance repository plans FTS compaction by whole snapshot", () => {
   });
 });
 
+test("maintenance repository plans derived metadata compaction by whole snapshot", () => {
+  withMigratedDatabase((database, repositories) => {
+    insertBaseGraph(repositories.storage);
+    insertSnapshot(repositories.storage, "snapshot-old-a", oldTime);
+    insertSnapshot(repositories.storage, "snapshot-old-b", "2026-04-02T00:00:00.000Z");
+    insertSnapshot(repositories.storage, "snapshot-new", latestTime);
+
+    insertSymbolMetadata(repositories, "snapshot-old-a", oldTime, 2, 1);
+    insertSymbolMetadata(repositories, "snapshot-old-b", "2026-04-02T00:00:00.000Z", 1, 0);
+    insertSymbolMetadata(repositories, "snapshot-new", latestTime, 1, 1);
+
+    const plan = repositories.maintenance.retention.planDerivedMetadataCompaction({
+      now,
+      limit: { maxAgeDays: 30, maxRows: 1 }
+    });
+
+    assert.equal(plan.totalSnapshots, 3);
+    assert.equal(plan.totalRows, 6);
+    assert.equal(plan.totalNodeRows, 4);
+    assert.equal(plan.totalEdgeRows, 2);
+    assert.equal(plan.retentionMatchedRows, 6);
+    assert.deepEqual(
+      plan.candidateSnapshots.map((snapshot) => snapshot.snapshotId).sort(),
+      ["snapshot-old-a", "snapshot-old-b"]
+    );
+    assert.equal(plan.rowCounts.symbolNodes, 3);
+    assert.equal(plan.rowCounts.symbolEdges, 1);
+    assert.equal(plan.protectedSnapshots.length, 1);
+    assert.equal(plan.protectedSnapshots[0].snapshotId, "snapshot-new");
+    assert.equal(plan.protectedSnapshots[0].protection, "latest_repo_snapshot");
+    assert.equal(plan.protectedSnapshots[0].reason, "row_limit");
+
+    const deletion = repositories.maintenance.retention.deleteDerivedMetadataSnapshots(["snapshot-old-a"]);
+
+    assert.deepEqual(deletion, { symbolNodes: 2, symbolEdges: 1 });
+    assert.equal(countRows(database, "symbol_nodes", "snapshot_id", "snapshot-old-a"), 0);
+    assert.equal(countRows(database, "symbol_edges", "snapshot_id", "snapshot-old-a"), 0);
+    assert.equal(countRows(database, "sources", "snapshot_id", "snapshot-old-a"), 2);
+    assert.equal(countRows(database, "repo_snapshots", "snapshot_id", "snapshot-old-a"), 1);
+    assert.equal(countRows(database, "symbol_nodes", "snapshot_id", "snapshot-new"), 1);
+    assert.equal(countRows(database, "symbol_edges", "snapshot_id", "snapshot-new"), 1);
+  });
+});
+
+test("maintenance repository preserves derived metadata referenced by surviving artifacts", () => {
+  withMigratedDatabase((database, repositories) => {
+    insertBaseGraph(repositories.storage);
+    insertSnapshot(repositories.storage, "snapshot-old", oldTime);
+    insertSnapshot(repositories.storage, "snapshot-new", latestTime);
+    insertSession(repositories.storage, "session-symbol");
+    insertArtifact(repositories.storage, "artifact-symbol-live", "session-symbol", newTime);
+
+    insertSymbolMetadata(repositories, "snapshot-old", oldTime, 1, 0);
+    insertSymbolMetadata(repositories, "snapshot-new", latestTime, 1, 0);
+    insertSymbolDependency(
+      repositories.storage,
+      "artifact-symbol-live",
+      "symbol:snapshot-old:0"
+    );
+
+    const protectedPlan = repositories.maintenance.retention.planDerivedMetadataCompaction({
+      now,
+      limit: { maxAgeDays: 30, maxRows: 0 }
+    });
+
+    assert.deepEqual(protectedPlan.candidateSnapshots.map((snapshot) => snapshot.snapshotId), []);
+    assert.equal(protectedPlan.protectedSnapshots.length, 2);
+    assert.equal(
+      protectedPlan.protectedSnapshots.find((snapshot) => snapshot.snapshotId === "snapshot-old")?.protection,
+      "referenced_by_context_artifact"
+    );
+    assert.equal(
+      protectedPlan.protectedSnapshots.find((snapshot) => snapshot.snapshotId === "snapshot-new")?.protection,
+      "latest_repo_snapshot"
+    );
+
+    const ignoredPlan = repositories.maintenance.retention.planDerivedMetadataCompaction({
+      now,
+      limit: { maxAgeDays: 30, maxRows: 0 },
+      ignoredContextArtifactIds: ["artifact-symbol-live"]
+    });
+
+    assert.deepEqual(ignoredPlan.candidateSnapshots.map((snapshot) => snapshot.snapshotId), ["snapshot-old"]);
+    assert.equal(ignoredPlan.rowCounts.symbolNodes, 1);
+    assert.equal(ignoredPlan.rowCounts.symbolEdges, 0);
+    assert.equal(countRows(database, "context_dependencies", "artifact_id", "artifact-symbol-live"), 1);
+  });
+});
+
 function insertBaseGraph(repositories) {
   repositories.projects.insert({
     projectId: "project-1",
@@ -257,6 +346,61 @@ function insertFtsRows(repositories, snapshotId, createdAt, count) {
   }
 }
 
+function insertSymbolMetadata(repositories, snapshotId, createdAt, nodeCount, edgeCount) {
+  for (let index = 0; index < nodeCount; index += 1) {
+    const sourceId = `source:symbol:${snapshotId}:${index}`;
+    const symbolId = `symbol:${snapshotId}:${index}`;
+    repositories.evidence.sources.insertOrIgnore({
+      sourceId,
+      snapshotId,
+      sourceType: "repository_file",
+      sourceRef: `src/${snapshotId}-symbol-${index}.ts`,
+      sourceHash: `hash:symbol-source:${snapshotId}:${index}`,
+      sourceScope: "committed",
+      trustClass: "trusted",
+      privacyStatus: "allowed",
+      redactionStatus: "not_needed",
+      metadataJson: "{}",
+      createdAt
+    });
+    repositories.indexing.symbolNodes.insertOrIgnore({
+      symbolId,
+      projectId: "project-1",
+      repoId: "repo-1",
+      snapshotId,
+      sourceId,
+      path: `src/${snapshotId}-symbol-${index}.ts`,
+      language: "typescript",
+      name: `symbol${index}`,
+      symbolKind: index === 0 ? "module" : "function",
+      startLine: 1,
+      endLine: 1,
+      bodyHash: `hash:symbol-body:${snapshotId}:${index}`,
+      signatureHash: `hash:symbol-signature:${snapshotId}:${index}`,
+      confidence: "high",
+      metadataJson: "{}",
+      createdAt
+    });
+  }
+
+  for (let index = 0; index < edgeCount; index += 1) {
+    repositories.indexing.symbolEdges.insertOrIgnore({
+      edgeId: `symbol_edge:${snapshotId}:${index}`,
+      projectId: "project-1",
+      repoId: "repo-1",
+      snapshotId,
+      fromSymbolId: `symbol:${snapshotId}:0`,
+      toSymbolId: nodeCount > 1 ? `symbol:${snapshotId}:1` : undefined,
+      toRef: nodeCount > 1 ? undefined : `./${snapshotId}`,
+      edgeType: "imports",
+      confidence: "high",
+      discoveryMethod: "ast",
+      metadataJson: "{}",
+      createdAt
+    });
+  }
+}
+
 function insertArtifact(repositories, artifactId, sessionId, createdAt) {
   repositories.contextArtifacts.insert({
     artifactId,
@@ -309,6 +453,18 @@ function insertCompressionDependency(repositories, artifactId, compressionId) {
     dependencyKind: "compression_artifact",
     dependencyRef: compressionId,
     dependencyHash: `hash:output:${compressionId}`,
+    scopeJson: "{}",
+    createdAt: now
+  });
+}
+
+function insertSymbolDependency(repositories, artifactId, symbolId) {
+  repositories.contextDependencies.insert({
+    dependencyId: `dependency:${artifactId}:${symbolId}`,
+    artifactId,
+    dependencyKind: "symbol",
+    dependencyRef: symbolId,
+    dependencyHash: `hash:${symbolId}`,
     scopeJson: "{}",
     createdAt: now
   });

@@ -67,8 +67,9 @@ test("compact help documents preview, confirm, and cleanup scope", () => {
   assert.equal(help.status, 0, help.stderr);
   assert.match(help.stdout, /grape compact --confirm/);
   assert.match(help.stdout, /Without --confirm, no data is deleted/);
-  assert.match(help.stdout, /context artifacts, compression cache rows, and FTS rows/);
+  assert.match(help.stdout, /context artifacts, compression cache rows, FTS rows, and derived symbol metadata/);
   assert.match(help.stdout, /FTS rows only by whole snapshot/);
+  assert.match(help.stdout, /derived symbol metadata only by whole snapshot/);
   assert.match(help.stdout, /preserves compression cache rows still referenced/);
   assert.match(help.stdout, /does not delete snapshots, claims/);
 
@@ -106,12 +107,21 @@ test("compact previews and applies eligible context artifact retention", () => {
     assert.equal(preview.ftsIndex.deletedRows, 0);
     assert.equal(preview.ftsIndex.rowCounts.ftsEntries, 2);
     assert.equal(preview.ftsIndex.rowCounts.ftsEntryText, 2);
+    assert.equal(preview.derivedMetadata.candidateSnapshots, 1);
+    assert.equal(preview.derivedMetadata.candidateRows, 3);
+    assert.equal(preview.derivedMetadata.candidateNodeRows, 2);
+    assert.equal(preview.derivedMetadata.candidateEdgeRows, 1);
+    assert.equal(preview.derivedMetadata.deletedRows, 0);
+    assert.equal(preview.derivedMetadata.rowCounts.symbolNodes, 2);
+    assert.equal(preview.derivedMetadata.rowCounts.symbolEdges, 1);
     assert.equal(countArtifact(repoPath, seeded.deleteArtifactId), 1);
     assert.equal(everyArtifactFileExists(repoPath, seeded.deleteArtifactId), true);
     assert.equal(countCompressionArtifact(repoPath, seeded.deleteCompressionId), 1);
     assert.equal(countCompressionInputs(repoPath, seeded.deleteCompressionId), 2);
     assert.equal(countFtsEntries(repoPath, seeded.deleteFtsSnapshotId), 2);
     assert.equal(countFtsTextRows(repoPath, seeded.deleteFtsSnapshotId), 2);
+    assert.equal(countSymbolNodes(repoPath, seeded.deleteDerivedSnapshotId), 2);
+    assert.equal(countSymbolEdges(repoPath, seeded.deleteDerivedSnapshotId), 1);
 
     const apply = runCliJson(repoPath, ["compact", "--confirm"]);
 
@@ -123,6 +133,9 @@ test("compact previews and applies eligible context artifact retention", () => {
     assert.equal(apply.contextArtifacts.artifactFiles.deletedFiles, 3);
     assert.equal(apply.compressionCache.deletedArtifacts, 1);
     assert.equal(apply.ftsIndex.deletedRows, 2);
+    assert.equal(apply.derivedMetadata.deletedRows, 3);
+    assert.equal(apply.derivedMetadata.deletedNodeRows, 2);
+    assert.equal(apply.derivedMetadata.deletedEdgeRows, 1);
     assert.equal(countArtifact(repoPath, seeded.deleteArtifactId), 0);
     assert.equal(countArtifactDependency(repoPath, seeded.deleteArtifactId), 0);
     assert.equal(countPackItems(repoPath, seeded.deleteArtifactId), 0);
@@ -131,6 +144,8 @@ test("compact previews and applies eligible context artifact retention", () => {
     assert.equal(countCompressionInputs(repoPath, seeded.deleteCompressionId), 0);
     assert.equal(countFtsEntries(repoPath, seeded.deleteFtsSnapshotId), 0);
     assert.equal(countFtsTextRows(repoPath, seeded.deleteFtsSnapshotId), 0);
+    assert.equal(countSymbolNodes(repoPath, seeded.deleteDerivedSnapshotId), 0);
+    assert.equal(countSymbolEdges(repoPath, seeded.deleteDerivedSnapshotId), 0);
 
     for (const protectedArtifactId of seeded.protectedArtifactIds) {
       assert.equal(countArtifact(repoPath, protectedArtifactId), 1);
@@ -139,6 +154,7 @@ test("compact previews and applies eligible context artifact retention", () => {
     assert.equal(countCompressionArtifact(repoPath, seeded.protectedCompressionId), 1);
     assert.equal(countCompressionInputs(repoPath, seeded.protectedCompressionId), 1);
     assert.ok(countFtsEntries(repoPath, identitySnapshotId(repoPath)) > 0);
+    assert.ok(countSymbolNodes(repoPath, identitySnapshotId(repoPath)) > 0);
   });
 });
 
@@ -167,6 +183,32 @@ test("compact requires confirmation when only FTS rows are eligible", () => {
   });
 });
 
+test("compact requires confirmation when only derived metadata is eligible", () => {
+  withGitRepo((repoPath) => {
+    runCliJson(repoPath, ["init", "--connect"]);
+    const seeded = seedDerivedMetadataOnlyRetention(repoPath);
+    const preview = runCliJson(repoPath, ["compact"]);
+
+    assert.equal(preview.confirmationRequired, true);
+    assert.equal(preview.contextArtifacts.candidateArtifacts, 0);
+    assert.equal(preview.compressionCache.candidateArtifacts, 0);
+    assert.equal(preview.ftsIndex.candidateSnapshots, 0);
+    assert.equal(preview.derivedMetadata.candidateSnapshots, 1);
+    assert.equal(preview.derivedMetadata.candidateRows, 3);
+    assert.equal(preview.derivedMetadata.deletedRows, 0);
+    assert.equal(countSymbolNodes(repoPath, seeded.deleteDerivedSnapshotId), 2);
+    assert.equal(countSymbolEdges(repoPath, seeded.deleteDerivedSnapshotId), 1);
+
+    const apply = runCliJson(repoPath, ["compact", "--confirm"]);
+
+    assert.equal(apply.derivedMetadata.deletedRows, 3);
+    assert.equal(countSymbolNodes(repoPath, seeded.deleteDerivedSnapshotId), 0);
+    assert.equal(countSymbolEdges(repoPath, seeded.deleteDerivedSnapshotId), 0);
+    assert.equal(countSourceRows(repoPath, seeded.deleteDerivedSnapshotId), 2);
+    assert.equal(countSnapshotRows(repoPath, seeded.deleteDerivedSnapshotId), 1);
+  });
+});
+
 function seedRetentionArtifacts(repoPath) {
   const databasePath = path.join(repoPath, ".grape", "grape.db");
   const database = new DatabaseSync(databasePath);
@@ -179,6 +221,7 @@ function seedRetentionArtifacts(repoPath) {
     const deleteArtifactId = "artifact:compact-delete-old";
     const deleteCompressionId = "compression:compact-delete-old";
     const deleteFtsSnapshotId = "snapshot:compact-fts-old";
+    const deleteDerivedSnapshotId = "snapshot:compact-derived-old";
     const protectedCompressionId = "compression:compact-protected-old";
     const protectedArtifactIds = [
       "artifact:compact-latest-old",
@@ -282,6 +325,25 @@ function seedRetentionArtifacts(repoPath) {
       createdAt: oldTime,
       count: 2
     });
+    insertFtsSnapshot(repositories, identity, deleteDerivedSnapshotId, oldTime);
+    insertSymbolRows({
+      evidenceRepositories,
+      indexingRepositories,
+      identity,
+      snapshotId: deleteDerivedSnapshotId,
+      createdAt: oldTime,
+      nodeCount: 2,
+      edgeCount: 1
+    });
+    insertSymbolRows({
+      evidenceRepositories,
+      indexingRepositories,
+      identity,
+      snapshotId: identity.snapshotId,
+      createdAt: newTime,
+      nodeCount: 1,
+      edgeCount: 0
+    });
     repositories.contextDependencies.insert({
       dependencyId: "dependency:compact-protected-compression",
       artifactId: "artifact:compact-active-old",
@@ -303,6 +365,7 @@ function seedRetentionArtifacts(repoPath) {
       deleteArtifactId,
       deleteCompressionId,
       deleteFtsSnapshotId,
+      deleteDerivedSnapshotId,
       protectedArtifactIds,
       protectedCompressionId
     };
@@ -332,6 +395,33 @@ function seedFtsOnlyRetention(repoPath) {
     });
 
     return { deleteFtsSnapshotId };
+  } finally {
+    database.close();
+  }
+}
+
+function seedDerivedMetadataOnlyRetention(repoPath) {
+  const databasePath = path.join(repoPath, ".grape", "grape.db");
+  const database = new DatabaseSync(databasePath);
+  try {
+    const identity = readIdentity(database);
+    const repositories = createStorageRepositories(database);
+    const evidenceRepositories = createEvidenceStorageRepositories(database);
+    const indexingRepositories = createIndexingStorageRepositories(database);
+    const deleteDerivedSnapshotId = "snapshot:compact-derived-only-old";
+
+    insertFtsSnapshot(repositories, identity, deleteDerivedSnapshotId, oldTime);
+    insertSymbolRows({
+      evidenceRepositories,
+      indexingRepositories,
+      identity,
+      snapshotId: deleteDerivedSnapshotId,
+      createdAt: oldTime,
+      nodeCount: 2,
+      edgeCount: 1
+    });
+
+    return { deleteDerivedSnapshotId };
   } finally {
     database.close();
   }
@@ -418,6 +508,60 @@ function insertFtsRows(input) {
       metadataJson: "{}",
       createdAt: input.createdAt,
       body: `compact fts body ${index}`
+    });
+  }
+}
+
+function insertSymbolRows(input) {
+  for (let index = 0; index < input.nodeCount; index += 1) {
+    const sourceId = `source:symbol:${input.snapshotId}:${index}`;
+    input.evidenceRepositories.sources.insertOrIgnore({
+      sourceId,
+      snapshotId: input.snapshotId,
+      sourceType: "repository_file",
+      sourceRef: `src/compact-symbol-${index}.ts`,
+      sourceHash: `hash:compact-symbol-source:${input.snapshotId}:${index}`,
+      sourceScope: "committed",
+      trustClass: "trusted",
+      privacyStatus: "allowed",
+      redactionStatus: "not_needed",
+      metadataJson: "{}",
+      createdAt: input.createdAt
+    });
+    input.indexingRepositories.symbolNodes.insertOrIgnore({
+      symbolId: `symbol:${input.snapshotId}:${index}`,
+      projectId: input.identity.projectId,
+      repoId: input.identity.repoId,
+      snapshotId: input.snapshotId,
+      sourceId,
+      path: `src/compact-symbol-${index}.ts`,
+      language: "typescript",
+      name: `symbol${index}`,
+      symbolKind: index === 0 ? "module" : "function",
+      startLine: 1,
+      endLine: 1,
+      bodyHash: `hash:compact-symbol-body:${input.snapshotId}:${index}`,
+      signatureHash: `hash:compact-symbol-signature:${input.snapshotId}:${index}`,
+      confidence: "high",
+      metadataJson: "{}",
+      createdAt: input.createdAt
+    });
+  }
+
+  for (let index = 0; index < input.edgeCount; index += 1) {
+    input.indexingRepositories.symbolEdges.insertOrIgnore({
+      edgeId: `symbol_edge:${input.snapshotId}:${index}`,
+      projectId: input.identity.projectId,
+      repoId: input.identity.repoId,
+      snapshotId: input.snapshotId,
+      fromSymbolId: `symbol:${input.snapshotId}:0`,
+      toSymbolId: input.nodeCount > 1 ? `symbol:${input.snapshotId}:1` : undefined,
+      toRef: input.nodeCount > 1 ? undefined : `./compact-symbol-${index}`,
+      edgeType: "imports",
+      confidence: "high",
+      discoveryMethod: "ast",
+      metadataJson: "{}",
+      createdAt: input.createdAt
     });
   }
 }
@@ -535,6 +679,14 @@ function countFtsTextRows(repoPath, snapshotId) {
   } finally {
     database.close();
   }
+}
+
+function countSymbolNodes(repoPath, snapshotId) {
+  return countRows(repoPath, "symbol_nodes", "snapshot_id", snapshotId);
+}
+
+function countSymbolEdges(repoPath, snapshotId) {
+  return countRows(repoPath, "symbol_edges", "snapshot_id", snapshotId);
 }
 
 function identitySnapshotId(repoPath) {

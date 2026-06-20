@@ -32,6 +32,16 @@ export type FtsRetentionReason =
 
 export type FtsRetentionProtection = "latest_repo_snapshot";
 
+export type DerivedMetadataRetentionReason =
+  | "age"
+  | "row_limit"
+  | "age_and_row_limit";
+
+export type DerivedMetadataRetentionProtection =
+  | "latest_repo_snapshot"
+  | "referenced_by_context_artifact"
+  | "incoming_symbol_edge_reference";
+
 export interface ContextArtifactRetentionCandidate {
   readonly artifactId: string;
   readonly sessionId: string;
@@ -123,6 +133,48 @@ export interface FtsRetentionPlan {
   };
 }
 
+export interface DerivedMetadataRetentionCandidate {
+  readonly snapshotId: string;
+  readonly repoId: string;
+  readonly indexedAt: string;
+  readonly nodeRows: number;
+  readonly edgeRows: number;
+  readonly totalRows: number;
+  readonly reason: DerivedMetadataRetentionReason;
+}
+
+export interface DerivedMetadataRetentionProtectedSnapshot {
+  readonly snapshotId: string;
+  readonly repoId: string;
+  readonly indexedAt: string;
+  readonly nodeRows: number;
+  readonly edgeRows: number;
+  readonly totalRows: number;
+  readonly reason: DerivedMetadataRetentionReason;
+  readonly protection: DerivedMetadataRetentionProtection;
+}
+
+export interface DerivedMetadataRetentionPlan {
+  readonly cutoff: string;
+  readonly totalSnapshots: number;
+  readonly totalRows: number;
+  readonly totalNodeRows: number;
+  readonly totalEdgeRows: number;
+  readonly retentionMatchedSnapshots: number;
+  readonly retentionMatchedRows: number;
+  readonly candidateSnapshots: readonly DerivedMetadataRetentionCandidate[];
+  readonly protectedSnapshots: readonly DerivedMetadataRetentionProtectedSnapshot[];
+  readonly rowCounts: {
+    readonly symbolNodes: number;
+    readonly symbolEdges: number;
+  };
+}
+
+export interface DerivedMetadataDeletionResult {
+  readonly symbolNodes: number;
+  readonly symbolEdges: number;
+}
+
 export interface MaintenanceStorageRepositories {
   readonly retention: {
     planContextArtifactCompaction(input: {
@@ -141,6 +193,12 @@ export interface MaintenanceStorageRepositories {
       readonly limit: StorageRetentionLimit;
     }): FtsRetentionPlan;
     deleteFtsSnapshots(snapshotIds: readonly string[]): number;
+    planDerivedMetadataCompaction(input: {
+      readonly now: string;
+      readonly limit: StorageRetentionLimit;
+      readonly ignoredContextArtifactIds?: readonly string[];
+    }): DerivedMetadataRetentionPlan;
+    deleteDerivedMetadataSnapshots(snapshotIds: readonly string[]): DerivedMetadataDeletionResult;
   };
 }
 
@@ -174,6 +232,20 @@ interface FlaggedFtsSnapshotRow {
   readonly ageExpired: boolean;
   readonly rowExpired: boolean;
   readonly isLatestRepoSnapshot: boolean;
+}
+
+interface FlaggedDerivedMetadataSnapshotRow {
+  readonly snapshotId: string;
+  readonly repoId: string;
+  readonly indexedAt: string;
+  readonly nodeRows: number;
+  readonly edgeRows: number;
+  readonly totalRows: number;
+  readonly ageExpired: boolean;
+  readonly rowExpired: boolean;
+  readonly isLatestRepoSnapshot: boolean;
+  readonly referencedByContextArtifact: boolean;
+  readonly hasIncomingSymbolEdgeReference: boolean;
 }
 
 export function createMaintenanceStorageRepositories(database: DatabaseSync): MaintenanceStorageRepositories {
@@ -336,6 +408,73 @@ export function createMaintenanceStorageRepositories(database: DatabaseSync): Ma
             .prepare(`DELETE FROM fts_entries WHERE snapshot_id IN (${placeholders})`)
             .run(...snapshotIds).changes
         );
+      },
+      planDerivedMetadataCompaction(input) {
+        const cutoff = retentionCutoff(input.now, input.limit.maxAgeDays);
+        const rows = listFlaggedDerivedMetadataSnapshots(database, {
+          cutoff,
+          maxRows: input.limit.maxRows,
+          ignoredContextArtifactIds: input.ignoredContextArtifactIds ?? []
+        });
+        const retentionMatched = rows.filter((row) => row.ageExpired || row.rowExpired);
+        const candidateSnapshots: DerivedMetadataRetentionCandidate[] = [];
+        const protectedSnapshots: DerivedMetadataRetentionProtectedSnapshot[] = [];
+
+        for (const row of retentionMatched) {
+          const reason = derivedMetadataRetentionReason(row);
+          const protection = derivedMetadataRetentionProtection(row);
+          if (protection) {
+            protectedSnapshots.push({
+              snapshotId: row.snapshotId,
+              repoId: row.repoId,
+              indexedAt: row.indexedAt,
+              nodeRows: row.nodeRows,
+              edgeRows: row.edgeRows,
+              totalRows: row.totalRows,
+              reason,
+              protection
+            });
+          } else {
+            candidateSnapshots.push({
+              snapshotId: row.snapshotId,
+              repoId: row.repoId,
+              indexedAt: row.indexedAt,
+              nodeRows: row.nodeRows,
+              edgeRows: row.edgeRows,
+              totalRows: row.totalRows,
+              reason
+            });
+          }
+        }
+
+        const snapshotIds = candidateSnapshots.map((snapshot) => snapshot.snapshotId);
+        return {
+          cutoff,
+          totalSnapshots: rows.length,
+          totalRows: rows.reduce((total, row) => total + row.totalRows, 0),
+          totalNodeRows: rows.reduce((total, row) => total + row.nodeRows, 0),
+          totalEdgeRows: rows.reduce((total, row) => total + row.edgeRows, 0),
+          retentionMatchedSnapshots: retentionMatched.length,
+          retentionMatchedRows: retentionMatched.reduce((total, row) => total + row.totalRows, 0),
+          candidateSnapshots,
+          protectedSnapshots,
+          rowCounts: derivedMetadataCandidateRowCounts(database, snapshotIds)
+        };
+      },
+      deleteDerivedMetadataSnapshots(snapshotIds) {
+        if (snapshotIds.length === 0) {
+          return { symbolNodes: 0, symbolEdges: 0 };
+        }
+
+        const rowCounts = derivedMetadataCandidateRowCounts(database, snapshotIds);
+        const placeholders = snapshotIds.map(() => "?").join(", ");
+        database
+          .prepare(`DELETE FROM symbol_edges WHERE snapshot_id IN (${placeholders})`)
+          .run(...snapshotIds);
+        database
+          .prepare(`DELETE FROM symbol_nodes WHERE snapshot_id IN (${placeholders})`)
+          .run(...snapshotIds);
+        return rowCounts;
       }
     }
   };
@@ -601,6 +740,175 @@ function ftsRetentionReason(row: FlaggedFtsSnapshotRow): FtsRetentionReason {
   return "row_limit";
 }
 
+function listFlaggedDerivedMetadataSnapshots(
+  database: DatabaseSync,
+  input: {
+    readonly cutoff: string;
+    readonly maxRows: number;
+    readonly ignoredContextArtifactIds: readonly string[];
+  }
+): FlaggedDerivedMetadataSnapshotRow[] {
+  const ignoredPlaceholders = input.ignoredContextArtifactIds.map(() => "?").join(", ");
+  const ignoredClause =
+    input.ignoredContextArtifactIds.length > 0
+      ? `AND dependency.artifact_id NOT IN (${ignoredPlaceholders})`
+      : "";
+  return (
+    database
+      .prepare(
+        [
+          "WITH snapshot_symbol_rows AS (",
+          "SELECT",
+          "node.snapshot_id,",
+          "node.repo_id,",
+          "snapshot.created_at AS snapshot_created_at,",
+          "max(node.created_at) AS indexed_at,",
+          "count(node.symbol_id) AS node_rows,",
+          "0 AS edge_rows",
+          "FROM symbol_nodes node",
+          "JOIN repo_snapshots snapshot ON snapshot.snapshot_id = node.snapshot_id",
+          "GROUP BY node.snapshot_id, node.repo_id, snapshot.created_at",
+          "UNION ALL",
+          "SELECT",
+          "edge.snapshot_id,",
+          "edge.repo_id,",
+          "snapshot.created_at AS snapshot_created_at,",
+          "max(edge.created_at) AS indexed_at,",
+          "0 AS node_rows,",
+          "count(edge.edge_id) AS edge_rows",
+          "FROM symbol_edges edge",
+          "JOIN repo_snapshots snapshot ON snapshot.snapshot_id = edge.snapshot_id",
+          "GROUP BY edge.snapshot_id, edge.repo_id, snapshot.created_at",
+          "),",
+          "snapshot_symbols AS (",
+          "SELECT",
+          "snapshot_id,",
+          "repo_id,",
+          "snapshot_created_at,",
+          "max(indexed_at) AS indexed_at,",
+          "sum(node_rows) AS node_rows,",
+          "sum(edge_rows) AS edge_rows,",
+          "sum(node_rows) + sum(edge_rows) AS total_rows",
+          "FROM snapshot_symbol_rows",
+          "GROUP BY snapshot_id, repo_id, snapshot_created_at",
+          "),",
+          "ranked_snapshots AS (",
+          "SELECT",
+          "snapshot_symbols.*,",
+          [
+            "sum(total_rows) OVER (",
+            "ORDER BY indexed_at DESC, snapshot_created_at DESC, snapshot_id DESC",
+            "ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW",
+            ") AS retained_rows"
+          ].join(" "),
+          "FROM snapshot_symbols",
+          "),",
+          "snapshot_symbol_refs AS (",
+          "SELECT snapshot_id, symbol_id AS dependency_ref FROM symbol_nodes",
+          "UNION ALL",
+          "SELECT snapshot_id, edge_id AS dependency_ref FROM symbol_edges",
+          "UNION ALL",
+          [
+            "SELECT snapshot_id,",
+            "CASE",
+            "WHEN symbol_id LIKE 'symbol_edge:%' THEN 'symbol:' || substr(symbol_id, 13)",
+            "WHEN symbol_id LIKE 'symbol:%' THEN symbol_id",
+            "ELSE 'symbol:' || symbol_id",
+            "END AS dependency_ref",
+            "FROM symbol_nodes"
+          ].join(" "),
+          "UNION ALL",
+          [
+            "SELECT snapshot_id,",
+            "CASE",
+            "WHEN edge_id LIKE 'symbol_edge:%' THEN 'symbol:' || substr(edge_id, 13)",
+            "WHEN edge_id LIKE 'symbol:%' THEN edge_id",
+            "ELSE 'symbol:' || edge_id",
+            "END AS dependency_ref",
+            "FROM symbol_edges"
+          ].join(" "),
+          ")",
+          "SELECT",
+          "ranked.snapshot_id,",
+          "ranked.repo_id,",
+          "ranked.indexed_at,",
+          "ranked.node_rows,",
+          "ranked.edge_rows,",
+          "ranked.total_rows,",
+          "ranked.indexed_at < ? AS age_expired,",
+          "ranked.retained_rows > ? AS row_expired,",
+          [
+            "NOT EXISTS (",
+            "SELECT 1 FROM repo_snapshots newer",
+            "WHERE newer.repo_id = ranked.repo_id",
+            "AND (",
+            "newer.created_at > ranked.snapshot_created_at",
+            "OR (newer.created_at = ranked.snapshot_created_at AND newer.snapshot_id > ranked.snapshot_id)",
+            ")",
+            ") AS is_latest_repo_snapshot,"
+          ].join(" "),
+          [
+            "EXISTS (",
+            "SELECT 1 FROM snapshot_symbol_refs ref",
+            "JOIN context_dependencies dependency",
+            "ON dependency.dependency_kind = 'symbol'",
+            "AND dependency.dependency_ref = ref.dependency_ref",
+            "JOIN context_artifacts artifact ON artifact.artifact_id = dependency.artifact_id",
+            "WHERE ref.snapshot_id = ranked.snapshot_id",
+            ignoredClause,
+            ") AS referenced_by_context_artifact,"
+          ].join(" "),
+          [
+            "EXISTS (",
+            "SELECT 1 FROM symbol_nodes node",
+            "JOIN symbol_edges edge",
+            "ON edge.from_symbol_id = node.symbol_id",
+            "OR edge.to_symbol_id = node.symbol_id",
+            "WHERE node.snapshot_id = ranked.snapshot_id",
+            "AND edge.snapshot_id <> ranked.snapshot_id",
+            ") AS has_incoming_symbol_edge_reference"
+          ].join(" "),
+          "FROM ranked_snapshots ranked",
+          "ORDER BY ranked.indexed_at DESC, ranked.snapshot_created_at DESC, ranked.snapshot_id DESC"
+        ].join(" ")
+      )
+      .all(input.cutoff, input.maxRows, ...input.ignoredContextArtifactIds) as Array<Record<string, unknown>>
+  ).map(mapFlaggedDerivedMetadataSnapshotRow);
+}
+
+function mapFlaggedDerivedMetadataSnapshotRow(row: Record<string, unknown>): FlaggedDerivedMetadataSnapshotRow {
+  return {
+    snapshotId: stringColumn(row, "snapshot_id"),
+    repoId: stringColumn(row, "repo_id"),
+    indexedAt: stringColumn(row, "indexed_at"),
+    nodeRows: Number(row.node_rows),
+    edgeRows: Number(row.edge_rows),
+    totalRows: Number(row.total_rows),
+    ageExpired: boolColumn(row, "age_expired"),
+    rowExpired: boolColumn(row, "row_expired"),
+    isLatestRepoSnapshot: boolColumn(row, "is_latest_repo_snapshot"),
+    referencedByContextArtifact: boolColumn(row, "referenced_by_context_artifact"),
+    hasIncomingSymbolEdgeReference: boolColumn(row, "has_incoming_symbol_edge_reference")
+  };
+}
+
+function derivedMetadataRetentionReason(
+  row: FlaggedDerivedMetadataSnapshotRow
+): DerivedMetadataRetentionReason {
+  if (row.ageExpired && row.rowExpired) return "age_and_row_limit";
+  if (row.ageExpired) return "age";
+  return "row_limit";
+}
+
+function derivedMetadataRetentionProtection(
+  row: FlaggedDerivedMetadataSnapshotRow
+): DerivedMetadataRetentionProtection | undefined {
+  if (row.isLatestRepoSnapshot) return "latest_repo_snapshot";
+  if (row.referencedByContextArtifact) return "referenced_by_context_artifact";
+  if (row.hasIncomingSymbolEdgeReference) return "incoming_symbol_edge_reference";
+  return undefined;
+}
+
 function candidateRowCounts(
   database: DatabaseSync,
   artifactIds: readonly string[]
@@ -667,6 +975,23 @@ function ftsCandidateRowCounts(
   return {
     ftsEntries: countRowsByArtifactIds(database, "fts_entries", "snapshot_id", snapshotIds),
     ftsEntryText: Number(textRow.count)
+  };
+}
+
+function derivedMetadataCandidateRowCounts(
+  database: DatabaseSync,
+  snapshotIds: readonly string[]
+): DerivedMetadataRetentionPlan["rowCounts"] {
+  if (snapshotIds.length === 0) {
+    return {
+      symbolNodes: 0,
+      symbolEdges: 0
+    };
+  }
+
+  return {
+    symbolNodes: countRowsByArtifactIds(database, "symbol_nodes", "snapshot_id", snapshotIds),
+    symbolEdges: countRowsByArtifactIds(database, "symbol_edges", "snapshot_id", snapshotIds)
   };
 }
 

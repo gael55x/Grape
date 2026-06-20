@@ -50,6 +50,8 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
   const compressionProtectedReasons = result.compressionCache.protectedByReason;
   const ftsRows = result.ftsIndex.rowCounts;
   const ftsProtectedReasons = result.ftsIndex.protectedByReason;
+  const derivedRows = result.derivedMetadata.rowCounts;
+  const derivedProtectedReasons = result.derivedMetadata.protectedByReason;
   return [
     result.applied ? "Grape compact applied." : "Grape compact preview.",
     "",
@@ -60,6 +62,7 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
     `  Context artifacts: ${result.retention.contextArtifacts.maxAgeDays} days, ${result.retention.contextArtifacts.maxRows} rows`,
     `  Compression inputs: ${result.retention.compressionInputs.maxAgeDays} days, ${result.retention.compressionInputs.maxRows} rows`,
     `  FTS rows: ${result.retention.ftsRows.maxAgeDays} days, ${result.retention.ftsRows.maxRows} rows`,
+    `  Derived metadata: ${result.retention.derivedMetadata.maxAgeDays} days, ${result.retention.derivedMetadata.maxRows} rows`,
     `  Cutoff: ${result.contextArtifacts.cutoff}`,
     "",
     "Context artifacts:",
@@ -102,6 +105,29 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
     `  Protected reasons: latest_snapshot=${ftsProtectedReasons.latest_repo_snapshot ?? 0}`,
     `  fts_entries: ${ftsRows.ftsEntries}`,
     `  fts_entry_text: ${ftsRows.ftsEntryText}`,
+    "",
+    "Derived metadata:",
+    `  Cutoff: ${result.derivedMetadata.cutoff}`,
+    `  Snapshots with symbol metadata: ${result.derivedMetadata.totalSnapshots}`,
+    `  Stored rows: ${result.derivedMetadata.totalRows}`,
+    `  Stored symbol nodes: ${result.derivedMetadata.totalNodeRows}`,
+    `  Stored symbol edges: ${result.derivedMetadata.totalEdgeRows}`,
+    `  Matched snapshots: ${result.derivedMetadata.retentionMatchedSnapshots}`,
+    `  Matched rows: ${result.derivedMetadata.retentionMatchedRows}`,
+    `  Eligible snapshots: ${result.derivedMetadata.candidateSnapshots}`,
+    `  Eligible rows: ${result.derivedMetadata.candidateRows}`,
+    `  Eligible symbol nodes: ${result.derivedMetadata.candidateNodeRows}`,
+    `  Eligible symbol edges: ${result.derivedMetadata.candidateEdgeRows}`,
+    `  Deleted rows: ${result.derivedMetadata.deletedRows}`,
+    `  Deleted symbol nodes: ${result.derivedMetadata.deletedNodeRows}`,
+    `  Deleted symbol edges: ${result.derivedMetadata.deletedEdgeRows}`,
+    `  Protected snapshots: ${result.derivedMetadata.protectedSnapshots}`,
+    `  Protected rows: ${result.derivedMetadata.protectedRows}`,
+    `  Protected symbol nodes: ${result.derivedMetadata.protectedNodeRows}`,
+    `  Protected symbol edges: ${result.derivedMetadata.protectedEdgeRows}`,
+    `  Protected reasons: latest_snapshot=${derivedProtectedReasons.latest_repo_snapshot ?? 0}, referenced=${derivedProtectedReasons.referenced_by_context_artifact ?? 0}, edge_reference=${derivedProtectedReasons.incoming_symbol_edge_reference ?? 0}`,
+    `  symbol_nodes: ${derivedRows.symbolNodes}`,
+    `  symbol_edges: ${derivedRows.symbolEdges}`,
     "",
     "Artifact files:",
     `  Planned files: ${artifactFiles.plannedFiles}`,

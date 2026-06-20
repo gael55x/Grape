@@ -318,7 +318,7 @@ Grape stores local runtime state under `.grape/`:
 
 Grape does not send repository content, artifacts, proofs, summaries, embeddings, or telemetry to a remote Grape service by default. Your MCP client or coding agent may still forward returned context to its model provider. Treat Grape output like any other repo context you give an AI tool.
 
-For bounded cleanup, run `grape compact` first. It previews eligible context artifact, compression cache, and FTS cleanup and deletes nothing unless you rerun it with `--confirm`. FTS cleanup removes old searchable text rows by whole snapshot. It does not delete source files or source records.
+For bounded cleanup, run `grape compact` first. It previews eligible context artifact, compression cache, FTS, and symbol metadata cleanup and deletes nothing unless you rerun it with `--confirm`. FTS and symbol cleanup delete old rows by whole snapshot. They do not delete source files, source records, snapshots, claims, or proofs.
 
 Safe manual cleanup while `grape purge` is deferred:
 

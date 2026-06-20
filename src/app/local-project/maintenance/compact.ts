@@ -6,6 +6,8 @@ import {
   runStorageTransaction,
   type CompressionRetentionPlan,
   type ContextArtifactRetentionPlan,
+  type DerivedMetadataDeletionResult,
+  type DerivedMetadataRetentionPlan,
   type FtsRetentionPlan
 } from "../../../core/storage/index.js";
 import { artifactFileBaseName } from "../context/artifact-files.js";
@@ -37,6 +39,10 @@ export interface CompactLocalProjectResult {
       readonly maxRows: number;
     };
     readonly ftsRows: {
+      readonly maxAgeDays: number;
+      readonly maxRows: number;
+    };
+    readonly derivedMetadata: {
       readonly maxAgeDays: number;
       readonly maxRows: number;
     };
@@ -83,6 +89,28 @@ export interface CompactLocalProjectResult {
     readonly protectedRows: number;
     readonly protectedByReason: Readonly<Record<string, number>>;
     readonly rowCounts: FtsRetentionPlan["rowCounts"];
+  };
+  readonly derivedMetadata: {
+    readonly cutoff: string;
+    readonly totalSnapshots: number;
+    readonly totalRows: number;
+    readonly totalNodeRows: number;
+    readonly totalEdgeRows: number;
+    readonly retentionMatchedSnapshots: number;
+    readonly retentionMatchedRows: number;
+    readonly candidateSnapshots: number;
+    readonly candidateRows: number;
+    readonly candidateNodeRows: number;
+    readonly candidateEdgeRows: number;
+    readonly deletedRows: number;
+    readonly deletedNodeRows: number;
+    readonly deletedEdgeRows: number;
+    readonly protectedSnapshots: number;
+    readonly protectedRows: number;
+    readonly protectedNodeRows: number;
+    readonly protectedEdgeRows: number;
+    readonly protectedByReason: Readonly<Record<string, number>>;
+    readonly rowCounts: DerivedMetadataRetentionPlan["rowCounts"];
   };
   readonly notes: readonly string[];
 }
@@ -131,16 +159,26 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
         limit: config.retention.ftsRows
       });
       const ftsSnapshotIds = ftsPlan.candidateSnapshots.map((snapshot) => snapshot.snapshotId);
+      const derivedMetadataPlan = maintenance.retention.planDerivedMetadataCompaction({
+        now,
+        limit: config.retention.derivedMetadata,
+        ignoredContextArtifactIds: artifactIds
+      });
+      const derivedMetadataSnapshotIds = derivedMetadataPlan.candidateSnapshots.map(
+        (snapshot) => snapshot.snapshotId
+      );
 
       if (dryRun) {
         return {
           plan,
           compressionPlan,
           ftsPlan,
+          derivedMetadataPlan,
           files: summarizeArtifactFiles(fileCandidates),
           deletedArtifacts: 0,
           deletedCompressionArtifacts: 0,
           deletedFtsRows: 0,
+          deletedDerivedMetadataRows: { symbolNodes: 0, symbolEdges: 0 },
           deletedFiles: 0,
           deletedBytes: 0
         };
@@ -149,17 +187,21 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
       const deletion = runStorageTransaction(database, () => ({
         deletedArtifacts: maintenance.retention.deleteContextArtifacts(artifactIds),
         deletedCompressionArtifacts: maintenance.retention.deleteCompressionArtifacts(compressionIds),
-        deletedFtsRows: maintenance.retention.deleteFtsSnapshots(ftsSnapshotIds)
+        deletedFtsRows: maintenance.retention.deleteFtsSnapshots(ftsSnapshotIds),
+        deletedDerivedMetadataRows:
+          maintenance.retention.deleteDerivedMetadataSnapshots(derivedMetadataSnapshotIds)
       }));
       const fileDeletion = deletePlannedArtifactFiles(fileCandidates);
       return {
         plan,
         compressionPlan,
         ftsPlan,
+        derivedMetadataPlan,
         files: summarizeArtifactFiles(fileCandidates),
         deletedArtifacts: deletion.deletedArtifacts,
         deletedCompressionArtifacts: deletion.deletedCompressionArtifacts,
         deletedFtsRows: deletion.deletedFtsRows,
+        deletedDerivedMetadataRows: deletion.deletedDerivedMetadataRows,
         deletedFiles: fileDeletion.deletedFiles,
         deletedBytes: fileDeletion.deletedBytes
       };
@@ -177,12 +219,14 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
       dryRun &&
       (value.plan.candidateArtifacts.length > 0 ||
         value.compressionPlan.candidateArtifacts.length > 0 ||
-        value.ftsPlan.candidateSnapshots.length > 0),
+        value.ftsPlan.candidateSnapshots.length > 0 ||
+        value.derivedMetadataPlan.candidateSnapshots.length > 0),
     migrationsApplied: databaseResult.migrationResult.applied.map((migration) => migration.id),
     retention: {
       contextArtifacts: config.retention.contextArtifacts,
       compressionInputs: config.retention.compressionInputs,
-      ftsRows: config.retention.ftsRows
+      ftsRows: config.retention.ftsRows,
+      derivedMetadata: config.retention.derivedMetadata
     },
     contextArtifacts: {
       cutoff: value.plan.cutoff,
@@ -227,11 +271,34 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
       protectedByReason: countFtsProtectedReasons(value.ftsPlan),
       rowCounts: value.ftsPlan.rowCounts
     },
+    derivedMetadata: {
+      cutoff: value.derivedMetadataPlan.cutoff,
+      totalSnapshots: value.derivedMetadataPlan.totalSnapshots,
+      totalRows: value.derivedMetadataPlan.totalRows,
+      totalNodeRows: value.derivedMetadataPlan.totalNodeRows,
+      totalEdgeRows: value.derivedMetadataPlan.totalEdgeRows,
+      retentionMatchedSnapshots: value.derivedMetadataPlan.retentionMatchedSnapshots,
+      retentionMatchedRows: value.derivedMetadataPlan.retentionMatchedRows,
+      candidateSnapshots: value.derivedMetadataPlan.candidateSnapshots.length,
+      candidateRows: sumDerivedMetadataRows(value.derivedMetadataPlan.candidateSnapshots),
+      candidateNodeRows: sumDerivedMetadataNodeRows(value.derivedMetadataPlan.candidateSnapshots),
+      candidateEdgeRows: sumDerivedMetadataEdgeRows(value.derivedMetadataPlan.candidateSnapshots),
+      deletedRows: sumDerivedMetadataDeletionRows(value.deletedDerivedMetadataRows),
+      deletedNodeRows: value.deletedDerivedMetadataRows.symbolNodes,
+      deletedEdgeRows: value.deletedDerivedMetadataRows.symbolEdges,
+      protectedSnapshots: value.derivedMetadataPlan.protectedSnapshots.length,
+      protectedRows: sumDerivedMetadataRows(value.derivedMetadataPlan.protectedSnapshots),
+      protectedNodeRows: sumDerivedMetadataNodeRows(value.derivedMetadataPlan.protectedSnapshots),
+      protectedEdgeRows: sumDerivedMetadataEdgeRows(value.derivedMetadataPlan.protectedSnapshots),
+      protectedByReason: countDerivedMetadataProtectedReasons(value.derivedMetadataPlan),
+      rowCounts: value.derivedMetadataPlan.rowCounts
+    },
     notes: compactNotes({
       dryRun,
       candidateArtifacts: value.plan.candidateArtifacts.length,
       candidateCompressionArtifacts: value.compressionPlan.candidateArtifacts.length,
       candidateFtsSnapshots: value.ftsPlan.candidateSnapshots.length,
+      candidateDerivedMetadataSnapshots: value.derivedMetadataPlan.candidateSnapshots.length,
       skippedUnsafeFiles: fileSummary.skippedUnsafeFiles
     })
   };
@@ -354,11 +421,48 @@ function countFtsProtectedReasons(plan: FtsRetentionPlan): Readonly<Record<strin
   return counts;
 }
 
+function countDerivedMetadataProtectedReasons(
+  plan: DerivedMetadataRetentionPlan
+): Readonly<Record<string, number>> {
+  const counts: Record<string, number> = {
+    latest_repo_snapshot: 0,
+    referenced_by_context_artifact: 0,
+    incoming_symbol_edge_reference: 0
+  };
+  for (const snapshot of plan.protectedSnapshots) {
+    counts[snapshot.protection] = (counts[snapshot.protection] ?? 0) + 1;
+  }
+  return counts;
+}
+
+function sumDerivedMetadataRows(
+  snapshots: readonly { readonly totalRows: number }[]
+): number {
+  return snapshots.reduce((total, snapshot) => total + snapshot.totalRows, 0);
+}
+
+function sumDerivedMetadataNodeRows(
+  snapshots: readonly { readonly nodeRows: number }[]
+): number {
+  return snapshots.reduce((total, snapshot) => total + snapshot.nodeRows, 0);
+}
+
+function sumDerivedMetadataEdgeRows(
+  snapshots: readonly { readonly edgeRows: number }[]
+): number {
+  return snapshots.reduce((total, snapshot) => total + snapshot.edgeRows, 0);
+}
+
+function sumDerivedMetadataDeletionRows(deletion: DerivedMetadataDeletionResult): number {
+  return deletion.symbolNodes + deletion.symbolEdges;
+}
+
 function compactNotes(input: {
   readonly dryRun: boolean;
   readonly candidateArtifacts: number;
   readonly candidateCompressionArtifacts: number;
   readonly candidateFtsSnapshots: number;
+  readonly candidateDerivedMetadataSnapshots: number;
   readonly skippedUnsafeFiles: number;
 }): readonly string[] {
   const notes: string[] = [];
@@ -368,14 +472,15 @@ function compactNotes(input: {
   if (
     input.candidateArtifacts === 0 &&
     input.candidateCompressionArtifacts === 0 &&
-    input.candidateFtsSnapshots === 0
+    input.candidateFtsSnapshots === 0 &&
+    input.candidateDerivedMetadataSnapshots === 0
   ) {
-    notes.push("No context artifacts, compression cache rows, or FTS rows are eligible for deletion.");
+    notes.push("No context artifacts, compression cache rows, FTS rows, or derived metadata rows are eligible for deletion.");
   }
   if (input.skippedUnsafeFiles > 0) {
     notes.push("Some artifact files were skipped because they were symlinks or not regular files.");
   }
-  notes.push("This compact run applies context artifact, compression cache, and FTS retention.");
+  notes.push("This compact run applies context artifact, compression cache, FTS, and derived metadata retention.");
   return notes;
 }
 
