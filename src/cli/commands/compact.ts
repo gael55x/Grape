@@ -52,6 +52,8 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
   const ftsProtectedReasons = result.ftsIndex.protectedByReason;
   const derivedRows = result.derivedMetadata.rowCounts;
   const derivedProtectedReasons = result.derivedMetadata.protectedByReason;
+  const snapshotRows = result.snapshots.rowCounts;
+  const snapshotProtectedReasons = result.snapshots.protectedByReason;
   return [
     result.applied ? "Grape compact applied." : "Grape compact preview.",
     "",
@@ -60,6 +62,7 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
     "",
     "Retention:",
     `  Context artifacts: ${result.retention.contextArtifacts.maxAgeDays} days, ${result.retention.contextArtifacts.maxRows} rows`,
+    `  Snapshots: ${result.retention.snapshots.maxAgeDays} days, ${result.retention.snapshots.maxRows} rows`,
     `  Compression inputs: ${result.retention.compressionInputs.maxAgeDays} days, ${result.retention.compressionInputs.maxRows} rows`,
     `  FTS rows: ${result.retention.ftsRows.maxAgeDays} days, ${result.retention.ftsRows.maxRows} rows`,
     `  Derived metadata: ${result.retention.derivedMetadata.maxAgeDays} days, ${result.retention.derivedMetadata.maxRows} rows`,
@@ -128,6 +131,19 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
     `  Protected reasons: latest_snapshot=${derivedProtectedReasons.latest_repo_snapshot ?? 0}, referenced=${derivedProtectedReasons.referenced_by_context_artifact ?? 0}, edge_reference=${derivedProtectedReasons.incoming_symbol_edge_reference ?? 0}`,
     `  symbol_nodes: ${derivedRows.symbolNodes}`,
     `  symbol_edges: ${derivedRows.symbolEdges}`,
+    "",
+    "Repo snapshots:",
+    `  Cutoff: ${result.snapshots.cutoff}`,
+    `  Stored snapshots: ${result.snapshots.totalSnapshots}`,
+    `  Matched snapshots: ${result.snapshots.retentionMatchedSnapshots}`,
+    `  Eligible orphan snapshots: ${result.snapshots.candidateSnapshots}`,
+    `  Deleted snapshots: ${result.snapshots.deletedSnapshots}`,
+    `  Eligible worktree rows: ${result.snapshots.candidateWorktreeRows}`,
+    `  Protected snapshots: ${result.snapshots.protectedSnapshots}`,
+    `  Protected worktree rows: ${result.snapshots.protectedWorktreeRows}`,
+    `  Protected reasons: latest_snapshot=${snapshotProtectedReasons.latest_repo_snapshot ?? 0}, session=${snapshotProtectedReasons.context_session ?? 0}, artifact=${snapshotProtectedReasons.context_artifact ?? 0}, compression=${snapshotProtectedReasons.compression_artifact ?? 0}, fts=${snapshotProtectedReasons.fts_entry ?? 0}, symbol_node=${snapshotProtectedReasons.symbol_node ?? 0}, symbol_edge=${snapshotProtectedReasons.symbol_edge ?? 0}, dependency=${snapshotProtectedReasons.context_dependency ?? 0}, source=${snapshotProtectedReasons.source ?? 0}`,
+    `  repo_snapshots: ${snapshotRows.repoSnapshots}`,
+    `  worktree_states: ${snapshotRows.worktreeStates}`,
     "",
     "Artifact files:",
     `  Planned files: ${artifactFiles.plannedFiles}`,

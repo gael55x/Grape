@@ -67,11 +67,13 @@ test("compact help documents preview, confirm, and cleanup scope", () => {
   assert.equal(help.status, 0, help.stderr);
   assert.match(help.stdout, /grape compact --confirm/);
   assert.match(help.stdout, /Without --confirm, no data is deleted/);
-  assert.match(help.stdout, /context artifacts, compression cache rows, FTS rows, and derived symbol metadata/);
+  assert.match(help.stdout, /context artifacts, compression cache rows, FTS rows, derived symbol metadata, and orphan snapshots/);
+  assert.match(help.stdout, /orphan snapshots/);
   assert.match(help.stdout, /FTS rows only by whole snapshot/);
   assert.match(help.stdout, /derived symbol metadata only by whole snapshot/);
   assert.match(help.stdout, /preserves compression cache rows still referenced/);
-  assert.match(help.stdout, /does not delete snapshots, claims/);
+  assert.match(help.stdout, /deletes repo snapshots only when they are orphaned/);
+  assert.match(help.stdout, /does not delete claims, proofs, sources/);
 
   const conflict = runCli(process.cwd(), ["compact", "--dry-run", "--confirm"]);
   assert.equal(conflict.status, 1);
@@ -206,6 +208,54 @@ test("compact requires confirmation when only derived metadata is eligible", () 
     assert.equal(countSymbolEdges(repoPath, seeded.deleteDerivedSnapshotId), 0);
     assert.equal(countSourceRows(repoPath, seeded.deleteDerivedSnapshotId), 2);
     assert.equal(countSnapshotRows(repoPath, seeded.deleteDerivedSnapshotId), 1);
+  });
+});
+
+test("compact requires confirmation when only orphan snapshots are eligible", () => {
+  withGitRepo((repoPath) => {
+    runCliJson(repoPath, ["init", "--connect"]);
+    const seeded = seedSnapshotOnlyRetention(repoPath);
+    const preview = runCliJson(repoPath, ["compact"]);
+
+    assert.equal(preview.confirmationRequired, true);
+    assert.equal(preview.contextArtifacts.candidateArtifacts, 0);
+    assert.equal(preview.compressionCache.candidateArtifacts, 0);
+    assert.equal(preview.ftsIndex.candidateSnapshots, 0);
+    assert.equal(preview.derivedMetadata.candidateSnapshots, 0);
+    assert.equal(preview.snapshots.candidateSnapshots, 1);
+    assert.equal(preview.snapshots.deletedSnapshots, 0);
+    assert.equal(preview.snapshots.rowCounts.repoSnapshots, 1);
+    assert.equal(preview.snapshots.rowCounts.worktreeStates, 1);
+    assert.equal(countSnapshotRows(repoPath, seeded.deleteSnapshotId), 1);
+    assert.equal(countWorktreeRows(repoPath, seeded.deleteSnapshotId), 1);
+
+    const apply = runCliJson(repoPath, ["compact", "--confirm"]);
+
+    assert.equal(apply.snapshots.deletedSnapshots, 1);
+    assert.equal(countSnapshotRows(repoPath, seeded.deleteSnapshotId), 0);
+    assert.equal(countWorktreeRows(repoPath, seeded.deleteSnapshotId), 0);
+  });
+});
+
+test("compact rechecks orphan snapshots after artifact deletion", () => {
+  withGitRepo((repoPath) => {
+    runCliJson(repoPath, ["init", "--connect"]);
+    const seeded = seedArtifactOwnedSnapshotRetention(repoPath);
+    const preview = runCliJson(repoPath, ["compact"]);
+
+    assert.equal(preview.confirmationRequired, true);
+    assert.equal(preview.contextArtifacts.candidateArtifacts, 1);
+    assert.equal(preview.snapshots.candidateSnapshots, 1);
+    assert.equal(countArtifact(repoPath, seeded.deleteArtifactId), 1);
+    assert.equal(countSnapshotRows(repoPath, seeded.deleteSnapshotId), 1);
+
+    const apply = runCliJson(repoPath, ["compact", "--confirm"]);
+
+    assert.equal(apply.contextArtifacts.deletedArtifacts, 1);
+    assert.equal(apply.snapshots.deletedSnapshots, 1);
+    assert.equal(countArtifact(repoPath, seeded.deleteArtifactId), 0);
+    assert.equal(countSnapshotRows(repoPath, seeded.deleteSnapshotId), 0);
+    assert.equal(countWorktreeRows(repoPath, seeded.deleteSnapshotId), 0);
   });
 });
 
@@ -369,6 +419,44 @@ function seedRetentionArtifacts(repoPath) {
       protectedArtifactIds,
       protectedCompressionId
     };
+  } finally {
+    database.close();
+  }
+}
+
+function seedSnapshotOnlyRetention(repoPath) {
+  const databasePath = path.join(repoPath, ".grape", "grape.db");
+  const database = new DatabaseSync(databasePath);
+  try {
+    const identity = readIdentity(database);
+    const repositories = createStorageRepositories(database);
+    const deleteSnapshotId = "snapshot:compact-orphan-only-old";
+
+    insertFtsSnapshot(repositories, identity, deleteSnapshotId, oldTime);
+
+    return { deleteSnapshotId };
+  } finally {
+    database.close();
+  }
+}
+
+function seedArtifactOwnedSnapshotRetention(repoPath) {
+  const databasePath = path.join(repoPath, ".grape", "grape.db");
+  const database = new DatabaseSync(databasePath);
+  try {
+    const identity = readIdentity(database);
+    const repositories = createStorageRepositories(database);
+    const deleteSnapshotId = "snapshot:compact-artifact-orphan-old";
+    const deleteArtifactId = "artifact:compact-artifact-orphan-old";
+    const keepArtifactId = "artifact:compact-artifact-orphan-new";
+    const sessionId = "compact-artifact-orphan-session";
+
+    insertFtsSnapshot(repositories, identity, deleteSnapshotId, oldTime);
+    insertSession(repositories, identity, sessionId, "unlocked");
+    insertArtifact(repositories, identity, deleteArtifactId, sessionId, oldTime, deleteSnapshotId);
+    insertArtifact(repositories, identity, keepArtifactId, sessionId, newTime);
+
+    return { deleteSnapshotId, deleteArtifactId };
   } finally {
     database.close();
   }
@@ -566,11 +654,11 @@ function insertSymbolRows(input) {
   }
 }
 
-function insertArtifact(repositories, identity, artifactId, sessionId, createdAt) {
+function insertArtifact(repositories, identity, artifactId, sessionId, createdAt, snapshotId = identity.snapshotId) {
   repositories.contextArtifacts.insert({
     artifactId,
     sessionId,
-    snapshotId: identity.snapshotId,
+    snapshotId,
     artifactHash: `hash:${artifactId}`,
     dependencyManifestHash: "hash:manifest",
     taskType: "analysis",
@@ -704,6 +792,10 @@ function countSourceRows(repoPath, snapshotId) {
 
 function countSnapshotRows(repoPath, snapshotId) {
   return countRows(repoPath, "repo_snapshots", "snapshot_id", snapshotId);
+}
+
+function countWorktreeRows(repoPath, snapshotId) {
+  return countRows(repoPath, "worktree_states", "snapshot_id", snapshotId);
 }
 
 function countRows(repoPath, tableName, columnName, value) {

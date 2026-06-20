@@ -219,7 +219,7 @@ const COMMAND_HELP: Readonly<Record<string, string>> = {
     "  grape compact --dry-run [--repo <path>] [--json]",
     "  grape compact --confirm [--repo <path>] [--json]",
     "",
-    "Previews or applies retention cleanup for eligible old context artifacts, compression cache rows, FTS rows, and derived symbol metadata.",
+    "Previews or applies retention cleanup for eligible old context artifacts, compression cache rows, FTS rows, derived symbol metadata, and orphan snapshots.",
     "",
     "Safety:",
     "  Without --confirm, no data is deleted.",
@@ -227,7 +227,8 @@ const COMMAND_HELP: Readonly<Record<string, string>> = {
     "  The current slice preserves compression cache rows still referenced by surviving context artifacts.",
     "  The current slice deletes FTS rows only by whole snapshot and preserves the latest repo snapshot.",
     "  The current slice deletes derived symbol metadata only by whole snapshot and preserves latest or still-referenced rows.",
-    "  The current slice does not delete snapshots, claims, proofs, sources, or audit rows."
+    "  The current slice deletes repo snapshots only when they are orphaned and have no sources, context, compression, FTS, symbol rows, or dependencies.",
+    "  The current slice does not delete claims, proofs, sources, source rejections, or audit rows."
   ].join("\n"),
   compile: [
     "Usage:",

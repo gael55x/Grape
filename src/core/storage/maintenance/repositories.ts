@@ -42,6 +42,22 @@ export type DerivedMetadataRetentionProtection =
   | "referenced_by_context_artifact"
   | "incoming_symbol_edge_reference";
 
+export type SnapshotRetentionReason =
+  | "age"
+  | "row_limit"
+  | "age_and_row_limit";
+
+export type SnapshotRetentionProtection =
+  | "latest_repo_snapshot"
+  | "context_session"
+  | "context_artifact"
+  | "compression_artifact"
+  | "fts_entry"
+  | "symbol_node"
+  | "symbol_edge"
+  | "context_dependency"
+  | "source";
+
 export interface ContextArtifactRetentionCandidate {
   readonly artifactId: string;
   readonly sessionId: string;
@@ -175,6 +191,35 @@ export interface DerivedMetadataDeletionResult {
   readonly symbolEdges: number;
 }
 
+export interface SnapshotRetentionCandidate {
+  readonly snapshotId: string;
+  readonly repoId: string;
+  readonly createdAt: string;
+  readonly worktreeRows: number;
+  readonly reason: SnapshotRetentionReason;
+}
+
+export interface SnapshotRetentionProtectedSnapshot {
+  readonly snapshotId: string;
+  readonly repoId: string;
+  readonly createdAt: string;
+  readonly worktreeRows: number;
+  readonly reason: SnapshotRetentionReason;
+  readonly protection: SnapshotRetentionProtection;
+}
+
+export interface SnapshotRetentionPlan {
+  readonly cutoff: string;
+  readonly totalSnapshots: number;
+  readonly retentionMatchedSnapshots: number;
+  readonly candidateSnapshots: readonly SnapshotRetentionCandidate[];
+  readonly protectedSnapshots: readonly SnapshotRetentionProtectedSnapshot[];
+  readonly rowCounts: {
+    readonly repoSnapshots: number;
+    readonly worktreeStates: number;
+  };
+}
+
 export interface MaintenanceStorageRepositories {
   readonly retention: {
     planContextArtifactCompaction(input: {
@@ -199,6 +244,15 @@ export interface MaintenanceStorageRepositories {
       readonly ignoredContextArtifactIds?: readonly string[];
     }): DerivedMetadataRetentionPlan;
     deleteDerivedMetadataSnapshots(snapshotIds: readonly string[]): DerivedMetadataDeletionResult;
+    planSnapshotCompaction(input: {
+      readonly now: string;
+      readonly limit: StorageRetentionLimit;
+      readonly ignoredContextArtifactIds?: readonly string[];
+      readonly ignoredCompressionIds?: readonly string[];
+      readonly ignoredFtsSnapshotIds?: readonly string[];
+      readonly ignoredDerivedMetadataSnapshotIds?: readonly string[];
+    }): SnapshotRetentionPlan;
+    deleteRepoSnapshots(snapshotIds: readonly string[]): number;
   };
 }
 
@@ -246,6 +300,24 @@ interface FlaggedDerivedMetadataSnapshotRow {
   readonly isLatestRepoSnapshot: boolean;
   readonly referencedByContextArtifact: boolean;
   readonly hasIncomingSymbolEdgeReference: boolean;
+}
+
+interface FlaggedSnapshotRow {
+  readonly snapshotId: string;
+  readonly repoId: string;
+  readonly createdAt: string;
+  readonly worktreeRows: number;
+  readonly ageExpired: boolean;
+  readonly rowExpired: boolean;
+  readonly isLatestRepoSnapshot: boolean;
+  readonly hasContextSession: boolean;
+  readonly hasContextArtifact: boolean;
+  readonly hasCompressionArtifact: boolean;
+  readonly hasFtsEntry: boolean;
+  readonly hasSymbolNode: boolean;
+  readonly hasSymbolEdge: boolean;
+  readonly hasContextDependency: boolean;
+  readonly hasSource: boolean;
 }
 
 export function createMaintenanceStorageRepositories(database: DatabaseSync): MaintenanceStorageRepositories {
@@ -475,6 +547,62 @@ export function createMaintenanceStorageRepositories(database: DatabaseSync): Ma
           .prepare(`DELETE FROM symbol_nodes WHERE snapshot_id IN (${placeholders})`)
           .run(...snapshotIds);
         return rowCounts;
+      },
+      planSnapshotCompaction(input) {
+        const cutoff = retentionCutoff(input.now, input.limit.maxAgeDays);
+        const rows = listFlaggedSnapshots(database, {
+          cutoff,
+          maxRows: input.limit.maxRows,
+          ignoredContextArtifactIds: input.ignoredContextArtifactIds ?? [],
+          ignoredCompressionIds: input.ignoredCompressionIds ?? [],
+          ignoredFtsSnapshotIds: input.ignoredFtsSnapshotIds ?? [],
+          ignoredDerivedMetadataSnapshotIds: input.ignoredDerivedMetadataSnapshotIds ?? []
+        });
+        const retentionMatched = rows.filter((row) => row.ageExpired || row.rowExpired);
+        const candidateSnapshots: SnapshotRetentionCandidate[] = [];
+        const protectedSnapshots: SnapshotRetentionProtectedSnapshot[] = [];
+
+        for (const row of retentionMatched) {
+          const reason = snapshotRetentionReason(row);
+          const protection = snapshotRetentionProtection(row);
+          if (protection) {
+            protectedSnapshots.push({
+              snapshotId: row.snapshotId,
+              repoId: row.repoId,
+              createdAt: row.createdAt,
+              worktreeRows: row.worktreeRows,
+              reason,
+              protection
+            });
+          } else {
+            candidateSnapshots.push({
+              snapshotId: row.snapshotId,
+              repoId: row.repoId,
+              createdAt: row.createdAt,
+              worktreeRows: row.worktreeRows,
+              reason
+            });
+          }
+        }
+
+        const snapshotIds = candidateSnapshots.map((snapshot) => snapshot.snapshotId);
+        return {
+          cutoff,
+          totalSnapshots: rows.length,
+          retentionMatchedSnapshots: retentionMatched.length,
+          candidateSnapshots,
+          protectedSnapshots,
+          rowCounts: snapshotCandidateRowCounts(database, snapshotIds)
+        };
+      },
+      deleteRepoSnapshots(snapshotIds) {
+        if (snapshotIds.length === 0) return 0;
+        const placeholders = snapshotIds.map(() => "?").join(", ");
+        return Number(
+          database
+            .prepare(`DELETE FROM repo_snapshots WHERE snapshot_id IN (${placeholders})`)
+            .run(...snapshotIds).changes
+        );
       }
     }
   };
@@ -909,6 +1037,201 @@ function derivedMetadataRetentionProtection(
   return undefined;
 }
 
+function listFlaggedSnapshots(
+  database: DatabaseSync,
+  input: {
+    readonly cutoff: string;
+    readonly maxRows: number;
+    readonly ignoredContextArtifactIds: readonly string[];
+    readonly ignoredCompressionIds: readonly string[];
+    readonly ignoredFtsSnapshotIds: readonly string[];
+    readonly ignoredDerivedMetadataSnapshotIds: readonly string[];
+  }
+): FlaggedSnapshotRow[] {
+  const ignoredArtifactPlaceholders = input.ignoredContextArtifactIds.map(() => "?").join(", ");
+  const ignoredArtifactClause =
+    input.ignoredContextArtifactIds.length > 0
+      ? `AND artifact.artifact_id NOT IN (${ignoredArtifactPlaceholders})`
+      : "";
+  const ignoredDependencyClause =
+    input.ignoredContextArtifactIds.length > 0
+      ? `AND dependency.artifact_id NOT IN (${ignoredArtifactPlaceholders})`
+      : "";
+  const ignoredCompressionPlaceholders = input.ignoredCompressionIds.map(() => "?").join(", ");
+  const ignoredCompressionClause =
+    input.ignoredCompressionIds.length > 0
+      ? `AND compression.compression_id NOT IN (${ignoredCompressionPlaceholders})`
+      : "";
+  const ignoredFtsSnapshotPlaceholders = input.ignoredFtsSnapshotIds.map(() => "?").join(", ");
+  const ftsSnapshotGuard =
+    input.ignoredFtsSnapshotIds.length > 0
+      ? `ranked.snapshot_id NOT IN (${ignoredFtsSnapshotPlaceholders}) AND `
+      : "";
+  const ignoredSymbolSnapshotPlaceholders = input.ignoredDerivedMetadataSnapshotIds.map(() => "?").join(", ");
+  const symbolSnapshotGuard =
+    input.ignoredDerivedMetadataSnapshotIds.length > 0
+      ? `ranked.snapshot_id NOT IN (${ignoredSymbolSnapshotPlaceholders}) AND `
+      : "";
+
+  return (
+    database
+      .prepare(
+        [
+          "WITH ranked_snapshots AS (",
+          "SELECT",
+          "snapshot.snapshot_id,",
+          "snapshot.repo_id,",
+          "snapshot.created_at,",
+          "ROW_NUMBER() OVER (ORDER BY snapshot.created_at DESC, snapshot.snapshot_id DESC) AS retention_rank",
+          "FROM repo_snapshots snapshot",
+          ")",
+          "SELECT",
+          "ranked.snapshot_id,",
+          "ranked.repo_id,",
+          "ranked.created_at,",
+          "ranked.created_at < ? AS age_expired,",
+          "ranked.retention_rank > ? AS row_expired,",
+          [
+            "NOT EXISTS (",
+            "SELECT 1 FROM repo_snapshots newer",
+            "WHERE newer.repo_id = ranked.repo_id",
+            "AND (",
+            "newer.created_at > ranked.created_at",
+            "OR (newer.created_at = ranked.created_at AND newer.snapshot_id > ranked.snapshot_id)",
+            ")",
+            ") AS is_latest_repo_snapshot,"
+          ].join(" "),
+          [
+            "EXISTS (",
+            "SELECT 1 FROM context_sessions session",
+            "WHERE session.repo_snapshot_id = ranked.snapshot_id",
+            ") AS has_context_session,"
+          ].join(" "),
+          [
+            "EXISTS (",
+            "SELECT 1 FROM context_artifacts artifact",
+            "WHERE artifact.snapshot_id = ranked.snapshot_id",
+            ignoredArtifactClause,
+            ") AS has_context_artifact,"
+          ].join(" "),
+          [
+            "EXISTS (",
+            "SELECT 1 FROM compression_artifacts compression",
+            "WHERE compression.repo_snapshot_id = ranked.snapshot_id",
+            ignoredCompressionClause,
+            ") AS has_compression_artifact,"
+          ].join(" "),
+          [
+            ftsSnapshotGuard,
+            "EXISTS (",
+            "SELECT 1 FROM fts_entries entry",
+            "WHERE entry.snapshot_id = ranked.snapshot_id",
+            ") AS has_fts_entry,"
+          ].join(" "),
+          [
+            symbolSnapshotGuard,
+            "EXISTS (",
+            "SELECT 1 FROM symbol_nodes node",
+            "WHERE node.snapshot_id = ranked.snapshot_id",
+            ") AS has_symbol_node,"
+          ].join(" "),
+          [
+            symbolSnapshotGuard,
+            "EXISTS (",
+            "SELECT 1 FROM symbol_edges edge",
+            "WHERE edge.snapshot_id = ranked.snapshot_id",
+            ") AS has_symbol_edge,"
+          ].join(" "),
+          [
+            "EXISTS (",
+            "SELECT 1 FROM context_dependencies dependency",
+            "WHERE (",
+            "(dependency.dependency_kind = 'repo_snapshot' AND dependency.dependency_ref = ranked.snapshot_id)",
+            "OR (",
+            "dependency.dependency_kind = 'worktree_state'",
+            "AND dependency.dependency_ref IN (",
+            "SELECT worktree.worktree_state_id FROM worktree_states worktree",
+            "WHERE worktree.snapshot_id = ranked.snapshot_id",
+            ")",
+            ")",
+            "OR (",
+            "dependency.dependency_kind = 'source'",
+            "AND dependency.dependency_ref IN (",
+            "SELECT source.source_id FROM sources source",
+            "WHERE source.snapshot_id = ranked.snapshot_id",
+            ")",
+            ")",
+            ")",
+            ignoredDependencyClause,
+            ") AS has_context_dependency,"
+          ].join(" "),
+          [
+            "EXISTS (",
+            "SELECT 1 FROM sources source",
+            "WHERE source.snapshot_id = ranked.snapshot_id",
+            ") AS has_source,"
+          ].join(" "),
+          [
+            "(SELECT count(*) FROM worktree_states worktree",
+            "WHERE worktree.snapshot_id = ranked.snapshot_id",
+            ") AS worktree_rows"
+          ].join(" "),
+          "FROM ranked_snapshots ranked",
+          "ORDER BY ranked.created_at DESC, ranked.snapshot_id DESC"
+        ].join(" ")
+      )
+      .all(
+        input.cutoff,
+        input.maxRows,
+        ...input.ignoredContextArtifactIds,
+        ...input.ignoredCompressionIds,
+        ...input.ignoredFtsSnapshotIds,
+        ...input.ignoredDerivedMetadataSnapshotIds,
+        ...input.ignoredDerivedMetadataSnapshotIds,
+        ...input.ignoredContextArtifactIds
+      ) as Array<Record<string, unknown>>
+  ).map(mapFlaggedSnapshotRow);
+}
+
+function mapFlaggedSnapshotRow(row: Record<string, unknown>): FlaggedSnapshotRow {
+  return {
+    snapshotId: stringColumn(row, "snapshot_id"),
+    repoId: stringColumn(row, "repo_id"),
+    createdAt: stringColumn(row, "created_at"),
+    worktreeRows: Number(row.worktree_rows),
+    ageExpired: boolColumn(row, "age_expired"),
+    rowExpired: boolColumn(row, "row_expired"),
+    isLatestRepoSnapshot: boolColumn(row, "is_latest_repo_snapshot"),
+    hasContextSession: boolColumn(row, "has_context_session"),
+    hasContextArtifact: boolColumn(row, "has_context_artifact"),
+    hasCompressionArtifact: boolColumn(row, "has_compression_artifact"),
+    hasFtsEntry: boolColumn(row, "has_fts_entry"),
+    hasSymbolNode: boolColumn(row, "has_symbol_node"),
+    hasSymbolEdge: boolColumn(row, "has_symbol_edge"),
+    hasContextDependency: boolColumn(row, "has_context_dependency"),
+    hasSource: boolColumn(row, "has_source")
+  };
+}
+
+function snapshotRetentionReason(row: FlaggedSnapshotRow): SnapshotRetentionReason {
+  if (row.ageExpired && row.rowExpired) return "age_and_row_limit";
+  if (row.ageExpired) return "age";
+  return "row_limit";
+}
+
+function snapshotRetentionProtection(row: FlaggedSnapshotRow): SnapshotRetentionProtection | undefined {
+  if (row.isLatestRepoSnapshot) return "latest_repo_snapshot";
+  if (row.hasContextSession) return "context_session";
+  if (row.hasContextArtifact) return "context_artifact";
+  if (row.hasCompressionArtifact) return "compression_artifact";
+  if (row.hasFtsEntry) return "fts_entry";
+  if (row.hasSymbolNode) return "symbol_node";
+  if (row.hasSymbolEdge) return "symbol_edge";
+  if (row.hasContextDependency) return "context_dependency";
+  if (row.hasSource) return "source";
+  return undefined;
+}
+
 function candidateRowCounts(
   database: DatabaseSync,
   artifactIds: readonly string[]
@@ -992,6 +1315,23 @@ function derivedMetadataCandidateRowCounts(
   return {
     symbolNodes: countRowsByArtifactIds(database, "symbol_nodes", "snapshot_id", snapshotIds),
     symbolEdges: countRowsByArtifactIds(database, "symbol_edges", "snapshot_id", snapshotIds)
+  };
+}
+
+function snapshotCandidateRowCounts(
+  database: DatabaseSync,
+  snapshotIds: readonly string[]
+): SnapshotRetentionPlan["rowCounts"] {
+  if (snapshotIds.length === 0) {
+    return {
+      repoSnapshots: 0,
+      worktreeStates: 0
+    };
+  }
+
+  return {
+    repoSnapshots: snapshotIds.length,
+    worktreeStates: countRowsByArtifactIds(database, "worktree_states", "snapshot_id", snapshotIds)
   };
 }
 

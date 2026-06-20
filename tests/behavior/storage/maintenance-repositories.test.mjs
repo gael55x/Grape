@@ -235,6 +235,116 @@ test("maintenance repository preserves derived metadata referenced by surviving 
   });
 });
 
+test("maintenance repository plans snapshot compaction only for orphan snapshots", () => {
+  withMigratedDatabase((database, repositories) => {
+    insertBaseGraph(repositories.storage);
+    insertSnapshot(repositories.storage, "snapshot-orphan-old", oldTime);
+    insertSnapshot(repositories.storage, "snapshot-session-old", oldTime);
+    insertSnapshot(repositories.storage, "snapshot-artifact-old", oldTime);
+    insertSnapshot(repositories.storage, "snapshot-compression-old", oldTime);
+    insertSnapshot(repositories.storage, "snapshot-fts-old", oldTime);
+    insertSnapshot(repositories.storage, "snapshot-symbol-node-old", oldTime);
+    insertSnapshot(repositories.storage, "snapshot-symbol-edge-old", oldTime);
+    insertSnapshot(repositories.storage, "snapshot-source-old", oldTime);
+    insertSnapshot(repositories.storage, "snapshot-dependency-old", oldTime);
+
+    insertSessionForSnapshot(repositories.storage, "session-snapshot-old", "snapshot-session-old");
+    insertSession(repositories.storage, "session-base");
+    insertArtifactForSnapshot(
+      repositories.storage,
+      "artifact-snapshot-old",
+      "session-base",
+      "snapshot-artifact-old",
+      oldTime
+    );
+    insertCompressionArtifactForSnapshot(
+      repositories.compression,
+      "compression-snapshot-old",
+      "snapshot-compression-old",
+      "snapshot-compression-old:worktree",
+      oldTime,
+      1
+    );
+    insertFtsRows(repositories, "snapshot-fts-old", oldTime, 1);
+    insertSymbolMetadata(repositories, "snapshot-symbol-node-old", oldTime, 1, 0);
+    insertSymbolEdgeOnly(repositories, "snapshot-symbol-edge-old", oldTime);
+    insertSourceOnly(repositories.evidence, "snapshot-source-old", oldTime);
+    insertSnapshotDependency(repositories.storage, "snapshot-dependency-old");
+
+    const plan = repositories.maintenance.retention.planSnapshotCompaction({
+      now,
+      limit: { maxAgeDays: 30, maxRows: 0 }
+    });
+
+    assert.equal(plan.totalSnapshots, 10);
+    assert.equal(plan.retentionMatchedSnapshots, 10);
+    assert.deepEqual(
+      plan.candidateSnapshots.map((snapshot) => snapshot.snapshotId),
+      ["snapshot-orphan-old"]
+    );
+    assert.equal(plan.rowCounts.repoSnapshots, 1);
+    assert.equal(plan.rowCounts.worktreeStates, 1);
+    assert.equal(
+      plan.protectedSnapshots.find((snapshot) => snapshot.snapshotId === "snapshot-1")?.protection,
+      "latest_repo_snapshot"
+    );
+    assert.equal(
+      plan.protectedSnapshots.find((snapshot) => snapshot.snapshotId === "snapshot-session-old")?.protection,
+      "context_session"
+    );
+    assert.equal(
+      plan.protectedSnapshots.find((snapshot) => snapshot.snapshotId === "snapshot-artifact-old")?.protection,
+      "context_artifact"
+    );
+    assert.equal(
+      plan.protectedSnapshots.find((snapshot) => snapshot.snapshotId === "snapshot-compression-old")?.protection,
+      "compression_artifact"
+    );
+    assert.equal(
+      plan.protectedSnapshots.find((snapshot) => snapshot.snapshotId === "snapshot-fts-old")?.protection,
+      "fts_entry"
+    );
+    assert.equal(
+      plan.protectedSnapshots.find((snapshot) => snapshot.snapshotId === "snapshot-symbol-node-old")?.protection,
+      "symbol_node"
+    );
+    assert.equal(
+      plan.protectedSnapshots.find((snapshot) => snapshot.snapshotId === "snapshot-symbol-edge-old")?.protection,
+      "symbol_edge"
+    );
+    assert.equal(
+      plan.protectedSnapshots.find((snapshot) => snapshot.snapshotId === "snapshot-source-old")?.protection,
+      "source"
+    );
+    assert.equal(
+      plan.protectedSnapshots.find((snapshot) => snapshot.snapshotId === "snapshot-dependency-old")?.protection,
+      "context_dependency"
+    );
+  });
+});
+
+test("maintenance repository deletes only orphan snapshot and worktree rows", () => {
+  withMigratedDatabase((database, repositories) => {
+    insertBaseGraph(repositories.storage);
+    insertSnapshot(repositories.storage, "snapshot-orphan-delete", oldTime);
+
+    const plan = repositories.maintenance.retention.planSnapshotCompaction({
+      now,
+      limit: { maxAgeDays: 30, maxRows: 1 }
+    });
+
+    assert.deepEqual(
+      plan.candidateSnapshots.map((snapshot) => snapshot.snapshotId),
+      ["snapshot-orphan-delete"]
+    );
+    assert.equal(repositories.maintenance.retention.deleteRepoSnapshots(["snapshot-orphan-delete"]), 1);
+    assert.equal(countRows(database, "repo_snapshots", "snapshot_id", "snapshot-orphan-delete"), 0);
+    assert.equal(countRows(database, "worktree_states", "snapshot_id", "snapshot-orphan-delete"), 0);
+    assert.equal(countRows(database, "repo_snapshots", "snapshot_id", "snapshot-1"), 1);
+    assert.equal(countRows(database, "worktree_states", "snapshot_id", "snapshot-1"), 1);
+  });
+});
+
 function insertBaseGraph(repositories) {
   repositories.projects.insert({
     projectId: "project-1",
@@ -298,6 +408,28 @@ function insertSession(repositories, sessionId) {
     repoId: "repo-1",
     repoSnapshotId: "snapshot-1",
     worktreeStateId: "worktree-1",
+    agentName: "codex",
+    agentSessionId: sessionId,
+    taskId: "task-1",
+    taskType: "analysis",
+    branchName: "main",
+    headCommitSha: "abc123",
+    status: "active",
+    lockStatus: "unlocked",
+    startedAt: now,
+    lastSeenAt: now,
+    createdAt: now,
+    updatedAt: now
+  });
+}
+
+function insertSessionForSnapshot(repositories, sessionId, snapshotId) {
+  repositories.contextSessions.insert({
+    sessionId,
+    projectId: "project-1",
+    repoId: "repo-1",
+    repoSnapshotId: snapshotId,
+    worktreeStateId: `${snapshotId}:worktree`,
     agentName: "codex",
     agentSessionId: sessionId,
     taskId: "task-1",
@@ -402,10 +534,14 @@ function insertSymbolMetadata(repositories, snapshotId, createdAt, nodeCount, ed
 }
 
 function insertArtifact(repositories, artifactId, sessionId, createdAt) {
+  insertArtifactForSnapshot(repositories, artifactId, sessionId, "snapshot-1", createdAt);
+}
+
+function insertArtifactForSnapshot(repositories, artifactId, sessionId, snapshotId, createdAt) {
   repositories.contextArtifacts.insert({
     artifactId,
     sessionId,
-    snapshotId: "snapshot-1",
+    snapshotId,
     artifactHash: `hash:${artifactId}`,
     dependencyManifestHash: hashB,
     taskType: "analysis",
@@ -417,12 +553,30 @@ function insertArtifact(repositories, artifactId, sessionId, createdAt) {
 }
 
 function insertCompressionArtifact(repositories, compressionId, createdAt, inputCount) {
+  insertCompressionArtifactForSnapshot(
+    repositories,
+    compressionId,
+    "snapshot-1",
+    "worktree-1",
+    createdAt,
+    inputCount
+  );
+}
+
+function insertCompressionArtifactForSnapshot(
+  repositories,
+  compressionId,
+  snapshotId,
+  worktreeStateId,
+  createdAt,
+  inputCount
+) {
   repositories.compressionArtifacts.upsert({
     compressionId,
     projectId: "project-1",
     repoId: "repo-1",
-    repoSnapshotId: "snapshot-1",
-    worktreeStateId: "worktree-1",
+    repoSnapshotId: snapshotId,
+    worktreeStateId,
     artifactType: "symbol_outline",
     method: "deterministic",
     summaryText: `summary:${compressionId}`,
@@ -444,6 +598,53 @@ function insertCompressionArtifact(repositories, compressionId, createdAt, input
       inputHash: `hash:input:${compressionId}:${index}`
     });
   }
+}
+
+function insertSourceOnly(repositories, snapshotId, createdAt) {
+  repositories.sources.insertOrIgnore({
+    sourceId: `source:only:${snapshotId}`,
+    snapshotId,
+    sourceType: "repository_file",
+    sourceRef: `src/${snapshotId}-source.ts`,
+    sourceHash: `hash:source-only:${snapshotId}`,
+    sourceScope: "committed",
+    trustClass: "trusted",
+    privacyStatus: "allowed",
+    redactionStatus: "not_needed",
+    metadataJson: "{}",
+    createdAt
+  });
+}
+
+function insertSymbolEdgeOnly(repositories, snapshotId, createdAt) {
+  insertSymbolMetadata(repositories, "snapshot-1", now, 1, 0);
+  repositories.indexing.symbolEdges.insertOrIgnore({
+    edgeId: `symbol_edge:${snapshotId}:only`,
+    projectId: "project-1",
+    repoId: "repo-1",
+    snapshotId,
+    fromSymbolId: "symbol:snapshot-1:0",
+    toRef: "./edge-only",
+    edgeType: "imports",
+    confidence: "high",
+    discoveryMethod: "ast",
+    metadataJson: "{}",
+    createdAt
+  });
+}
+
+function insertSnapshotDependency(repositories, snapshotId) {
+  insertSession(repositories, "session-dependency-base");
+  insertArtifact(repositories, "artifact-dependency-base", "session-dependency-base", newTime);
+  repositories.contextDependencies.insert({
+    dependencyId: `dependency:${snapshotId}`,
+    artifactId: "artifact-dependency-base",
+    dependencyKind: "repo_snapshot",
+    dependencyRef: snapshotId,
+    dependencyHash: `hash:${snapshotId}`,
+    scopeJson: "{}",
+    createdAt: now
+  });
 }
 
 function insertCompressionDependency(repositories, artifactId, compressionId) {
