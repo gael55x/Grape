@@ -101,9 +101,11 @@ New `.grape/config.json` files include a `retention` block. Existing schema-1 co
 | Derived metadata | 30 days | 250000 rows |
 | Historical or invalidated records | 14 days | 50000 rows |
 
-These values are retention policy inputs. They do not run in the background. `grape compact` currently enforces the context artifact limit only for eligible artifacts. It requires `--confirm` before deleting rows or artifact files. Other retention classes stay as policy inputs until later compact or purge slices implement them. Invalid edited retention values fail closed instead of being silently ignored.
+These values are retention policy inputs. They do not run in the background. `grape compact` currently enforces context artifact retention and compression input retention. It requires `--confirm` before deleting rows or artifact files. Other retention classes stay as policy inputs until later compact or purge slices implement them. Invalid edited retention values fail closed instead of being silently ignored.
 
-Context artifact compaction deletes only eligible old `context_artifacts` rows and their cascaded artifact-owned dependency, sent, omitted, and pack rows. It also removes the matching `.json`, `.md`, and `.repository.json` files under `.grape/artifacts/` when they are regular files. It preserves the latest artifact per session, artifacts with active sent context, artifacts with restorable omitted context, and artifacts in locked or contended sessions. It does not delete snapshots, sources, FTS rows, compression rows, claims, proofs, source rejections, audit rows, or the SQLite database file.
+Context artifact compaction deletes only eligible old `context_artifacts` rows and their cascaded artifact-owned dependency, sent, omitted, and pack rows. It also removes the matching `.json`, `.md`, and `.repository.json` files under `.grape/artifacts/` when they are regular files. It preserves the latest artifact per session, artifacts with active sent context, artifacts with restorable omitted context, and artifacts in locked or contended sessions.
+
+Compression cache compaction deletes only eligible `compression_artifacts` rows. SQLite cascades their `compression_inputs`. It treats compression input rows as the count cap and preserves compression artifacts still referenced by context artifacts that survive the same compact plan. It does not delete snapshots, sources, FTS rows, claims, proofs, source rejections, audit rows, or the SQLite database file.
 
 ## Indexing Foundation Storage Extension
 

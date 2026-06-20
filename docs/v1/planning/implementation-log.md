@@ -38,13 +38,13 @@ Keep entries simple:
 - Tests or checks run: large compression dependency scope regression test plus the standard local gates for the slice.
 - Risks or follow-ups: the compaction command still needs to enforce the configured limits for old artifacts, snapshots, FTS rows, compression inputs, and invalidated records.
 
-### 2026-06-19 - Context Artifact Compaction Slice
+### 2026-06-20 - Context Artifact And Compression Cache Compaction Slice
 
 - Author/agent: Gaille Amolong / Codex
 - Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
-- Summary: added `grape compact` as a preview-first local maintenance command for context artifact retention. The command deletes nothing unless `--confirm` is passed. The first slice deletes only eligible old context artifact rows, cascaded artifact-owned rows, and matching regular artifact files under `.grape/artifacts/`. It preserves latest-per-session artifacts, active sent context, restorable omitted context, and locked sessions.
-- Tests or checks run: focused CLI compact behavior tests before broader verification.
-- Risks or follow-ups: snapshot, FTS, compression, derived metadata, invalidated-record, purge, and export lifecycle controls still need separate slices.
+- Summary: added `grape compact` as a preview-first local maintenance command for context artifact and compression cache retention. The command deletes nothing unless `--confirm` is passed. It deletes only eligible old context artifact rows, cascaded artifact-owned rows, matching regular artifact files under `.grape/artifacts/`, and eligible unreferenced compression cache rows. It preserves latest-per-session artifacts, active sent context, restorable omitted context, locked sessions, and compression artifacts still referenced by surviving context artifacts.
+- Tests or checks run: focused CLI compact behavior tests and maintenance repository retention tests before broader verification.
+- Risks or follow-ups: snapshot, FTS, derived metadata, invalidated-record, purge, and export lifecycle controls still need separate slices.
 
 ### 2026-06-17 - MCP Client Config Auto-Wiring
 

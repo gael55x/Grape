@@ -4,6 +4,7 @@ import path from "node:path";
 import {
   createMaintenanceStorageRepositories,
   runStorageTransaction,
+  type CompressionRetentionPlan,
   type ContextArtifactRetentionPlan
 } from "../../../core/storage/index.js";
 import { artifactFileBaseName } from "../context/artifact-files.js";
@@ -30,6 +31,10 @@ export interface CompactLocalProjectResult {
       readonly maxAgeDays: number;
       readonly maxRows: number;
     };
+    readonly compressionInputs: {
+      readonly maxAgeDays: number;
+      readonly maxRows: number;
+    };
   };
   readonly contextArtifacts: {
     readonly cutoff: string;
@@ -48,6 +53,17 @@ export interface CompactLocalProjectResult {
       readonly skippedUnsafeFiles: number;
       readonly skippedMissingFiles: number;
     };
+  };
+  readonly compressionCache: {
+    readonly cutoff: string;
+    readonly totalArtifacts: number;
+    readonly totalInputRows: number;
+    readonly retentionMatchedArtifacts: number;
+    readonly candidateArtifacts: number;
+    readonly deletedArtifacts: number;
+    readonly protectedArtifacts: number;
+    readonly protectedByReason: Readonly<Record<string, number>>;
+    readonly rowCounts: CompressionRetentionPlan["rowCounts"];
   };
   readonly notes: readonly string[];
 }
@@ -85,25 +101,36 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
         artifactDirPath: layout.artifactDirPath,
         artifactIds
       });
+      const compressionPlan = maintenance.retention.planCompressionCompaction({
+        now,
+        limit: config.retention.compressionInputs,
+        ignoredContextArtifactIds: artifactIds
+      });
+      const compressionIds = compressionPlan.candidateArtifacts.map((artifact) => artifact.compressionId);
 
       if (dryRun) {
         return {
           plan,
+          compressionPlan,
           files: summarizeArtifactFiles(fileCandidates),
           deletedArtifacts: 0,
+          deletedCompressionArtifacts: 0,
           deletedFiles: 0,
           deletedBytes: 0
         };
       }
 
-      const deletedArtifacts = runStorageTransaction(database, () =>
-        maintenance.retention.deleteContextArtifacts(artifactIds)
-      );
+      const deletion = runStorageTransaction(database, () => ({
+        deletedArtifacts: maintenance.retention.deleteContextArtifacts(artifactIds),
+        deletedCompressionArtifacts: maintenance.retention.deleteCompressionArtifacts(compressionIds)
+      }));
       const fileDeletion = deletePlannedArtifactFiles(fileCandidates);
       return {
         plan,
+        compressionPlan,
         files: summarizeArtifactFiles(fileCandidates),
-        deletedArtifacts,
+        deletedArtifacts: deletion.deletedArtifacts,
+        deletedCompressionArtifacts: deletion.deletedCompressionArtifacts,
         deletedFiles: fileDeletion.deletedFiles,
         deletedBytes: fileDeletion.deletedBytes
       };
@@ -117,10 +144,13 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
     databasePath: layout.databasePath,
     dryRun,
     applied: !dryRun,
-    confirmationRequired: dryRun && value.plan.candidateArtifacts.length > 0,
+    confirmationRequired:
+      dryRun &&
+      (value.plan.candidateArtifacts.length > 0 || value.compressionPlan.candidateArtifacts.length > 0),
     migrationsApplied: databaseResult.migrationResult.applied.map((migration) => migration.id),
     retention: {
-      contextArtifacts: config.retention.contextArtifacts
+      contextArtifacts: config.retention.contextArtifacts,
+      compressionInputs: config.retention.compressionInputs
     },
     contextArtifacts: {
       cutoff: value.plan.cutoff,
@@ -140,9 +170,21 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
         skippedMissingFiles: fileSummary.skippedMissingFiles
       }
     },
+    compressionCache: {
+      cutoff: value.compressionPlan.cutoff,
+      totalArtifacts: value.compressionPlan.totalArtifacts,
+      totalInputRows: value.compressionPlan.totalInputRows,
+      retentionMatchedArtifacts: value.compressionPlan.retentionMatchedArtifacts,
+      candidateArtifacts: value.compressionPlan.candidateArtifacts.length,
+      deletedArtifacts: value.deletedCompressionArtifacts,
+      protectedArtifacts: value.compressionPlan.protectedArtifacts.length,
+      protectedByReason: countCompressionProtectedReasons(value.compressionPlan),
+      rowCounts: value.compressionPlan.rowCounts
+    },
     notes: compactNotes({
       dryRun,
       candidateArtifacts: value.plan.candidateArtifacts.length,
+      candidateCompressionArtifacts: value.compressionPlan.candidateArtifacts.length,
       skippedUnsafeFiles: fileSummary.skippedUnsafeFiles
     })
   };
@@ -243,22 +285,35 @@ function countProtectedReasons(
   return counts;
 }
 
+function countCompressionProtectedReasons(
+  plan: CompressionRetentionPlan
+): Readonly<Record<string, number>> {
+  const counts: Record<string, number> = {
+    referenced_by_context_artifact: 0
+  };
+  for (const artifact of plan.protectedArtifacts) {
+    counts[artifact.protection] = (counts[artifact.protection] ?? 0) + 1;
+  }
+  return counts;
+}
+
 function compactNotes(input: {
   readonly dryRun: boolean;
   readonly candidateArtifacts: number;
+  readonly candidateCompressionArtifacts: number;
   readonly skippedUnsafeFiles: number;
 }): readonly string[] {
   const notes: string[] = [];
   if (input.dryRun) {
     notes.push("No data was deleted. Rerun with --confirm to apply this plan.");
   }
-  if (input.candidateArtifacts === 0) {
-    notes.push("No context artifacts are eligible for deletion.");
+  if (input.candidateArtifacts === 0 && input.candidateCompressionArtifacts === 0) {
+    notes.push("No context artifacts or compression cache rows are eligible for deletion.");
   }
   if (input.skippedUnsafeFiles > 0) {
     notes.push("Some artifact files were skipped because they were symlinks or not regular files.");
   }
-  notes.push("This compact slice only applies context artifact retention.");
+  notes.push("This compact run applies context artifact and compression cache retention.");
   return notes;
 }
 

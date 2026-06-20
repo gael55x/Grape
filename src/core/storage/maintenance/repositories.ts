@@ -18,6 +18,13 @@ export type ContextArtifactRetentionProtection =
   | "restorable_omitted_context"
   | "locked_session";
 
+export type CompressionRetentionReason =
+  | "age"
+  | "input_row_limit"
+  | "age_and_input_row_limit";
+
+export type CompressionRetentionProtection = "referenced_by_context_artifact";
+
 export interface ContextArtifactRetentionCandidate {
   readonly artifactId: string;
   readonly sessionId: string;
@@ -48,6 +55,36 @@ export interface ContextArtifactRetentionPlan {
   };
 }
 
+export interface CompressionRetentionCandidate {
+  readonly compressionId: string;
+  readonly artifactType: string;
+  readonly createdAt: string;
+  readonly inputRows: number;
+  readonly reason: CompressionRetentionReason;
+}
+
+export interface CompressionRetentionProtectedArtifact {
+  readonly compressionId: string;
+  readonly artifactType: string;
+  readonly createdAt: string;
+  readonly inputRows: number;
+  readonly reason: CompressionRetentionReason;
+  readonly protection: CompressionRetentionProtection;
+}
+
+export interface CompressionRetentionPlan {
+  readonly cutoff: string;
+  readonly totalArtifacts: number;
+  readonly totalInputRows: number;
+  readonly retentionMatchedArtifacts: number;
+  readonly candidateArtifacts: readonly CompressionRetentionCandidate[];
+  readonly protectedArtifacts: readonly CompressionRetentionProtectedArtifact[];
+  readonly rowCounts: {
+    readonly compressionArtifacts: number;
+    readonly compressionInputs: number;
+  };
+}
+
 export interface MaintenanceStorageRepositories {
   readonly retention: {
     planContextArtifactCompaction(input: {
@@ -55,6 +92,12 @@ export interface MaintenanceStorageRepositories {
       readonly limit: StorageRetentionLimit;
     }): ContextArtifactRetentionPlan;
     deleteContextArtifacts(artifactIds: readonly string[]): number;
+    planCompressionCompaction(input: {
+      readonly now: string;
+      readonly limit: StorageRetentionLimit;
+      readonly ignoredContextArtifactIds?: readonly string[];
+    }): CompressionRetentionPlan;
+    deleteCompressionArtifacts(compressionIds: readonly string[]): number;
   };
 }
 
@@ -68,6 +111,16 @@ interface FlaggedArtifactRow {
   readonly hasActiveSentContext: boolean;
   readonly hasRestorableOmittedContext: boolean;
   readonly sessionLocked: boolean;
+}
+
+interface FlaggedCompressionArtifactRow {
+  readonly compressionId: string;
+  readonly artifactType: string;
+  readonly createdAt: string;
+  readonly inputRows: number;
+  readonly ageExpired: boolean;
+  readonly inputRowsExpired: boolean;
+  readonly referencedByContextArtifact: boolean;
 }
 
 export function createMaintenanceStorageRepositories(database: DatabaseSync): MaintenanceStorageRepositories {
@@ -123,6 +176,59 @@ export function createMaintenanceStorageRepositories(database: DatabaseSync): Ma
           database
             .prepare(`DELETE FROM context_artifacts WHERE artifact_id IN (${placeholders})`)
             .run(...artifactIds).changes
+        );
+      },
+      planCompressionCompaction(input) {
+        const cutoff = retentionCutoff(input.now, input.limit.maxAgeDays);
+        const rows = listFlaggedCompressionArtifacts(database, {
+          cutoff,
+          maxInputRows: input.limit.maxRows,
+          ignoredContextArtifactIds: input.ignoredContextArtifactIds ?? []
+        });
+        const retentionMatched = rows.filter((row) => row.ageExpired || row.inputRowsExpired);
+        const candidateArtifacts: CompressionRetentionCandidate[] = [];
+        const protectedArtifacts: CompressionRetentionProtectedArtifact[] = [];
+
+        for (const row of retentionMatched) {
+          const reason = compressionRetentionReason(row);
+          if (row.referencedByContextArtifact) {
+            protectedArtifacts.push({
+              compressionId: row.compressionId,
+              artifactType: row.artifactType,
+              createdAt: row.createdAt,
+              inputRows: row.inputRows,
+              reason,
+              protection: "referenced_by_context_artifact"
+            });
+          } else {
+            candidateArtifacts.push({
+              compressionId: row.compressionId,
+              artifactType: row.artifactType,
+              createdAt: row.createdAt,
+              inputRows: row.inputRows,
+              reason
+            });
+          }
+        }
+
+        const compressionIds = candidateArtifacts.map((artifact) => artifact.compressionId);
+        return {
+          cutoff,
+          totalArtifacts: rows.length,
+          totalInputRows: rows.reduce((total, row) => total + row.inputRows, 0),
+          retentionMatchedArtifacts: retentionMatched.length,
+          candidateArtifacts,
+          protectedArtifacts,
+          rowCounts: compressionCandidateRowCounts(database, compressionIds)
+        };
+      },
+      deleteCompressionArtifacts(compressionIds) {
+        if (compressionIds.length === 0) return 0;
+        const placeholders = compressionIds.map(() => "?").join(", ");
+        return Number(
+          database
+            .prepare(`DELETE FROM compression_artifacts WHERE compression_id IN (${placeholders})`)
+            .run(...compressionIds).changes
         );
       }
     }
@@ -233,6 +339,86 @@ function retentionProtection(
   return undefined;
 }
 
+function listFlaggedCompressionArtifacts(
+  database: DatabaseSync,
+  input: {
+    readonly cutoff: string;
+    readonly maxInputRows: number;
+    readonly ignoredContextArtifactIds: readonly string[];
+  }
+): FlaggedCompressionArtifactRow[] {
+  const ignoredPlaceholders = input.ignoredContextArtifactIds.map(() => "?").join(", ");
+  const ignoredClause =
+    input.ignoredContextArtifactIds.length > 0
+      ? `AND dependency.artifact_id NOT IN (${ignoredPlaceholders})`
+      : "";
+  return (
+    database
+      .prepare(
+        [
+          "WITH artifact_inputs AS (",
+          "SELECT",
+          "artifact.compression_id,",
+          "artifact.artifact_type,",
+          "artifact.created_at,",
+          "count(input.compression_input_id) AS input_rows",
+          "FROM compression_artifacts artifact",
+          "LEFT JOIN compression_inputs input ON input.compression_id = artifact.compression_id",
+          "GROUP BY artifact.compression_id, artifact.artifact_type, artifact.created_at",
+          "),",
+          "ranked_artifacts AS (",
+          "SELECT",
+          "artifact_inputs.*,",
+          [
+            "sum(input_rows) OVER (",
+            "ORDER BY created_at DESC, compression_id DESC",
+            "ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW",
+            ") AS retained_input_rows"
+          ].join(" "),
+          "FROM artifact_inputs",
+          ")",
+          "SELECT",
+          "ranked.compression_id,",
+          "ranked.artifact_type,",
+          "ranked.created_at,",
+          "ranked.input_rows,",
+          "ranked.created_at < ? AS age_expired,",
+          "ranked.retained_input_rows > ? AS input_rows_expired,",
+          [
+            "EXISTS (",
+            "SELECT 1 FROM context_dependencies dependency",
+            "JOIN context_artifacts artifact ON artifact.artifact_id = dependency.artifact_id",
+            "WHERE dependency.dependency_kind = 'compression_artifact'",
+            "AND dependency.dependency_ref = ranked.compression_id",
+            ignoredClause,
+            ") AS referenced_by_context_artifact"
+          ].join(" "),
+          "FROM ranked_artifacts ranked",
+          "ORDER BY ranked.created_at DESC, ranked.compression_id DESC"
+        ].join(" ")
+      )
+      .all(input.cutoff, input.maxInputRows, ...input.ignoredContextArtifactIds) as Array<Record<string, unknown>>
+  ).map(mapFlaggedCompressionArtifactRow);
+}
+
+function mapFlaggedCompressionArtifactRow(row: Record<string, unknown>): FlaggedCompressionArtifactRow {
+  return {
+    compressionId: stringColumn(row, "compression_id"),
+    artifactType: stringColumn(row, "artifact_type"),
+    createdAt: stringColumn(row, "created_at"),
+    inputRows: Number(row.input_rows),
+    ageExpired: boolColumn(row, "age_expired"),
+    inputRowsExpired: boolColumn(row, "input_rows_expired"),
+    referencedByContextArtifact: boolColumn(row, "referenced_by_context_artifact")
+  };
+}
+
+function compressionRetentionReason(row: FlaggedCompressionArtifactRow): CompressionRetentionReason {
+  if (row.ageExpired && row.inputRowsExpired) return "age_and_input_row_limit";
+  if (row.ageExpired) return "age";
+  return "input_row_limit";
+}
+
 function candidateRowCounts(
   database: DatabaseSync,
   artifactIds: readonly string[]
@@ -253,6 +439,23 @@ function candidateRowCounts(
     contextSentItems: countRowsByArtifactIds(database, "context_sent_items", "artifact_id", artifactIds),
     omittedContextItems: countRowsByArtifactIds(database, "omitted_context_items", "artifact_id", artifactIds),
     contextPackItems: countRowsByArtifactIds(database, "context_pack_items", "artifact_id", artifactIds)
+  };
+}
+
+function compressionCandidateRowCounts(
+  database: DatabaseSync,
+  compressionIds: readonly string[]
+): CompressionRetentionPlan["rowCounts"] {
+  if (compressionIds.length === 0) {
+    return {
+      compressionArtifacts: 0,
+      compressionInputs: 0
+    };
+  }
+
+  return {
+    compressionArtifacts: compressionIds.length,
+    compressionInputs: countRowsByArtifactIds(database, "compression_inputs", "compression_id", compressionIds)
   };
 }
 

@@ -2999,7 +2999,7 @@ grape compile --task <text>
 grape diff-context --task <text>
 ```
 
-`grape compact` previews local retention cleanup by default. `grape compact --confirm` applies the current context artifact retention slice. It deletes eligible old context artifact rows, cascaded artifact-owned rows, and matching regular files under `.grape/artifacts/`. It preserves latest-per-session artifacts, active sent context, restorable omitted context, and locked or contended sessions. It does not yet delete snapshots, sources, FTS rows, compression rows, claims, proofs, source rejections, audit rows, or the database file.
+`grape compact` previews local retention cleanup by default. `grape compact --confirm` applies the current context artifact and compression cache retention slices. It deletes eligible old context artifact rows, cascaded artifact-owned rows, matching regular files under `.grape/artifacts/`, and eligible unreferenced compression cache rows plus their compression input rows. It preserves latest-per-session artifacts, active sent context, restorable omitted context, locked or contended sessions, and compression artifacts still referenced by surviving context artifacts. It does not yet delete snapshots, sources, FTS rows, claims, proofs, source rejections, audit rows, or the database file.
 
 Inspection/debugging:
 
@@ -3024,7 +3024,7 @@ Still part of V1.0, but not implemented in the current beta transport slice:
 - `grape export`: exports local Grape data only after a privacy-preserving export contract exists.
 - `grape purge`: purges local Grape data only after a scoped purge contract and user-confirmation flow exist.
 
-New local config files include retention defaults for context artifacts, snapshots, FTS rows, compression inputs, derived metadata, and invalidated records. Existing schema-1 configs without that block remain valid and read with the same defaults. `grape compact` currently enforces the context artifact limit only for eligible artifacts and requires `--confirm`; the other retention classes remain policy inputs until later compact or purge slices enforce them.
+New local config files include retention defaults for context artifacts, snapshots, FTS rows, compression inputs, derived metadata, and invalidated records. Existing schema-1 configs without that block remain valid and read with the same defaults. `grape compact` currently enforces context artifact retention and compression input retention only. It requires `--confirm`; the other retention classes remain policy inputs until later compact or purge slices enforce them.
 
 Do not ship `grape ask` in V1. It makes Grape look like another coding assistant.
 

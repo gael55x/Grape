@@ -256,7 +256,7 @@ Grape stores local runtime state under `.grape/`:
 
 Grape does not send repository content, artifacts, proofs, summaries, embeddings, or telemetry to a remote Grape service by default. Your MCP client or coding agent may still forward returned context to its model provider.
 
-New `.grape/config.json` files include retention defaults: 30 days or 500 rows for context artifacts, 30 days or 200 rows for snapshots, 30 days or 250000 rows for FTS rows, compression inputs, and derived metadata, and 14 days or 50000 rows for invalidated records. `grape compact` previews context artifact cleanup by default. Run `grape compact --confirm` only when you want it to delete eligible old artifact rows and regular artifact files. The other retention classes are still documented cleanup limits and do not delete data by themselves yet.
+New `.grape/config.json` files include retention defaults: 30 days or 500 rows for context artifacts, 30 days or 200 rows for snapshots, 30 days or 250000 rows for FTS rows, compression inputs, and derived metadata, and 14 days or 50000 rows for invalidated records. `grape compact` previews context artifact and compression cache cleanup by default. Run `grape compact --confirm` only when you want it to delete eligible old artifact rows, regular artifact files, and unreferenced compression cache rows. Snapshot, FTS, source, claim, proof, and invalidated-record limits are still documented cleanup limits and do not delete data by themselves yet.
 
 Manual cleanup while `grape purge` is deferred:
 

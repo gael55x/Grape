@@ -46,6 +46,8 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
   const artifactFiles = result.contextArtifacts.artifactFiles;
   const rows = result.contextArtifacts.rowCounts;
   const protectedReasons = result.contextArtifacts.protectedByReason;
+  const compressionRows = result.compressionCache.rowCounts;
+  const compressionProtectedReasons = result.compressionCache.protectedByReason;
   return [
     result.applied ? "Grape compact applied." : "Grape compact preview.",
     "",
@@ -54,6 +56,7 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
     "",
     "Retention:",
     `  Context artifacts: ${result.retention.contextArtifacts.maxAgeDays} days, ${result.retention.contextArtifacts.maxRows} rows`,
+    `  Compression inputs: ${result.retention.compressionInputs.maxAgeDays} days, ${result.retention.compressionInputs.maxRows} rows`,
     `  Cutoff: ${result.contextArtifacts.cutoff}`,
     "",
     "Context artifacts:",
@@ -70,6 +73,17 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
     `  context_sent_items: ${rows.contextSentItems}`,
     `  omitted_context_items: ${rows.omittedContextItems}`,
     `  context_pack_items: ${rows.contextPackItems}`,
+    "",
+    "Compression cache:",
+    `  Stored artifacts: ${result.compressionCache.totalArtifacts}`,
+    `  Stored input rows: ${result.compressionCache.totalInputRows}`,
+    `  Matched retention: ${result.compressionCache.retentionMatchedArtifacts}`,
+    `  Eligible to delete: ${result.compressionCache.candidateArtifacts}`,
+    `  Deleted artifacts: ${result.compressionCache.deletedArtifacts}`,
+    `  Protected artifacts: ${result.compressionCache.protectedArtifacts}`,
+    `  Protected reasons: referenced=${compressionProtectedReasons.referenced_by_context_artifact ?? 0}`,
+    `  compression_artifacts: ${compressionRows.compressionArtifacts}`,
+    `  compression_inputs: ${compressionRows.compressionInputs}`,
     "",
     "Artifact files:",
     `  Planned files: ${artifactFiles.plannedFiles}`,
