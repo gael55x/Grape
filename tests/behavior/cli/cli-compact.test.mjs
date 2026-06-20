@@ -29,7 +29,8 @@ function withGitRepo(fn) {
       "-m",
       "initial fixture"
     ]);
-    fn(dir);
+    const canonicalRepoPath = execGit(dir, ["rev-parse", "--show-toplevel"]);
+    fn(canonicalRepoPath);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
