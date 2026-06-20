@@ -3,6 +3,7 @@ import { statusFreshnessLabel } from "../shared/trust-wording.js";
 import { runArtifacts } from "./commands/artifacts.js";
 import { runBench } from "./commands/bench.js";
 import { runClaims } from "./commands/claims.js";
+import { runCompact } from "./commands/compact.js";
 import { runCompile } from "./commands/compile.js";
 import { runConflicts } from "./commands/conflicts.js";
 import { runDiffContext } from "./commands/diff-context.js";
@@ -85,6 +86,8 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
       return runSync(parsed);
     case "compile":
       return runCompile(parsed);
+    case "compact":
+      return runCompact(parsed);
     case "diff-context":
       return runDiffContext(parsed);
     case "artifacts":

@@ -10,6 +10,7 @@ const storageBackedCommands = new Set([
   "artifacts",
   "bench",
   "claims",
+  "compact",
   "compile",
   "conflicts",
   "diff-context",

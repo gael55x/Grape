@@ -30,6 +30,7 @@ Before editing security-sensitive code, agents must verify:
 |---|---|
 | Git/local ignore filtering, snapshot rejection, artifact secret scan, `.grape/` exclusion | **Implemented** |
 | Ignored/private read approval workflow (`audit_events`, scoped approval) | **Partial** (doctor/status diagnostics; full approval UX deferred) |
+| `grape compact` artifact retention cleanup | **Partial** (context artifact retention only; confirm required) |
 | `grape export` / `grape purge` privacy workflows | **Deferred** (specified in CLI contract; no runnable command yet) |
 | Complete redaction engine beyond baseline artifact scan | **Partial** |
 
@@ -103,7 +104,9 @@ grape init --connect
 
 This removes local Grape state for that repository and recreates setup state. It does not change source files or Git history.
 
-New local configs include retention defaults for context artifacts, snapshots, FTS rows, compression inputs, derived metadata, and invalidated records. Existing schema-1 configs without the retention block still read with those defaults. Until `grape compact` is implemented, these values are documented limits for cleanup policy, not background deletion.
+New local configs include retention defaults for context artifacts, snapshots, FTS rows, compression inputs, derived metadata, and invalidated records. Existing schema-1 configs without the retention block still read with those defaults. These values are cleanup policy, not background deletion.
+
+`grape compact` now enforces the context artifact limit for eligible artifacts only. It previews by default and requires `--confirm` before it deletes artifact rows or regular files under `.grape/artifacts/`. It does not delete snapshots, FTS rows, compression rows, sources, claims, proofs, source rejections, audit rows, or the whole `.grape/` directory.
 
 ## Logging Rules
 

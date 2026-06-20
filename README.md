@@ -248,6 +248,7 @@ Manual CLI usage is available for debugging and fallback:
 
 ```bash
 grape sync
+grape compact
 grape compile --task "Explain the files I need to edit"
 grape diff-context --task "Explain the files I need to edit"
 grape status
@@ -316,6 +317,8 @@ Grape stores local runtime state under `.grape/`:
 * observed command and test evidence from `grape run` and `grape test`, stored as hashes and metadata instead of raw stdout or stderr bodies
 
 Grape does not send repository content, artifacts, proofs, summaries, embeddings, or telemetry to a remote Grape service by default. Your MCP client or coding agent may still forward returned context to its model provider. Treat Grape output like any other repo context you give an AI tool.
+
+For bounded artifact cleanup, run `grape compact` first. It previews eligible context artifact cleanup and deletes nothing unless you rerun it with `--confirm`.
 
 Safe manual cleanup while `grape purge` is deferred:
 

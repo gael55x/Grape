@@ -101,6 +101,8 @@ export function helpText(): string {
     "  grape doctor                Run setup and privacy diagnostics",
     "  grape doctor --privacy      Run privacy-focused diagnostics",
     "  grape sync                  Refresh local snapshot, evidence, and file index",
+    "  grape compact               Preview local artifact retention cleanup",
+    "  grape compact --confirm     Apply eligible local artifact retention cleanup",
     "  grape compile --task <text> Compile a task context pack",
     "  grape diff-context --task <text> Compile and diff a task context pack",
     "  grape diff-context --explain   Show per-item diff reasons for the pack",
@@ -158,6 +160,7 @@ export function helpText(): string {
     "  --test-framework <name>     Label a Grape-observed test run",
     "  --client <name>             MCP install client: cursor, claude, or codex",
     "  --dry-run                   Preview MCP client config writes without changing files",
+    "  --confirm                   Apply a destructive local maintenance command",
     "  --force                     Replace a conflicting existing Grape MCP server entry",
     "  --json                      Emit machine-readable JSON"
   ].join("\n");
@@ -209,6 +212,19 @@ const COMMAND_HELP: Readonly<Record<string, string>> = {
     "  grape sync [--repo <path>] [--json]",
     "",
     "Refreshes local snapshot, evidence, and lightweight index without sending a context pack."
+  ].join("\n"),
+  compact: [
+    "Usage:",
+    "  grape compact [--repo <path>] [--json]",
+    "  grape compact --dry-run [--repo <path>] [--json]",
+    "  grape compact --confirm [--repo <path>] [--json]",
+    "",
+    "Previews or applies retention cleanup for eligible old context artifacts.",
+    "",
+    "Safety:",
+    "  Without --confirm, no data is deleted.",
+    "  The current slice preserves the latest artifact per session, active sent context, restorable omitted context, and locked sessions.",
+    "  The current slice does not delete snapshots, FTS rows, compression rows, claims, proofs, sources, or audit rows."
   ].join("\n"),
   compile: [
     "Usage:",

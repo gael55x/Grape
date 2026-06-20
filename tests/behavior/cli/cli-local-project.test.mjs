@@ -95,6 +95,7 @@ test("cli help exposes setup, status, doctor, and mcp guidance commands", () => 
   assert.equal(result.stderr, "");
   assert.match(result.stdout, /grape init --connect/);
   assert.match(result.stdout, /grape sync/);
+  assert.match(result.stdout, /grape compact/);
   assert.match(result.stdout, /grape compile --task <text>/);
   assert.match(result.stdout, /grape diff-context --task <text>/);
   assert.match(result.stdout, /grape run --session <id> -- <cmd\.\.\.>/);
@@ -140,6 +141,7 @@ test("cli public commands render command-specific help", () => {
     "status",
     "doctor",
     "compile",
+    "compact",
     "diff-context",
     "mcp",
     "bench",
