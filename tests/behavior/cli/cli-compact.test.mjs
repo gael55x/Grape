@@ -67,12 +67,14 @@ test("compact help documents preview, confirm, and cleanup scope", () => {
   assert.equal(help.status, 0, help.stderr);
   assert.match(help.stdout, /grape compact --confirm/);
   assert.match(help.stdout, /Without --confirm, no data is deleted/);
-  assert.match(help.stdout, /context artifacts, compression cache rows, FTS rows, derived symbol metadata, and orphan snapshots/);
+  assert.match(help.stdout, /context artifacts, compression cache rows, FTS rows, derived symbol metadata, orphan snapshots, and invalidated ledger rows/);
   assert.match(help.stdout, /orphan snapshots/);
+  assert.match(help.stdout, /invalidated ledger rows/);
   assert.match(help.stdout, /FTS rows only by whole snapshot/);
   assert.match(help.stdout, /derived symbol metadata only by whole snapshot/);
   assert.match(help.stdout, /preserves compression cache rows still referenced/);
   assert.match(help.stdout, /deletes repo snapshots only when they are orphaned/);
+  assert.match(help.stdout, /deletes invalidation ledger rows only with any sent rows/);
   assert.match(help.stdout, /does not delete claims, proofs, sources/);
 
   const conflict = runCli(process.cwd(), ["compact", "--dry-run", "--confirm"]);
@@ -259,6 +261,65 @@ test("compact rechecks orphan snapshots after artifact deletion", () => {
   });
 });
 
+test("compact requires confirmation when only invalidated records are eligible", () => {
+  withGitRepo((repoPath) => {
+    runCliJson(repoPath, ["init", "--connect"]);
+    const seeded = seedInvalidatedRecordOnlyRetention(repoPath);
+    const preview = runCliJson(repoPath, ["compact"]);
+
+    assert.equal(preview.confirmationRequired, true);
+    assert.equal(preview.contextArtifacts.candidateArtifacts, 0);
+    assert.equal(preview.compressionCache.candidateArtifacts, 0);
+    assert.equal(preview.ftsIndex.candidateSnapshots, 0);
+    assert.equal(preview.derivedMetadata.candidateSnapshots, 0);
+    assert.equal(preview.snapshots.candidateSnapshots, 0);
+    assert.equal(preview.invalidatedRecords.candidateInvalidations, 1);
+    assert.equal(preview.invalidatedRecords.deletedInvalidationPackItems, 0);
+    assert.equal(preview.invalidatedRecords.rowCounts.invalidationPackItems, 1);
+    assert.equal(preview.invalidatedRecords.rowCounts.invalidatedSentItems, 1);
+    assert.equal(preview.invalidatedRecords.rowCounts.invalidatedSentPackItems, 1);
+    assert.equal(countPackRow(repoPath, seeded.invalidationPackItemId), 1);
+    assert.equal(countPackRow(repoPath, seeded.sentItemId), 1);
+    assert.equal(countSentRows(repoPath, seeded.sentItemId), 1);
+
+    const apply = runCliJson(repoPath, ["compact", "--confirm"]);
+
+    assert.equal(apply.invalidatedRecords.deletedInvalidationPackItems, 1);
+    assert.equal(apply.invalidatedRecords.deletedInvalidatedSentItems, 1);
+    assert.equal(apply.invalidatedRecords.deletedInvalidatedSentPackItems, 1);
+    assert.equal(countPackRow(repoPath, seeded.invalidationPackItemId), 0);
+    assert.equal(countPackRow(repoPath, seeded.sentItemId), 0);
+    assert.equal(countSentRows(repoPath, seeded.sentItemId), 0);
+  });
+});
+
+test("compact removes invalidated records before artifact cleanup can orphan markers", () => {
+  withGitRepo((repoPath) => {
+    runCliJson(repoPath, ["init", "--connect"]);
+    const seeded = seedInvalidatedRecordWithArtifactRetention(repoPath);
+    const preview = runCliJson(repoPath, ["compact"]);
+
+    assert.equal(preview.confirmationRequired, true);
+    assert.equal(preview.contextArtifacts.candidateArtifacts, 1);
+    assert.equal(preview.invalidatedRecords.candidateInvalidations, 1);
+    assert.equal(countArtifact(repoPath, seeded.sentArtifactId), 1);
+    assert.equal(countPackRow(repoPath, seeded.invalidationPackItemId), 1);
+    assert.equal(countPackRow(repoPath, seeded.sentItemId), 1);
+    assert.equal(countSentRows(repoPath, seeded.sentItemId), 1);
+
+    const apply = runCliJson(repoPath, ["compact", "--confirm"]);
+
+    assert.equal(apply.invalidatedRecords.deletedInvalidationPackItems, 1);
+    assert.equal(apply.invalidatedRecords.deletedInvalidatedSentItems, 1);
+    assert.equal(apply.invalidatedRecords.deletedInvalidatedSentPackItems, 1);
+    assert.equal(apply.contextArtifacts.deletedArtifacts, 1);
+    assert.equal(countArtifact(repoPath, seeded.sentArtifactId), 0);
+    assert.equal(countPackRow(repoPath, seeded.invalidationPackItemId), 0);
+    assert.equal(countPackRow(repoPath, seeded.sentItemId), 0);
+    assert.equal(countSentRows(repoPath, seeded.sentItemId), 0);
+  });
+});
+
 function seedRetentionArtifacts(repoPath) {
   const databasePath = path.join(repoPath, ".grape", "grape.db");
   const database = new DatabaseSync(databasePath);
@@ -419,6 +480,70 @@ function seedRetentionArtifacts(repoPath) {
       protectedArtifactIds,
       protectedCompressionId
     };
+  } finally {
+    database.close();
+  }
+}
+
+function seedInvalidatedRecordOnlyRetention(repoPath) {
+  const databasePath = path.join(repoPath, ".grape", "grape.db");
+  const database = new DatabaseSync(databasePath);
+  try {
+    const identity = readIdentity(database);
+    const repositories = createStorageRepositories(database);
+    const sessionId = "compact-invalidated-session";
+    const sentArtifactId = "artifact:compact-invalidated-sent";
+    const invalidationArtifactId = "artifact:compact-invalidated-marker";
+    const sentItemId = "sent:compact-invalidated";
+    const invalidationPackItemId = "invalidate:compact-invalidated";
+
+    insertSession(repositories, identity, sessionId, "unlocked");
+    insertArtifact(repositories, identity, sentArtifactId, sessionId, newTime);
+    insertArtifact(repositories, identity, invalidationArtifactId, sessionId, oldTime);
+    insertInvalidatedSentPair(repositories, {
+      sessionId,
+      sentArtifactId,
+      invalidationArtifactId,
+      sentItemId,
+      invalidationPackItemId,
+      sentAt: newTime,
+      invalidatedAt: oldTime
+    });
+
+    return { sentItemId, invalidationPackItemId };
+  } finally {
+    database.close();
+  }
+}
+
+function seedInvalidatedRecordWithArtifactRetention(repoPath) {
+  const databasePath = path.join(repoPath, ".grape", "grape.db");
+  const database = new DatabaseSync(databasePath);
+  try {
+    const identity = readIdentity(database);
+    const repositories = createStorageRepositories(database);
+    const sessionId = "compact-invalidated-artifact-session";
+    const sentArtifactId = "artifact:compact-invalidated-artifact-sent";
+    const invalidationArtifactId = "artifact:compact-invalidated-artifact-marker";
+    const latestArtifactId = "artifact:compact-invalidated-artifact-latest";
+    const sentItemId = "sent:compact-invalidated-artifact";
+    const invalidationPackItemId = "invalidate:compact-invalidated-artifact";
+
+    insertSession(repositories, identity, sessionId, "unlocked");
+    insertArtifact(repositories, identity, sentArtifactId, sessionId, oldTime);
+    insertArtifact(repositories, identity, invalidationArtifactId, sessionId, oldTime);
+    insertArtifact(repositories, identity, latestArtifactId, sessionId, newTime);
+    insertInvalidatedSentPair(repositories, {
+      sessionId,
+      sentArtifactId,
+      invalidationArtifactId,
+      sentItemId,
+      invalidationPackItemId,
+      sentAt: oldTime,
+      invalidatedAt: oldTime
+    });
+
+    return { sentArtifactId, sentItemId, invalidationPackItemId };
   } finally {
     database.close();
   }
@@ -699,6 +824,60 @@ function insertCompressionArtifact(repositories, identity, compressionId, create
   }
 }
 
+function insertInvalidatedSentPair(repositories, input) {
+  repositories.contextSentItems.insert({
+    sentItemId: input.sentItemId,
+    sessionId: input.sessionId,
+    artifactId: input.sentArtifactId,
+    sectionId: `section:${input.sentItemId}`,
+    taskId: "task:compact",
+    itemKind: "code_span",
+    itemRef: "README.md",
+    itemHash: `hash:item:${input.sentItemId}`,
+    contentHash: `hash:content:${input.sentItemId}`,
+    branchName: "main",
+    commitSha: "HEAD",
+    dependencyManifestHash: "hash:manifest",
+    wasPinned: false,
+    lastDiffState: "NEW",
+    firstSentAt: input.sentAt,
+    lastSentAt: input.sentAt,
+    sendCount: 1,
+    tokenCount: 1
+  });
+  repositories.contextPackItems.insert({
+    packItemId: input.sentItemId,
+    sessionId: input.sessionId,
+    artifactId: input.sentArtifactId,
+    sectionId: `section:${input.sentItemId}`,
+    diffState: "NEW",
+    itemKind: "code_span",
+    itemRef: "README.md",
+    contentHash: `hash:content:${input.sentItemId}`,
+    tokenCount: 1,
+    pinned: false,
+    safetyCritical: false,
+    inputRefsJson: "[]",
+    createdAt: input.sentAt
+  });
+  repositories.contextPackItems.insert({
+    packItemId: input.invalidationPackItemId,
+    sessionId: input.sessionId,
+    artifactId: input.invalidationArtifactId,
+    sectionId: `section:${input.sentItemId}`,
+    diffState: "INVALIDATE_PREVIOUS",
+    itemKind: "invalidation",
+    itemRef: input.sentItemId,
+    contentHash: `hash:invalidate:${input.invalidationPackItemId}`,
+    tokenCount: 1,
+    pinned: false,
+    safetyCritical: true,
+    invalidatesSentItemId: input.sentItemId,
+    inputRefsJson: "[]",
+    createdAt: input.invalidatedAt
+  });
+}
+
 function writeArtifactFiles(repoPath, artifactId) {
   const artifactDir = path.join(repoPath, ".grape", "artifacts");
   mkdirSync(artifactDir, { recursive: true });
@@ -796,6 +975,14 @@ function countSnapshotRows(repoPath, snapshotId) {
 
 function countWorktreeRows(repoPath, snapshotId) {
   return countRows(repoPath, "worktree_states", "snapshot_id", snapshotId);
+}
+
+function countPackRow(repoPath, packItemId) {
+  return countRows(repoPath, "context_pack_items", "pack_item_id", packItemId);
+}
+
+function countSentRows(repoPath, sentItemId) {
+  return countRows(repoPath, "context_sent_items", "sent_item_id", sentItemId);
 }
 
 function countRows(repoPath, tableName, columnName, value) {

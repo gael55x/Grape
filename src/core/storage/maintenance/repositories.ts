@@ -16,7 +16,8 @@ export type ContextArtifactRetentionProtection =
   | "latest_per_session"
   | "active_sent_context"
   | "restorable_omitted_context"
-  | "locked_session";
+  | "locked_session"
+  | "invalidation_marker";
 
 export type CompressionRetentionReason =
   | "age"
@@ -57,6 +58,13 @@ export type SnapshotRetentionProtection =
   | "symbol_edge"
   | "context_dependency"
   | "source";
+
+export type InvalidatedRecordRetentionReason =
+  | "age"
+  | "row_limit"
+  | "age_and_row_limit";
+
+export type InvalidatedRecordRetentionProtection = "locked_session" | "sent_row_retained";
 
 export interface ContextArtifactRetentionCandidate {
   readonly artifactId: string;
@@ -220,6 +228,42 @@ export interface SnapshotRetentionPlan {
   };
 }
 
+export interface InvalidatedRecordRetentionCandidate {
+  readonly invalidationPackItemId: string;
+  readonly sessionId: string;
+  readonly invalidatedSentItemId?: string;
+  readonly createdAt: string;
+  readonly reason: InvalidatedRecordRetentionReason;
+}
+
+export interface InvalidatedRecordRetentionProtectedRecord {
+  readonly invalidationPackItemId: string;
+  readonly sessionId: string;
+  readonly invalidatedSentItemId?: string;
+  readonly createdAt: string;
+  readonly reason: InvalidatedRecordRetentionReason;
+  readonly protection: InvalidatedRecordRetentionProtection;
+}
+
+export interface InvalidatedRecordRetentionPlan {
+  readonly cutoff: string;
+  readonly totalInvalidations: number;
+  readonly retentionMatchedInvalidations: number;
+  readonly candidateInvalidations: readonly InvalidatedRecordRetentionCandidate[];
+  readonly protectedInvalidations: readonly InvalidatedRecordRetentionProtectedRecord[];
+  readonly rowCounts: {
+    readonly invalidationPackItems: number;
+    readonly invalidatedSentItems: number;
+    readonly invalidatedSentPackItems: number;
+  };
+}
+
+export interface InvalidatedRecordDeletionResult {
+  readonly invalidationPackItems: number;
+  readonly invalidatedSentItems: number;
+  readonly invalidatedSentPackItems: number;
+}
+
 export interface MaintenanceStorageRepositories {
   readonly retention: {
     planContextArtifactCompaction(input: {
@@ -253,6 +297,11 @@ export interface MaintenanceStorageRepositories {
       readonly ignoredDerivedMetadataSnapshotIds?: readonly string[];
     }): SnapshotRetentionPlan;
     deleteRepoSnapshots(snapshotIds: readonly string[]): number;
+    planInvalidatedRecordCompaction(input: {
+      readonly now: string;
+      readonly limit: StorageRetentionLimit;
+    }): InvalidatedRecordRetentionPlan;
+    deleteInvalidatedRecords(invalidationPackItemIds: readonly string[]): InvalidatedRecordDeletionResult;
   };
 }
 
@@ -266,6 +315,7 @@ interface FlaggedArtifactRow {
   readonly hasActiveSentContext: boolean;
   readonly hasRestorableOmittedContext: boolean;
   readonly sessionLocked: boolean;
+  readonly hasNeededInvalidationMarker: boolean;
 }
 
 interface FlaggedCompressionArtifactRow {
@@ -318,6 +368,16 @@ interface FlaggedSnapshotRow {
   readonly hasSymbolEdge: boolean;
   readonly hasContextDependency: boolean;
   readonly hasSource: boolean;
+}
+
+interface FlaggedInvalidatedRecordRow {
+  readonly invalidationPackItemId: string;
+  readonly sessionId: string;
+  readonly invalidatedSentItemId?: string;
+  readonly createdAt: string;
+  readonly ageExpired: boolean;
+  readonly rowExpired: boolean;
+  readonly sessionLocked: boolean;
 }
 
 export function createMaintenanceStorageRepositories(database: DatabaseSync): MaintenanceStorageRepositories {
@@ -603,6 +663,108 @@ export function createMaintenanceStorageRepositories(database: DatabaseSync): Ma
             .prepare(`DELETE FROM repo_snapshots WHERE snapshot_id IN (${placeholders})`)
             .run(...snapshotIds).changes
         );
+      },
+      planInvalidatedRecordCompaction(input) {
+        const cutoff = retentionCutoff(input.now, input.limit.maxAgeDays);
+        const rows = listFlaggedInvalidatedRecords(database, {
+          cutoff,
+          maxRows: input.limit.maxRows
+        });
+        const retentionMatched = rows.filter((row) => row.ageExpired || row.rowExpired);
+        const deletableSentItemIds = new Set(
+          deletableInvalidatedSentItemIds(
+            database,
+            retentionMatched
+              .filter((row) => !row.sessionLocked)
+              .map((row) => row.invalidationPackItemId)
+          )
+        );
+        const candidateInvalidations: InvalidatedRecordRetentionCandidate[] = [];
+        const protectedInvalidations: InvalidatedRecordRetentionProtectedRecord[] = [];
+
+        for (const row of retentionMatched) {
+          const reason = invalidatedRecordRetentionReason(row);
+          if (row.sessionLocked) {
+            protectedInvalidations.push({
+              invalidationPackItemId: row.invalidationPackItemId,
+              sessionId: row.sessionId,
+              invalidatedSentItemId: row.invalidatedSentItemId,
+              createdAt: row.createdAt,
+              reason,
+              protection: "locked_session"
+            });
+          } else if (
+            !row.invalidatedSentItemId ||
+            !deletableSentItemIds.has(row.invalidatedSentItemId)
+          ) {
+            protectedInvalidations.push({
+              invalidationPackItemId: row.invalidationPackItemId,
+              sessionId: row.sessionId,
+              invalidatedSentItemId: row.invalidatedSentItemId,
+              createdAt: row.createdAt,
+              reason,
+              protection: "sent_row_retained"
+            });
+          } else {
+            candidateInvalidations.push({
+              invalidationPackItemId: row.invalidationPackItemId,
+              sessionId: row.sessionId,
+              invalidatedSentItemId: row.invalidatedSentItemId,
+              createdAt: row.createdAt,
+              reason
+            });
+          }
+        }
+
+        const invalidationIds = candidateInvalidations.map((record) => record.invalidationPackItemId);
+        return {
+          cutoff,
+          totalInvalidations: rows.length,
+          retentionMatchedInvalidations: retentionMatched.length,
+          candidateInvalidations,
+          protectedInvalidations,
+          rowCounts: invalidatedRecordCandidateRowCounts(database, invalidationIds)
+        };
+      },
+      deleteInvalidatedRecords(invalidationPackItemIds) {
+        if (invalidationPackItemIds.length === 0) {
+          return {
+            invalidationPackItems: 0,
+            invalidatedSentItems: 0,
+            invalidatedSentPackItems: 0
+          };
+        }
+
+        const invalidatedSentItemIds = deletableInvalidatedSentItemIds(database, invalidationPackItemIds);
+        const safeInvalidationPackItemIds = invalidationPackItemIdsForSentItems(database, {
+          invalidationPackItemIds,
+          invalidatedSentItemIds
+        });
+        if (safeInvalidationPackItemIds.length === 0) {
+          return {
+            invalidationPackItems: 0,
+            invalidatedSentItems: 0,
+            invalidatedSentPackItems: 0
+          };
+        }
+
+        const rowCounts = invalidatedRecordCandidateRowCounts(database, safeInvalidationPackItemIds);
+        const invalidationPlaceholders = safeInvalidationPackItemIds.map(() => "?").join(", ");
+        database
+          .prepare(`DELETE FROM context_pack_items WHERE pack_item_id IN (${invalidationPlaceholders})`)
+          .run(...safeInvalidationPackItemIds);
+
+        if (invalidatedSentItemIds.length > 0) {
+          const sentPlaceholders = invalidatedSentItemIds.map(() => "?").join(", ");
+          database
+            .prepare(`DELETE FROM context_pack_items WHERE pack_item_id IN (${sentPlaceholders})`)
+            .run(...invalidatedSentItemIds);
+          database
+            .prepare(`DELETE FROM context_sent_items WHERE sent_item_id IN (${sentPlaceholders})`)
+            .run(...invalidatedSentItemIds);
+        }
+
+        return rowCounts;
       }
     }
   };
@@ -673,6 +835,16 @@ function listFlaggedArtifacts(
             "AND omitted.restore_id IS NOT NULL",
             ") AS has_restorable_omitted_context,"
           ].join(" "),
+          [
+            "EXISTS (",
+            "SELECT 1 FROM context_pack_items invalidation",
+            "JOIN context_sent_items sent",
+            "ON sent.session_id = invalidation.session_id",
+            "AND sent.sent_item_id = invalidation.invalidates_sent_item_id",
+            "WHERE invalidation.artifact_id = ranked.artifact_id",
+            "AND invalidation.diff_state = 'INVALIDATE_PREVIOUS'",
+            ") AS has_needed_invalidation_marker,"
+          ].join(" "),
           "ranked.lock_status IN ('locked', 'contended') AS session_locked",
           "FROM ranked_artifacts ranked",
           "ORDER BY ranked.created_at DESC, ranked.artifact_id DESC"
@@ -692,7 +864,8 @@ function mapFlaggedArtifactRow(row: Record<string, unknown>): FlaggedArtifactRow
     isLatestForSession: boolColumn(row, "is_latest_for_session"),
     hasActiveSentContext: boolColumn(row, "has_active_sent_context"),
     hasRestorableOmittedContext: boolColumn(row, "has_restorable_omitted_context"),
-    sessionLocked: boolColumn(row, "session_locked")
+    sessionLocked: boolColumn(row, "session_locked"),
+    hasNeededInvalidationMarker: boolColumn(row, "has_needed_invalidation_marker")
   };
 }
 
@@ -709,6 +882,7 @@ function retentionProtection(
   if (row.hasActiveSentContext) return "active_sent_context";
   if (row.hasRestorableOmittedContext) return "restorable_omitted_context";
   if (row.sessionLocked) return "locked_session";
+  if (row.hasNeededInvalidationMarker) return "invalidation_marker";
   return undefined;
 }
 
@@ -1232,6 +1406,65 @@ function snapshotRetentionProtection(row: FlaggedSnapshotRow): SnapshotRetention
   return undefined;
 }
 
+function listFlaggedInvalidatedRecords(
+  database: DatabaseSync,
+  input: {
+    readonly cutoff: string;
+    readonly maxRows: number;
+  }
+): FlaggedInvalidatedRecordRow[] {
+  return (
+    database
+      .prepare(
+        [
+          "WITH ranked_invalidations AS (",
+          "SELECT",
+          "pack.pack_item_id AS invalidation_pack_item_id,",
+          "pack.session_id,",
+          "pack.invalidates_sent_item_id,",
+          "pack.created_at,",
+          "session.lock_status,",
+          "ROW_NUMBER() OVER (ORDER BY pack.created_at DESC, pack.pack_item_id DESC) AS retention_rank",
+          "FROM context_pack_items pack",
+          "JOIN context_sessions session ON session.session_id = pack.session_id",
+          "WHERE pack.diff_state = 'INVALIDATE_PREVIOUS'",
+          ")",
+          "SELECT",
+          "ranked.invalidation_pack_item_id,",
+          "ranked.session_id,",
+          "ranked.invalidates_sent_item_id,",
+          "ranked.created_at,",
+          "ranked.created_at < ? AS age_expired,",
+          "ranked.retention_rank > ? AS row_expired,",
+          "ranked.lock_status IN ('locked', 'contended') AS session_locked",
+          "FROM ranked_invalidations ranked",
+          "ORDER BY ranked.created_at DESC, ranked.invalidation_pack_item_id DESC"
+        ].join(" ")
+      )
+      .all(input.cutoff, input.maxRows) as Array<Record<string, unknown>>
+  ).map(mapFlaggedInvalidatedRecordRow);
+}
+
+function mapFlaggedInvalidatedRecordRow(row: Record<string, unknown>): FlaggedInvalidatedRecordRow {
+  return {
+    invalidationPackItemId: stringColumn(row, "invalidation_pack_item_id"),
+    sessionId: stringColumn(row, "session_id"),
+    invalidatedSentItemId: optionalStringColumn(row, "invalidates_sent_item_id"),
+    createdAt: stringColumn(row, "created_at"),
+    ageExpired: boolColumn(row, "age_expired"),
+    rowExpired: boolColumn(row, "row_expired"),
+    sessionLocked: boolColumn(row, "session_locked")
+  };
+}
+
+function invalidatedRecordRetentionReason(
+  row: FlaggedInvalidatedRecordRow
+): InvalidatedRecordRetentionReason {
+  if (row.ageExpired && row.rowExpired) return "age_and_row_limit";
+  if (row.ageExpired) return "age";
+  return "row_limit";
+}
+
 function candidateRowCounts(
   database: DatabaseSync,
   artifactIds: readonly string[]
@@ -1335,6 +1568,88 @@ function snapshotCandidateRowCounts(
   };
 }
 
+function invalidatedRecordCandidateRowCounts(
+  database: DatabaseSync,
+  invalidationPackItemIds: readonly string[]
+): InvalidatedRecordRetentionPlan["rowCounts"] {
+  if (invalidationPackItemIds.length === 0) {
+    return {
+      invalidationPackItems: 0,
+      invalidatedSentItems: 0,
+      invalidatedSentPackItems: 0
+    };
+  }
+
+  const invalidatedSentItemIds = deletableInvalidatedSentItemIds(database, invalidationPackItemIds);
+  return {
+    invalidationPackItems: invalidationPackItemIds.length,
+    invalidatedSentItems: invalidatedSentItemIds.length,
+    invalidatedSentPackItems:
+      invalidatedSentItemIds.length === 0
+        ? 0
+        : countRowsByArtifactIds(database, "context_pack_items", "pack_item_id", invalidatedSentItemIds)
+  };
+}
+
+function deletableInvalidatedSentItemIds(
+  database: DatabaseSync,
+  invalidationPackItemIds: readonly string[]
+): readonly string[] {
+  if (invalidationPackItemIds.length === 0) return [];
+
+  const candidatePlaceholders = invalidationPackItemIds.map(() => "?").join(", ");
+  return (
+    database
+      .prepare(
+        [
+          "SELECT DISTINCT candidate.invalidates_sent_item_id",
+          "FROM context_pack_items candidate",
+          "JOIN context_sent_items sent ON sent.sent_item_id = candidate.invalidates_sent_item_id",
+          `WHERE candidate.pack_item_id IN (${candidatePlaceholders})`,
+          "AND candidate.diff_state = 'INVALIDATE_PREVIOUS'",
+          "AND candidate.invalidates_sent_item_id IS NOT NULL",
+          "AND NOT EXISTS (",
+          "SELECT 1 FROM context_pack_items remaining",
+          "WHERE remaining.diff_state = 'INVALIDATE_PREVIOUS'",
+          "AND remaining.invalidates_sent_item_id = candidate.invalidates_sent_item_id",
+          `AND remaining.pack_item_id NOT IN (${candidatePlaceholders})`,
+          ")",
+          "ORDER BY candidate.invalidates_sent_item_id ASC"
+        ].join(" ")
+      )
+      .all(...invalidationPackItemIds, ...invalidationPackItemIds) as Array<Record<string, unknown>>
+  ).map((row) => stringColumn(row, "invalidates_sent_item_id"));
+}
+
+function invalidationPackItemIdsForSentItems(
+  database: DatabaseSync,
+  input: {
+    readonly invalidationPackItemIds: readonly string[];
+    readonly invalidatedSentItemIds: readonly string[];
+  }
+): readonly string[] {
+  if (input.invalidationPackItemIds.length === 0 || input.invalidatedSentItemIds.length === 0) {
+    return [];
+  }
+
+  const invalidationPlaceholders = input.invalidationPackItemIds.map(() => "?").join(", ");
+  const sentPlaceholders = input.invalidatedSentItemIds.map(() => "?").join(", ");
+  return (
+    database
+      .prepare(
+        [
+          "SELECT pack_item_id",
+          "FROM context_pack_items",
+          `WHERE pack_item_id IN (${invalidationPlaceholders})`,
+          "AND diff_state = 'INVALIDATE_PREVIOUS'",
+          `AND invalidates_sent_item_id IN (${sentPlaceholders})`,
+          "ORDER BY pack_item_id ASC"
+        ].join(" ")
+      )
+      .all(...input.invalidationPackItemIds, ...input.invalidatedSentItemIds) as Array<Record<string, unknown>>
+  ).map((row) => stringColumn(row, "pack_item_id"));
+}
+
 function countRowsByArtifactIds(
   database: DatabaseSync,
   tableName: string,
@@ -1356,4 +1671,9 @@ function stringColumn(row: Record<string, unknown>, key: string): string {
 
 function boolColumn(row: Record<string, unknown>, key: string): boolean {
   return Number(row[key]) === 1;
+}
+
+function optionalStringColumn(row: Record<string, unknown>, key: string): string | undefined {
+  const value = row[key];
+  return value === null || value === undefined ? undefined : String(value);
 }

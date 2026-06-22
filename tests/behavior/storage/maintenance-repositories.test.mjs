@@ -345,6 +345,179 @@ test("maintenance repository deletes only orphan snapshot and worktree rows", ()
   });
 });
 
+test("maintenance repository plans invalidated record compaction as closed pairs", () => {
+  withMigratedDatabase((database, repositories) => {
+    insertBaseGraph(repositories.storage);
+    insertSession(repositories.storage, "session-invalidated");
+    insertArtifact(repositories.storage, "artifact-sent-delete", "session-invalidated", oldTime);
+    insertArtifact(repositories.storage, "artifact-invalidation-delete", "session-invalidated", oldTime);
+    insertInvalidatedSentPair(repositories.storage, {
+      sessionId: "session-invalidated",
+      sentArtifactId: "artifact-sent-delete",
+      invalidationArtifactId: "artifact-invalidation-delete",
+      sentItemId: "sent-delete",
+      invalidationPackItemId: "invalidate-delete",
+      sentAt: oldTime,
+      invalidatedAt: oldTime
+    });
+
+    insertArtifact(repositories.storage, "artifact-sent-retained", "session-invalidated", oldTime);
+    insertArtifact(repositories.storage, "artifact-invalidation-retained-old", "session-invalidated", oldTime);
+    insertArtifact(repositories.storage, "artifact-invalidation-retained-new", "session-invalidated", newTime);
+    insertInvalidatedSentPair(repositories.storage, {
+      sessionId: "session-invalidated",
+      sentArtifactId: "artifact-sent-retained",
+      invalidationArtifactId: "artifact-invalidation-retained-old",
+      sentItemId: "sent-retained",
+      invalidationPackItemId: "invalidate-retained-old",
+      sentAt: oldTime,
+      invalidatedAt: oldTime
+    });
+    insertInvalidationOnly(repositories.storage, {
+      sessionId: "session-invalidated",
+      artifactId: "artifact-invalidation-retained-new",
+      invalidationPackItemId: "invalidate-retained-new",
+      sentItemId: "sent-retained",
+      invalidatedAt: newTime
+    });
+
+    insertSession(repositories.storage, "session-invalidated-locked", "locked");
+    insertArtifact(repositories.storage, "artifact-sent-locked", "session-invalidated-locked", oldTime);
+    insertArtifact(repositories.storage, "artifact-invalidation-locked", "session-invalidated-locked", oldTime);
+    insertInvalidatedSentPair(repositories.storage, {
+      sessionId: "session-invalidated-locked",
+      sentArtifactId: "artifact-sent-locked",
+      invalidationArtifactId: "artifact-invalidation-locked",
+      sentItemId: "sent-locked",
+      invalidationPackItemId: "invalidate-locked",
+      sentAt: oldTime,
+      invalidatedAt: oldTime
+    });
+
+    const plan = repositories.maintenance.retention.planInvalidatedRecordCompaction({
+      now,
+      limit: { maxAgeDays: 30, maxRows: 100 }
+    });
+
+    assert.deepEqual(
+      plan.candidateInvalidations.map((record) => record.invalidationPackItemId),
+      ["invalidate-delete"]
+    );
+    assert.equal(plan.rowCounts.invalidationPackItems, 1);
+    assert.equal(plan.rowCounts.invalidatedSentItems, 1);
+    assert.equal(plan.rowCounts.invalidatedSentPackItems, 1);
+    assert.equal(
+      plan.protectedInvalidations.find((record) => record.invalidationPackItemId === "invalidate-retained-old")?.protection,
+      "sent_row_retained"
+    );
+    assert.equal(
+      plan.protectedInvalidations.find((record) => record.invalidationPackItemId === "invalidate-locked")?.protection,
+      "locked_session"
+    );
+  });
+});
+
+test("maintenance repository deletes invalidated records without reviving stale sent context", () => {
+  withMigratedDatabase((database, repositories) => {
+    insertBaseGraph(repositories.storage);
+    insertSession(repositories.storage, "session-delete-invalidated");
+    insertArtifact(repositories.storage, "artifact-sent-delete", "session-delete-invalidated", oldTime);
+    insertArtifact(repositories.storage, "artifact-invalidation-delete", "session-delete-invalidated", oldTime);
+    insertInvalidatedSentPair(repositories.storage, {
+      sessionId: "session-delete-invalidated",
+      sentArtifactId: "artifact-sent-delete",
+      invalidationArtifactId: "artifact-invalidation-delete",
+      sentItemId: "sent-delete-invalidated",
+      invalidationPackItemId: "invalidate-delete-invalidated",
+      sentAt: oldTime,
+      invalidatedAt: oldTime
+    });
+
+    assert.equal(repositories.storage.contextSentItems.listActiveBySession("session-delete-invalidated").length, 0);
+    const deletion = repositories.maintenance.retention.deleteInvalidatedRecords([
+      "invalidate-delete-invalidated"
+    ]);
+
+    assert.deepEqual(deletion, {
+      invalidationPackItems: 1,
+      invalidatedSentItems: 1,
+      invalidatedSentPackItems: 1
+    });
+    assert.equal(countRows(database, "context_pack_items", "pack_item_id", "invalidate-delete-invalidated"), 0);
+    assert.equal(countRows(database, "context_pack_items", "pack_item_id", "sent-delete-invalidated"), 0);
+    assert.equal(countRows(database, "context_sent_items", "sent_item_id", "sent-delete-invalidated"), 0);
+    assert.equal(repositories.storage.contextSentItems.listActiveBySession("session-delete-invalidated").length, 0);
+  });
+});
+
+test("maintenance repository refuses marker-only invalidated record deletion", () => {
+  withMigratedDatabase((database, repositories) => {
+    insertBaseGraph(repositories.storage);
+    insertSession(repositories.storage, "session-retain-invalidated");
+    insertArtifact(repositories.storage, "artifact-sent-retained", "session-retain-invalidated", oldTime);
+    insertArtifact(repositories.storage, "artifact-invalidation-old", "session-retain-invalidated", oldTime);
+    insertArtifact(repositories.storage, "artifact-invalidation-new", "session-retain-invalidated", newTime);
+    insertInvalidatedSentPair(repositories.storage, {
+      sessionId: "session-retain-invalidated",
+      sentArtifactId: "artifact-sent-retained",
+      invalidationArtifactId: "artifact-invalidation-old",
+      sentItemId: "sent-retained-invalidated",
+      invalidationPackItemId: "invalidate-retained-invalidated-old",
+      sentAt: oldTime,
+      invalidatedAt: oldTime
+    });
+    insertInvalidationOnly(repositories.storage, {
+      sessionId: "session-retain-invalidated",
+      artifactId: "artifact-invalidation-new",
+      invalidationPackItemId: "invalidate-retained-invalidated-new",
+      sentItemId: "sent-retained-invalidated",
+      invalidatedAt: newTime
+    });
+
+    const deletion = repositories.maintenance.retention.deleteInvalidatedRecords([
+      "invalidate-retained-invalidated-old"
+    ]);
+
+    assert.deepEqual(deletion, {
+      invalidationPackItems: 0,
+      invalidatedSentItems: 0,
+      invalidatedSentPackItems: 0
+    });
+    assert.equal(countRows(database, "context_pack_items", "pack_item_id", "invalidate-retained-invalidated-old"), 1);
+    assert.equal(countRows(database, "context_sent_items", "sent_item_id", "sent-retained-invalidated"), 1);
+    assert.equal(repositories.storage.contextSentItems.listActiveBySession("session-retain-invalidated").length, 0);
+  });
+});
+
+test("maintenance repository protects artifacts with needed invalidation markers", () => {
+  withMigratedDatabase((database, repositories) => {
+    insertBaseGraph(repositories.storage);
+    insertSession(repositories.storage, "session-marker-artifact");
+    insertArtifact(repositories.storage, "artifact-sent-marker", "session-marker-artifact", oldTime);
+    insertArtifact(repositories.storage, "artifact-invalidation-marker", "session-marker-artifact", oldTime);
+    insertArtifact(repositories.storage, "artifact-new-marker", "session-marker-artifact", newTime);
+    insertInvalidatedSentPair(repositories.storage, {
+      sessionId: "session-marker-artifact",
+      sentArtifactId: "artifact-sent-marker",
+      invalidationArtifactId: "artifact-invalidation-marker",
+      sentItemId: "sent-marker-artifact",
+      invalidationPackItemId: "invalidate-marker-artifact",
+      sentAt: oldTime,
+      invalidatedAt: oldTime
+    });
+
+    const plan = repositories.maintenance.retention.planContextArtifactCompaction({
+      now,
+      limit: { maxAgeDays: 30, maxRows: 0 }
+    });
+
+    assert.equal(
+      plan.protectedArtifacts.find((artifact) => artifact.artifactId === "artifact-invalidation-marker")?.protection,
+      "invalidation_marker"
+    );
+  });
+});
+
 function insertBaseGraph(repositories) {
   repositories.projects.insert({
     projectId: "project-1",
@@ -401,7 +574,7 @@ function insertSnapshot(repositories, snapshotId, createdAt) {
   });
 }
 
-function insertSession(repositories, sessionId) {
+function insertSession(repositories, sessionId, lockStatus = "unlocked") {
   repositories.contextSessions.insert({
     sessionId,
     projectId: "project-1",
@@ -415,7 +588,8 @@ function insertSession(repositories, sessionId) {
     branchName: "main",
     headCommitSha: "abc123",
     status: "active",
-    lockStatus: "unlocked",
+    lockStatus,
+    lockToken: lockStatus === "locked" ? `lock:${sessionId}` : undefined,
     startedAt: now,
     lastSeenAt: now,
     createdAt: now,
@@ -644,6 +818,70 @@ function insertSnapshotDependency(repositories, snapshotId) {
     dependencyHash: `hash:${snapshotId}`,
     scopeJson: "{}",
     createdAt: now
+  });
+}
+
+function insertInvalidatedSentPair(repositories, input) {
+  repositories.contextSentItems.insert({
+    sentItemId: input.sentItemId,
+    sessionId: input.sessionId,
+    artifactId: input.sentArtifactId,
+    sectionId: `section:${input.sentItemId}`,
+    taskId: "task-1",
+    itemKind: "code_span",
+    itemRef: "README.md",
+    itemHash: `hash:item:${input.sentItemId}`,
+    contentHash: `hash:content:${input.sentItemId}`,
+    branchName: "main",
+    commitSha: "abc123",
+    dependencyManifestHash: hashB,
+    wasPinned: false,
+    lastDiffState: "NEW",
+    firstSentAt: input.sentAt,
+    lastSentAt: input.sentAt,
+    sendCount: 1,
+    tokenCount: 1
+  });
+  repositories.contextPackItems.insert({
+    packItemId: input.sentItemId,
+    sessionId: input.sessionId,
+    artifactId: input.sentArtifactId,
+    sectionId: `section:${input.sentItemId}`,
+    diffState: "NEW",
+    itemKind: "code_span",
+    itemRef: "README.md",
+    contentHash: `hash:content:${input.sentItemId}`,
+    tokenCount: 1,
+    pinned: false,
+    safetyCritical: false,
+    inputRefsJson: "[]",
+    createdAt: input.sentAt
+  });
+  insertInvalidationOnly(repositories, {
+    sessionId: input.sessionId,
+    artifactId: input.invalidationArtifactId,
+    invalidationPackItemId: input.invalidationPackItemId,
+    sentItemId: input.sentItemId,
+    invalidatedAt: input.invalidatedAt
+  });
+}
+
+function insertInvalidationOnly(repositories, input) {
+  repositories.contextPackItems.insert({
+    packItemId: input.invalidationPackItemId,
+    sessionId: input.sessionId,
+    artifactId: input.artifactId,
+    sectionId: `section:${input.sentItemId}`,
+    diffState: "INVALIDATE_PREVIOUS",
+    itemKind: "invalidation",
+    itemRef: input.sentItemId,
+    contentHash: `hash:invalidate:${input.invalidationPackItemId}`,
+    tokenCount: 1,
+    pinned: false,
+    safetyCritical: true,
+    invalidatesSentItemId: input.sentItemId,
+    inputRefsJson: "[]",
+    createdAt: input.invalidatedAt
   });
 }
 

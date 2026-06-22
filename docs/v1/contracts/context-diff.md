@@ -114,6 +114,7 @@ interface OmittedContextItem {
 - `INVALIDATE_PREVIOUS` must include the prior item ID or prior section ID being invalidated.
 - A branch, worktree, dependency, or compression invalidation must invalidate sent items that relied on it. Dependency-manifest drift should be narrowed to the affected section when stored pack-item dependency refs are available, so unrelated new compression dependencies do not force unchanged sections to resend.
 - A stale sent item should emit `INVALIDATE_PREVIOUS` once per session. Later packs should not repeat the same invalidation after it has already been recorded in the session pack ledger, and invalidated sent rows must not be reused as current context if a later artifact returns to the same dependency manifest.
+- Retention cleanup may delete old invalidation ledger rows only as closed pairs. It must delete the `INVALIDATE_PREVIOUS` marker, the stale sent row it points at, and that stale row's original pack row together. It must not delete only the marker while keeping the stale sent row.
 
 ## In-Memory Loop Proof
 

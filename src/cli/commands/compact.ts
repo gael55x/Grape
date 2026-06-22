@@ -54,6 +54,8 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
   const derivedProtectedReasons = result.derivedMetadata.protectedByReason;
   const snapshotRows = result.snapshots.rowCounts;
   const snapshotProtectedReasons = result.snapshots.protectedByReason;
+  const invalidatedRows = result.invalidatedRecords.rowCounts;
+  const invalidatedProtectedReasons = result.invalidatedRecords.protectedByReason;
   return [
     result.applied ? "Grape compact applied." : "Grape compact preview.",
     "",
@@ -66,6 +68,7 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
     `  Compression inputs: ${result.retention.compressionInputs.maxAgeDays} days, ${result.retention.compressionInputs.maxRows} rows`,
     `  FTS rows: ${result.retention.ftsRows.maxAgeDays} days, ${result.retention.ftsRows.maxRows} rows`,
     `  Derived metadata: ${result.retention.derivedMetadata.maxAgeDays} days, ${result.retention.derivedMetadata.maxRows} rows`,
+    `  Invalidated records: ${result.retention.invalidatedRecords.maxAgeDays} days, ${result.retention.invalidatedRecords.maxRows} rows`,
     `  Cutoff: ${result.contextArtifacts.cutoff}`,
     "",
     "Context artifacts:",
@@ -74,7 +77,7 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
     `  Eligible to delete: ${result.contextArtifacts.candidateArtifacts}`,
     `  Deleted: ${result.contextArtifacts.deletedArtifacts}`,
     `  Protected: ${result.contextArtifacts.protectedArtifacts}`,
-    `  Protected reasons: latest=${protectedReasons.latest_per_session ?? 0}, active=${protectedReasons.active_sent_context ?? 0}, restorable=${protectedReasons.restorable_omitted_context ?? 0}, locked=${protectedReasons.locked_session ?? 0}`,
+    `  Protected reasons: latest=${protectedReasons.latest_per_session ?? 0}, active=${protectedReasons.active_sent_context ?? 0}, restorable=${protectedReasons.restorable_omitted_context ?? 0}, locked=${protectedReasons.locked_session ?? 0}, invalidation_marker=${protectedReasons.invalidation_marker ?? 0}`,
     "",
     "Rows covered by this plan:",
     `  context_artifacts: ${rows.contextArtifacts}`,
@@ -144,6 +147,20 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
     `  Protected reasons: latest_snapshot=${snapshotProtectedReasons.latest_repo_snapshot ?? 0}, session=${snapshotProtectedReasons.context_session ?? 0}, artifact=${snapshotProtectedReasons.context_artifact ?? 0}, compression=${snapshotProtectedReasons.compression_artifact ?? 0}, fts=${snapshotProtectedReasons.fts_entry ?? 0}, symbol_node=${snapshotProtectedReasons.symbol_node ?? 0}, symbol_edge=${snapshotProtectedReasons.symbol_edge ?? 0}, dependency=${snapshotProtectedReasons.context_dependency ?? 0}, source=${snapshotProtectedReasons.source ?? 0}`,
     `  repo_snapshots: ${snapshotRows.repoSnapshots}`,
     `  worktree_states: ${snapshotRows.worktreeStates}`,
+    "",
+    "Invalidated records:",
+    `  Cutoff: ${result.invalidatedRecords.cutoff}`,
+    `  Stored invalidations: ${result.invalidatedRecords.totalInvalidations}`,
+    `  Matched invalidations: ${result.invalidatedRecords.retentionMatchedInvalidations}`,
+    `  Eligible invalidations: ${result.invalidatedRecords.candidateInvalidations}`,
+    `  Deleted invalidation pack rows: ${result.invalidatedRecords.deletedInvalidationPackItems}`,
+    `  Deleted invalidated sent rows: ${result.invalidatedRecords.deletedInvalidatedSentItems}`,
+    `  Deleted invalidated sent pack rows: ${result.invalidatedRecords.deletedInvalidatedSentPackItems}`,
+    `  Protected invalidations: ${result.invalidatedRecords.protectedInvalidations}`,
+    `  Protected reasons: locked=${invalidatedProtectedReasons.locked_session ?? 0}, sent_retained=${invalidatedProtectedReasons.sent_row_retained ?? 0}`,
+    `  invalidation context_pack_items: ${invalidatedRows.invalidationPackItems}`,
+    `  context_sent_items: ${invalidatedRows.invalidatedSentItems}`,
+    `  sent context_pack_items: ${invalidatedRows.invalidatedSentPackItems}`,
     "",
     "Artifact files:",
     `  Planned files: ${artifactFiles.plannedFiles}`,
