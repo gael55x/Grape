@@ -8,6 +8,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- Added retrieval confidence reporting to task source retrieval, repository artifacts, public context artifacts, MCP `grape_get_context` output, CLI compile output, and Markdown renderers. The state is `safe`, `partial`, or `missing_likely_files`, and `missing_likely_files` also adds `missing:task_retrieval_missing_likely_files` to public `missingContext`.
 - Added bounded TypeScript module resolution for indexing. TS/JS import and re-export edges now record whether a target was resolved by relative path, TypeScript compiler module resolution, workspace package exports, or left unresolved. Resolution only uses files already admitted into the current snapshot.
 - Added compact storage footprint reporting. `grape compact` now reports measured `.grape/`, database, WAL, SHM, artifact JSON, artifact Markdown, and artifact repository bytes before and after a run.
 - Added benchmark storage footprint diagnostics. `grape bench` now records per-turn `.grape/`, database, WAL, SHM, artifact JSON, artifact Markdown, and artifact repository bytes, and gated no-change fixtures fail when repeated-turn `.grape/` byte growth exceeds the storage threshold.

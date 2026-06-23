@@ -11,7 +11,8 @@ import {
   contextPackItemKinds,
   contextSectionTypes,
   dependencyStrengths,
-  diffStates
+  diffStates,
+  retrievalConfidenceStates
 } from "../../../.tmp/build/src/shared/index.js";
 
 const cliPath = path.join(process.cwd(), ".tmp/build/src/cli/index.js");
@@ -99,12 +100,26 @@ function assertContextArtifactShape(artifact) {
   assert.ok(Array.isArray(artifact.outputSections));
   assert.ok(Array.isArray(artifact.compressionArtifactRefs));
   assert.ok(Array.isArray(artifact.compressionArtifactsUsed));
+  assertRetrievalConfidenceShape(artifact.retrievalConfidence);
   assert.ok(artifact.outputSections.length > 0, "contextArtifact.outputSections should not be empty");
   for (const field of ["contentHash", "createdAt"]) assertNonEmptyString(artifact[field], `contextArtifact.${field}`);
 
   assertDependencyManifestShape(artifact);
   assertInputRefs(artifact.inputRefs);
   assertOutputSections(artifact.outputSections, artifact.dependencyManifest.dependencies);
+}
+
+function assertRetrievalConfidenceShape(confidence) {
+  if (confidence === undefined) return;
+  assert.ok(
+    retrievalConfidenceStates.includes(confidence.state),
+    `unexpected retrieval confidence ${confidence.state}`
+  );
+  assert.ok(Array.isArray(confidence.reasons));
+  assert.ok(confidence.reasons.length > 0, "retrieval confidence should explain its state");
+  for (const reason of confidence.reasons) {
+    assertNonEmptyString(reason, "retrievalConfidence.reason");
+  }
 }
 
 function assertCurrentScope(scope) {

@@ -81,6 +81,7 @@ The stability boundary is enforced through TypeScript types, this document, and 
 | `taskType` | **Stable** | String. |
 | `riskOverlays` | **Stable** | Array of strings; may be empty. |
 | `compileMode` | **Stable** | One of `safe_minimum`, `partial_with_risk`, `cannot_compile_safely`. `broad_context_required` is reserved for forward compatibility but is not currently emitted; beta clients may ignore it. Debug-only warnings do not change this field. |
+| `retrievalConfidence` | **Stable** | Object with `state` and `reasons`. State is `safe`, `partial`, or `missing_likely_files`. It describes source selection only and does not prove behavior or test coverage. |
 | `outputMode` | **Stable** | `agent_pack` or `full`. Defaults to `agent_pack`. |
 | `artifactRef` | **Stable** | Object. See `AgentContextArtifactRef` below. |
 | `contextPackItems` | **Stable** | Array of compact `AgentContextPackItem` objects in `agent_pack` mode. |
@@ -192,6 +193,16 @@ These surfaces are implemented and tested but may change shape before stable 1.0
 - `agentGraph`: full-inspection adjacency graph over context-pack items. The `graphFormat` version string will bump if the node/edge schema changes. Default `agent_pack` omits this field, and beta clients must not require it.
 - `recoveryGuidance`: human-readable array of recovery suggestions. Content is advisory; beta clients must not parse or branch on prose.
 - `contextPackMarkdown`: inspection-oriented Markdown navigation summary. Default `agent_pack` omits it to avoid duplicating structured fields. Agents should prefer structured `contextPackItems` and `artifactRef` for reliable extraction.
+
+## Retrieval Confidence
+
+`retrievalConfidence.state` is stable and has three values:
+
+- `safe`: current sources were selected from direct task evidence and no retrieval warning was emitted.
+- `partial`: current context was selected, but evidence is weaker or warnings remain.
+- `missing_likely_files`: missing seeds, no source matches, or source caps show that useful files were probably not included.
+
+Clients may display this field or use it to decide whether to ask for narrower `files`, `symbols`, or `tests` seeds. They must not treat it as proof of runtime behavior, test coverage, root cause, or fix validity.
 
 ## Accepted Advisory Surfaces
 

@@ -67,6 +67,7 @@ export function toCompileLocalContextResult(input: LocalCompileResultInput): Com
     currentScope: input.currentScope,
     contextPackItems,
     contextArtifact,
+    retrievalConfidence: contextArtifact.retrievalConfidence,
     omittedItemCount: input.value.build.omittedItems.length,
     sentItemCount: input.value.build.sentItems.length,
     tokenMetric: input.value.build.tokenMetric,

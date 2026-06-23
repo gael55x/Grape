@@ -1,4 +1,5 @@
 import type { RiskOverlay, TaskType } from "./contracts.js";
+import type { RetrievalConfidenceShape } from "./retrieval-confidence.js";
 
 export const compileModes = [
   "safe_minimum",
@@ -182,6 +183,7 @@ export interface ContextArtifactShape {
   readonly dependencyManifest: ContextDependencyManifestShape;
   readonly confidence: "high" | "medium" | "low";
   readonly graphConfidence: "high" | "medium" | "low" | "unknown";
+  readonly retrievalConfidence?: RetrievalConfidenceShape;
   readonly impactCandidateSetTooLarge: boolean;
   readonly missingContext: readonly string[];
   readonly unverifiedAssumptions: readonly string[];

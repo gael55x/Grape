@@ -50,6 +50,7 @@ export interface GrapeGetContextToolOutput {
   readonly taskType: TaskType;
   readonly riskOverlays: readonly RiskOverlay[];
   readonly compileMode: "safe_minimum" | "partial_with_risk" | "broad_context_required" | "cannot_compile_safely";
+  readonly retrievalConfidence?: CompileLocalContextResult["retrievalConfidence"];
   readonly outputMode: GrapeGetContextOutputMode;
   readonly artifactRef: AgentContextArtifactRef;
   readonly agentGraph?: AgentContextGraphCut;
@@ -128,6 +129,7 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
     taskType: taskTypeFromResult(parsed.taskType),
     riskOverlays: result.riskOverlays,
     compileMode: compileModeFor(result, riskWarnings),
+    retrievalConfidence: result.retrievalConfidence,
     outputMode,
     artifactRef,
     contextPackItems,

@@ -13,6 +13,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added `grape mcp --print-agents-snippet` to print path-neutral AGENTS.md guidance without editing files.
 - Added a repo-local Codex plugin in `plugins/grape` with Grape MCP config, a Grape skill, and a marketplace entry in `.agents/plugins/marketplace.json`.
 - Added `npm run codex:check` to verify Grape's local Codex setup without touching the normal Codex config.
+- Added retrieval confidence reporting in public context artifacts, MCP `grape_get_context` output, CLI compile output, and task-retrieval sections with `safe`, `partial`, and `missing_likely_files` states.
 
 ### Fixed
 

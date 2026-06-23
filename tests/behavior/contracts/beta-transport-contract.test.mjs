@@ -89,6 +89,14 @@ function getContextResponse(repoPath, extraArgs = {}) {
   return responses[1].result.structuredContent;
 }
 
+function assertRetrievalConfidence(confidence) {
+  assert.equal(typeof confidence, "object");
+  assert.ok(confidence !== null);
+  assert.ok(["safe", "partial", "missing_likely_files"].includes(confidence.state));
+  assert.ok(Array.isArray(confidence.reasons));
+  assert.ok(confidence.reasons.length > 0);
+}
+
 // --- Core identifier fields ---
 
 test("beta transport: core identifier fields are non-empty strings", () => {
@@ -120,6 +128,7 @@ test("beta transport: VCS and compile state fields have correct types", () => {
     assert.equal(typeof sc.taskType, "string");
     assert.equal(typeof sc.compileMode, "string");
     assert.equal(sc.outputMode, "agent_pack");
+    assertRetrievalConfidence(sc.retrievalConfidence);
     assert.ok(Array.isArray(sc.riskOverlays));
     assert.ok(Array.isArray(sc.warnings));
     assert.ok(Array.isArray(sc.unsafeReasons));
@@ -136,6 +145,14 @@ test("beta transport: default outputMode is agent_pack with no embedded contextA
     assert.equal(Object.hasOwn(sc, "contextArtifact"), false);
     assert.equal(Object.hasOwn(sc, "agentGraph"), false);
     assert.equal(Object.hasOwn(sc, "contextPackMarkdown"), false);
+  });
+});
+
+test("beta transport: default agent_pack includes retrieval confidence", () => {
+  withGitRepo((repoPath) => {
+    const sc = getContextResponse(repoPath);
+
+    assertRetrievalConfidence(sc.retrievalConfidence);
   });
 });
 
@@ -307,6 +324,15 @@ test("beta transport: contextPackMarkdown when present is a string", () => {
     const sc = getContextResponse(repoPath, { outputMode: "full" });
 
     assert.equal(typeof sc.contextPackMarkdown, "string");
+  });
+});
+
+test("beta transport: full output retrieval confidence matches embedded artifact", () => {
+  withGitRepo((repoPath) => {
+    const sc = getContextResponse(repoPath, { outputMode: "full" });
+
+    assertRetrievalConfidence(sc.retrievalConfidence);
+    assert.deepEqual(sc.retrievalConfidence, sc.contextArtifact.retrievalConfidence);
   });
 });
 

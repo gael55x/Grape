@@ -158,6 +158,14 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function assertRetrievalConfidence(confidence) {
+  assert.equal(typeof confidence, "object");
+  assert.ok(confidence !== null);
+  assert.ok(["safe", "partial", "missing_likely_files"].includes(confidence.state));
+  assert.ok(Array.isArray(confidence.reasons));
+  assert.ok(confidence.reasons.length > 0);
+}
+
 test("mcp grape_get_conflicts returns conflict inspection without root paths", () => {
   withGitRepo((repoPath) => {
     writeFileSync(
@@ -882,6 +890,7 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     assert.equal(toolResult.structuredContent.sessionId, "mcp-session");
     assert.equal(toolResult.structuredContent.branch, "main");
     assert.equal(toolResult.structuredContent.outputMode, "agent_pack");
+    assertRetrievalConfidence(toolResult.structuredContent.retrievalConfidence);
     assert.equal(Object.hasOwn(toolResult.structuredContent, "contextArtifact"), false);
     assert.equal(toolResult.structuredContent.artifactRef.artifactId, toolResult.structuredContent.artifactId);
     assert.equal(toolResult.structuredContent.artifactRef.fullArtifactTool.name, "grape_get_artifact");
@@ -904,6 +913,10 @@ test("mcp grape_get_context compiles and returns structured context pack output"
       readFileSync(path.join(repoPath, toolResult.structuredContent.artifactFiles.json), "utf8")
     );
     assert.equal(artifactJson.contextArtifact.id, toolResult.structuredContent.artifactId);
+    assert.deepEqual(
+      toolResult.structuredContent.retrievalConfidence,
+      artifactJson.contextArtifact.retrievalConfidence
+    );
     assert.equal("artifact" in artifactJson, false);
   });
 });

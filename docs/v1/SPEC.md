@@ -2487,6 +2487,10 @@ type ContextArtifact = {
 
   confidence: "high" | "medium" | "low";
   graphConfidence: "high" | "medium" | "low" | "unknown";
+  retrievalConfidence?: {
+    state: "safe" | "partial" | "missing_likely_files";
+    reasons: string[];
+  };
   impactCandidateSetTooLarge: boolean;
 
   missingContext: string[];

@@ -1,7 +1,7 @@
 import type { CompileLocalContextResult } from "../../app/local-project/types.js";
 import { recoveryGuidanceForErrorMessage } from "../../app/local-project/setup/recovery.js";
 import { compileSuccessTitle } from "../../shared/trust-wording.js";
-import type { ContextPackItemShape } from "../../shared/index.js";
+import { displayRetrievalConfidenceState, type ContextPackItemShape } from "../../shared/index.js";
 import { repoPath, unsupportedFlag, type ParsedArgs } from "../args.js";
 import {
   errorMessage,
@@ -96,6 +96,7 @@ export async function runCompileLike(
       `Branch: ${result.branch}`,
       `Head: ${result.headCommit}`,
       `Worktree: ${result.dirtyWorktree ? "dirty" : "clean"}`,
+      `Retrieval confidence: ${formatRetrievalConfidence(result)}`,
       `Pack items: ${result.contextPackItems.length}`,
       `Sent items: ${result.sentItemCount}`,
       `Omitted unchanged: ${result.omittedItemCount}`,
@@ -121,6 +122,12 @@ export async function runCompileLike(
     writeError(formatCommandFailure(output.commandLabel, error, guidance), outputOptions);
     return compileErrorExitCode(error);
   }
+}
+
+function formatRetrievalConfidence(result: CompileLocalContextResult): string {
+  return result.retrievalConfidence
+    ? displayRetrievalConfidenceState(result.retrievalConfidence.state)
+    : "none";
 }
 
 function countPackStates(

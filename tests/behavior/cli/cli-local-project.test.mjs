@@ -246,8 +246,25 @@ test("cli compile applies caller environment scope to compiled artifacts", () =>
     ]);
 
     assert.equal(output.contextArtifact.environmentScope, "staging");
+    assertRetrievalConfidence(output.retrievalConfidence);
+    assert.deepEqual(output.retrievalConfidence, output.contextArtifact.retrievalConfidence);
     const artifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, output.artifactJsonPath), "utf8"));
     assert.equal(artifactJson.contextArtifact.environmentScope, "staging");
+  });
+});
+
+test("cli compile human output reports retrieval confidence", () => {
+  withGitRepo((repoPath) => {
+    const result = runCli(repoPath, [
+      "compile",
+      "--task",
+      "Review repository entry points",
+      "--session",
+      "cli-retrieval-confidence-session"
+    ]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /Retrieval confidence: (safe|partial|missing likely files)/);
   });
 });
 
@@ -270,6 +287,14 @@ test("cli compile accepts caller feature flag scope without exposing flag labels
     assert.equal(JSON.stringify(output).includes("rollout_secret"), false);
   });
 });
+
+function assertRetrievalConfidence(confidence) {
+  assert.equal(typeof confidence, "object");
+  assert.ok(confidence !== null);
+  assert.ok(["safe", "partial", "missing_likely_files"].includes(confidence.state));
+  assert.ok(Array.isArray(confidence.reasons));
+  assert.ok(confidence.reasons.length > 0);
+}
 
 test("cli compile rejects unallowlisted feature flag scope input", () => {
   withGitRepo((repoPath) => {

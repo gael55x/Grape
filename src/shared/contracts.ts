@@ -1,4 +1,5 @@
 import type { ContextInputKind, EnvironmentScope } from "./context-artifact-contract.js";
+import type { RetrievalConfidenceShape } from "./retrieval-confidence.js";
 
 export const taskTypes = [
   "bug_fix",
@@ -240,6 +241,7 @@ export interface InMemoryContextArtifactShape {
   dependencyManifest: InMemoryContextDependencyManifestShape;
   warnings: string[];
   unsafeReasons: string[];
+  retrievalConfidence?: RetrievalConfidenceShape;
   createdAt: string;
   artifactHash: string;
 }

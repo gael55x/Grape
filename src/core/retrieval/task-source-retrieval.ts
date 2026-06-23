@@ -1,5 +1,7 @@
 import type { SourceType } from "../../shared/index.js";
+import type { RetrievalConfidenceShape } from "../../shared/index.js";
 import { packageRootForSourceRef } from "../scope/package-root.js";
+import { classifyTaskRetrievalConfidence } from "./confidence.js";
 import {
   buildTaskSemanticCandidates,
   type TaskSemanticCandidate
@@ -75,6 +77,7 @@ export interface TaskSourceRetrievalResult {
   readonly sourceAnchors: readonly TaskSourceRetrievalAnchor[];
   readonly queryTerms: readonly string[];
   readonly warnings: readonly string[];
+  readonly confidence: RetrievalConfidenceShape;
 }
 
 export interface TaskRetrievalRelatedTestRelationship {
@@ -290,7 +293,7 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     warnings.push("task_retrieval_no_related_tests_found");
   }
 
-  return {
+  const result = {
     selectedSourceRefs,
     rankedSourceRefs,
     semanticCandidates,
@@ -310,6 +313,11 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     sourceAnchors: sourceAnchors.filter((anchor) => selectedSourceRefs.includes(anchor.sourceRef)),
     queryTerms,
     warnings
+  };
+
+  return {
+    ...result,
+    confidence: classifyTaskRetrievalConfidence(result)
   };
 }
 

@@ -3,6 +3,7 @@ import type {
   InMemoryContextArtifactShape,
   InMemoryContextRequest
 } from "../../../shared/index.js";
+import { classifyTaskRetrievalConfidence } from "../../retrieval/index.js";
 import { assertInMemoryContextArtifactShape } from "../artifact/in-memory-context-artifact.js";
 import { dependencyManifest } from "./manifest/dependencies.js";
 import { hashStableJson, hashStableParts } from "./hash.js";
@@ -18,15 +19,16 @@ import type { CompileRepositoryContextArtifactInput } from "./types.js";
 export function compileRepositoryContextArtifact(
   input: CompileRepositoryContextArtifactInput
 ): InMemoryContextArtifactShape {
-  const dependencies = dependencyManifest(input);
-  const sections = contextSections(input, dependencies);
+  const normalizedInput = normalizeTaskRetrievalConfidence(input);
+  const dependencies = dependencyManifest(normalizedInput);
+  const sections = contextSections(normalizedInput, dependencies);
   const manifestHash = repositoryContextManifestHash({
     dependencies,
-    snapshotId: input.snapshot.snapshotId,
-    worktreeStateId: input.worktreeStateId
+    snapshotId: normalizedInput.snapshot.snapshotId,
+    worktreeStateId: normalizedInput.worktreeStateId
   });
-  const request = artifactInput(input);
-  const artifactIdentityHash = hashStableJson({ request, manifestHash, createdAt: input.createdAt });
+  const request = artifactInput(normalizedInput);
+  const artifactIdentityHash = hashStableJson({ request, manifestHash, createdAt: normalizedInput.createdAt });
   const artifactId = `artifact:${hashStableParts([artifactIdentityHash]).slice(0, 24)}`;
   const manifest = {
     manifestId: `manifest:${artifactId.slice("artifact:".length)}`,
@@ -50,11 +52,25 @@ export function compileRepositoryContextArtifact(
     input: request,
     sections,
     dependencyManifest: manifest,
-    warnings: compileWarnings(input),
-    unsafeReasons: unsafeReasons(input),
-    createdAt: input.createdAt,
+    warnings: compileWarnings(normalizedInput),
+    unsafeReasons: unsafeReasons(normalizedInput),
+    retrievalConfidence: normalizedInput.taskRetrieval?.confidence,
+    createdAt: normalizedInput.createdAt,
     artifactHash
   });
+}
+
+function normalizeTaskRetrievalConfidence(
+  input: CompileRepositoryContextArtifactInput
+): CompileRepositoryContextArtifactInput {
+  if (!input.taskRetrieval) return input;
+  return {
+    ...input,
+    taskRetrieval: {
+      ...input.taskRetrieval,
+      confidence: classifyTaskRetrievalConfidence(input.taskRetrieval)
+    }
+  };
 }
 
 function artifactInput(input: CompileRepositoryContextArtifactInput): InMemoryContextRequest {

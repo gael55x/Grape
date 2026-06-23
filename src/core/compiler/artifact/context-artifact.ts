@@ -73,8 +73,9 @@ export function buildContextArtifact(input: ContextArtifactBuildInput): ContextA
     },
     confidence: confidenceFor(unsafeReasons, warnings),
     graphConfidence: graphConfidenceFor(warnings),
+    retrievalConfidence: input.artifact.retrievalConfidence,
     impactCandidateSetTooLarge: false,
-    missingContext: missingContextFor(unsafeReasons),
+    missingContext: missingContextFor(unsafeReasons, input.artifact.retrievalConfidence),
     unverifiedAssumptions: warnings,
     activeContradictions: sections
       .filter((section) => section.containsActiveContradiction)

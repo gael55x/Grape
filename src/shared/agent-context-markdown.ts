@@ -2,6 +2,7 @@ import type { ContextArtifactShape } from "./context-artifact-contract.js";
 import type { AgentContextPackItemShape } from "./agent-context-transport.js";
 import type { ContextPackItemShape as PackItemShape } from "./contracts.js";
 import { diffStates } from "./contracts.js";
+import { displayRetrievalConfidenceState } from "./retrieval-confidence.js";
 
 export interface AgentContextDiffSummary {
   readonly newItems: number;
@@ -61,8 +62,15 @@ function renderArtifactSummary(input: AgentContextMarkdownInput): string[] {
     `Head commit: ${artifact.headCommit}`,
     `Dirty worktree: ${formatBoolean(artifact.dirtyWorktree)}`,
     `Graph confidence: ${artifact.graphConfidence}`,
+    `Retrieval confidence: ${formatRetrievalConfidence(artifact)}`,
     `Section count: ${artifact.outputSections.length}`
   ]);
+}
+
+function formatRetrievalConfidence(artifact: ContextArtifactShape): string {
+  return artifact.retrievalConfidence
+    ? displayRetrievalConfidenceState(artifact.retrievalConfidence.state)
+    : "none";
 }
 
 function renderDiffSummary(input: AgentContextMarkdownInput): string[] {

@@ -22,6 +22,14 @@ Keep entries simple:
 
 ## Entries
 
+### 2026-06-23 - Retrieval Confidence Reporting Slice
+
+- Author/agent: Gaille Amolong / Codex
+- Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
+- Summary: added task retrieval confidence reporting. Grape now classifies source selection as `safe`, `partial`, or `missing_likely_files`, renders the state and reasons in the task-retrieval section, and exposes the same state in public context artifacts, MCP output, and CLI output. Missing likely files also appears in public `missingContext`.
+- Tests or checks run: focused retrieval, compiler, and contract behavior tests before broader verification.
+- Risks or follow-ups: this does not add full TypeScript checker-backed declaration or call-target resolution. It reports selection confidence over the current evidence.
+
 ### 2026-06-23 - TypeScript Module Resolution Slice
 
 - Author/agent: Gaille Amolong / Codex

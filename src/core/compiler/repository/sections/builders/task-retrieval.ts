@@ -2,6 +2,7 @@ import type {
   InMemoryContextDependencyShape,
   InMemoryContextSectionShape
 } from "../../../../../shared/index.js";
+import { displayRetrievalConfidenceState } from "../../../../../shared/index.js";
 import { TRUST_WORDING_DISCLAIMERS } from "../../../../../shared/trust-wording.js";
 import { repositoryContextSection } from "../factory.js";
 import { dependencyIdForRef, sectionDependencyRefs, sourceAndPackageContextDependencyRefs } from "../dependencies.js";
@@ -49,6 +50,9 @@ function taskRetrievalBody(
 ): string {
   return [
     `Query terms: ${retrieval.queryTerms.length > 0 ? retrieval.queryTerms.join(", ") : "none"}`,
+    `Retrieval confidence: ${displayRetrievalConfidenceState(retrieval.confidence?.state ?? "partial")}`,
+    "Confidence reasons:",
+    ...listOrNone(retrieval.confidence?.reasons ?? ["no_task_selection_evidence"]),
     "Selected source refs:",
     ...listOrNone(retrieval.selectedSourceRefs),
     "Retrieval-priority source refs (same as selected; advisory only; not proof):",

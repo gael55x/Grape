@@ -1,4 +1,5 @@
 import { diffStates } from "../../../../shared/index.js";
+import { displayRetrievalConfidenceState } from "../../../../shared/index.js";
 import type {
   ContextDependencyShape,
   ContextInputRefShape,
@@ -45,9 +46,18 @@ function renderArtifactSummary(input: RepositoryContextRenderInput): string[] {
     `Environment: ${artifact.environmentScope}`,
     `Confidence: ${artifact.confidence}`,
     `Graph confidence: ${artifact.graphConfidence}`,
+    `Retrieval confidence: ${formatRetrievalConfidence(artifact)}`,
     `Content hash: ${artifact.contentHash}`,
     `Created at: ${artifact.createdAt}`
   ]);
+}
+
+function formatRetrievalConfidence(
+  artifact: RepositoryContextRenderInput["contextArtifact"]
+): string {
+  return artifact.retrievalConfidence
+    ? displayRetrievalConfidenceState(artifact.retrievalConfidence.state)
+    : "none";
 }
 
 function renderDiffSummary(items: readonly ContextPackItemShape[]): string[] {

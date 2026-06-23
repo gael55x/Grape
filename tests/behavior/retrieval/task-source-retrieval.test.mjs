@@ -44,6 +44,8 @@ test("task source retrieval merges explicit file and symbol seeds without broad 
   assert.deepEqual(result.graphSourceRefs, []);
   assert.deepEqual(result.symbolSourceRefs, ["src/billing.ts"]);
   assert.deepEqual(result.lexicalSourceRefs, []);
+  assert.equal(result.confidence.state, "missing_likely_files");
+  assert.ok(result.confidence.reasons.includes("seed_refs_missing"));
   assert.deepEqual(result.sourceAnchors, [
     {
       sourceRef: "src/billing.ts",
@@ -127,6 +129,8 @@ test("task source retrieval includes related tests that import selected source f
       relationship: "imports"
     }
   ]);
+  assert.equal(result.confidence.state, "safe");
+  assert.ok(result.confidence.reasons.includes("related_test_evidence_matched"));
   assert.deepEqual(result.graphSourceRefs, []);
   assert.deepEqual(result.symbolSourceRefs, ["src/billing.ts"]);
   assert.deepEqual(result.lexicalSourceRefs, []);
@@ -355,6 +359,8 @@ test("task source retrieval warns when selected implementation sources have no r
 
   assert.deepEqual(result.selectedSourceRefs, ["src/billing.ts"]);
   assert.deepEqual(result.relatedTestSourceRefs, []);
+  assert.equal(result.confidence.state, "partial");
+  assert.ok(result.confidence.reasons.includes("related_tests_not_found"));
   assert.ok(result.warnings.includes("task_retrieval_no_related_tests_found"));
 });
 
@@ -421,7 +427,23 @@ test("task source retrieval warns when query terms find no source matches", () =
   });
 
   assert.deepEqual(result.selectedSourceRefs, []);
+  assert.equal(result.confidence.state, "missing_likely_files");
+  assert.ok(result.confidence.reasons.includes("query_terms_had_no_selected_sources"));
   assert.ok(result.warnings.includes("task_retrieval_no_source_matches"));
+});
+
+test("task source retrieval treats stopword-only generic tasks as partial, not missing files", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Explain the repository",
+    sources: [source("source-readme", "README.md")],
+    symbols: [],
+    lexicalMatches: []
+  });
+
+  assert.deepEqual(result.queryTerms, []);
+  assert.deepEqual(result.selectedSourceRefs, []);
+  assert.equal(result.confidence.state, "partial");
+  assert.equal(result.warnings.includes("task_retrieval_no_source_matches"), false);
 });
 
 test("task source retrieval retains high-relevance tier-2 evidence over tier-3 graph noise when capped", () => {
@@ -447,6 +469,8 @@ test("task source retrieval retains high-relevance tier-2 evidence over tier-3 g
 
   assert.deepEqual(result.selectedSourceRefs, ["src/refund.ts", "src/anchor.ts"]);
   assert.equal(result.selectedSourceRefs.includes("src/graph-3.ts"), false);
+  assert.equal(result.confidence.state, "missing_likely_files");
+  assert.ok(result.confidence.reasons.includes("source_cap_omitted_candidates"));
   assert.ok(result.warnings.includes("task_retrieval_truncated"));
   assert.ok(result.warnings.some((warning) => warning.startsWith("task_retrieval_omitted_over_cap:")));
 });

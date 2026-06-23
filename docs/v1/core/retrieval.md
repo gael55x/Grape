@@ -71,6 +71,16 @@ The current retrieval path may use:
 
 Private, ignored, unreadable, oversized, binary, stale-hash, and secret-looking files are not valid retrieval inputs.
 
+## Retrieval Confidence
+
+Task retrieval reports a small confidence state in the task-retrieval section and in the public `ContextArtifact.retrievalConfidence` field.
+
+- `safe` means Grape selected current allowed sources, found direct task evidence such as an explicit file seed, a test seed, a symbol match, or a related test, and did not emit retrieval warnings.
+- `partial` means Grape selected some current context, but the selection depends on weaker evidence or has a warning that does not prove likely files were missed. Examples include lexical-only context, graph expansion without direct evidence, rejected exact-source proofs, or no related tests for selected implementation files.
+- `missing_likely_files` means Grape has evidence that useful files were probably not included. This includes missing file or test seeds, no source matches for task terms, or source caps that omitted candidates, package groups, language groups, seeded package groups, or seeded language groups.
+
+The confidence state is about source selection only. It does not prove runtime behavior, test coverage, correctness, root cause, or fix validity. When the state is `missing_likely_files`, the public artifact also includes `missing:task_retrieval_missing_likely_files` in `missingContext`.
+
 ## Selection Rules
 
 Task source retrieval is an impact candidate selector, not relevance ranking over durable truth.

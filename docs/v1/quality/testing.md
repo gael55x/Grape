@@ -171,6 +171,7 @@ Artifact and diff:
 Indexing and retrieval:
 
 - `file_indexing_resolves_typescript_path_aliases_and_workspace_package_exports`
+- `task_source_retrieval_reports_safe_partial_and_missing_likely_files_confidence`
 
 Compression:
 

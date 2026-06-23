@@ -1,4 +1,5 @@
 import type { ContextScopeShape, RiskOverlay, SourceType, TaskType } from "../../../shared/index.js";
+import type { RetrievalConfidenceShape } from "../../../shared/index.js";
 
 export interface RepositoryArtifactSnapshotInput {
   readonly snapshotId: string;
@@ -83,6 +84,7 @@ export interface RepositoryArtifactTaskRetrievalInput {
   readonly sourceAnchors?: readonly RepositoryArtifactSourceAnchorInput[];
   readonly queryTerms: readonly string[];
   readonly warnings: readonly string[];
+  readonly confidence?: RetrievalConfidenceShape;
 }
 
 export interface RepositoryArtifactRelatedTestRelationshipInput {

@@ -636,6 +636,9 @@ test("repository artifact compiler dependency-backs related test relationship re
     retrieval?.body ?? "",
     /tests\/billing\.test\.ts imports src\/billing\.ts \(relationshipRef: symbol_edge:billing-test-import\)/
   );
+  assert.match(retrieval?.body ?? "", /Retrieval confidence: safe/);
+  assert.match(retrieval?.body ?? "", /related_test_evidence_matched/);
+  assert.equal(artifact.retrievalConfidence?.state, "safe");
   assert.equal(relationshipDependency?.kind, "symbol");
   assert.equal(retrieval?.dependencyRefs.includes("symbol:billing-test-import"), true);
   assert.deepEqual(retrieval?.proofRefs, []);

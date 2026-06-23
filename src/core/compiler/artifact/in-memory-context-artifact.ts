@@ -2,7 +2,8 @@ import type {
   InMemoryContextArtifactShape,
   InMemoryContextDependencyManifestShape,
   InMemoryContextRequest,
-  InMemoryContextSectionShape
+  InMemoryContextSectionShape,
+  RetrievalConfidenceShape
 } from "../../../shared/index.js";
 
 export interface InMemoryContextArtifactShapeInput {
@@ -12,6 +13,7 @@ export interface InMemoryContextArtifactShapeInput {
   dependencyManifest: InMemoryContextDependencyManifestShape;
   warnings?: string[];
   unsafeReasons?: string[];
+  retrievalConfidence?: RetrievalConfidenceShape;
   createdAt: string;
   artifactHash: string;
 }
@@ -32,6 +34,7 @@ export function assertInMemoryContextArtifactShape(
     dependencyManifest: input.dependencyManifest,
     warnings: input.warnings ?? [],
     unsafeReasons: input.unsafeReasons ?? [],
+    retrievalConfidence: input.retrievalConfidence,
     createdAt: input.createdAt,
     artifactHash: input.artifactHash
   };
