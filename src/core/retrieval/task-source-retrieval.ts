@@ -45,6 +45,13 @@ export interface TaskRetrievalRelationship {
   readonly relationship: "imports" | "calls" | string;
 }
 
+export interface TaskRetrievalObservedFailureLink {
+  readonly claimId: string;
+  readonly observedRunId?: string;
+  readonly testSourceRefs: readonly string[];
+  readonly candidateSourceRefs: readonly string[];
+}
+
 export interface TaskRetrievalTermInput {
   readonly task: string;
   readonly symbols?: readonly string[];
@@ -57,6 +64,7 @@ export interface TaskSourceRetrievalInput {
   readonly symbols: readonly TaskRetrievalSymbol[];
   readonly lexicalMatches: readonly TaskRetrievalLexicalMatch[];
   readonly relationships?: readonly TaskRetrievalRelationship[];
+  readonly observedFailureLinks?: readonly TaskRetrievalObservedFailureLink[];
   readonly seedFiles?: readonly string[];
   readonly seedSymbols?: readonly string[];
   readonly seedTests?: readonly string[];
@@ -69,6 +77,9 @@ export interface TaskSourceRetrievalResult {
   readonly semanticCandidates: readonly TaskSemanticCandidate[];
   readonly explicitSourceRefs: readonly string[];
   readonly testSourceRefs: readonly string[];
+  readonly observedFailureSourceRefs: readonly string[];
+  readonly observedFailureTestSourceRefs: readonly string[];
+  readonly observedFailureLinks: readonly TaskRetrievalObservedFailureLink[];
   readonly relatedTestSourceRefs: readonly string[];
   readonly relatedTestRelationships: readonly TaskRetrievalRelatedTestRelationship[];
   readonly graphSourceRefs: readonly string[];
@@ -193,6 +204,13 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   }
   appendMissingSeedOmittedWarnings(warnings, missingSeedWarnings);
 
+  const observedFailureLinks = selectObservedFailureLinks(
+    selectedReasons,
+    input.observedFailureLinks ?? [],
+    sourceByRef,
+    isExcludedSourceRef
+  );
+
   const packageRootBySourceRef = packageRootsBySourceRef(input.symbols);
   const languageBySourceRef = languagesBySourceRef(input.symbols);
   const scopedCandidate = scopedCandidatePredicate(explicitPathRefs, packageRootBySourceRef);
@@ -288,7 +306,8 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
   if (
     selectedSourceRefs.some((sourceRef) => isImplementationSourceRef(sourceRef, sourceByRef)) &&
     refsForReason(selectedReasons, selectedSourceRefs, "test_seed").length === 0 &&
-    refsForReason(selectedReasons, selectedSourceRefs, "related_test").length === 0
+    refsForReason(selectedReasons, selectedSourceRefs, "related_test").length === 0 &&
+    observedFailureRefsForRole(observedFailureLinks, selectedSourceRefSet, "test").length === 0
   ) {
     warnings.push("task_retrieval_no_related_tests_found");
   }
@@ -299,6 +318,15 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     semanticCandidates,
     explicitSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "explicit_seed"),
     testSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "test_seed"),
+    observedFailureSourceRefs: observedFailureRefsForRole(
+      observedFailureLinks,
+      selectedSourceRefSet,
+      "candidate"
+    ),
+    observedFailureTestSourceRefs: observedFailureRefsForRole(observedFailureLinks, selectedSourceRefSet, "test"),
+    observedFailureLinks: observedFailureLinks.filter((link) =>
+      [...link.testSourceRefs, ...link.candidateSourceRefs].some((sourceRef) => selectedSourceRefSet.has(sourceRef))
+    ),
     relatedTestSourceRefs: refsForReason(selectedReasons, selectedSourceRefs, "related_test"),
     relatedTestRelationships: sortedRelatedTestRelationships(
       relatedTestRelationships.filter(
@@ -319,6 +347,58 @@ export function resolveTaskSourceRetrieval(input: TaskSourceRetrievalInput): Tas
     ...result,
     confidence: classifyTaskRetrievalConfidence(result)
   };
+}
+
+function selectObservedFailureLinks(
+  selectedReasons: Map<string, Set<SelectionReason>>,
+  observedFailureLinks: readonly TaskRetrievalObservedFailureLink[],
+  sourceByRef: ReadonlyMap<string, TaskRetrievalSource>,
+  isExcludedSourceRef: (sourceRef: string) => boolean
+): readonly TaskRetrievalObservedFailureLink[] {
+  const selectedLinks: TaskRetrievalObservedFailureLink[] = [];
+
+  for (const link of observedFailureLinks) {
+    const testSourceRefs = sourceRefsPresentForLink(link.testSourceRefs, sourceByRef, isExcludedSourceRef);
+    const candidateSourceRefs = sourceRefsPresentForLink(link.candidateSourceRefs, sourceByRef, isExcludedSourceRef);
+    if (testSourceRefs.length === 0 && candidateSourceRefs.length === 0) continue;
+
+    for (const sourceRef of [...testSourceRefs, ...candidateSourceRefs]) {
+      addReason(selectedReasons, sourceRef, "observed_failure_link");
+    }
+    selectedLinks.push({
+      claimId: link.claimId,
+      observedRunId: link.observedRunId,
+      testSourceRefs,
+      candidateSourceRefs
+    });
+  }
+
+  return selectedLinks;
+}
+
+function sourceRefsPresentForLink(
+  sourceRefs: readonly string[],
+  sourceByRef: ReadonlyMap<string, TaskRetrievalSource>,
+  isExcludedSourceRef: (sourceRef: string) => boolean
+): readonly string[] {
+  return [...new Set(sourceRefs)]
+    .filter((sourceRef) => sourceByRef.has(sourceRef) && !isExcludedSourceRef(sourceRef))
+    .sort(compareStableStrings);
+}
+
+function observedFailureRefsForRole(
+  links: readonly TaskRetrievalObservedFailureLink[],
+  selectedSourceRefs: ReadonlySet<string>,
+  role: "candidate" | "test"
+): readonly string[] {
+  const refs = new Set<string>();
+  for (const link of links) {
+    const sourceRefs = role === "candidate" ? link.candidateSourceRefs : link.testSourceRefs;
+    for (const sourceRef of sourceRefs) {
+      if (selectedSourceRefs.has(sourceRef)) refs.add(sourceRef);
+    }
+  }
+  return [...refs].sort(compareStableStrings);
 }
 
 function addGraphRelatedSources(

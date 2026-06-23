@@ -63,6 +63,12 @@ function taskRetrievalBody(
     ...listOrNone(retrieval.explicitSourceRefs),
     "Test seed refs:",
     ...listOrNone(retrieval.testSourceRefs),
+    "Observed failure linked source refs (selection evidence only; not root cause proof):",
+    ...listOrNone(retrieval.observedFailureSourceRefs ?? []),
+    "Observed failure linked test refs (selection evidence only; not test coverage proof):",
+    ...listOrNone(retrieval.observedFailureTestSourceRefs ?? []),
+    "Observed failure links:",
+    ...observedFailureLinkListOrNone(retrieval.observedFailureLinks ?? []),
     "Related test refs:",
     ...listOrNone(retrieval.relatedTestSourceRefs),
     "Related test relationships (selection evidence only; not test execution or correctness proof):",
@@ -77,6 +83,21 @@ function taskRetrievalBody(
     ...listOrNone(retrieval.lexicalSourceRefs),
     retrieval.warnings.length > 0 ? `Warnings: ${retrieval.warnings.join(", ")}` : "Warnings: none"
   ].join("\n");
+}
+
+function observedFailureLinkListOrNone(
+  links: NonNullable<CompileRepositoryContextArtifactInput["taskRetrieval"]>["observedFailureLinks"]
+): readonly string[] {
+  return links && links.length > 0
+    ? links.map((link) =>
+        [
+          `- ${link.claimId}`,
+          link.observedRunId ? ` observedRunId=${link.observedRunId}` : "",
+          ` tests=[${link.testSourceRefs.join(", ") || "none"}]`,
+          ` candidates=[${link.candidateSourceRefs.join(", ") || "none"}]`
+        ].join("")
+      )
+    : ["- none"];
 }
 
 function listOrNone(values: readonly string[]): readonly string[] {

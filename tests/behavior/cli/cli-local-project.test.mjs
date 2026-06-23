@@ -595,7 +595,7 @@ test("cli observed failing test links candidate spans without raw failure logs o
     runCliJson(repoPath, [
       "compile",
       "--task",
-      "Fix counter test failure in tests/counter.test.js",
+      "Use the observed failure link",
       "--session",
       "failure-link-session"
     ]);
@@ -633,11 +633,23 @@ test("cli observed failing test links candidate spans without raw failure logs o
     const artifact = runCliJson(repoPath, [
       "compile",
       "--task",
-      "Fix counter test failure in tests/counter.test.js",
+      "Use the observed failure link",
       "--session",
       "failure-link-session"
     ]);
+    assert.deepEqual(artifact.contextArtifact.retrievalConfidence.state, "safe");
     const artifactJson = JSON.parse(readFileSync(localPublicPath(repoPath, artifact.artifactJsonPath), "utf8"));
+    assert.deepEqual(
+      artifactJson.contextArtifact.retrievalConfidence.reasons.includes("observed_failure_link_matched"),
+      true
+    );
+    const retrieval = artifactJson.contextArtifact.outputSections.find(
+      (section) => section.id === "task-retrieval"
+    );
+    assert.ok(retrieval);
+    assert.match(retrieval.text, /Observed failure linked source refs/);
+    assert.match(retrieval.text, /src\/counter\.js/);
+    assert.match(retrieval.text, /tests\/counter\.test\.js/);
     const currentValidClaims = artifactJson.contextArtifact.outputSections.find(
       (section) => section.id === "current-valid-claims"
     );

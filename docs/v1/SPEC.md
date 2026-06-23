@@ -1683,7 +1683,8 @@ flowchart TD
     SNAP --> TASK[Detect Task Type + Risk Overlays]
     TASK --> SEEDS[Resolve Seed Files / Symbols / Routes / Tests]
     SEEDS --> SEARCH[Run Lexical Search + Structured Filters]
-    SEARCH --> SCOPE[Resolve Scope Match]
+    SEARCH --> FAILS[Load Current-Session Observed Failure Links]
+    FAILS --> SCOPE[Resolve Scope Match]
     SCOPE --> VALID[Apply Current-Valid Filter]
     VALID --> RANK[Rank by Task Relevance]
     RANK --> PROOFS[Retrieve Supporting Proofs]
@@ -1705,6 +1706,7 @@ After current-valid filtering, rank by:
 - matched symbol
 - matched route/config/test
 - recent failure match
+- current-session observed failure link
 - risk overlay relevance
 - proof strength
 - authority compatibility
@@ -1720,6 +1722,12 @@ has no selected source refs, so a task-specific artifact does not fill unused
 proof/claim slots with unrelated files from the same commit. Inspection
 commands such as `grape claims --active` may still list all current-valid
 claims for debugging.
+
+Current-session `observed_test_failure_span_link` claims may feed task
+retrieval after current-valid filtering. They can select linked candidate
+source refs and linked test refs for the same session. They are selection
+evidence only. They do not prove root cause, code wrongness, test coverage,
+runtime behavior, correctness, or fix validity.
 
 ---
 
@@ -2100,6 +2108,7 @@ type CompilerPolicy = {
 Prioritize:
 
 - failing test output
+- observed failure links from the current session
 - bug claims
 - target code spans
 - recent diffs
@@ -2528,6 +2537,7 @@ A V1 artifact may include:
 - valid compression summaries/outlines where allowed
 - related symbols
 - related tests
+- observed failure links
 - relevant config
 - known risks
 - active contradictions

@@ -136,6 +136,43 @@ test("task source retrieval includes related tests that import selected source f
   assert.deepEqual(result.lexicalSourceRefs, []);
 });
 
+test("task source retrieval uses observed failure links as candidate source selection evidence", () => {
+  const result = resolveTaskSourceRetrieval({
+    task: "Fix failing counter test",
+    sources: [
+      source("source-counter", "src/counter.js"),
+      source("source-counter-test", "tests/counter.test.js"),
+      source("source-readme", "README.md")
+    ],
+    symbols: [],
+    lexicalMatches: [],
+    observedFailureLinks: [
+      {
+        claimId: "claim:failure-link",
+        observedRunId: "run:abcdef1234567890abcdef12",
+        testSourceRefs: ["tests/counter.test.js"],
+        candidateSourceRefs: ["src/counter.js", "src/missing.js"]
+      }
+    ]
+  });
+
+  assert.deepEqual(result.selectedSourceRefs, ["src/counter.js", "tests/counter.test.js"]);
+  assert.deepEqual(result.observedFailureSourceRefs, ["src/counter.js"]);
+  assert.deepEqual(result.observedFailureTestSourceRefs, ["tests/counter.test.js"]);
+  assert.deepEqual(result.observedFailureLinks, [
+    {
+      claimId: "claim:failure-link",
+      observedRunId: "run:abcdef1234567890abcdef12",
+      testSourceRefs: ["tests/counter.test.js"],
+      candidateSourceRefs: ["src/counter.js"]
+    }
+  ]);
+  assert.deepEqual(result.relatedTestSourceRefs, []);
+  assert.equal(result.confidence.state, "safe");
+  assert.ok(result.confidence.reasons.includes("observed_failure_link_matched"));
+  assert.equal(result.warnings.includes("task_retrieval_no_related_tests_found"), false);
+});
+
 test("task source retrieval scopes broad matches when the task names a package source path", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix apiBillingTotal in packages/api/src/apiBilling.ts for packages/api",

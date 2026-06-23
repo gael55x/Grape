@@ -4,6 +4,8 @@ export interface TaskRetrievalConfidenceInput {
   readonly selectedSourceRefs: readonly string[];
   readonly explicitSourceRefs: readonly string[];
   readonly testSourceRefs: readonly string[];
+  readonly observedFailureSourceRefs?: readonly string[];
+  readonly observedFailureTestSourceRefs?: readonly string[];
   readonly relatedTestSourceRefs: readonly string[];
   readonly graphSourceRefs: readonly string[];
   readonly symbolSourceRefs: readonly string[];
@@ -43,6 +45,7 @@ function taskRetrievalConfidenceReasons(input: TaskRetrievalConfidenceInput): re
   if (hasSelectedSource(input)) reasons.push("selected_current_sources");
   if (input.explicitSourceRefs.length > 0) reasons.push("explicit_source_seed_matched");
   if (input.testSourceRefs.length > 0) reasons.push("test_seed_matched");
+  if (observedFailureRefCount(input) > 0) reasons.push("observed_failure_link_matched");
   if (input.symbolSourceRefs.length > 0) reasons.push("symbol_evidence_matched");
   if (input.relatedTestSourceRefs.length > 0) reasons.push("related_test_evidence_matched");
   if (input.graphSourceRefs.length > 0) reasons.push("graph_expansion_used");
@@ -65,9 +68,14 @@ function hasDirectEvidence(input: TaskRetrievalConfidenceInput): boolean {
   return (
     input.explicitSourceRefs.length > 0 ||
     input.testSourceRefs.length > 0 ||
+    observedFailureRefCount(input) > 0 ||
     input.symbolSourceRefs.length > 0 ||
     input.relatedTestSourceRefs.length > 0
   );
+}
+
+function observedFailureRefCount(input: TaskRetrievalConfidenceInput): number {
+  return (input.observedFailureSourceRefs?.length ?? 0) + (input.observedFailureTestSourceRefs?.length ?? 0);
 }
 
 function hasMissingLikelyFilesSignal(input: TaskRetrievalConfidenceInput): boolean {

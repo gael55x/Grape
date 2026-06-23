@@ -204,6 +204,7 @@ MCP and CLI:
 - `cli_bench_requires_named_fixture`
 - `cli_doctor_privacy_redacts_secrets`
 - `cli_observed_test_run_records_explicit_test_file_refs`
+- `task_source_retrieval_uses_observed_failure_links_as_candidate_source_selection_evidence`
 - `observed_test_failure_span_link_policy_rejects_root_cause_overclaim`
 - `failed_observed_test_run_promotes_candidate_span_link_claim_with_hash_only_failure_output`
 - `cli_observed_failing_test_links_candidate_spans_without_raw_failure_logs`

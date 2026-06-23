@@ -76,6 +76,9 @@ export interface RepositoryArtifactTaskRetrievalInput {
   readonly semanticCandidates: readonly RepositoryArtifactSemanticCandidateInput[];
   readonly explicitSourceRefs: readonly string[];
   readonly testSourceRefs: readonly string[];
+  readonly observedFailureSourceRefs?: readonly string[];
+  readonly observedFailureTestSourceRefs?: readonly string[];
+  readonly observedFailureLinks?: readonly RepositoryArtifactObservedFailureLinkInput[];
   readonly relatedTestSourceRefs: readonly string[];
   readonly relatedTestRelationships: readonly RepositoryArtifactRelatedTestRelationshipInput[];
   readonly graphSourceRefs: readonly string[];
@@ -85,6 +88,13 @@ export interface RepositoryArtifactTaskRetrievalInput {
   readonly queryTerms: readonly string[];
   readonly warnings: readonly string[];
   readonly confidence?: RetrievalConfidenceShape;
+}
+
+export interface RepositoryArtifactObservedFailureLinkInput {
+  readonly claimId: string;
+  readonly observedRunId?: string;
+  readonly testSourceRefs: readonly string[];
+  readonly candidateSourceRefs: readonly string[];
 }
 
 export interface RepositoryArtifactRelatedTestRelationshipInput {

@@ -7,6 +7,7 @@ import { compareStableStrings } from "./stable-compare.js";
 export type SelectionReason =
   | "explicit_seed"
   | "test_seed"
+  | "observed_failure_link"
   | "related_test"
   | "graph_related"
   | "symbol_match"
@@ -152,7 +153,9 @@ function partitionByTier(selectedReasons: ReadonlyMap<string, ReadonlySet<Select
 function strongestTier(reasons: ReadonlySet<SelectionReason>): SelectionTier {
   if (reasons.has("explicit_seed")) return "1a";
   if (reasons.has("test_seed")) return "1b";
-  if (reasons.has("symbol_match") || reasons.has("related_test")) return "2";
+  if (reasons.has("symbol_match") || reasons.has("related_test") || reasons.has("observed_failure_link")) {
+    return "2";
+  }
   return "3";
 }
 
@@ -170,6 +173,7 @@ function evidenceRolesBySourceRef(
 
 function exactEvidenceRole(reasons: ReadonlySet<SelectionReason> | undefined): string | undefined {
   if (!reasons) return undefined;
+  if (reasons.has("observed_failure_link")) return "observed_failure_link";
   if (reasons.has("related_test")) return "related_test";
   if (reasons.has("symbol_match")) return "symbol_match";
   return undefined;

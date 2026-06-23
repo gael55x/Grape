@@ -112,6 +112,14 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         sourceRef: node.path,
         metadataJson: node.metadataJson
       }));
+      const currentSessionClaimsForRetrieval = resolveLocalCurrentValidClaims({
+        claims: claimRepositories.claims,
+        claimEdges: claimRepositories.claimEdges,
+        proofs: proofRepositories.proofs,
+        sources: evidenceRepositories.sources,
+        snapshot: snapshotResult.snapshot,
+        sessionId
+      });
       const taskRetrieval = resolveLocalTaskRetrieval({
         task: input.task,
         snapshotId: snapshotResult.snapshotId,
@@ -119,6 +127,7 @@ export function compileLocalContext(input: CompileLocalContextInput): CompileLoc
         symbolNodes,
         symbolEdges,
         indexingRepositories,
+        observedFailureClaims: currentSessionClaimsForRetrieval.activeClaims,
         seedFiles: input.seedFiles,
         seedSymbols: input.seedSymbols,
         seedTests: input.seedTests

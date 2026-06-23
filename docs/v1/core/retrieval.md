@@ -44,7 +44,7 @@ lexical matches. Selection is tier-aware and rank-before-cap:
 
 - **Tier 1A** explicit user source refs (`explicit_seed`): highest priority after validation; may use the full cap but are not immune beyond it. When explicit refs exceed the cap, Grape ranks within Tier 1A and omits extras.
 - **Tier 1B** path-like test/failure seeds (`test_seed`): bounded reservation via named ratio policy so tests do not crowd out all source evidence on default tasks.
-- **Tier 2** exact task/symbol/test-relationship evidence (`symbol_match`, `related_test`).
+- **Tier 2** exact task/symbol/test-relationship evidence (`symbol_match`, `related_test`, `observed_failure_link`).
 - **Tier 3** expansion candidates (`graph_related`, `lexical_match`).
 
 Grape ranks semantically within each tier, then fills `selectedSourceRefs` in tier-priority order until `maxSelectedSources`. `rankedSourceRefs` contains the final selected source refs in deterministic retrieval-priority order with the same membership and order as `selectedSourceRefs`. Retrieval priority is tier-aware; it is not a pure global semantic-score ordering and user seed order is not a ranking signal. Equal-score refs within a tier are broken by stable byte-string comparison for cross-environment determinism. Semantic candidates in artifacts are filtered to selected refs only.
@@ -68,6 +68,7 @@ The current retrieval path may use:
 - current-valid narrow source-excerpt claims after proof validation
 - current-valid narrow symbol declaration claims after high-confidence AST extraction and provider proof validation
 - current-valid narrow observed-run result claims after trusted local `grape run` / `grape test` promotion
+- current-valid observed failure-span-link claims from the current session, limited to candidate source/test refs already stored as hash-backed claim scope
 
 Private, ignored, unreadable, oversized, binary, stale-hash, and secret-looking files are not valid retrieval inputs.
 
@@ -93,6 +94,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 - Graph expansion may select directly related source files through supported import and call edges.
 - Related tests may be selected when a test imports or calls a selected source file.
 - When a related test is selected through an import/call edge, the task-retrieval section should render the test/source relationship as selection evidence only. When the relationship came from the indexed symbol graph, the section should include the stable relationship ref and dependency ref for traceability. This relationship does not prove the test was run, that the test covers the behavior, or that the implementation is correct.
+- Current-session observed failure-span-link claims may select their linked candidate source refs and linked test refs. This uses only current-valid claim scope and hash-backed proof metadata. It does not prove root cause, code wrongness, test coverage, or fix validity.
 - Lexical matches may add source refs from safe indexed text.
 - Lexical repository search uses storage-bounded SQL prefiltering and a bounded deterministic normalized fallback so punctuation/case matching does not require scanning every stored text row.
 - In monorepos and mixed-language repos, explicit seed refs should be interpreted inside their package/workspace when known, and source budgets should avoid allowing unrelated packages or one fallback language to exhaust Tier 2 direct evidence or Tier 3 expansion context.
