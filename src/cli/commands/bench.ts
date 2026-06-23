@@ -69,6 +69,16 @@ function renderBenchmarkReport(result: {
     readonly contextPackItemCount: number;
     readonly durationMs: number;
     readonly stateCounts: Record<string, number>;
+    readonly storageFootprint: {
+      readonly grapeBytes: number;
+      readonly databaseBytes: number;
+      readonly databaseWalBytes: number;
+      readonly databaseShmBytes: number;
+      readonly artifactBytes: number;
+      readonly artifactJsonBytes: number;
+      readonly artifactMarkdownBytes: number;
+      readonly artifactRepositoryBytes: number;
+    };
   }[];
   readonly failures: readonly string[];
   readonly totals?: {
@@ -76,6 +86,7 @@ function renderBenchmarkReport(result: {
     readonly omittedUnchangedTokens: number;
     readonly restoreAvailableCount: number;
     readonly invalidationItemCount: number;
+    readonly secondTurnStorageGrowthBytes?: number;
   };
 }): string {
   const lines = [
@@ -95,7 +106,8 @@ function renderBenchmarkReport(result: {
       `Second-turn reduction (fixture estimate vs naive resend): ${result.totals.secondTurnReductionPercent}%`,
       `Omitted unchanged tokens: ${result.totals.omittedUnchangedTokens}`,
       `Restore hints: ${result.totals.restoreAvailableCount}`,
-      `Invalidation items: ${result.totals.invalidationItemCount}`
+      `Invalidation items: ${result.totals.invalidationItemCount}`,
+      `Second-turn .grape byte growth: ${result.totals.secondTurnStorageGrowthBytes ?? "n/a"}`
     );
   } else {
     const second = result.turns[1];
@@ -120,11 +132,19 @@ function renderTurn(turn: {
   readonly reductionPercent: number;
   readonly contextPackItemCount: number;
   readonly durationMs: number;
+  readonly storageFootprint: {
+    readonly grapeBytes: number;
+    readonly databaseBytes: number;
+    readonly databaseWalBytes: number;
+    readonly databaseShmBytes: number;
+    readonly artifactBytes: number;
+  };
 }): string {
   return [
     `Turn ${turn.turn}:`,
     `  tokens: ${turn.grapeTokens} grape / ${turn.naiveTokens} naive (${turn.reductionPercent}% fixture estimate vs naive resend)`,
     `  pack items: ${turn.contextPackItemCount}`,
+    `  storage bytes: .grape=${turn.storageFootprint.grapeBytes} db=${turn.storageFootprint.databaseBytes} wal=${turn.storageFootprint.databaseWalBytes} shm=${turn.storageFootprint.databaseShmBytes} artifacts=${turn.storageFootprint.artifactBytes}`,
     `  duration: ${turn.durationMs}ms`
   ].join("\n");
 }

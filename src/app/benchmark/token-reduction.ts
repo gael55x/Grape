@@ -5,6 +5,7 @@ import type { TokenReductionBenchmarkInput, TokenReductionBenchmarkResult } from
 const minSecondTurnReductionPercent = 30;
 const maxFirstTurnOverheadPercent = 10;
 const maxFirstTurnAgentOutputOverheadPercent = 400;
+const maxSecondTurnStorageGrowthBytes = 5 * 1024 * 1024;
 
 export function runTokenReductionBenchmark(
   input: TokenReductionBenchmarkInput
@@ -49,6 +50,7 @@ export function runTokenReductionBenchmark(
         minSecondTurnReductionPercent,
         maxFirstTurnOverheadPercent,
         maxFirstTurnAgentOutputOverheadPercent,
+        maxSecondTurnStorageGrowthBytes,
         requireZeroUnsafeOmissions: true,
         requireZeroStaleItemsSent: true,
         requireSecondTurnOmission: true,
@@ -67,6 +69,9 @@ function tokenReductionFailures(
   firstTurn: {
     readonly overheadPercent: number;
     readonly agentOutputOverheadPercent: number;
+    readonly storageFootprint: {
+      readonly grapeBytes: number;
+    };
   },
   secondTurn: {
     readonly reductionPercent: number;
@@ -74,6 +79,9 @@ function tokenReductionFailures(
     readonly staleItemsSent: number;
     readonly stateCounts: Record<string, number>;
     readonly restoreAvailableCount: number;
+    readonly storageFootprint: {
+      readonly grapeBytes: number;
+    };
   }
 ): string[] {
   const failures: string[] = [];
@@ -98,6 +106,12 @@ function tokenReductionFailures(
   if (secondTurn.restoreAvailableCount === 0) {
     failures.push("second_turn_missing_restore_available");
   }
+  if (
+    secondTurn.storageFootprint.grapeBytes - firstTurn.storageFootprint.grapeBytes >
+    maxSecondTurnStorageGrowthBytes
+  ) {
+    failures.push("second_turn_storage_growth_above_threshold");
+  }
   return failures;
 }
 
@@ -115,8 +129,13 @@ function totalsFor(turns: readonly {
   readonly invalidationOverheadTokens: number;
   readonly invalidationItemCount: number;
   readonly restoreAvailableCount: number;
+  readonly storageFootprint: {
+    readonly grapeBytes: number;
+  };
 }[]): TokenReductionBenchmarkResult["totals"] {
   const [first, second] = turns;
+  const secondTurnStorageGrowthBytes =
+    second && first ? second.storageFootprint.grapeBytes - first.storageFootprint.grapeBytes : 0;
   return {
     wallClockMs: Math.round(turns.reduce((total, turn) => total + turn.durationMs, 0) * 100) / 100,
     firstTurnTokens: first?.grapeTokens ?? 0,
@@ -132,6 +151,7 @@ function totalsFor(turns: readonly {
     pinnedOverheadTokens: turns.reduce((total, turn) => total + turn.pinnedOverheadTokens, 0),
     invalidationOverheadTokens: turns.reduce((total, turn) => total + turn.invalidationOverheadTokens, 0),
     invalidationItemCount: turns.reduce((total, turn) => total + turn.invalidationItemCount, 0),
-    restoreAvailableCount: turns.reduce((total, turn) => total + turn.restoreAvailableCount, 0)
+    restoreAvailableCount: turns.reduce((total, turn) => total + turn.restoreAvailableCount, 0),
+    secondTurnStorageGrowthBytes
   };
 }

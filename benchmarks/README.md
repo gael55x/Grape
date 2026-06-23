@@ -53,6 +53,8 @@ The uncapped mode measures maximum recall. The budgeted mode caps each baseline 
 
 Post-beta grape rows include layered metrics per output stage: retrieval selection, evidence attachment, project rules, pack `inputRefs`, and final agent-facing refs. Each layer reports recall, known-noise ratio, and selected file count. The harness records `searchEngine` (`rg` or `node-fallback`) in the result environment. Compare published-beta and local-candidate runs only when `artifactIdentity` differs.
 
+Current fixture runs also report per-turn storage footprint diagnostics for the temporary workspace: `.grape/`, database, WAL, SHM, artifact JSON, artifact Markdown, and artifact repository bytes. These fields help catch local storage regressions. They are fixture diagnostics, not production storage claims.
+
 `npm run bench` is the **beta candidate transport** path: it does **not** benchmark the published registry package and does **not** use the dev source-checkout CLI unless you pass `--include-dev-source`.
 
 Full beta gate (unchanged):

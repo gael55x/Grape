@@ -421,6 +421,8 @@ Fallback does not mean ignored. It means Grape avoids pretending it has precise 
 
 Grape includes benchmark fixtures and scripts for local comparison. Recorded numbers are fixture evidence only. They are not production performance proof or claims that Grape beats naive context, search, or external tools unless a committed result file, command, date, and limits are named together.
 
+Current benchmark output also reports per-turn local storage bytes for the temporary fixture workspace. Those fields help catch `.grape/`, database, WAL, and artifact growth regressions. They are fixture diagnostics, not production storage claims.
+
 ### Transport fixtures
 
 `npm run bench` exercises the installed package on six named fixtures. On the three no-change transport fixtures, the second same-session turn reduced body-token context with zero unsafe omissions and zero stale sends:

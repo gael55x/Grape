@@ -9,6 +9,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 ### Changed
 
 - Added compact storage footprint reporting. `grape compact` now reports measured `.grape/`, database, WAL, SHM, artifact JSON, artifact Markdown, and artifact repository bytes before and after a run.
+- Added benchmark storage footprint diagnostics. `grape bench` now records per-turn `.grape/`, database, WAL, SHM, artifact JSON, artifact Markdown, and artifact repository bytes, and gated no-change fixtures fail when repeated-turn `.grape/` byte growth exceeds the storage threshold.
 - Added Codex MCP client config auto-wiring. `grape mcp --install --client codex` writes project-local `.codex/config.toml`, preserves unrelated TOML, refuses malformed Codex table headers, treats identical `[mcp_servers.grape]` entries as already configured, and requires `--force` before replacing a conflicting Grape MCP table.
 - Added MCP server instructions to the `initialize` response so Codex-style clients receive session identity, invalidation, and omitted-restore guidance from `grape mcp --stdio`.
 - Added `grape mcp --print-agents-snippet` to print path-neutral AGENTS.md guidance for Grape MCP usage without editing repository rules.

@@ -22,6 +22,14 @@ Keep entries simple:
 
 ## Entries
 
+### 2026-06-23 - Benchmark Storage Footprint Gate
+
+- Author/agent: Gaille Amolong / Codex
+- Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
+- Summary: added per-turn storage footprint diagnostics to `grape bench` and `npm run benchmark:run`. Benchmark JSON now records `.grape/`, database, WAL, SHM, artifact JSON, artifact Markdown, and artifact repository bytes for each fixture turn. The gated no-change fixtures fail if second-turn `.grape/` growth exceeds 5 MB. The fields are fixture diagnostics only.
+- Tests or checks run: focused benchmark behavior tests and benchmark suite before broader verification.
+- Risks or follow-ups: release benchmarks still need fresh committed raw result files for a final 1.0 candidate.
+
 ### 2026-06-23 - Compact Footprint Reporting Slice
 
 - Author/agent: Gaille Amolong / Codex

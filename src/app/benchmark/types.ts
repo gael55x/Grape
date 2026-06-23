@@ -1,3 +1,5 @@
+import type { StorageFootprint } from "../local-project/maintenance/storage-footprint.js";
+
 export interface BenchmarkFixtureInput {
   readonly fixtureName: string;
   readonly fixturePath: string;
@@ -69,6 +71,7 @@ export interface BenchmarkTurnMetric {
   readonly reductionPercent: number;
   readonly overheadPercent: number;
   readonly agentOutputOverheadPercent: number;
+  readonly storageFootprint: StorageFootprint;
   readonly stateTokenBreakdown: readonly BenchmarkStateTokenBreakdown[];
   readonly sectionTokenBreakdown: readonly BenchmarkSectionTokenBreakdown[];
 }
@@ -83,6 +86,7 @@ export interface TokenReductionBenchmarkResult {
     readonly minSecondTurnReductionPercent: number;
     readonly maxFirstTurnOverheadPercent: number;
     readonly maxFirstTurnAgentOutputOverheadPercent: number;
+    readonly maxSecondTurnStorageGrowthBytes: number;
     readonly requireZeroUnsafeOmissions: true;
     readonly requireZeroStaleItemsSent: true;
     readonly requireSecondTurnOmission: true;
@@ -105,6 +109,7 @@ export interface TokenReductionBenchmarkResult {
     readonly invalidationOverheadTokens: number;
     readonly invalidationItemCount: number;
     readonly restoreAvailableCount: number;
+    readonly secondTurnStorageGrowthBytes: number;
   };
   readonly failures: readonly string[];
 }

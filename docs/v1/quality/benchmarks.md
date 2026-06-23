@@ -74,6 +74,8 @@ Fixture name selects the benchmark scenario:
 
 Each fixture metadata file owns its default `benchmarkTask`. `--task <text>` overrides that fixture-owned task for ad hoc local inspection.
 
+Each benchmark turn also reports measured local storage bytes after that turn. The fields include `.grape/`, `grape.db`, WAL, SHM, all artifact files, artifact JSON files, artifact Markdown files, and artifact repository backing files. These are diagnostics for the fixture workspace. They do not prove production storage use.
+
 Run all fixtures:
 
 ```bash
@@ -179,12 +181,15 @@ Current benchmark thresholds:
 - first-turn overhead must be no more than 10 percent above naive resend
 - first-turn serialized agent-output overhead must be no more than 400 percent above naive resend
 - second-turn reduction must be at least 30 percent (internal CI harness threshold on gated no-change fixtures; not a user-facing savings claim)
+- second-turn `.grape/` byte growth must stay under 5 MB on gated no-change fixtures
 - unsafe omissions must be zero
 - stale items sent must be zero
 - second turn must include at least one `OMIT_UNCHANGED`
 - second turn must include at least one `RESTORE_AVAILABLE`
 
 Benchmark output also reports serialized context-pack token estimates, serialized default agent-output token estimates, and token breakdowns by diff state and section. These are transport diagnostics: body-token counts explain logical context savings, serialized-pack counts show JSON overhead from metadata, restore hints, and dependency references, and serialized-agent-output counts estimate the default MCP `agent_pack` frame including compact text summary and compact preview structured content.
+
+Benchmark output also reports storage footprint diagnostics per turn. Storage bytes are measured from the temporary fixture workspace after each compile. The repeated-turn growth threshold catches obvious fixture regressions, but it is not a general production storage claim.
 
 These numbers are deterministic approximate token estimates from named fixtures. They are valid as local harness checks because they fail on unsafe omission or stale send counters. They are not proof of production token savings or external tool superiority.
 
@@ -212,6 +217,18 @@ interface BenchmarkTurnMetric {
   reductionPercent: number;
   overheadPercent: number;
   agentOutputOverheadPercent: number;
+  storageFootprint: {
+    grapeBytes: number;
+    databaseBytes: number;
+    databaseWalBytes: number;
+    databaseShmBytes: number;
+    artifactBytes: number;
+    artifactJsonBytes: number;
+    artifactMarkdownBytes: number;
+    artifactRepositoryBytes: number;
+    artifactOtherBytes: number;
+    otherBytes: number;
+  };
   stateTokenBreakdown: Array<{
     state: DiffState;
     itemCount: number;

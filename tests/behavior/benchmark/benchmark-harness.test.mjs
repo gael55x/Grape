@@ -43,6 +43,7 @@ test("cli bench reports deterministic token reduction for a named fixture", () =
   assert.equal(output.turns[1].turn, 2);
   assert.equal(output.thresholds.maxFirstTurnOverheadPercent, 10);
   assert.equal(output.thresholds.maxFirstTurnAgentOutputOverheadPercent, 400);
+  assert.equal(output.thresholds.maxSecondTurnStorageGrowthBytes, 5 * 1024 * 1024);
   assert.equal(output.turns[0].overheadPercent <= output.thresholds.maxFirstTurnOverheadPercent, true);
   assert.equal(
     output.turns[0].agentOutputOverheadPercent <= output.thresholds.maxFirstTurnAgentOutputOverheadPercent,
@@ -52,6 +53,20 @@ test("cli bench reports deterministic token reduction for a named fixture", () =
   assert.equal(output.turns[0].serializedAgentOutputTokens > 0, true);
   assert.equal(output.turns[0].serializedAgentStructuredTokens > 0, true);
   assert.equal(output.turns[0].serializedAgentTextTokens > 0, true);
+  assert.equal(output.turns[0].storageFootprint.grapeBytes > 0, true);
+  assert.equal(output.turns[0].storageFootprint.databaseBytes > 0, true);
+  assert.equal(output.turns[0].storageFootprint.artifactJsonBytes > 0, true);
+  assert.equal(output.turns[0].storageFootprint.artifactMarkdownBytes > 0, true);
+  assert.equal(output.turns[0].storageFootprint.artifactRepositoryBytes > 0, true);
+  assert.equal(
+    output.turns[1].storageFootprint.grapeBytes - output.turns[0].storageFootprint.grapeBytes <=
+      output.thresholds.maxSecondTurnStorageGrowthBytes,
+    true
+  );
+  assert.equal(
+    output.totals.secondTurnStorageGrowthBytes,
+    output.turns[1].storageFootprint.grapeBytes - output.turns[0].storageFootprint.grapeBytes
+  );
   assert.equal(output.totals.serializedPackTokens > 0, true);
   assert.equal(output.totals.serializedAgentOutputTokens > 0, true);
   assert.equal(typeof output.totals.firstTurnAgentOutputOverheadPercent, "number");
@@ -68,6 +83,20 @@ test("cli bench reports deterministic token reduction for a named fixture", () =
     true
   );
   assert.deepEqual(output.failures, []);
+});
+
+test("cli bench human output reports storage footprint", () => {
+  const result = runCli([
+    "bench",
+    "--fixture",
+    "clean-typescript-app",
+    "--fixture-path",
+    cleanFixturePath
+  ]);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /storage bytes: \.grape=/);
+  assert.match(result.stdout, /Second-turn \.grape byte growth:/);
 });
 
 test("cli bench branch-switch fixture reports invalidation on feature branch", () => {

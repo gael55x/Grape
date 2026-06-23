@@ -3547,6 +3547,9 @@ type TokenSavingsMetric = {
   invalidationTokenCost: number;
   restoreRequestCount: number;
   unsafeOmissionCount: number;
+  grapeStorageBytes: number;
+  grapeDatabaseBytes: number;
+  grapeArtifactBytes: number;
   wallClockMs: number;
   toolCallsAvoided: number;
   savingsRatio: number;
@@ -3563,6 +3566,12 @@ Minimum target (internal harness acceptance on named fixtures only; not a releas
 
 ```text
 After first turn, context token reduction >= 50% on benchmark fixtures versus the scripted naive baseline, with unsafeOmissionCount = 0.
+```
+
+Storage target (internal fixture gate only; not a production storage claim):
+
+```text
+On gated no-change fixtures, second-turn .grape byte growth stays below the benchmark storage threshold.
 ```
 
 Stretch target (harness stretch only; not proven and not release-facing):

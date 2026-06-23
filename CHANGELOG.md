@@ -22,6 +22,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added retention defaults to local `.grape/config.json`; older schema-1 configs without the field still read with the same defaults.
 - Added `grape compact` for preview-first context artifact, compression cache, FTS, derived symbol metadata, orphan snapshot, and invalidated ledger retention cleanup. It requires `--confirm` before deleting eligible old artifact rows, regular artifact files, unreferenced compression cache rows, old searchable text rows, old symbol metadata rows, old orphan snapshot rows, or old closed invalidation pairs.
 - `grape compact` now reports measured `.grape`, database, WAL, SHM, artifact JSON, artifact Markdown, and artifact repository bytes before and after cleanup.
+- `grape bench` now reports per-turn `.grape`, database, WAL, SHM, and artifact byte diagnostics, with a repeated-turn storage-growth threshold on no-change fixtures.
 
 ## 1.0.0-beta.8 - 2026-06-17
 

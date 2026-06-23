@@ -1,6 +1,8 @@
 import { performance } from "node:perf_hooks";
+import path from "node:path";
 
 import { compileLocalContext } from "../local-project/context/compile.js";
+import { measureStorageFootprint } from "../local-project/maintenance/storage-footprint.js";
 import type { CompileLocalContextResult } from "../local-project/types.js";
 import {
   buildBenchmarkTokenBreakdown,
@@ -30,7 +32,12 @@ export function runBenchmarkCompileTurn(input: {
     resetSession: input.resetSession
   });
   const durationMs = Math.round((performance.now() - started) * 100) / 100;
-  return turnMetric(input.turn, result, durationMs);
+  const storageFootprint = measureStorageFootprint({
+    grapeDirPath: path.join(input.repoPath, ".grape"),
+    databasePath: path.join(input.repoPath, ".grape", "grape.db"),
+    artifactDirPath: path.join(input.repoPath, ".grape", "artifacts")
+  });
+  return turnMetric(input.turn, result, durationMs, storageFootprint);
 }
 
 export function countPackStates(result: CompileLocalContextResult): Record<string, number> {
@@ -44,7 +51,8 @@ export function countPackStates(result: CompileLocalContextResult): Record<strin
 function turnMetric(
   turn: number,
   result: CompileLocalContextResult,
-  durationMs: number
+  durationMs: number,
+  storageFootprint: BenchmarkTurnMetric["storageFootprint"]
 ): BenchmarkTurnMetric {
   const stateCounts = countPackStates(result);
   const tokenBreakdown = buildBenchmarkTokenBreakdown(result.contextPackItems);
@@ -76,6 +84,7 @@ function turnMetric(
     reductionPercent: result.tokenMetric.reductionPercent,
     overheadPercent: firstTurnOverheadPercent(result.tokenMetric.naiveTokens, result.tokenMetric.grapeTokens),
     agentOutputOverheadPercent: agentOutput.agentOutputOverheadPercent,
+    storageFootprint,
     stateTokenBreakdown: tokenBreakdown.byState,
     sectionTokenBreakdown: tokenBreakdown.bySection
   };
