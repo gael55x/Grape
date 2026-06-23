@@ -108,7 +108,7 @@ Invalidation should:
 
 Current implementation is useful but not broad language-aware indexing:
 
-- TypeScript/JavaScript files get deterministic AST-backed symbols, imports, exports, direct calls, and related-test orientation.
+- TypeScript/JavaScript files get deterministic AST-backed symbols, imports, exports, direct calls, and related-test orientation. Import and re-export edges use bounded TypeScript compiler module resolution for relative paths, `tsconfig` path aliases, and simple workspace package exports. The resolver only uses files already admitted into the current snapshot.
 - Every indexed file is tagged with normalized provider metadata. TypeScript/JavaScript AST rows use the `typescript_ast` provider. Safe fallback rows use the `generic_text` provider with explicit `module_edges` and `test_edges` capability-gap diagnostics.
 - Generic manifest detection tags package-root evidence for common manifests such as `package.json`, `pyproject.toml`, `requirements.txt`, `Cargo.toml`, `go.mod`, `pom.xml`, and Gradle build/settings files. Nested source files under those roots carry the manifest ref and manifest kind as index metadata.
 - High-confidence TypeScript/JavaScript AST declaration nodes can promote the narrow `repository_symbol_declaration_exists` claim only when covered by an accepted exact source excerpt window and `provider_symbol_declaration` proof; this proves declaration-span existence only.
@@ -130,7 +130,7 @@ This is acceptable for a controlled beta only if the promise stays: reliable con
 ## Known Failure Modes And Bad Assumptions
 
 - Shallow provider dispatch: `src/core/indexing/file-index-provider.ts` chooses between the TS/JS parser and generic text fallback. Grape does not yet have a per-language provider module tree.
-- JS-style import bias: local import resolution checks JS/TS extensions and `index.*` forms only.
+- JS/TS resolution is still bounded: Grape resolves relative paths, `tsconfig` path aliases, and simple workspace package exports from allowed snapshot files. It still does not resolve arbitrary `node_modules`, complex package export condition trees, generated code, framework routing, or full TypeScript checker declaration targets.
 - Regex fallback is declaration-only: generic symbol detection recognizes conservative common declaration lines, but it can miss decorators, annotations, macros, overloads, generated code, nested declarations, language-specific type aliases, and framework entry points.
 - Language detection gaps: unknown extensions still collapse to `unknown`, and language labels do not imply graph extraction capability.
 - Monorepo flattening: repository snapshot and retrieval mostly treat the repo as one source pool. Explicit package-path tasks and package-scoped claim activation can use common-prefix scope metadata or manifest-backed package-root metadata from exact refs. Package manifests produce package-root index metadata, selected source retrieval can use manifest-derived package roots, and selected package context carries package-local manifest and lockfile dependency refs for common-prefix and manifest-derived package roots. Ranked tiers can spread across known package roots and indexed source languages before the global cap applies. Full package-aware budgets, dependency closure, and workspace graph policy are not implemented yet.
@@ -148,6 +148,7 @@ Before Grape claims broad polyglot or monorepo retrieval, it needs:
 - complete per-package capability metadata surfaced in artifacts or diagnostics
 - package/workspace boundary metadata consumed by retrieval, current-valid scope, and invalidation policy
 - per-package/per-language retrieval caps beyond the current explicit-path guard and in-tier package/language spreading
+- TypeScript checker-backed declaration and call-target resolution beyond module path resolution
 - comparable external benchmarks and broader gold-label baselines for polyglot and monorepo scenarios beyond the current internal fixture estimates
 - tests that prove package-local manifest changes do not over-invalidate unrelated package context when dependency refs are scoped
 

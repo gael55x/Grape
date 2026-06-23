@@ -63,7 +63,7 @@ The current retrieval path may use:
 - Git-visible source records from the current snapshot
 - safe portable lexical search rows built from allowed source records
 - AST-backed TypeScript/JavaScript symbol nodes for modules, functions, classes, methods, interfaces, types, constants, and variables
-- local import/export/call relationships discovered from AST traversal where supported
+- local import/export/call relationships discovered from AST traversal where supported, with bounded TypeScript compiler module resolution for relative paths, `tsconfig` path aliases, and simple workspace package exports
 - file-level module nodes, lexical rows, and conservative declaration anchors for fallback languages where source text is safe to index
 - current-valid narrow source-excerpt claims after proof validation
 - current-valid narrow symbol declaration claims after high-confidence AST extraction and provider proof validation
@@ -104,7 +104,7 @@ Task source retrieval is an impact candidate selector, not relevance ranking ove
 
 The beta promise is reliable context transport over the Beta Retrieval V2 contract. Beta may promise deterministic TypeScript/JavaScript graph expansion for common modules, symbols, imports, exports, calls, related tests, and session-scoped observed-run result recall. For other languages, beta may promise safe file/path/lexical fallback only unless a provider and fixture prove stronger support. Beta does not promise embeddings, semantic ranking, complete call graphs, broad language AST support, runtime behavior correctness, root-cause proof, automatic conflict resolution, or automatic behavior claims from tests. Observed-run result claims prove that Grape observed one command/test result only.
 
-The current TypeScript/JavaScript signal includes function declarations, class declarations, methods, interfaces, type aliases, constants, variables, const-assigned arrow/function declarations, static imports/exports, and direct call expressions. These graph facts guide source selection and excerpt anchoring, but exact excerpts remain source-existence proof only. Parsed project rules prove only that exact rule text exists in the scoped rule file; they do not infer generated policy or automatically resolve rule conflicts. Npm manifest dependency claims prove only declaration in `package.json`. Conservative `needs_review` edges remain review metadata; they do not deactivate claims by themselves.
+The current TypeScript/JavaScript signal includes function declarations, class declarations, methods, interfaces, type aliases, constants, variables, const-assigned arrow/function declarations, static imports/exports, direct call expressions, relative import resolution, `tsconfig` path alias resolution, and simple workspace package export resolution. These graph facts guide source selection and excerpt anchoring, but exact excerpts remain source-existence proof only. Parsed project rules prove only that exact rule text exists in the scoped rule file; they do not infer generated policy or automatically resolve rule conflicts. Npm manifest dependency claims prove only declaration in `package.json`. Conservative `needs_review` edges remain review metadata; they do not deactivate claims by themselves.
 
 ## Polyglot And Monorepo Failure Modes
 
@@ -113,7 +113,7 @@ Current implementation can fail or become inefficient in these cases:
 - nested `package.json`, `pyproject.toml`, `go.mod`, or `Cargo.toml` files can scope selected source retrieval and dependency-back selected package context through index metadata. Manifest-backed package roots can also participate in current-valid package scope for exact refs and supported claim types. They still do not create full workspace budgets, dependency closure, or non-npm manifest dependency claims
 - unsupported language files receive lexical/path fallback, and common fallback source languages can receive conservative declaration anchors, but non-TS/JS files still do not receive language-aware imports or test relationships
 - Python, Java, Kotlin, Go, Rust, YAML, C#, Ruby, PHP, Swift, C, C++, and shell relationships are not extracted as language-aware graph edges today
-- JS/TS import resolution can miss aliases, package exports, generated code, framework routing, dynamic imports, and non-relative imports
+- JS/TS import resolution can miss complex package export conditions, `node_modules` dependencies, generated code, framework routing, dynamic imports, and type-checker declaration targets
 - global source caps can still omit seeded packages or languages when explicit or test seeds outnumber available source slots, or when package and language metadata are unknown; tier spreading uses common-prefix package roots, manifest-derived package roots, and indexed source language metadata, not full per-package or per-language budgets
 - checked-in polyglot and monorepo fixtures prove safe fallback, explicit package-path scoping, manifest-derived nested package scoping, package-scoped current-valid filtering, and selected package manifest dependency refs, not full workspace graph coverage
 
@@ -125,7 +125,7 @@ Retrieval should surface these cases as blind spots or `partial_with_risk` rathe
 - package/workspace boundary detection
 - full per-package and per-language source budgets
 - broader language extraction beyond TypeScript/JavaScript
-- stronger TypeScript checker-backed declaration resolution
+- TypeScript checker-backed declaration and call-target resolution beyond module path resolution
 - richer exact-span ranking across tests and source files
 - durable retrieval over broader claim/proof types beyond source excerpts and observed-run results
 - richer conflict-aware ranking once broader durable claim types exist

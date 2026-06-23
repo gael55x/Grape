@@ -1,5 +1,5 @@
 import { hashStableParts } from "./index-hash.js";
-import { resolveLocalImport } from "./import-resolution.js";
+import { resolveImport, type ImportResolutionContext, type ImportResolutionMethod } from "./import-resolution.js";
 import { languageProviderMetadataFields, type LanguageProviderMetadata } from "./language-provider.js";
 import { packageRootMetadataFields, type PackageRootMetadata } from "./package-roots.js";
 import type { AstCallCandidate } from "./typescript-ast-index.js";
@@ -15,7 +15,7 @@ export function fileIndexEdgesForParsedFiles(
   input: FileIndexInput,
   parsedFiles: readonly ParsedFileIndex[],
   allNodes: readonly FileIndexNode[],
-  filePaths: ReadonlySet<string>
+  importResolutionContext: ImportResolutionContext
 ): FileIndexEdge[] {
   const edges: FileIndexEdge[] = [];
   const symbolLookup = symbolLookupFor(allNodes);
@@ -27,10 +27,10 @@ export function fileIndexEdgesForParsedFiles(
     edges.push(...parsed.symbols.filter((symbol) => symbol.metadata.exported === true).map((symbol) =>
       exportEdge(input, parsed.moduleNode.symbolId, symbol.symbolId, symbol.name, parsed.provider, parsed.packageRoot)
     ));
-    edges.push(...detectImportEdges(input, parsed, filePaths));
+    edges.push(...detectImportEdges(input, parsed, importResolutionContext));
     if (parsed.ast) {
-      edges.push(...detectReExportEdges(input, parsed, filePaths));
-      edges.push(...detectCallEdges(input, parsed, symbolLookup, filePaths));
+      edges.push(...detectReExportEdges(input, parsed, importResolutionContext));
+      edges.push(...detectCallEdges(input, parsed, symbolLookup, importResolutionContext));
     }
   }
 
@@ -40,14 +40,14 @@ export function fileIndexEdgesForParsedFiles(
 function detectImportEdges(
   input: FileIndexInput,
   parsed: ParsedFileIndex,
-  filePaths: ReadonlySet<string>
+  importResolutionContext: ImportResolutionContext
 ): FileIndexEdge[] {
   const imports = parsed.ast?.imports ?? [];
 
   return imports.map((candidate) => {
-    const targetPath = resolveLocalImport(parsed.file.path, candidate.specifier, filePaths);
-    const toSymbolId = targetPath ? moduleSymbolId(input, targetPath) : undefined;
-    const toRef = targetPath ?? candidate.specifier;
+    const resolvedImport = resolveImport(parsed.file.path, candidate.specifier, importResolutionContext);
+    const toSymbolId = resolvedImport ? moduleSymbolId(input, resolvedImport.targetPath) : undefined;
+    const toRef = resolvedImport?.targetPath ?? candidate.specifier;
     return {
       edgeId: `symbol_edge:${hashStableParts([
         input.repoId,
@@ -64,13 +64,14 @@ function detectImportEdges(
       toSymbolId,
       toRef,
       edgeType: "imports",
-      confidence: targetPath ? "medium" : "low",
+      confidence: resolvedImport ? "medium" : "low",
       discoveryMethod: candidate.dynamic ? "ast" : "import_resolution",
       metadata: {
         ...languageProviderMetadataFields(parsed.provider),
         ...packageRootMetadataFields(parsed.packageRoot),
         specifier: candidate.specifier,
-        targetPath,
+        targetPath: resolvedImport?.targetPath,
+        resolutionMethod: resolutionMethodForMetadata(resolvedImport?.method),
         bindings: candidate.bindings,
         bindingSignature: bindingSignature(candidate.bindings),
         dynamic: candidate.dynamic,
@@ -84,12 +85,12 @@ function detectImportEdges(
 function detectReExportEdges(
   input: FileIndexInput,
   parsed: ParsedFileIndex,
-  filePaths: ReadonlySet<string>
+  importResolutionContext: ImportResolutionContext
 ): FileIndexEdge[] {
   return (parsed.ast?.reExports ?? []).map((candidate) => {
-    const targetPath = resolveLocalImport(parsed.file.path, candidate.specifier, filePaths);
-    const toSymbolId = targetPath ? moduleSymbolId(input, targetPath) : undefined;
-    const toRef = targetPath ?? candidate.specifier;
+    const resolvedImport = resolveImport(parsed.file.path, candidate.specifier, importResolutionContext);
+    const toSymbolId = resolvedImport ? moduleSymbolId(input, resolvedImport.targetPath) : undefined;
+    const toRef = resolvedImport?.targetPath ?? candidate.specifier;
     return {
       edgeId: `symbol_edge:${hashStableParts([
         input.repoId,
@@ -106,13 +107,14 @@ function detectReExportEdges(
       toSymbolId,
       toRef,
       edgeType: "exports",
-      confidence: targetPath ? "medium" : "low",
+      confidence: resolvedImport ? "medium" : "low",
       discoveryMethod: "ast",
       metadata: {
         ...languageProviderMetadataFields(parsed.provider),
         ...packageRootMetadataFields(parsed.packageRoot),
         specifier: candidate.specifier,
-        targetPath,
+        targetPath: resolvedImport?.targetPath,
+        resolutionMethod: resolutionMethodForMetadata(resolvedImport?.method),
         bindings: candidate.bindings,
         bindingSignature: bindingSignature(candidate.bindings),
         extractor: "typescript_ast"
@@ -126,11 +128,11 @@ function detectCallEdges(
   input: FileIndexInput,
   parsed: ParsedFileIndex,
   symbolLookup: SymbolLookup,
-  filePaths: ReadonlySet<string>
+  importResolutionContext: ImportResolutionContext
 ): FileIndexEdge[] {
   return (parsed.ast?.calls ?? []).map((call) => {
     const fromSymbol = containingSymbol(parsed, call) ?? parsed.moduleNode;
-    const targetSymbol = resolveCallTarget(parsed, call, symbolLookup, filePaths);
+    const targetSymbol = resolveCallTarget(parsed, call, symbolLookup, importResolutionContext);
     const toRef = targetSymbol ? targetSymbol.name : call.name;
     return {
       edgeId: `symbol_edge:${hashStableParts([
@@ -256,7 +258,7 @@ function resolveCallTarget(
   parsed: ParsedFileIndex,
   call: AstCallCandidate,
   symbolLookup: SymbolLookup,
-  filePaths: ReadonlySet<string>
+  importResolutionContext: ImportResolutionContext
 ): FileIndexNode | undefined {
   const sameFile = symbolLookup.byPathAndName.get(`${parsed.file.path}:${call.name}`);
   if (sameFile) return sameFile;
@@ -264,12 +266,16 @@ function resolveCallTarget(
   for (const candidate of parsed.ast?.imports ?? []) {
     const binding = candidate.bindings.find((entry) => entry.localName === call.name);
     if (!binding) continue;
-    const targetPath = resolveLocalImport(parsed.file.path, candidate.specifier, filePaths);
-    if (!targetPath) continue;
-    return symbolLookup.byPathAndName.get(`${targetPath}:${binding.importedName}`) ??
-      symbolLookup.byPathAndName.get(`${targetPath}:${call.name}`);
+    const resolvedImport = resolveImport(parsed.file.path, candidate.specifier, importResolutionContext);
+    if (!resolvedImport) continue;
+    return symbolLookup.byPathAndName.get(`${resolvedImport.targetPath}:${binding.importedName}`) ??
+      symbolLookup.byPathAndName.get(`${resolvedImport.targetPath}:${call.name}`);
   }
 
   const matches = symbolLookup.byName.get(call.name) ?? [];
   return matches.length === 1 ? matches[0] : undefined;
+}
+
+function resolutionMethodForMetadata(method: ImportResolutionMethod | undefined): string {
+  return method ?? "unresolved";
 }

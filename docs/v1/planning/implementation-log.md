@@ -22,6 +22,14 @@ Keep entries simple:
 
 ## Entries
 
+### 2026-06-23 - TypeScript Module Resolution Slice
+
+- Author/agent: Gaille Amolong / Codex
+- Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
+- Summary: added bounded TypeScript module resolution to symbol edge indexing. Import and re-export edges now resolve relative paths, `tsconfig` path aliases, and simple workspace package exports from admitted snapshot files, and record the resolution method in edge metadata. Unresolved imports stay low-confidence.
+- Tests or checks run: focused TypeScript build and indexing behavior tests before broader verification.
+- Risks or follow-ups: full TypeScript checker-backed declaration and call-target resolution remains a later retrieval-correctness slice.
+
 ### 2026-06-23 - Benchmark Storage Footprint Gate
 
 - Author/agent: Gaille Amolong / Codex

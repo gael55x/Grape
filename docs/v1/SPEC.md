@@ -1529,6 +1529,10 @@ type SymbolEdge = {
 
   confidence: "high" | "medium" | "low";
   discoveryMethod?: "ast" | "import_resolution" | "framework_extractor" | "config_scan" | "runtime_trace" | "manual" | "inferred";
+  metadata?: {
+    resolutionMethod?: "relative_path" | "typescript_compiler" | "workspace_package_exports" | "unresolved";
+    targetPath?: string;
+  };
 
   createdAt: string;
 };
@@ -1563,6 +1567,8 @@ V1 static graph blind spots must be surfaced:
 - unsupported provider capability
 - unknown nested package/workspace boundary
 - generated code or generated client packages
+- complex TypeScript package export conditions
+- TypeScript checker declaration targets that are not resolved by module path resolution
 
 ### 17.4 Monorepo boundary rule
 

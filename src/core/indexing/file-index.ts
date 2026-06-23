@@ -2,6 +2,7 @@ import { readIndexableText } from "./indexable-source-reader.js";
 import { detectRegexSymbols, moduleNodeForFile, symbolNodeForAstSymbol } from "./file-index-nodes.js";
 import { fileIndexEdgesForParsedFiles } from "./file-index-edges.js";
 import { selectFileIndexProvider } from "./file-index-provider.js";
+import { createImportResolutionContext } from "./import-resolution.js";
 import { detectPackageRootEvidence, packageRootMetadataForFile } from "./package-roots.js";
 import type {
   FileIndexInput,
@@ -29,6 +30,7 @@ export function buildFileIndex(input: FileIndexInput): FileIndexResult {
   const skipped: FileIndexSkip[] = [];
   const parsedFiles: ParsedFileIndex[] = [];
   const packageRoots = detectPackageRootEvidence(files);
+  const fileTextByPath = new Map<string, string>();
 
   for (const file of files) {
     const readResult = readIndexableText(input.rootPath, file);
@@ -36,6 +38,7 @@ export function buildFileIndex(input: FileIndexInput): FileIndexResult {
       skipped.push({ path: file.path, reason: readResult.reason });
       continue;
     }
+    fileTextByPath.set(file.path, readResult.text);
 
     const { ast, extractor, provider } = selectFileIndexProvider(file.path, readResult.text);
     const packageRoot = packageRootMetadataForFile(file, packageRoots);
@@ -48,9 +51,15 @@ export function buildFileIndex(input: FileIndexInput): FileIndexResult {
     parsedFiles.push({ file, moduleNode, symbols, provider, packageRoot, ast });
   }
 
+  const importResolutionContext = createImportResolutionContext({
+    rootPath: input.rootPath,
+    files,
+    fileTextByPath
+  });
+
   return {
     nodes,
-    edges: fileIndexEdgesForParsedFiles(input, parsedFiles, nodes, filePaths),
+    edges: fileIndexEdgesForParsedFiles(input, parsedFiles, nodes, importResolutionContext),
     skipped
   };
 }

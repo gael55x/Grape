@@ -432,6 +432,156 @@ test("file indexing detects package roots from common manifest boundaries", () =
   }
 });
 
+test("file indexing resolves TypeScript path aliases and workspace package exports", () => {
+  const rootPath = mkdtempSync(path.join(tmpdir(), "grape-file-index-ts-resolve-"));
+
+  try {
+    mkdirSync(path.join(rootPath, "src", "core"), { recursive: true });
+    mkdirSync(path.join(rootPath, "src", "shared"), { recursive: true });
+    mkdirSync(path.join(rootPath, "apps", "web", "src"), { recursive: true });
+    mkdirSync(path.join(rootPath, "packages", "api", "src"), { recursive: true });
+
+    const files = [
+      file(
+        rootPath,
+        "tsconfig.json",
+        JSON.stringify(
+          {
+            compilerOptions: {
+              baseUrl: ".",
+              module: "NodeNext",
+              moduleResolution: "NodeNext",
+              paths: {
+                "@core/*": ["src/core/*"],
+                "@shared": ["src/shared/index.ts"]
+              }
+            }
+          },
+          null,
+          2
+        ),
+        "source:tsconfig",
+        "config"
+      ),
+      file(
+        rootPath,
+        "package.json",
+        JSON.stringify({ name: "root", workspaces: ["apps/*", "packages/*"] }),
+        "source:root-package",
+        "package"
+      ),
+      file(
+        rootPath,
+        "src/core/pricing.ts",
+        "export function computeDiscount() { return 10; }\n",
+        "source:pricing"
+      ),
+      file(
+        rootPath,
+        "src/shared/index.ts",
+        "export { computeDiscount } from '@core/pricing';\n",
+        "source:shared-index"
+      ),
+      file(
+        rootPath,
+        "src/app.ts",
+        [
+          "import { computeDiscount } from '@shared';",
+          "export function runApp() {",
+          "  return computeDiscount();",
+          "}",
+          ""
+        ].join("\n"),
+        "source:app"
+      ),
+      file(
+        rootPath,
+        "packages/api/package.json",
+        JSON.stringify({
+          name: "@repo/api",
+          exports: {
+            ".": "./src/index.ts",
+            "./billing": "./src/billing.ts"
+          }
+        }),
+        "source:api-package",
+        "package"
+      ),
+      file(
+        rootPath,
+        "packages/api/src/index.ts",
+        "export { apiBillingTotal } from './billing';\n",
+        "source:api-index"
+      ),
+      file(
+        rootPath,
+        "packages/api/src/billing.ts",
+        "export function apiBillingTotal() { return 20; }\n",
+        "source:api-billing"
+      ),
+      file(
+        rootPath,
+        "apps/web/src/cart.ts",
+        [
+          "import { apiBillingTotal } from '@repo/api/billing';",
+          "export function cartTotal() {",
+          "  return apiBillingTotal();",
+          "}",
+          ""
+        ].join("\n"),
+        "source:cart"
+      )
+    ];
+
+    const result = buildFileIndex({
+      projectId: "project-1",
+      repoId: "repo-1",
+      snapshotId: "snapshot-1",
+      rootPath,
+      files,
+      createdAt: now
+    });
+    const nodeByPathAndName = new Map(result.nodes.map((node) => [`${node.path}:${node.name}`, node]));
+    const appModule = nodeByPathAndName.get("src/app.ts:src/app.ts");
+    const sharedModule = nodeByPathAndName.get("src/shared/index.ts:src/shared/index.ts");
+    const pricingModule = nodeByPathAndName.get("src/core/pricing.ts:src/core/pricing.ts");
+    const cartModule = nodeByPathAndName.get("apps/web/src/cart.ts:apps/web/src/cart.ts");
+    const apiBillingModule = nodeByPathAndName.get("packages/api/src/billing.ts:packages/api/src/billing.ts");
+
+    const appAliasEdge = result.edges.find(
+      (edge) =>
+        edge.edgeType === "imports" &&
+        edge.fromSymbolId === appModule?.symbolId &&
+        edge.toSymbolId === sharedModule?.symbolId
+    );
+    const barrelAliasEdge = result.edges.find(
+      (edge) =>
+        edge.edgeType === "exports" &&
+        edge.fromSymbolId === sharedModule?.symbolId &&
+        edge.toSymbolId === pricingModule?.symbolId
+    );
+    const workspaceExportEdge = result.edges.find(
+      (edge) =>
+        edge.edgeType === "imports" &&
+        edge.fromSymbolId === cartModule?.symbolId &&
+        edge.toSymbolId === apiBillingModule?.symbolId
+    );
+
+    assert.equal(edgeMetadata(appAliasEdge).specifier, "@shared");
+    assert.equal(edgeMetadata(appAliasEdge).resolutionMethod, "typescript_compiler");
+    assert.equal(edgeMetadata(appAliasEdge).targetPath, "src/shared/index.ts");
+    assert.equal(edgeMetadata(barrelAliasEdge).specifier, "@core/pricing");
+    assert.equal(edgeMetadata(barrelAliasEdge).resolutionMethod, "typescript_compiler");
+    assert.equal(edgeMetadata(barrelAliasEdge).targetPath, "src/core/pricing.ts");
+    assert.equal(edgeMetadata(workspaceExportEdge).specifier, "@repo/api/billing");
+    assert.equal(edgeMetadata(workspaceExportEdge).resolutionMethod, "workspace_package_exports");
+    assert.equal(edgeMetadata(workspaceExportEdge).targetPath, "packages/api/src/billing.ts");
+    assert.equal(JSON.stringify(result).includes(rootPath), false);
+  } finally {
+    rmSync(rootPath, { recursive: true, force: true });
+  }
+});
+
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
 }
@@ -450,6 +600,12 @@ function nodeMetadata(node) {
   assert.ok(node, "expected indexed module node");
   if (node.metadata) return node.metadata;
   return JSON.parse(node.metadataJson ?? "{}");
+}
+
+function edgeMetadata(edge) {
+  assert.ok(edge, "expected indexed edge");
+  if (edge.metadata) return edge.metadata;
+  return JSON.parse(edge.metadataJson ?? "{}");
 }
 
 test("snapshot file indexing is idempotent for unchanged snapshots", () => {

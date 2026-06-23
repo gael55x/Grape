@@ -168,6 +168,10 @@ Artifact and diff:
 - `restore_token_rejects_stale_proof_dependency`
 - `context_pack_summary_excludes_currently_invalidated_sent_items`
 
+Indexing and retrieval:
+
+- `file_indexing_resolves_typescript_path_aliases_and_workspace_package_exports`
+
 Compression:
 
 - `compression_artifact_requires_input_hashes`
