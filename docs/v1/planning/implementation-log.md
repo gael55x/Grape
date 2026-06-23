@@ -22,6 +22,14 @@ Keep entries simple:
 
 ## Entries
 
+### 2026-06-23 - Compact Footprint Reporting Slice
+
+- Author/agent: Gaille Amolong / Codex
+- Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
+- Summary: added measured storage footprint reporting to `grape compact`. Preview output reports current `.grape/`, database, WAL, SHM, artifact JSON, artifact Markdown, and artifact repository bytes without deleting data. Confirmed compact measures the same fields again after deletion and reports deltas. The report is measurement only; SQLite row cleanup can leave database or WAL file bytes unchanged.
+- Tests or checks run: focused CLI compact behavior tests before broader verification.
+- Risks or follow-ups: release benchmarks still need a committed storage-growth fixture that records repeated-run behavior and default MCP payload bytes.
+
 ### 2026-06-19 - Codex MCP Setup Slice
 
 - Author/agent: Gaille Amolong / Codex

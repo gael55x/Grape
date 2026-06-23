@@ -56,11 +56,23 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
   const snapshotProtectedReasons = result.snapshots.protectedByReason;
   const invalidatedRows = result.invalidatedRecords.rowCounts;
   const invalidatedProtectedReasons = result.invalidatedRecords.protectedByReason;
+  const footprint = result.storageFootprint;
   return [
     result.applied ? "Grape compact applied." : "Grape compact preview.",
     "",
     `Database: ${result.databasePath}`,
     `Migrations applied: ${result.migrationsApplied.length === 0 ? "none" : result.migrationsApplied.join(", ")}`,
+    "",
+    "Storage footprint:",
+    `  .grape bytes: ${footprint.before.grapeBytes} before, ${footprint.after.grapeBytes} after, delta ${formatSignedBytes(footprint.delta.grapeBytes)}`,
+    `  Database bytes: ${footprint.before.databaseBytes} before, ${footprint.after.databaseBytes} after, delta ${formatSignedBytes(footprint.delta.databaseBytes)}`,
+    `  WAL bytes: ${footprint.before.databaseWalBytes} before, ${footprint.after.databaseWalBytes} after, delta ${formatSignedBytes(footprint.delta.databaseWalBytes)}`,
+    `  SHM bytes: ${footprint.before.databaseShmBytes} before, ${footprint.after.databaseShmBytes} after, delta ${formatSignedBytes(footprint.delta.databaseShmBytes)}`,
+    `  Artifact bytes: ${footprint.before.artifactBytes} before, ${footprint.after.artifactBytes} after, delta ${formatSignedBytes(footprint.delta.artifactBytes)}`,
+    `  Artifact JSON bytes: ${footprint.before.artifactJsonBytes} before, ${footprint.after.artifactJsonBytes} after, delta ${formatSignedBytes(footprint.delta.artifactJsonBytes)}`,
+    `  Artifact Markdown bytes: ${footprint.before.artifactMarkdownBytes} before, ${footprint.after.artifactMarkdownBytes} after, delta ${formatSignedBytes(footprint.delta.artifactMarkdownBytes)}`,
+    `  Artifact repository bytes: ${footprint.before.artifactRepositoryBytes} before, ${footprint.after.artifactRepositoryBytes} after, delta ${formatSignedBytes(footprint.delta.artifactRepositoryBytes)}`,
+    `  After measurement: ${footprint.afterMeasuredPostApply ? "after confirmed compact" : "same as preview because no data was deleted"}`,
     "",
     "Retention:",
     `  Context artifacts: ${result.retention.contextArtifacts.maxAgeDays} days, ${result.retention.contextArtifacts.maxRows} rows`,
@@ -173,4 +185,8 @@ function renderCompactResult(result: CompactLocalProjectResult): string {
     "Notes:",
     ...result.notes.map((note) => `  - ${note}`)
   ].join("\n");
+}
+
+function formatSignedBytes(bytes: number): string {
+  return bytes > 0 ? `+${bytes}` : String(bytes);
 }

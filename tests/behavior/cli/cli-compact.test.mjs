@@ -95,6 +95,14 @@ test("compact previews and applies eligible context artifact retention", () => {
     assert.equal(preview.contextArtifacts.deletedArtifacts, 0);
     assert.equal(preview.contextArtifacts.artifactFiles.plannedFiles, 3);
     assert.equal(preview.contextArtifacts.artifactFiles.deletedFiles, 0);
+    assert.equal(preview.storageFootprint.afterMeasuredPostApply, false);
+    assert.deepEqual(preview.storageFootprint.after, preview.storageFootprint.before);
+    assert.equal(preview.storageFootprint.delta.artifactBytes, 0);
+    assert.ok(preview.storageFootprint.before.grapeBytes >= preview.storageFootprint.before.databaseBytes);
+    assert.ok(preview.storageFootprint.before.artifactBytes > 0);
+    assert.ok(preview.storageFootprint.before.artifactJsonBytes > 0);
+    assert.ok(preview.storageFootprint.before.artifactMarkdownBytes > 0);
+    assert.ok(preview.storageFootprint.before.artifactRepositoryBytes > 0);
     assert.equal(preview.contextArtifacts.protectedByReason.latest_per_session, 1);
     assert.equal(preview.contextArtifacts.protectedByReason.active_sent_context, 1);
     assert.equal(preview.contextArtifacts.protectedByReason.restorable_omitted_context, 1);
@@ -127,6 +135,12 @@ test("compact previews and applies eligible context artifact retention", () => {
     assert.equal(countSymbolNodes(repoPath, seeded.deleteDerivedSnapshotId), 2);
     assert.equal(countSymbolEdges(repoPath, seeded.deleteDerivedSnapshotId), 1);
 
+    const humanPreview = runCli(repoPath, ["compact"]);
+    assert.equal(humanPreview.status, 0, humanPreview.stderr);
+    assert.match(humanPreview.stdout, /Storage footprint:/);
+    assert.match(humanPreview.stdout, /Artifact JSON bytes:/);
+    assert.match(humanPreview.stdout, /After measurement: same as preview because no data was deleted/);
+
     const apply = runCliJson(repoPath, ["compact", "--confirm"]);
 
     assert.equal(apply.dryRun, false);
@@ -135,6 +149,16 @@ test("compact previews and applies eligible context artifact retention", () => {
     assert.equal(apply.contextArtifacts.candidateArtifacts, 1);
     assert.equal(apply.contextArtifacts.deletedArtifacts, 1);
     assert.equal(apply.contextArtifacts.artifactFiles.deletedFiles, 3);
+    assert.equal(apply.storageFootprint.afterMeasuredPostApply, true);
+    assert.ok(apply.storageFootprint.before.artifactBytes > apply.storageFootprint.after.artifactBytes);
+    assert.ok(apply.storageFootprint.delta.artifactBytes < 0);
+    assert.ok(apply.storageFootprint.delta.artifactJsonBytes < 0);
+    assert.ok(apply.storageFootprint.delta.artifactMarkdownBytes < 0);
+    assert.ok(apply.storageFootprint.delta.artifactRepositoryBytes < 0);
+    assert.equal(
+      apply.storageFootprint.delta.artifactBytes,
+      apply.storageFootprint.after.artifactBytes - apply.storageFootprint.before.artifactBytes
+    );
     assert.equal(apply.compressionCache.deletedArtifacts, 1);
     assert.equal(apply.ftsIndex.deletedRows, 2);
     assert.equal(apply.derivedMetadata.deletedRows, 3);

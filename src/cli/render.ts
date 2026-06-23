@@ -223,6 +223,7 @@ const COMMAND_HELP: Readonly<Record<string, string>> = {
     "",
     "Safety:",
     "  Without --confirm, no data is deleted.",
+    "  Output includes measured .grape, database, WAL, SHM, and artifact bytes before and after the run.",
     "  The current slice preserves the latest artifact per session, active sent context, restorable omitted context, and locked sessions.",
     "  The current slice preserves compression cache rows still referenced by surviving context artifacts.",
     "  The current slice deletes FTS rows only by whole snapshot and preserves the latest repo snapshot.",

@@ -29,6 +29,11 @@ import {
   sumDerivedMetadataRows,
   sumSnapshotWorktreeRows
 } from "./compact-result-summary.js";
+import {
+  measureStorageFootprint,
+  storageFootprintReport,
+  type StorageFootprintReport
+} from "./storage-footprint.js";
 
 export interface CompactLocalProjectInput {
   readonly rootPath: string;
@@ -160,6 +165,7 @@ export interface CompactLocalProjectResult {
     readonly protectedByReason: Readonly<Record<string, number>>;
     readonly rowCounts: InvalidatedRecordRetentionPlan["rowCounts"];
   };
+  readonly storageFootprint: StorageFootprintReport;
   readonly notes: readonly string[];
 }
 
@@ -171,12 +177,18 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
   const now = input.now ?? new Date().toISOString();
   const { layout, config } = ensureConfiguredLocalProjectLayout(input.rootPath);
   const dryRun = !input.confirm;
+  const footprintInput = {
+    grapeDirPath: layout.grapeDirPath,
+    databasePath: layout.databasePath,
+    artifactDirPath: layout.artifactDirPath
+  };
 
   const databaseResult = withMigratedLocalDatabase({
     databasePath: layout.databasePath,
     migrationsDir: input.migrationsDir,
     now: () => now,
     operation(database) {
+      const footprintBefore = measureStorageFootprint(footprintInput);
       const maintenance = createMaintenanceStorageRepositories(database);
       const plan = maintenance.retention.planContextArtifactCompaction({
         now,
@@ -243,7 +255,8 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
             invalidatedSentPackItems: 0
           },
           deletedFiles: 0,
-          deletedBytes: 0
+          deletedBytes: 0,
+          footprintBefore
         };
       }
 
@@ -289,13 +302,25 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
         deletedSnapshots: deletion.deletedSnapshots,
         deletedInvalidatedRecords: deletion.deletedInvalidatedRecords,
         deletedFiles: fileDeletion.deletedFiles,
-        deletedBytes: fileDeletion.deletedBytes
+        deletedBytes: fileDeletion.deletedBytes,
+        footprintBefore
       };
     }
   });
 
   const value = databaseResult.value;
   const fileSummary = value.files;
+  const storageFootprint = dryRun
+    ? storageFootprintReport({
+        before: value.footprintBefore,
+        after: value.footprintBefore,
+        afterMeasuredPostApply: false
+      })
+    : storageFootprintReport({
+        before: value.footprintBefore,
+        after: measureStorageFootprint(footprintInput),
+        afterMeasuredPostApply: true
+      });
   return {
     rootPath: layout.rootPath,
     databasePath: layout.databasePath,
@@ -407,6 +432,7 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
       protectedByReason: countInvalidatedRecordProtectedReasons(value.invalidatedRecordPlan),
       rowCounts: value.invalidatedRecordPlan.rowCounts
     },
+    storageFootprint,
     notes: compactNotes({
       dryRun,
       candidateArtifacts: value.plan.candidateArtifacts.length,
