@@ -1,20 +1,34 @@
-import { existsSync, lstatSync, rmSync } from "node:fs";
-import path from "node:path";
-
 import {
   createMaintenanceStorageRepositories,
   runStorageTransaction,
   type CompressionRetentionPlan,
   type ContextArtifactRetentionPlan,
-  type DerivedMetadataDeletionResult,
   type DerivedMetadataRetentionPlan,
   type FtsRetentionPlan,
   type InvalidatedRecordRetentionPlan,
   type SnapshotRetentionPlan
 } from "../../../core/storage/index.js";
-import { artifactFileBaseName } from "../context/artifact-files.js";
 import { ensureConfiguredLocalProjectLayout } from "../setup/configured-layout.js";
 import { withMigratedLocalDatabase } from "../setup/storage.js";
+import {
+  deletePlannedArtifactFiles,
+  planArtifactFiles,
+  summarizeArtifactFiles
+} from "./artifact-file-retention.js";
+import {
+  compactNotes,
+  countCompressionProtectedReasons,
+  countDerivedMetadataProtectedReasons,
+  countFtsProtectedReasons,
+  countInvalidatedRecordProtectedReasons,
+  countProtectedReasons,
+  countSnapshotProtectedReasons,
+  sumDerivedMetadataDeletionRows,
+  sumDerivedMetadataEdgeRows,
+  sumDerivedMetadataNodeRows,
+  sumDerivedMetadataRows,
+  sumSnapshotWorktreeRows
+} from "./compact-result-summary.js";
 
 export interface CompactLocalProjectInput {
   readonly rootPath: string;
@@ -147,14 +161,6 @@ export interface CompactLocalProjectResult {
     readonly rowCounts: InvalidatedRecordRetentionPlan["rowCounts"];
   };
   readonly notes: readonly string[];
-}
-
-interface ArtifactFileCandidate {
-  readonly absolutePath: string;
-  readonly relativePath: string;
-  readonly bytes: number;
-  readonly status: "delete" | "missing" | "unsafe";
-  readonly unsafeReason?: string;
 }
 
 export function compactLocalProject(input: CompactLocalProjectInput): CompactLocalProjectResult {
@@ -412,237 +418,4 @@ export function compactLocalProject(input: CompactLocalProjectInput): CompactLoc
       skippedUnsafeFiles: fileSummary.skippedUnsafeFiles
     })
   };
-}
-
-function planArtifactFiles(input: {
-  readonly rootPath: string;
-  readonly artifactDirPath: string;
-  readonly artifactIds: readonly string[];
-}): ArtifactFileCandidate[] {
-  const files: ArtifactFileCandidate[] = [];
-  for (const artifactId of input.artifactIds) {
-    const baseName = artifactFileBaseName(artifactId);
-    for (const suffix of [".json", ".md", ".repository.json"]) {
-      const absolutePath = path.join(input.artifactDirPath, `${baseName}${suffix}`);
-      const relativePath = repoRelativePath(input.rootPath, absolutePath);
-      assertInsideDirectory(input.artifactDirPath, absolutePath);
-
-      if (!existsSync(absolutePath)) {
-        files.push({ absolutePath, relativePath, bytes: 0, status: "missing" });
-        continue;
-      }
-
-      const stat = lstatSync(absolutePath);
-      if (stat.isSymbolicLink()) {
-        files.push({
-          absolutePath,
-          relativePath,
-          bytes: 0,
-          status: "unsafe",
-          unsafeReason: "symlink"
-        });
-        continue;
-      }
-      if (!stat.isFile()) {
-        files.push({
-          absolutePath,
-          relativePath,
-          bytes: 0,
-          status: "unsafe",
-          unsafeReason: "not_regular_file"
-        });
-        continue;
-      }
-
-      files.push({
-        absolutePath,
-        relativePath,
-        bytes: stat.size,
-        status: "delete"
-      });
-    }
-  }
-  return files;
-}
-
-function summarizeArtifactFiles(files: readonly ArtifactFileCandidate[]): {
-  readonly plannedFiles: number;
-  readonly plannedBytes: number;
-  readonly skippedUnsafeFiles: number;
-  readonly skippedMissingFiles: number;
-} {
-  return {
-    plannedFiles: files.filter((file) => file.status === "delete").length,
-    plannedBytes: files.reduce((total, file) => (file.status === "delete" ? total + file.bytes : total), 0),
-    skippedUnsafeFiles: files.filter((file) => file.status === "unsafe").length,
-    skippedMissingFiles: files.filter((file) => file.status === "missing").length
-  };
-}
-
-function deletePlannedArtifactFiles(files: readonly ArtifactFileCandidate[]): {
-  readonly deletedFiles: number;
-  readonly deletedBytes: number;
-} {
-  let deletedFiles = 0;
-  let deletedBytes = 0;
-  for (const file of files) {
-    if (file.status !== "delete") continue;
-    rmSync(file.absolutePath, { force: true });
-    deletedFiles += 1;
-    deletedBytes += file.bytes;
-  }
-  return { deletedFiles, deletedBytes };
-}
-
-function countProtectedReasons(
-  plan: ContextArtifactRetentionPlan
-): Readonly<Record<string, number>> {
-  const counts: Record<string, number> = {
-    latest_per_session: 0,
-    active_sent_context: 0,
-    restorable_omitted_context: 0,
-    locked_session: 0,
-    invalidation_marker: 0
-  };
-  for (const artifact of plan.protectedArtifacts) {
-    counts[artifact.protection] = (counts[artifact.protection] ?? 0) + 1;
-  }
-  return counts;
-}
-
-function countCompressionProtectedReasons(
-  plan: CompressionRetentionPlan
-): Readonly<Record<string, number>> {
-  const counts: Record<string, number> = {
-    referenced_by_context_artifact: 0
-  };
-  for (const artifact of plan.protectedArtifacts) {
-    counts[artifact.protection] = (counts[artifact.protection] ?? 0) + 1;
-  }
-  return counts;
-}
-
-function countFtsProtectedReasons(plan: FtsRetentionPlan): Readonly<Record<string, number>> {
-  const counts: Record<string, number> = {
-    latest_repo_snapshot: 0
-  };
-  for (const snapshot of plan.protectedSnapshots) {
-    counts[snapshot.protection] = (counts[snapshot.protection] ?? 0) + 1;
-  }
-  return counts;
-}
-
-function countDerivedMetadataProtectedReasons(
-  plan: DerivedMetadataRetentionPlan
-): Readonly<Record<string, number>> {
-  const counts: Record<string, number> = {
-    latest_repo_snapshot: 0,
-    referenced_by_context_artifact: 0,
-    incoming_symbol_edge_reference: 0
-  };
-  for (const snapshot of plan.protectedSnapshots) {
-    counts[snapshot.protection] = (counts[snapshot.protection] ?? 0) + 1;
-  }
-  return counts;
-}
-
-function countSnapshotProtectedReasons(plan: SnapshotRetentionPlan): Readonly<Record<string, number>> {
-  const counts: Record<string, number> = {
-    latest_repo_snapshot: 0,
-    context_session: 0,
-    context_artifact: 0,
-    compression_artifact: 0,
-    fts_entry: 0,
-    symbol_node: 0,
-    symbol_edge: 0,
-    context_dependency: 0,
-    source: 0
-  };
-  for (const snapshot of plan.protectedSnapshots) {
-    counts[snapshot.protection] = (counts[snapshot.protection] ?? 0) + 1;
-  }
-  return counts;
-}
-
-function countInvalidatedRecordProtectedReasons(
-  plan: InvalidatedRecordRetentionPlan
-): Readonly<Record<string, number>> {
-  const counts: Record<string, number> = {
-    locked_session: 0,
-    sent_row_retained: 0
-  };
-  for (const record of plan.protectedInvalidations) {
-    counts[record.protection] = (counts[record.protection] ?? 0) + 1;
-  }
-  return counts;
-}
-
-function sumDerivedMetadataRows(
-  snapshots: readonly { readonly totalRows: number }[]
-): number {
-  return snapshots.reduce((total, snapshot) => total + snapshot.totalRows, 0);
-}
-
-function sumDerivedMetadataNodeRows(
-  snapshots: readonly { readonly nodeRows: number }[]
-): number {
-  return snapshots.reduce((total, snapshot) => total + snapshot.nodeRows, 0);
-}
-
-function sumDerivedMetadataEdgeRows(
-  snapshots: readonly { readonly edgeRows: number }[]
-): number {
-  return snapshots.reduce((total, snapshot) => total + snapshot.edgeRows, 0);
-}
-
-function sumDerivedMetadataDeletionRows(deletion: DerivedMetadataDeletionResult): number {
-  return deletion.symbolNodes + deletion.symbolEdges;
-}
-
-function sumSnapshotWorktreeRows(
-  snapshots: readonly { readonly worktreeRows: number }[]
-): number {
-  return snapshots.reduce((total, snapshot) => total + snapshot.worktreeRows, 0);
-}
-
-function compactNotes(input: {
-  readonly dryRun: boolean;
-  readonly candidateArtifacts: number;
-  readonly candidateCompressionArtifacts: number;
-  readonly candidateFtsSnapshots: number;
-  readonly candidateDerivedMetadataSnapshots: number;
-  readonly candidateSnapshots: number;
-  readonly candidateInvalidatedRecords: number;
-  readonly skippedUnsafeFiles: number;
-}): readonly string[] {
-  const notes: string[] = [];
-  if (input.dryRun) {
-    notes.push("No data was deleted. Rerun with --confirm to apply this plan.");
-  }
-  if (
-    input.candidateArtifacts === 0 &&
-    input.candidateCompressionArtifacts === 0 &&
-    input.candidateFtsSnapshots === 0 &&
-    input.candidateDerivedMetadataSnapshots === 0 &&
-    input.candidateSnapshots === 0 &&
-    input.candidateInvalidatedRecords === 0
-  ) {
-    notes.push("No context artifacts, compression cache rows, FTS rows, derived metadata rows, orphan snapshots, or invalidated ledger rows are eligible for deletion.");
-  }
-  if (input.skippedUnsafeFiles > 0) {
-    notes.push("Some artifact files were skipped because they were symlinks or not regular files.");
-  }
-  notes.push("This compact run applies context artifact, compression cache, FTS, derived metadata, orphan snapshot, and invalidated-record retention.");
-  return notes;
-}
-
-function assertInsideDirectory(directoryPath: string, filePath: string): void {
-  const relative = path.relative(directoryPath, filePath);
-  if (relative === "" || relative.startsWith("..") || path.isAbsolute(relative)) {
-    throw new Error("refusing to touch an artifact file outside .grape/artifacts.");
-  }
-}
-
-function repoRelativePath(rootPath: string, filePath: string): string {
-  return path.relative(rootPath, filePath).split(path.sep).join("/");
 }
