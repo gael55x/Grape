@@ -240,7 +240,7 @@ Storage and security:
 ## Required Fixture Repositories
 
 - `clean-typescript-app`
-- `dirty-worktree-repo`
+- `dirty-worktree-typescript-app`
 - `branch-switch-repo`
 - `stale-proof-repo`
 - `ignored-files-secrets-repo`
@@ -258,7 +258,7 @@ Storage and security:
 | Fixture | Must exercise |
 |---|---|
 | `clean-typescript-app` | clean snapshot, symbol index, first artifact, no-change diff |
-| `dirty-worktree-repo` | dirty scope, worktree-local claims, partial warnings |
+| `dirty-worktree-typescript-app` | tracked source becomes dirty, compile reports dirty worktree, and turn 2 invalidates edited-source context without `OMIT_UNCHANGED` |
 | `branch-switch-repo` | branch-invalid claims and sent item invalidation |
 | `stale-proof-repo` | proof hash mismatch invalidates claims/artifacts |
 | `ignored-files-secrets-repo` | ignored files, `.env`, redaction/blocking, approval flow |

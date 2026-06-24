@@ -22,6 +22,14 @@ Keep entries simple:
 
 ## Entries
 
+### 2026-06-24 - Dirty Worktree Benchmark Slice
+
+- Author/agent: Gaille Amolong / Codex
+- Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
+- Summary: added a dedicated dirty-worktree benchmark fixture. The benchmark edits a tracked source file without committing it, then requires turn 2 to report dirty worktree, source-specific invalidation, no unchanged omission, zero unsafe omissions, and zero stale sends.
+- Tests or checks run: focused TypeScript build, fixture checks, and benchmark behavior tests before broader verification.
+- Risks or follow-ups: this covers one uncommitted tracked source edit. Broader dirty-worktree cases, such as untracked files and mixed staged changes, still need separate fixtures.
+
 ### 2026-06-24 - Privacy Purge Slice
 
 - Author/agent: Gaille Amolong / Codex

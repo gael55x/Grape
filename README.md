@@ -437,7 +437,7 @@ Current benchmark output also reports per-turn local storage bytes for the tempo
 
 ### Transport fixtures
 
-`npm run bench` exercises the installed package on six named fixtures. On the three no-change transport fixtures, the second same-session turn reduced body-token context with zero unsafe omissions and zero stale sends:
+`npm run bench` exercises the installed package on named fixtures. On the three no-change transport fixtures from the recorded 2026-06-13 run, the second same-session turn reduced body-token context with zero unsafe omissions and zero stale sends:
 
 | Fixture | Turn 1 body tokens | Turn 2 body tokens | Reduction |
 | --- | ---: | ---: | ---: |
@@ -445,7 +445,7 @@ Current benchmark output also reports per-turn local storage bytes for the tempo
 | `polyglot-fallback-repo` | 3132 | 2523 | 31.46% |
 | `monorepo-lite-repo` | 3388 | 1885 | 52.07% |
 
-The same run also passed branch-switch, stale-source, and session-reset invalidation fixtures.
+The current benchmark suite also covers branch-switch, dirty-worktree, stale-source, and session-reset invalidation fixtures.
 
 That supports the core beta transport claim on these fixtures: Grape can omit unchanged same-session context, keep restore metadata for omitted items, and invalidate prior context when files, branches, or sessions change.
 

@@ -7,7 +7,7 @@
 | Context size vs naive full-context? | `naive-baseline.mjs` + `grape bench` turn metrics | Fixture estimate on `clean-typescript-app` |
 | Repeated-session reduction via `OMIT_UNCHANGED`? | Turn-2 `grapeTokens` vs turn-1 on no-change fixtures | Beta fixture evidence when tied to a committed raw result file; not a production savings claim |
 | Restore when context unchanged? | Turn-2 `RESTORE_AVAILABLE` + smoke scripts | Measured on named fixtures |
-| Stale context rejected after file changes? | `stale-source-typescript-app`, `branch-switch-typescript-app` | Measured on named fixtures |
+| Stale context rejected after file changes? | `stale-source-typescript-app`, `dirty-worktree-typescript-app`, `branch-switch-typescript-app` | Measured on named fixtures |
 | Context useful for coding agents, not just smaller? | Task prompts + usefulness score (1-5) | Partial. Harness scores only; human or agent eval deferred |
 | Value vs Graphify/chum-mem? | `run-comparator.mjs` + capability matrix | Partial. Current Graphify probe measures one-shot CLI orientation only when CLI is installed |
 | Where competitors beat Grape on their wedge? | Competitor analysis in readiness report | Documented. Semantic memory, broad graphs, cloud scale |
@@ -18,7 +18,7 @@
 | --- | --- |
 | Avoid stale source excerpts? | `stale-source-typescript-app` |
 | Invalidate after branch change? | `branch-switch-typescript-app` |
-| Dirty worktree handling? | `beta:client-trial` (single edit); full matrix **planned** |
+| Dirty worktree handling? | `dirty-worktree-typescript-app`; `beta:client-trial` also edits one file | Fixture gate covers uncommitted source invalidation; broader dirty matrix deferred |
 | Proof-backed claims preserved? | Behavior tests; not bench-gated |
 | High-risk claims without evidence blocked? | Behavior tests (`auth-security` planned) |
 | Secret/env leak avoidance? | `beta:client-trial` |

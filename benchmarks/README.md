@@ -6,7 +6,7 @@ This directory holds the comparative benchmark harness for Grape. It is separate
 
 Grape includes benchmark fixtures and scripts for local comparison.
 
-The harness measures transport behavior (omission, invalidation, restore) on named fixtures. It also compares against fair baselines (naive full context, manual `rg`, packed tarball install) and records partial external comparator runs where installable (Graphify orientation, chum-mem when Docker available).
+The harness measures transport behavior (omission, invalidation, restore) on named fixtures, including branch changes, uncommitted source edits, stale source edits, and session resets. It also compares against fair baselines (naive full context, manual `rg`, packed tarball install) and records partial external comparator runs where installable (Graphify orientation, chum-mem when Docker available).
 
 Current Graphify rows measure one-shot CLI orientation only. They do not measure Graphify's full MCP, update, hook, IDE, or multi-turn assistant workflow. Graphify is strongest at building a queryable repo knowledge graph. Grape is strongest at preserving safe context continuity across agent turns with session diff, restore, invalidation, and proof-backed excerpts.
 
@@ -32,7 +32,7 @@ benchmarks/
   results/                  # generated JSON (gitignored except post-beta-*.json)
 ```
 
-Fixture **source trees** live under `tests/fixtures/`. The manifest describes post-beta case intent; `npm run benchmark:run` remains the CI gate for the six core transport fixtures.
+Fixture **source trees** live under `tests/fixtures/`. The manifest describes post-beta case intent; `npm run benchmark:run` remains the CI gate for the seven core transport fixtures.
 
 ## Commands
 

@@ -22,6 +22,10 @@ export interface StaleSourceBenchmarkInput extends BenchmarkFixtureInput {
   readonly task: string;
 }
 
+export interface DirtyWorktreeBenchmarkInput extends BenchmarkFixtureInput {
+  readonly task: string;
+}
+
 export interface SessionResetBenchmarkInput extends BenchmarkFixtureInput {
   readonly task: string;
 }
@@ -40,6 +44,7 @@ export interface BenchmarkSectionTokenBreakdown {
   readonly state: string;
   readonly itemKind: string;
   readonly itemRef: string;
+  readonly inputRefs: readonly string[];
   readonly bodyTokens: number;
   readonly serializedTokens: number;
 }
@@ -48,6 +53,7 @@ export interface BenchmarkTurnMetric {
   readonly turn: number;
   readonly artifactId: string;
   readonly artifactHash: string;
+  readonly dirtyWorktree: boolean;
   readonly durationMs: number;
   readonly toolCallCount: 1;
   readonly contextPackItemCount: number;
@@ -134,6 +140,26 @@ export interface StaleSourceBenchmarkResult {
   readonly failures: readonly string[];
 }
 
+export interface DirtyWorktreeBenchmarkResult {
+  readonly benchmark: "bench_dirty_worktree_invalidation";
+  readonly fixture: string;
+  readonly task: string;
+  readonly status: BenchmarkStatus;
+  readonly workspacePath?: string;
+  readonly scenario: {
+    readonly editedSourceRef: string;
+    readonly sourceWasTracked: boolean;
+    readonly sourceCleanBeforeEdit: boolean;
+    readonly sourceDirtyAfterEdit: boolean;
+    readonly dirtyStatusAfterEdit: readonly string[];
+    readonly dirtyWorktreeReported: boolean;
+    readonly invalidationItemsReferencingEditedSource: number;
+    readonly omittedUnchangedAfterEdit: number;
+  };
+  readonly turns: readonly BenchmarkTurnMetric[];
+  readonly failures: readonly string[];
+}
+
 export interface SessionResetBenchmarkResult {
   readonly benchmark: "bench_diff_vs_naive_resend";
   readonly fixture: string;
@@ -148,4 +174,5 @@ export type BenchmarkResult =
   | TokenReductionBenchmarkResult
   | BranchSwitchBenchmarkResult
   | StaleSourceBenchmarkResult
+  | DirtyWorktreeBenchmarkResult
   | SessionResetBenchmarkResult;

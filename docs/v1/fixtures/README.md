@@ -29,6 +29,7 @@ Do not change runtime source hashing to compensate for fixture checkout differen
 
 - [clean-typescript-app](clean-typescript-app.md): baseline token-reduction benchmark
 - `branch-switch-typescript-app`: branch-switch invalidation benchmark (metadata under `tests/fixtures/`)
+- `dirty-worktree-typescript-app`: uncommitted source-edit invalidation benchmark (metadata under `tests/fixtures/`)
 - `stale-source-typescript-app`: dependency-stale invalidation benchmark (metadata under `tests/fixtures/`)
 - `session-reset-typescript-app`: explicit session-reset invalidation benchmark (metadata under `tests/fixtures/`)
 - `polyglot-fallback-repo`: behavior proof fixture and no-change token benchmark for unsupported-language lexical/path fallback
@@ -40,9 +41,9 @@ Do not change runtime source hashing to compensate for fixture checkout differen
 |---|---|---|
 | `clean-typescript-app` | baseline clean repo; two-turn `OMIT_UNCHANGED` token reduction | **implemented**: `grape bench --fixture clean-typescript-app` |
 | `branch-switch-typescript-app` | `INVALIDATE_PREVIOUS` after explicit session reuses a feature branch | **implemented**: `grape bench --fixture branch-switch-typescript-app` |
+| `dirty-worktree-typescript-app` | `INVALIDATE_PREVIOUS` after a tracked source file changes without a commit | **implemented**: `grape bench --fixture dirty-worktree-typescript-app` |
 | `stale-source-typescript-app` | `INVALIDATE_PREVIOUS` after depended-on source bytes change | **implemented**: `grape bench --fixture stale-source-typescript-app` |
 | `session-reset-typescript-app` | `INVALIDATE_PREVIOUS` plus full resend after `--reset-session` / `resetSession: true` | **implemented**: `grape bench --fixture session-reset-typescript-app` |
-| `dirty-worktree-repo` | dirty facts are worktree-scoped | planned |
 | `stale-proof-repo` | proof hashes invalidate dependents | planned |
 | `ignored-files-secrets-repo` | privacy and redaction rules | planned (partial coverage in unit/behavior tests) |
 | `no-tests-repo` | missing verification surfaced honestly | planned |
@@ -60,6 +61,7 @@ Do not change runtime source hashing to compensate for fixture checkout differen
 |---|---|---|
 | `clean-typescript-app` | `bench_token_reduction_after_first_turn` | two-turn compile; `OMIT_UNCHANGED` + `RESTORE_AVAILABLE`; token reduction threshold; zero unsafe omissions |
 | `branch-switch-typescript-app` | `bench_branch_switch_invalidation` | turn 2 on `feature/context` emits `INVALIDATE_PREVIOUS`; zero unsafe omissions |
+| `dirty-worktree-typescript-app` | `bench_dirty_worktree_invalidation` | turn 2 after an uncommitted tracked source edit reports dirty worktree, emits source-specific `INVALIDATE_PREVIOUS`, emits no `OMIT_UNCHANGED`, and has zero unsafe omissions or stale sends |
 | `stale-source-typescript-app` | `bench_stale_source_invalidation` | turn 2 after source edit emits `INVALIDATE_PREVIOUS`; zero unsafe omissions |
 | `session-reset-typescript-app` | `bench_diff_vs_naive_resend` | turn 2 with reset emits `INVALIDATE_PREVIOUS`, sends new current context, and emits no `OMIT_UNCHANGED`; zero unsafe omissions |
 | `polyglot-fallback-repo` | `bench_token_reduction_after_first_turn` | fixture-owned task exercises Python fallback context, provider blind spots, two-turn `OMIT_UNCHANGED`, restore hints, and zero unsafe omissions |

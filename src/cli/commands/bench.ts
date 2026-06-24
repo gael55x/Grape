@@ -61,6 +61,14 @@ function renderBenchmarkReport(result: {
   readonly fixture: string;
   readonly status: string;
   readonly workspacePath?: string;
+  readonly scenario?: {
+    readonly editedSourceRef: string;
+    readonly sourceWasTracked: boolean;
+    readonly sourceDirtyAfterEdit: boolean;
+    readonly dirtyWorktreeReported: boolean;
+    readonly invalidationItemsReferencingEditedSource: number;
+    readonly omittedUnchangedAfterEdit: number;
+  };
   readonly turns: readonly {
     readonly turn: number;
     readonly grapeTokens: number;
@@ -118,6 +126,18 @@ function renderBenchmarkReport(result: {
         `Second-turn OMIT_UNCHANGED: ${second.stateCounts.OMIT_UNCHANGED ?? 0}`
       );
     }
+  }
+
+  if (result.scenario) {
+    lines.push(
+      "",
+      `Dirty source: ${result.scenario.editedSourceRef}`,
+      `Source tracked: ${result.scenario.sourceWasTracked}`,
+      `Source dirty after edit: ${result.scenario.sourceDirtyAfterEdit}`,
+      `Compile reported dirty worktree: ${result.scenario.dirtyWorktreeReported}`,
+      `Source-specific invalidations: ${result.scenario.invalidationItemsReferencingEditedSource}`,
+      `Omitted unchanged after edit: ${result.scenario.omittedUnchangedAfterEdit}`
+    );
   }
 
   return [...lines, ...renderProblems("Failures", result.failures)]

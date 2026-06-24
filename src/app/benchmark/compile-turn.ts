@@ -61,6 +61,7 @@ function turnMetric(
     turn,
     artifactId: result.artifactId,
     artifactHash: result.artifactHash,
+    dirtyWorktree: result.dirtyWorktree,
     durationMs,
     toolCallCount: 1,
     contextPackItemCount: result.contextPackItems.length,

@@ -67,6 +67,7 @@ Fixture name selects the benchmark scenario:
 |---|---|
 | `clean-typescript-app` | `bench_token_reduction_after_first_turn` |
 | `branch-switch-typescript-app` | `bench_branch_switch_invalidation` |
+| `dirty-worktree-typescript-app` | `bench_dirty_worktree_invalidation` |
 | `stale-source-typescript-app` | `bench_stale_source_invalidation` |
 | `session-reset-typescript-app` | `bench_diff_vs_naive_resend` |
 | `polyglot-fallback-repo` | `bench_token_reduction_after_first_turn` |
@@ -136,7 +137,7 @@ On the recorded fixture run dated **2026-06-13**, Grape produced the listed body
 | Git commit | `3666a37d9e526c0f267d9b53f6357272884f6ca6` |
 | Package version | `1.0.0-beta.0` (packed tarball from git tree) |
 | Node | `v22.18.0` on `darwin` |
-| Fixtures | all six gated fixtures below |
+| Fixtures | the six gated fixtures listed in this historical run |
 | Limits | harness thresholds in this doc; zero unsafe omissions; zero stale sends |
 | Caveats | local fixture results only; not proof of production savings or external tool superiority |
 
@@ -150,6 +151,8 @@ On the recorded fixture run dated **2026-06-13**, Grape produced the listed body
 | `monorepo-lite-repo` | 3388 | 1885 | 52.07% | 7 | 1 | 0 | 0 |
 
 Allowed transport claim from this table: Grape works as a session-aware context transport layer on these fixtures. On the three no-change transport fixtures, the second same-session turn reduced body-token context by 31.46 percent to 52.07 percent with zero unsafe omissions and zero stale sends. Branch-switch, stale-source, and session-reset fixtures show stale context invalidation and safe full resend behavior, not token savings.
+
+The current benchmark suite also includes `dirty-worktree-typescript-app`. That fixture is not part of the 2026-06-13 recorded table. It edits a tracked source file without committing it and expects turn 2 to report a dirty worktree, emit source-specific `INVALIDATE_PREVIOUS`, emit no `OMIT_UNCHANGED`, and report zero unsafe omissions and zero stale sends.
 
 ### Recorded published-package retrieval baseline (2026-06-13)
 
@@ -174,7 +177,7 @@ The post-beta harness compares the published registry package with naive and sea
 | `docs_beta_release` | uncapped | 1 / 0.125 | 1 / 0.125 | 1 / 0.125 | Grape selected the legacy alpha README as known noise |
 | `docs_beta_release` | budgeted | 1 / 0.125 | 1 / 0.125 | 1 / 0.125 | Grape selected the legacy alpha README as known noise |
 
-Token reduction thresholds apply to no-change transport fixtures: `clean-typescript-app`, `polyglot-fallback-repo`, and `monorepo-lite-repo`. Invalidation benchmarks require `INVALIDATE_PREVIOUS > 0` on turn 2 with zero unsafe omissions. The session-reset benchmark also requires `NEW > 0` and `OMIT_UNCHANGED = 0` on the reset turn to prove the agent receives a safe full resend instead of a no-change omission.
+Token reduction thresholds apply to no-change transport fixtures: `clean-typescript-app`, `polyglot-fallback-repo`, and `monorepo-lite-repo`. Invalidation benchmarks require `INVALIDATE_PREVIOUS > 0` on turn 2 with zero unsafe omissions and zero stale sends. The session-reset benchmark also requires `NEW > 0` and `OMIT_UNCHANGED = 0` on the reset turn to prove the agent receives a safe full resend instead of a no-change omission.
 
 Current benchmark thresholds:
 
@@ -202,6 +205,7 @@ interface BenchmarkTurnMetric {
   fixture: string;
   taskId: string;
   turn: number;
+  dirtyWorktree: boolean;
   naiveTokens: number;
   grapeTokens: number;
   serializedPackTokens: number;
@@ -240,6 +244,7 @@ interface BenchmarkTurnMetric {
     state: DiffState;
     itemKind: ContextPackItemKind;
     itemRef: string;
+    inputRefs: string[];
     bodyTokens: number;
     serializedTokens: number;
   }>;
@@ -274,7 +279,7 @@ interface BenchmarkTurnMetric {
 - Zero stale proof dependencies in active artifacts.
 - Zero omitted pinned safety sections.
 - First-turn token cost reported separately from later-turn cost.
-- Later-turn token reduction measured on the six gated no-change and invalidation fixtures above. Broader gold-label and sync-time fixtures in the metrics table below are not yet bench-gated.
+- Later-turn token reduction is measured on the no-change fixtures above. Invalidation behavior is gated on the branch-switch, dirty-worktree, stale-source, and session-reset fixtures. Broader gold-label and sync-time fixtures in the metrics table below are not yet bench-gated.
 
 ## Required Benchmark Names
 

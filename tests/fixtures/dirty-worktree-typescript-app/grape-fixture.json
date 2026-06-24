@@ -1,0 +1,57 @@
+{
+  "name": "dirty-worktree-typescript-app",
+  "purpose": "Dirty worktree benchmark for conservative invalidation after uncommitted source edits.",
+  "benchmarkTask": "Explain calculateDiscount behavior after an uncommitted source edit.",
+  "repoShape": {
+    "branches": ["main"],
+    "worktree": "dirty",
+    "packageType": "typescript-app"
+  },
+  "files": [
+    {
+      "path": "package.json",
+      "sha256": "bcff53a444a8e2cfd4c4b95505302b1da24cfd01ea64e49da552be0257b48586",
+      "purpose": "package identity"
+    },
+    {
+      "path": "src/calculateDiscount.ts",
+      "sha256": "b2527844393ea15f48d40210dd5debbaa06ad74bdfc214b352a36e1dca437597",
+      "purpose": "source proof"
+    },
+    {
+      "path": "src/calculateDiscount.test.ts",
+      "sha256": "3838f52277ce979bb06962ab62061ad085ee1c8a30aea6ef47116aa20fe44d79",
+      "purpose": "test proof"
+    },
+    {
+      "path": ".grape/rules.md",
+      "sha256": "212060e362a19b04f4476de2dd319011998ea0d0ae7f5779bb10fa00cc0fbaea",
+      "purpose": "pinned project rule"
+    }
+  ],
+  "expectedClaims": [
+    {
+      "id": "claim.calculate_discount.member_discount",
+      "text": "calculateDiscount returns the configured member discount for a positive subtotal and returns zero for non-positive subtotals.",
+      "verificationStatus": "verified",
+      "proofFiles": ["src/calculateDiscount.ts", "src/calculateDiscount.test.ts"]
+    }
+  ],
+  "expectedScopeResults": {
+    "branch:main": "match",
+    "worktree:dirty": "match",
+    "feature_flags:unknown": "unknown"
+  },
+  "expectedArtifactSections": [
+    "task",
+    "pinned_rule",
+    "active_claim",
+    "code_span",
+    "test_span"
+  ],
+  "expectedFirstTurnDiffStates": ["NEW", "PINNED"],
+  "expectedSecondTurnDiffStates": ["INVALIDATE_PREVIOUS", "NEW", "PINNED"],
+  "relatedBenchmarks": [
+    "bench_dirty_worktree_invalidation"
+  ]
+}

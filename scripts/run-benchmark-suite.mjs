@@ -7,6 +7,7 @@ const cliPath = path.join(root, ".tmp/build/src/cli/index.js");
 const fixtures = [
   "clean-typescript-app",
   "branch-switch-typescript-app",
+  "dirty-worktree-typescript-app",
   "stale-source-typescript-app",
   "session-reset-typescript-app",
   "polyglot-fallback-repo",
@@ -90,6 +91,7 @@ for (const fixture of fixtures) {
     storageArtifactJsonBytesFinal: last?.storageFootprint?.artifactJsonBytes,
     storageArtifactMarkdownBytesFinal: last?.storageFootprint?.artifactMarkdownBytes,
     storageArtifactRepositoryBytesFinal: last?.storageFootprint?.artifactRepositoryBytes,
+    dirtyScenario: output.scenario,
     omitUnchanged: second?.stateCounts?.OMIT_UNCHANGED ?? 0,
     invalidatePrevious: second?.stateCounts?.INVALIDATE_PREVIOUS ?? 0,
     unsafeOmissions: second?.unsafeOmissions ?? 0,
@@ -111,6 +113,9 @@ for (const row of rows) {
       `  serializedPackTokens=${row.serializedPackTokens ?? "n/a"} serializedAgentOutputTokens=${row.serializedAgentOutputTokens ?? "n/a"} agentOutputOverhead=${row.firstTurnAgentOutputOverheadPercent ?? "n/a"}%`,
       `  storageGrapeBytesFinal=${row.storageGrapeBytesFinal ?? "n/a"} storageGrapeBytesGrowth=${row.storageGrapeBytesGrowth ?? "n/a"} storageDbBytesFinal=${row.storageDatabaseBytesFinal ?? "n/a"} storageWalBytesFinal=${row.storageWalBytesFinal ?? "n/a"} storageShmBytesFinal=${row.storageShmBytesFinal ?? "n/a"}`,
       `  storageArtifactBytesFinal=${row.storageArtifactBytesFinal ?? "n/a"} storageArtifactBytesGrowth=${row.storageArtifactBytesGrowth ?? "n/a"} artifactJson=${row.storageArtifactJsonBytesFinal ?? "n/a"} artifactMarkdown=${row.storageArtifactMarkdownBytesFinal ?? "n/a"} artifactRepository=${row.storageArtifactRepositoryBytesFinal ?? "n/a"}`,
+      row.dirtyScenario
+        ? `  dirtyScenario source=${row.dirtyScenario.editedSourceRef} tracked=${row.dirtyScenario.sourceWasTracked} dirty=${row.dirtyScenario.sourceDirtyAfterEdit} compileDirty=${row.dirtyScenario.dirtyWorktreeReported} sourceInvalidations=${row.dirtyScenario.invalidationItemsReferencingEditedSource} omitUnchanged=${row.dirtyScenario.omittedUnchangedAfterEdit}`
+        : undefined,
       `  OMIT_UNCHANGED=${row.omitUnchanged} INVALIDATE_PREVIOUS=${row.invalidatePrevious} unsafe=${row.unsafeOmissions}`,
       row.failures?.length ? `  failures=${row.failures.join(", ")}` : undefined
     ]

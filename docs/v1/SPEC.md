@@ -3643,6 +3643,8 @@ After first turn, context token reduction >= 70% for stable bug-fix/refactor ses
 - ignored files stay ignored
 - high-risk task blocks summary-only compile
 
+`grape bench --fixture dirty-worktree-typescript-app` edits a tracked source file in the copied fixture workspace without committing it. Turn 2 must report a dirty worktree, emit source-specific `INVALIDATE_PREVIOUS`, emit no `OMIT_UNCHANGED`, and report zero unsafe omissions and zero stale sends. This fixture checks one named uncommitted-source invalidation path. It is not a broad dirty-worktree performance claim.
+
 ### 37.3 End-to-end tests
 
 Fixtures:

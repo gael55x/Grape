@@ -8,6 +8,7 @@ const cliPath = path.join(process.cwd(), ".tmp/build/src/cli/index.js");
 const fixturesRoot = path.join(process.cwd(), "tests/fixtures");
 const cleanFixturePath = path.join(fixturesRoot, "clean-typescript-app");
 const branchFixturePath = path.join(fixturesRoot, "branch-switch-typescript-app");
+const dirtyWorktreeFixturePath = path.join(fixturesRoot, "dirty-worktree-typescript-app");
 const staleFixturePath = path.join(fixturesRoot, "stale-source-typescript-app");
 const sessionResetFixturePath = path.join(fixturesRoot, "session-reset-typescript-app");
 const polyglotFixturePath = path.join(fixturesRoot, "polyglot-fallback-repo");
@@ -115,6 +116,45 @@ test("cli bench branch-switch fixture reports invalidation on feature branch", (
   assert.equal(output.fixture, "branch-switch-typescript-app");
   assert.equal(output.status, "pass");
   assert.equal(output.turns[1].stateCounts.INVALIDATE_PREVIOUS > 0, true);
+  assert.deepEqual(output.failures, []);
+});
+
+test("cli bench dirty-worktree fixture reports invalidation on uncommitted source edit", () => {
+  const result = runCli([
+    "bench",
+    "--fixture",
+    "dirty-worktree-typescript-app",
+    "--fixture-path",
+    dirtyWorktreeFixturePath,
+    "--json"
+  ]);
+
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.benchmark, "bench_dirty_worktree_invalidation");
+  assert.equal(output.fixture, "dirty-worktree-typescript-app");
+  assert.equal(output.status, "pass");
+  assert.equal(output.scenario.editedSourceRef, "src/calculateDiscount.ts");
+  assert.equal(output.scenario.sourceWasTracked, true);
+  assert.equal(output.scenario.sourceCleanBeforeEdit, true);
+  assert.equal(output.scenario.sourceDirtyAfterEdit, true);
+  assert.deepEqual(output.scenario.dirtyStatusAfterEdit, ["M src/calculateDiscount.ts"]);
+  assert.equal(output.scenario.dirtyWorktreeReported, true);
+  assert.equal(output.scenario.invalidationItemsReferencingEditedSource > 0, true);
+  assert.equal(output.scenario.omittedUnchangedAfterEdit, 0);
+  assert.equal(output.turns[1].dirtyWorktree, true);
+  assert.equal(output.turns[1].stateCounts.INVALIDATE_PREVIOUS > 0, true);
+  assert.equal(output.turns[1].stateCounts.OMIT_UNCHANGED ?? 0, 0);
+  assert.equal(output.turns[1].unsafeOmissions, 0);
+  assert.equal(output.turns[1].staleItemsSent, 0);
+  assert.equal(
+    output.turns[1].sectionTokenBreakdown.some(
+      (entry) =>
+        entry.state === "INVALIDATE_PREVIOUS" &&
+        entry.inputRefs.includes("src/calculateDiscount.ts")
+    ),
+    true
+  );
   assert.deepEqual(output.failures, []);
 });
 

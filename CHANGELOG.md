@@ -29,6 +29,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added `grape compact` for preview-first context artifact, compression cache, FTS, derived symbol metadata, orphan snapshot, and invalidated ledger retention cleanup. It requires `--confirm` before deleting eligible old artifact rows, regular artifact files, unreferenced compression cache rows, old searchable text rows, old symbol metadata rows, old orphan snapshot rows, or old closed invalidation pairs.
 - `grape compact` now reports measured `.grape`, database, WAL, SHM, artifact JSON, artifact Markdown, and artifact repository bytes before and after cleanup.
 - `grape bench` now reports per-turn `.grape`, database, WAL, SHM, and artifact byte diagnostics, with a repeated-turn storage-growth threshold on no-change fixtures.
+- `grape bench --fixture dirty-worktree-typescript-app` now covers an uncommitted tracked source edit and fails if turn 2 does not report dirty worktree, source-specific invalidation, zero unchanged omission, zero unsafe omission, and zero stale sends.
 - `grape purge` refuses symlinked local state, Git-tracked files under `.grape`, mismatched config roots, and locked or contended context sessions. It does not delete source files, Git history, editor config, or MCP config.
 
 ## 1.0.0-beta.8 - 2026-06-17

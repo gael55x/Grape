@@ -12,6 +12,7 @@ export interface BenchmarkSectionTokenBreakdown {
   readonly state: string;
   readonly itemKind: string;
   readonly itemRef: string;
+  readonly inputRefs: readonly string[];
   readonly bodyTokens: number;
   readonly serializedTokens: number;
 }
@@ -51,9 +52,11 @@ export function buildBenchmarkTokenBreakdown(
       state: item.state,
       itemKind: item.itemKind,
       itemRef: item.itemRef,
+      inputRefs: [],
       bodyTokens: 0,
       serializedTokens: 0
     };
+    section.inputRefs = [...new Set([...section.inputRefs, ...item.inputRefs.map((ref) => ref.ref)])].sort();
     section.bodyTokens += item.tokenCount;
     section.serializedTokens += serializedTokens;
     sectionBreakdown.set(sectionKey, section);
@@ -103,6 +106,7 @@ interface MutableSectionTokenBreakdown {
   state: string;
   itemKind: string;
   itemRef: string;
+  inputRefs: string[];
   bodyTokens: number;
   serializedTokens: number;
 }
