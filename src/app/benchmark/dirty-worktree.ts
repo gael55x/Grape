@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { execGitInBenchmarkRepo, prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
+import { collectBenchmarkFailures } from "./rules.js";
 import type { DirtyWorktreeBenchmarkInput, DirtyWorktreeBenchmarkResult } from "./types.js";
 
 const editedSourceRef = "src/calculateDiscount.ts";
@@ -109,35 +110,17 @@ function dirtyWorktreeFailures(input: {
   };
 }): string[] {
   const { scenario, second } = input;
-  const failures: string[] = [];
-  if (!scenario.sourceWasTracked) {
-    failures.push("dirty_worktree_source_not_tracked");
-  }
-  if (!scenario.sourceCleanBeforeEdit) {
-    failures.push("dirty_worktree_source_not_clean_before_edit");
-  }
-  if (!scenario.sourceDirtyAfterEdit) {
-    failures.push("dirty_worktree_source_not_dirty_after_edit");
-  }
-  if (!scenario.dirtyWorktreeReported) {
-    failures.push("dirty_worktree_not_reported_by_compile");
-  }
-  if ((second.stateCounts.INVALIDATE_PREVIOUS ?? 0) === 0) {
-    failures.push("dirty_worktree_missing_invalidate_previous");
-  }
-  if (scenario.invalidationItemsReferencingEditedSource === 0) {
-    failures.push("dirty_worktree_missing_source_specific_invalidation");
-  }
-  if (scenario.omittedUnchangedAfterEdit !== 0) {
-    failures.push("dirty_worktree_must_not_omit_unchanged");
-  }
-  if (second.unsafeOmissions !== 0) {
-    failures.push("unsafe_omissions_present");
-  }
-  if (second.staleItemsSent !== 0) {
-    failures.push("stale_items_sent_present");
-  }
-  return failures;
+  return collectBenchmarkFailures([
+    ["dirty_worktree_source_not_tracked", scenario.sourceWasTracked],
+    ["dirty_worktree_source_not_clean_before_edit", scenario.sourceCleanBeforeEdit],
+    ["dirty_worktree_source_not_dirty_after_edit", scenario.sourceDirtyAfterEdit],
+    ["dirty_worktree_not_reported_by_compile", scenario.dirtyWorktreeReported],
+    ["dirty_worktree_missing_invalidate_previous", (second.stateCounts.INVALIDATE_PREVIOUS ?? 0) > 0],
+    ["dirty_worktree_missing_source_specific_invalidation", scenario.invalidationItemsReferencingEditedSource > 0],
+    ["dirty_worktree_must_not_omit_unchanged", scenario.omittedUnchangedAfterEdit === 0],
+    ["unsafe_omissions_present", second.unsafeOmissions === 0],
+    ["stale_items_sent_present", second.staleItemsSent === 0]
+  ]);
 }
 
 function sourceIsTracked(gitBinary: string, repoPath: string, sourceRef: string): boolean {

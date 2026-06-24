@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
+import { collectBenchmarkFailures } from "./rules.js";
 import type { StaleSourceBenchmarkInput, StaleSourceBenchmarkResult } from "./types.js";
 
 export function runStaleSourceBenchmark(input: StaleSourceBenchmarkInput): StaleSourceBenchmarkResult {
@@ -59,16 +60,14 @@ export function runStaleSourceBenchmark(input: StaleSourceBenchmarkInput): Stale
   }
 }
 
-function staleSourceFailures(secondTurn: { readonly stateCounts: Record<string, number>; readonly unsafeOmissions: number; readonly staleItemsSent: number }): string[] {
-  const failures: string[] = [];
-  if ((secondTurn.stateCounts.INVALIDATE_PREVIOUS ?? 0) === 0) {
-    failures.push("stale_source_missing_invalidate_previous");
-  }
-  if (secondTurn.unsafeOmissions !== 0) {
-    failures.push("unsafe_omissions_present");
-  }
-  if (secondTurn.staleItemsSent !== 0) {
-    failures.push("stale_items_sent_present");
-  }
-  return failures;
+function staleSourceFailures(secondTurn: {
+  readonly stateCounts: Record<string, number>;
+  readonly unsafeOmissions: number;
+  readonly staleItemsSent: number;
+}): string[] {
+  return collectBenchmarkFailures([
+    ["stale_source_missing_invalidate_previous", (secondTurn.stateCounts.INVALIDATE_PREVIOUS ?? 0) > 0],
+    ["unsafe_omissions_present", secondTurn.unsafeOmissions === 0],
+    ["stale_items_sent_present", secondTurn.staleItemsSent === 0]
+  ]);
 }

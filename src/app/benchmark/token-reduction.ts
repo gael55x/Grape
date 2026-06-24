@@ -1,5 +1,6 @@
 import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
+import { collectBenchmarkFailures } from "./rules.js";
 import type { TokenReductionBenchmarkInput, TokenReductionBenchmarkResult } from "./types.js";
 
 const minSecondTurnReductionPercent = 30;
@@ -84,35 +85,23 @@ function tokenReductionFailures(
     };
   }
 ): string[] {
-  const failures: string[] = [];
-  if (firstTurn.overheadPercent > maxFirstTurnOverheadPercent) {
-    failures.push("first_turn_overhead_above_threshold");
-  }
-  if (firstTurn.agentOutputOverheadPercent > maxFirstTurnAgentOutputOverheadPercent) {
-    failures.push("first_turn_agent_output_overhead_above_threshold");
-  }
-  if (secondTurn.reductionPercent < minSecondTurnReductionPercent) {
-    failures.push("second_turn_reduction_below_threshold");
-  }
-  if (secondTurn.unsafeOmissions !== 0) {
-    failures.push("unsafe_omissions_present");
-  }
-  if (secondTurn.staleItemsSent !== 0) {
-    failures.push("stale_items_sent_present");
-  }
-  if ((secondTurn.stateCounts.OMIT_UNCHANGED ?? 0) === 0) {
-    failures.push("second_turn_missing_omit_unchanged");
-  }
-  if (secondTurn.restoreAvailableCount === 0) {
-    failures.push("second_turn_missing_restore_available");
-  }
-  if (
-    secondTurn.storageFootprint.grapeBytes - firstTurn.storageFootprint.grapeBytes >
-    maxSecondTurnStorageGrowthBytes
-  ) {
-    failures.push("second_turn_storage_growth_above_threshold");
-  }
-  return failures;
+  return collectBenchmarkFailures([
+    ["first_turn_overhead_above_threshold", firstTurn.overheadPercent <= maxFirstTurnOverheadPercent],
+    [
+      "first_turn_agent_output_overhead_above_threshold",
+      firstTurn.agentOutputOverheadPercent <= maxFirstTurnAgentOutputOverheadPercent
+    ],
+    ["second_turn_reduction_below_threshold", secondTurn.reductionPercent >= minSecondTurnReductionPercent],
+    ["unsafe_omissions_present", secondTurn.unsafeOmissions === 0],
+    ["stale_items_sent_present", secondTurn.staleItemsSent === 0],
+    ["second_turn_missing_omit_unchanged", (secondTurn.stateCounts.OMIT_UNCHANGED ?? 0) > 0],
+    ["second_turn_missing_restore_available", secondTurn.restoreAvailableCount > 0],
+    [
+      "second_turn_storage_growth_above_threshold",
+      secondTurn.storageFootprint.grapeBytes - firstTurn.storageFootprint.grapeBytes <=
+        maxSecondTurnStorageGrowthBytes
+    ]
+  ]);
 }
 
 function totalsFor(turns: readonly {

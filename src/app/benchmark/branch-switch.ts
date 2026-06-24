@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { execGitInBenchmarkRepo, prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
+import { collectBenchmarkFailures } from "./rules.js";
 import type { BranchSwitchBenchmarkInput, BranchSwitchBenchmarkResult } from "./types.js";
 
 export function runBranchSwitchBenchmark(input: BranchSwitchBenchmarkInput): BranchSwitchBenchmarkResult {
@@ -71,16 +72,14 @@ export function runBranchSwitchBenchmark(input: BranchSwitchBenchmarkInput): Bra
   }
 }
 
-function branchSwitchFailures(secondTurn: { readonly stateCounts: Record<string, number>; readonly unsafeOmissions: number; readonly staleItemsSent: number }): string[] {
-  const failures: string[] = [];
-  if ((secondTurn.stateCounts.INVALIDATE_PREVIOUS ?? 0) === 0) {
-    failures.push("branch_switch_missing_invalidate_previous");
-  }
-  if (secondTurn.unsafeOmissions !== 0) {
-    failures.push("unsafe_omissions_present");
-  }
-  if (secondTurn.staleItemsSent !== 0) {
-    failures.push("stale_items_sent_present");
-  }
-  return failures;
+function branchSwitchFailures(secondTurn: {
+  readonly stateCounts: Record<string, number>;
+  readonly unsafeOmissions: number;
+  readonly staleItemsSent: number;
+}): string[] {
+  return collectBenchmarkFailures([
+    ["branch_switch_missing_invalidate_previous", (secondTurn.stateCounts.INVALIDATE_PREVIOUS ?? 0) > 0],
+    ["unsafe_omissions_present", secondTurn.unsafeOmissions === 0],
+    ["stale_items_sent_present", secondTurn.staleItemsSent === 0]
+  ]);
 }
