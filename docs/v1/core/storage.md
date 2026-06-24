@@ -117,6 +117,14 @@ Snapshot compaction deletes only eligible orphan `repo_snapshots` rows. A snapsh
 
 Invalidated-record compaction deletes only old closed invalidation pairs. A pair is closed when an `INVALIDATE_PREVIOUS` pack row points at a stale `context_sent_items` row, and both that marker row and the stale sent row's original pack row are eligible to be removed together. Compact refuses to delete only the marker while keeping the stale sent row, because the sent ledger treats a sent row with no invalidation marker as active context. It also skips locked sessions. This cleanup can keep rows above the configured cap when the marker is still needed to keep stale context inactive.
 
+## Privacy Inventory
+
+`grape export` reads storage through `src/core/storage/privacy/` and emits a metadata-only local inventory. It counts rows for setup, repository state, trust, index, context, compression, and audit data. It also reports measured bytes for `.grape/`, the SQLite database and sidecars, artifact JSON, artifact Markdown, `.repository.json` backing files, and other local state.
+
+The inventory discloses that `fts_entry_text` can store allowed source text for lexical search and that context artifact files can store rendered source or rule excerpts. It returns counts and byte totals only. It does not return raw source file bodies, raw FTS bodies, raw artifact JSON or Markdown bodies, backing-file bodies, SQLite database bytes, raw command output bodies, or rejected ignored/private file contents.
+
+The command is read-only except for applying missing SQLite migrations before it reads the inventory. It does not compact, purge, or archive local state.
+
 ## Indexing Foundation Storage Extension
 
 Migration `0002_indexing_foundation.sql` implements the first indexing-specific tables after source ingestion made file relationship tracking possible:

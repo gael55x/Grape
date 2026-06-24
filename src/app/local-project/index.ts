@@ -3,6 +3,7 @@ export * from "./inspection/index.js";
 export * from "./maintenance/index.js";
 export * from "./observation/index.js";
 export * from "./omission/index.js";
+export * from "./privacy/index.js";
 export * from "./setup/index.js";
 export * from "./source-excerpts/index.js";
 export * from "./types.js";

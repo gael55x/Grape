@@ -31,7 +31,8 @@ Before editing security-sensitive code, agents must verify:
 | Git/local ignore filtering, snapshot rejection, artifact secret scan, `.grape/` exclusion | **Implemented** |
 | Ignored/private read approval workflow (`audit_events`, scoped approval) | **Partial** (doctor/status diagnostics; full approval UX deferred) |
 | `grape compact` retention cleanup | **Partial** (context artifact, snapshot, compression cache, FTS, derived metadata, and invalidated-record retention; confirm required) |
-| `grape export` / `grape purge` privacy workflows | **Deferred** (specified in CLI contract; no runnable command yet) |
+| `grape export` privacy inventory | **Implemented** (read-only inventory, no raw bodies) |
+| `grape purge` privacy workflow | **Deferred** (specified in CLI contract; no runnable command yet) |
 | Complete redaction engine beyond baseline artifact scan | **Partial** |
 
 ## Non-Negotiable Rules
@@ -56,7 +57,7 @@ Rejected ignored/private paths are persisted only as path-level `source_rejectio
 
 Git repo snapshots also reject oversized files and binary-looking files before they become source records. Oversized rejections store path, reason, source kind, and size only; binary rejections store path, reason, source kind, size, and a content hash, but no raw bytes. CLI setup/status output exposes aggregate scan diagnostics so developers and agents can see why files were skipped without receiving file bodies.
 
-`grape doctor --privacy` exposes the same privacy posture as diagnostics only: local-first defaults, `.grape/` Git exclusion, aggregate scanner rejection counts, ignored/private rejection handling, and artifact secret-scan coverage. It does not approve ignored/private reads, export raw local data, purge local data, or reveal rejected-file contents.
+`grape doctor --privacy` exposes the same privacy posture as diagnostics only: local-first defaults, `.grape/` Git exclusion, aggregate scanner rejection counts, ignored/private rejection handling, and artifact secret-scan coverage. It does not approve ignored/private reads, purge local data, return export bodies, or reveal rejected-file contents.
 
 The current file-indexing foundation reads only files already present in the allowed snapshot file manifest. Before provider-backed symbol/import extraction or safe lexical fallback, it normalizes repository separators, rejects traversal or drive-qualified repo paths, and rejects symlinks, binary files, oversized files, unreadable files, and files whose current bytes no longer match the snapshot hash. It stores module/symbol names, import refs, hashes, line numbers, confidence, and discovery method, but not source excerpts or file contents.
 
@@ -104,6 +105,8 @@ grape init --connect
 
 This removes local Grape state for that repository and recreates setup state. It does not change source files or Git history.
 
+`grape export` is the safe read-only privacy inventory. It reports format version, sanitized repository/database paths, applied migrations, measured `.grape/` bytes, row counts by data class, and whether local storage contains allowed searchable source text rows or rendered context artifact excerpts. It does not export raw repository source bodies, raw FTS text bodies, context artifact bodies, `.repository.json` backing-file bodies, SQLite database bytes, raw command stdout/stderr bodies, or ignored/private/scanner-rejected file contents. It may apply missing SQLite migrations before reading the inventory. It does not delete, compact, purge, or archive local state.
+
 New local configs include retention defaults for context artifacts, snapshots, FTS rows, compression inputs, derived metadata, and invalidated records. Existing schema-1 configs without the retention block still read with those defaults. These values are cleanup policy, not background deletion.
 
 `grape compact` now enforces context artifact, snapshot, compression input, FTS row, derived metadata, and invalidated-record retention. It previews by default and requires `--confirm` before it deletes artifact rows, regular files under `.grape/artifacts/`, unreferenced compression cache rows, old FTS rows, old symbol metadata rows, orphan snapshot rows, or old closed invalidation pairs. FTS cleanup deletes whole snapshot groups from `fts_entries`; SQLite deletes the matching `fts_entry_text` rows. Derived metadata cleanup deletes whole snapshot groups from `symbol_nodes` and `symbol_edges`. Snapshot cleanup deletes `repo_snapshots` only when the snapshot has no sessions, artifacts, compression rows, FTS rows, symbol rows, source rows, or context dependencies; SQLite deletes only the matching `worktree_states`. Invalidated-record cleanup deletes a stale sent row only with the `INVALIDATE_PREVIOUS` marker that kept it inactive and the stale row's original pack row. It preserves marker-only cases so stale context cannot become active again. It preserves the latest repo snapshot's FTS and symbol rows, and it preserves symbol rows still referenced by surviving context artifact dependencies. It does not delete sources, claims, proofs, source rejections, audit rows, or the whole `.grape/` directory.
@@ -128,5 +131,6 @@ New local configs include retention defaults for context artifacts, snapshots, F
 - `artifact_secret_scan_failure_is_unsafe_compile`
 - `logs_do_not_include_raw_secret`
 - `public_output_sanitizes_local_paths_and_secret_like_values`
+- `cli_export_inventory_omits_raw_bodies`
 - `status_refuses_symlinked_local_state`
 - `repository_text_is_rendered_as_untrusted_evidence`

@@ -249,6 +249,7 @@ Manual CLI usage is available for debugging and fallback:
 ```bash
 grape sync
 grape compact
+grape export
 grape compile --task "Explain the files I need to edit"
 grape diff-context --task "Explain the files I need to edit"
 grape status
@@ -312,6 +313,8 @@ Grape stores local runtime state under `.grape/`:
 * `.grape/config.json` for local project setup
 * `.grape/grape.db` for SQLite state, sessions, ledgers, proofs, source metadata, and scan diagnostics
 * `.grape/artifacts/` for generated JSON and Markdown context artifacts
+* allowed source text rows for local lexical search
+* rendered source or rule excerpts inside generated context artifacts
 * restore metadata for omitted context
 * proof and excerpt metadata for accepted exact source or rule spans
 * observed command and test evidence from `grape run` and `grape test`, stored as hashes and metadata instead of raw stdout or stderr bodies
@@ -319,6 +322,8 @@ Grape stores local runtime state under `.grape/`:
 Grape does not send repository content, artifacts, proofs, summaries, embeddings, or telemetry to a remote Grape service by default. Your MCP client or coding agent may still forward returned context to its model provider. Treat Grape output like any other repo context you give an AI tool.
 
 For bounded cleanup, run `grape compact` first. It previews eligible context artifact, compression cache, FTS, symbol metadata, orphan snapshot, and invalidated ledger cleanup. It also reports measured `.grape`, database, WAL, SHM, and artifact bytes before and after the run. It deletes nothing unless you rerun it with `--confirm`. FTS and symbol cleanup delete old rows by whole snapshot from their own tables. Snapshot cleanup deletes only orphan `repo_snapshots` with no source rows, context, indexes, compression rows, or dependencies. Invalidated ledger cleanup deletes old closed invalidation pairs only when the stale sent row and the marker that kept it inactive can be removed together. Compact does not delete source files, source records, claims, or proofs.
+
+To inspect local storage without dumping bodies, run `grape export`. It returns a local inventory with storage bytes, row counts, and a source-text storage disclosure. It omits raw source files, FTS text bodies, context artifact bodies, database bytes, backing-file bodies, command output bodies, and ignored/private rejected file contents.
 
 Safe manual cleanup while `grape purge` is deferred:
 

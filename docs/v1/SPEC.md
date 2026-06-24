@@ -14,7 +14,8 @@
 | Narrow durable claims (source excerpts, symbol declarations, parsed rules, observed runs) | **Implemented** |
 | Deterministic compression cache (`symbol_outline`, `rule_digest`, `context_pack_summary`) | **Implemented** |
 | Runtime FSM enforcement in compile path | **Deferred** (state names are documentary vocabulary; see `architecture/state-machine.md`) |
-| Privacy export/purge CLI (`grape export`, `grape purge`) | **Deferred** |
+| Privacy export inventory (`grape export`) | **Implemented** |
+| Privacy purge CLI (`grape purge`) | **Deferred** |
 | Incremental sync, cloud/team sync, embeddings/semantic ranking | **Deferred** |
 | Broad polyglot graph / complete call graphs | **Deferred** |
 | Daemon or autonomous background observation without MCP calls | **Not implemented** |
@@ -3015,6 +3016,7 @@ Manual fallback:
 ```bash
 grape sync
 grape compact
+grape export
 grape compile --task <text>
 grape diff-context --task <text>
 ```
@@ -3041,7 +3043,7 @@ Still part of V1.0, but not implemented in the current beta transport slice:
 - `grape add-decision "Use thin route handlers for auth routes"`: records a directly confirmed developer decision candidate for Trust Kernel promotion.
 - `grape decisions review`: reviews confirmed and candidate decisions with scope, proof, stale, and contradiction metadata.
 - `grape proofs <claim_id>`: inspect proof rows linked to a durable claim once broader claim-linked proof inspection is implemented.
-- `grape export`: exports local Grape data only after a privacy-preserving export contract exists.
+- `grape export`: emits a read-only local inventory with sanitized paths, applied migrations, storage bytes, row counts by data class, source-text storage disclosure, and omitted-body notes. It does not return raw source file bodies, raw FTS text bodies, raw artifact bodies, `.repository.json` backing-file bodies, SQLite database bytes, raw command output bodies, or ignored/private/scanner-rejected file contents. It may apply missing SQLite migrations before reading the inventory. It does not delete, compact, purge, or archive local state.
 - `grape purge`: purges local Grape data only after a scoped purge contract and user-confirmation flow exist.
 
 New local config files include retention defaults for context artifacts, snapshots, FTS rows, compression inputs, derived metadata, and invalidated records. Existing schema-1 configs without that block remain valid and read with the same defaults. `grape compact` currently enforces context artifact, snapshot, compression input, FTS row, derived metadata, and invalidated-record retention. It requires `--confirm`; broader historical record limits remain policy inputs until later compact or purge slices enforce them.

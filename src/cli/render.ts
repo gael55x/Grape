@@ -103,6 +103,7 @@ export function helpText(): string {
     "  grape sync                  Refresh local snapshot, evidence, and file index",
     "  grape compact               Preview local retention cleanup",
     "  grape compact --confirm     Apply eligible local retention cleanup",
+    "  grape export                Export a local data inventory without raw bodies",
     "  grape compile --task <text> Compile a task context pack",
     "  grape diff-context --task <text> Compile and diff a task context pack",
     "  grape diff-context --explain   Show per-item diff reasons for the pack",
@@ -231,6 +232,18 @@ const COMMAND_HELP: Readonly<Record<string, string>> = {
     "  The current slice deletes repo snapshots only when they are orphaned and have no sources, context, compression, FTS, symbol rows, or dependencies.",
     "  The current slice deletes invalidation ledger rows only with any sent rows needed to keep stale context inactive.",
     "  The current slice does not delete claims, proofs, sources, source rejections, or audit rows."
+  ].join("\n"),
+  export: [
+    "Usage:",
+    "  grape export [--repo <path>] [--json]",
+    "",
+    "Exports a local Grape inventory with storage bytes, row counts, source-text disclosure, and omission notes.",
+    "",
+    "Safety:",
+    "  The export does not include raw repository source bodies.",
+    "  The export does not include raw FTS text, context artifact bodies, artifact repository backing files, or database bytes.",
+    "  The command may apply missing storage migrations before reading the inventory.",
+    "  The command does not delete, compact, or purge local data."
   ].join("\n"),
   compile: [
     "Usage:",

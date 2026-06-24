@@ -15,6 +15,7 @@ const storageBackedCommands = new Set([
   "conflicts",
   "diff-context",
   "doctor",
+  "export",
   "init",
   "omitted",
   "proofs",

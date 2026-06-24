@@ -7,6 +7,7 @@ import { runCompact } from "./commands/compact.js";
 import { runCompile } from "./commands/compile.js";
 import { runConflicts } from "./commands/conflicts.js";
 import { runDiffContext } from "./commands/diff-context.js";
+import { runExport } from "./commands/export.js";
 import { runMcp } from "./commands/mcp.js";
 import { runOmitted } from "./commands/omitted.js";
 import { runObservedCommand } from "./commands/observed-run.js";
@@ -88,6 +89,8 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
       return runCompile(parsed);
     case "compact":
       return runCompact(parsed);
+    case "export":
+      return runExport(parsed);
     case "diff-context":
       return runDiffContext(parsed);
     case "artifacts":

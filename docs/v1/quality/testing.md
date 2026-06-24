@@ -84,6 +84,7 @@ New behavior tests should go in the folder that owns the user-visible contract t
 | Security/redaction tests | Validate ignored files, approvals, secret blocking, logs. | security/evidence/compiler/storage |
 | Cross-platform path tests | Validate path normalization and case behavior. | git/storage/indexing/security |
 | Benchmark tests | Validate benchmark harness determinism and thresholds. | benchmark changes |
+| Privacy inventory tests | Validate local export counts and omitted raw bodies. | export/privacy commands |
 
 ## Required Named Tests
 

@@ -15,6 +15,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added `npm run codex:check` to verify Grape's local Codex setup without touching the normal Codex config.
 - Added retrieval confidence reporting in public context artifacts, MCP `grape_get_context` output, CLI compile output, and task-retrieval sections with `safe`, `partial`, and `missing_likely_files` states.
 - Added current-session observed failure links to task retrieval, so a failed `grape test` run can select its candidate source and test spans on later compiles without claiming root cause or fix validity.
+- Added `grape export` as a read-only local inventory with storage bytes, row counts, source-text disclosure, and explicit omitted raw bodies.
 
 ### Fixed
 

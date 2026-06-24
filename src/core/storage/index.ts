@@ -4,6 +4,7 @@ export * from "./claims/repositories.js";
 export * from "./compression/repositories.js";
 export * from "./indexing/repositories.js";
 export * from "./maintenance/repositories.js";
+export * from "./privacy/repositories.js";
 export * from "./migrations.js";
 export * from "./migration-plan.js";
 export * from "./proofs/repositories.js";
