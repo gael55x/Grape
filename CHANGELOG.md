@@ -16,6 +16,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added retrieval confidence reporting in public context artifacts, MCP `grape_get_context` output, CLI compile output, and task-retrieval sections with `safe`, `partial`, and `missing_likely_files` states.
 - Added current-session observed failure links to task retrieval, so a failed `grape test` run can select its candidate source and test spans on later compiles without claiming root cause or fix validity.
 - Added `grape export` as a read-only local inventory with storage bytes, row counts, source-text disclosure, and explicit omitted raw bodies.
+- Added `grape purge` as a preview-first local cleanup command for repo-local `.grape` state, with `--confirm` required before deletion.
 
 ### Fixed
 
@@ -28,6 +29,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Added `grape compact` for preview-first context artifact, compression cache, FTS, derived symbol metadata, orphan snapshot, and invalidated ledger retention cleanup. It requires `--confirm` before deleting eligible old artifact rows, regular artifact files, unreferenced compression cache rows, old searchable text rows, old symbol metadata rows, old orphan snapshot rows, or old closed invalidation pairs.
 - `grape compact` now reports measured `.grape`, database, WAL, SHM, artifact JSON, artifact Markdown, and artifact repository bytes before and after cleanup.
 - `grape bench` now reports per-turn `.grape`, database, WAL, SHM, and artifact byte diagnostics, with a repeated-turn storage-growth threshold on no-change fixtures.
+- `grape purge` refuses symlinked local state, Git-tracked files under `.grape`, mismatched config roots, and locked or contended context sessions. It does not delete source files, Git history, editor config, or MCP config.
 
 ## 1.0.0-beta.8 - 2026-06-17
 

@@ -85,6 +85,7 @@ New behavior tests should go in the folder that owns the user-visible contract t
 | Cross-platform path tests | Validate path normalization and case behavior. | git/storage/indexing/security |
 | Benchmark tests | Validate benchmark harness determinism and thresholds. | benchmark changes |
 | Privacy inventory tests | Validate local export counts and omitted raw bodies. | export/privacy commands |
+| Privacy purge tests | Validate preview-first deletion, confirmation, symlink refusal, tracked-path refusal, mismatched-root refusal, locked-session refusal, and source/Git preservation. | purge/privacy commands |
 
 ## Required Named Tests
 

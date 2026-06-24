@@ -32,7 +32,7 @@ Before editing security-sensitive code, agents must verify:
 | Ignored/private read approval workflow (`audit_events`, scoped approval) | **Partial** (doctor/status diagnostics; full approval UX deferred) |
 | `grape compact` retention cleanup | **Partial** (context artifact, snapshot, compression cache, FTS, derived metadata, and invalidated-record retention; confirm required) |
 | `grape export` privacy inventory | **Implemented** (read-only inventory, no raw bodies) |
-| `grape purge` privacy workflow | **Deferred** (specified in CLI contract; no runnable command yet) |
+| `grape purge` privacy workflow | **Implemented** (preview-first whole `.grape/` cleanup; confirm required) |
 | Complete redaction engine beyond baseline artifact scan | **Partial** |
 
 ## Non-Negotiable Rules
@@ -96,20 +96,23 @@ V1 must not send repository content, proofs, artifacts, embeddings, telemetry, o
 
 This local-first rule covers Grape's own behavior. The user's MCP client, editor, or coding agent may forward returned context to its model provider. Grape output should be treated like any other repository context given to an AI tool.
 
-Manual cleanup while `grape purge` is deferred:
+To remove local Grape state for one repository:
 
 ```bash
-rm -rf .grape
+grape purge
+grape purge --confirm
 grape init --connect
 ```
 
-This removes local Grape state for that repository and recreates setup state. It does not change source files or Git history.
+`grape purge` previews deletion and deletes nothing. `grape purge --confirm` deletes only the repo-local `.grape/` directory after safety checks. It refuses symlinked local state, Git-tracked files under `.grape/`, mismatched config roots, and locked or contended sessions. It does not change source files, Git history, editor config, or MCP config.
 
 `grape export` is the safe read-only privacy inventory. It reports format version, sanitized repository/database paths, applied migrations, measured `.grape/` bytes, row counts by data class, and whether local storage contains allowed searchable source text rows or rendered context artifact excerpts. It does not export raw repository source bodies, raw FTS text bodies, context artifact bodies, `.repository.json` backing-file bodies, SQLite database bytes, raw command stdout/stderr bodies, or ignored/private/scanner-rejected file contents. It may apply missing SQLite migrations before reading the inventory. It does not delete, compact, purge, or archive local state.
 
 New local configs include retention defaults for context artifacts, snapshots, FTS rows, compression inputs, derived metadata, and invalidated records. Existing schema-1 configs without the retention block still read with those defaults. These values are cleanup policy, not background deletion.
 
 `grape compact` now enforces context artifact, snapshot, compression input, FTS row, derived metadata, and invalidated-record retention. It previews by default and requires `--confirm` before it deletes artifact rows, regular files under `.grape/artifacts/`, unreferenced compression cache rows, old FTS rows, old symbol metadata rows, orphan snapshot rows, or old closed invalidation pairs. FTS cleanup deletes whole snapshot groups from `fts_entries`; SQLite deletes the matching `fts_entry_text` rows. Derived metadata cleanup deletes whole snapshot groups from `symbol_nodes` and `symbol_edges`. Snapshot cleanup deletes `repo_snapshots` only when the snapshot has no sessions, artifacts, compression rows, FTS rows, symbol rows, source rows, or context dependencies; SQLite deletes only the matching `worktree_states`. Invalidated-record cleanup deletes a stale sent row only with the `INVALIDATE_PREVIOUS` marker that kept it inactive and the stale row's original pack row. It preserves marker-only cases so stale context cannot become active again. It preserves the latest repo snapshot's FTS and symbol rows, and it preserves symbol rows still referenced by surviving context artifact dependencies. It does not delete sources, claims, proofs, source rejections, audit rows, or the whole `.grape/` directory.
+
+`grape purge --confirm` deletes the whole `.grape/` directory instead of deleting selected SQLite rows. That removes the database, source metadata, FTS text rows, claims, proofs, audit rows, source rejections, artifacts, logs, cache files, and restore/session ledgers for the current repository. Because the session ledger is gone, the next compile starts from fresh local state.
 
 ## Logging Rules
 

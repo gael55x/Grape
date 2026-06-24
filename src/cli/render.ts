@@ -104,6 +104,8 @@ export function helpText(): string {
     "  grape compact               Preview local retention cleanup",
     "  grape compact --confirm     Apply eligible local retention cleanup",
     "  grape export                Export a local data inventory without raw bodies",
+    "  grape purge                 Preview deletion of repo-local .grape state",
+    "  grape purge --confirm       Delete repo-local .grape state after safety checks",
     "  grape compile --task <text> Compile a task context pack",
     "  grape diff-context --task <text> Compile and diff a task context pack",
     "  grape diff-context --explain   Show per-item diff reasons for the pack",
@@ -244,6 +246,21 @@ const COMMAND_HELP: Readonly<Record<string, string>> = {
     "  The export does not include raw FTS text, context artifact bodies, artifact repository backing files, or database bytes.",
     "  The command may apply missing storage migrations before reading the inventory.",
     "  The command does not delete, compact, or purge local data."
+  ].join("\n"),
+  purge: [
+    "Usage:",
+    "  grape purge [--repo <path>] [--json]",
+    "  grape purge --dry-run [--repo <path>] [--json]",
+    "  grape purge --confirm [--repo <path>] [--json]",
+    "",
+    "Previews or deletes the repo-local .grape directory.",
+    "",
+    "Safety:",
+    "  Without --confirm, no data is deleted.",
+    "  The command does not delete source files, Git history, editor config, or MCP config.",
+    "  The command refuses symlinked .grape state, Git-tracked paths under .grape, mismatched config roots, and locked or contended context sessions.",
+    "  Confirmed purge requires .grape/config.json to match the current repository path.",
+    "  After purge, run grape init --connect to create fresh local state."
   ].join("\n"),
   compile: [
     "Usage:",

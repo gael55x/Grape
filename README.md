@@ -250,6 +250,7 @@ Manual CLI usage is available for debugging and fallback:
 grape sync
 grape compact
 grape export
+grape purge
 grape compile --task "Explain the files I need to edit"
 grape diff-context --task "Explain the files I need to edit"
 grape status
@@ -325,14 +326,20 @@ For bounded cleanup, run `grape compact` first. It previews eligible context art
 
 To inspect local storage without dumping bodies, run `grape export`. It returns a local inventory with storage bytes, row counts, and a source-text storage disclosure. It omits raw source files, FTS text bodies, context artifact bodies, database bytes, backing-file bodies, command output bodies, and ignored/private rejected file contents.
 
-Safe manual cleanup while `grape purge` is deferred:
+To remove local Grape state for one repository, preview the deletion first:
 
 ```bash
-rm -rf .grape
+grape purge
+```
+
+Then confirm it:
+
+```bash
+grape purge --confirm
 grape init --connect
 ```
 
-This removes local Grape state for that repository. It does not change source files or Git history.
+`grape purge --confirm` deletes only the repo-local `.grape/` directory after safety checks. It refuses symlinked local state, Git-tracked files under `.grape/`, mismatched config roots, and locked or contended sessions. It does not change source files, Git history, editor config, or MCP config.
 
 ## How Grape works
 

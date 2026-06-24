@@ -3,6 +3,7 @@ export * from "./bootstrap-detection.js";
 export * from "./config.js";
 export * from "./configured-layout.js";
 export * from "./doctor.js";
+export * from "./existing-layout.js";
 export * from "./git-exclude.js";
 export * from "./initialize.js";
 export * from "./mcp-guide.js";

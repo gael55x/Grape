@@ -19,6 +19,7 @@ const storageBackedCommands = new Set([
   "init",
   "omitted",
   "proofs",
+  "purge",
   "run",
   "sessions",
   "stale",

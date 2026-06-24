@@ -15,7 +15,7 @@
 | Deterministic compression cache (`symbol_outline`, `rule_digest`, `context_pack_summary`) | **Implemented** |
 | Runtime FSM enforcement in compile path | **Deferred** (state names are documentary vocabulary; see `architecture/state-machine.md`) |
 | Privacy export inventory (`grape export`) | **Implemented** |
-| Privacy purge CLI (`grape purge`) | **Deferred** |
+| Privacy purge CLI (`grape purge`) | **Implemented** |
 | Incremental sync, cloud/team sync, embeddings/semantic ranking | **Deferred** |
 | Broad polyglot graph / complete call graphs | **Deferred** |
 | Daemon or autonomous background observation without MCP calls | **Not implemented** |
@@ -3017,6 +3017,7 @@ Manual fallback:
 grape sync
 grape compact
 grape export
+grape purge
 grape compile --task <text>
 grape diff-context --task <text>
 ```
@@ -3044,9 +3045,9 @@ Still part of V1.0, but not implemented in the current beta transport slice:
 - `grape decisions review`: reviews confirmed and candidate decisions with scope, proof, stale, and contradiction metadata.
 - `grape proofs <claim_id>`: inspect proof rows linked to a durable claim once broader claim-linked proof inspection is implemented.
 - `grape export`: emits a read-only local inventory with sanitized paths, applied migrations, storage bytes, row counts by data class, source-text storage disclosure, and omitted-body notes. It does not return raw source file bodies, raw FTS text bodies, raw artifact bodies, `.repository.json` backing-file bodies, SQLite database bytes, raw command output bodies, or ignored/private/scanner-rejected file contents. It may apply missing SQLite migrations before reading the inventory. It does not delete, compact, purge, or archive local state.
-- `grape purge`: purges local Grape data only after a scoped purge contract and user-confirmation flow exist.
+- `grape purge`: previews deletion of the repo-local `.grape/` directory by default. `grape purge --confirm` deletes that directory only after the current Git root is resolved, `.grape/` is proven to be a real directory inside that root, known state files are not symlinks, `.grape/config.json` matches the current root, no files under `.grape/` are Git-tracked, and readable session rows have no locked or contended sessions. It does not delete source files, Git history, editor config, or MCP config. After purge, the next `grape init --connect` creates fresh local state and prior session ledgers are gone.
 
-New local config files include retention defaults for context artifacts, snapshots, FTS rows, compression inputs, derived metadata, and invalidated records. Existing schema-1 configs without that block remain valid and read with the same defaults. `grape compact` currently enforces context artifact, snapshot, compression input, FTS row, derived metadata, and invalidated-record retention. It requires `--confirm`; broader historical record limits remain policy inputs until later compact or purge slices enforce them.
+New local config files include retention defaults for context artifacts, snapshots, FTS rows, compression inputs, derived metadata, and invalidated records. Existing schema-1 configs without that block remain valid and read with the same defaults. `grape compact` currently enforces context artifact, snapshot, compression input, FTS row, derived metadata, and invalidated-record retention. It requires `--confirm`. `grape purge --confirm` is the whole-local-state cleanup path for one repository.
 
 Do not ship `grape ask` in V1. It makes Grape look like another coding assistant.
 
@@ -3863,7 +3864,7 @@ Build:
 
 - benchmark runner
 - privacy doctor
-- purge/export commands
+- richer export archive formats beyond the local inventory
 - performance profiling
 - packaging polish
 - npm release pipeline

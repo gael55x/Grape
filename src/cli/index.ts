@@ -12,6 +12,7 @@ import { runMcp } from "./commands/mcp.js";
 import { runOmitted } from "./commands/omitted.js";
 import { runObservedCommand } from "./commands/observed-run.js";
 import { runProofs } from "./commands/proofs.js";
+import { runPurge } from "./commands/purge.js";
 import { runSessions } from "./commands/sessions.js";
 import { runStale } from "./commands/stale.js";
 import { runSync } from "./commands/sync.js";
@@ -91,6 +92,8 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
       return runCompact(parsed);
     case "export":
       return runExport(parsed);
+    case "purge":
+      return runPurge(parsed);
     case "diff-context":
       return runDiffContext(parsed);
     case "artifacts":

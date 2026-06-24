@@ -125,6 +125,14 @@ The inventory discloses that `fts_entry_text` can store allowed source text for 
 
 The command is read-only except for applying missing SQLite migrations before it reads the inventory. It does not compact, purge, or archive local state.
 
+## Privacy Purge
+
+`grape purge` is the whole-local-state cleanup path for one repository. The default command is a preview. It reports the repo-local `.grape/` target, planned file and directory counts, planned bytes, config-root status, Git-tracked path count, and session-lock status. It deletes nothing without `--confirm`.
+
+`grape purge --confirm` deletes only the repo-local `.grape/` directory. It removes the SQLite database and sidecars, artifacts, artifact repository backing files, FTS text rows, source metadata, source rejections, claims, proofs, audit rows, cache files, logs, temporary files, restore rows, and session ledgers by deleting that directory. It does not delete source files, Git history, editor config, MCP config, or `.git/info/exclude`.
+
+Purge refuses to run when `.grape/` is a symlink, known state files such as `config.json` or `grape.db` are symlinks, `.grape/config.json` points at another repository root, Git tracks any path under `.grape/`, or readable session rows show locked or contended sessions. It does not apply migrations and does not run SQL deletion.
+
 ## Indexing Foundation Storage Extension
 
 Migration `0002_indexing_foundation.sql` implements the first indexing-specific tables after source ingestion made file relationship tracking possible:

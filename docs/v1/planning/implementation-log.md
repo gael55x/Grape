@@ -22,13 +22,21 @@ Keep entries simple:
 
 ## Entries
 
+### 2026-06-24 - Privacy Purge Slice
+
+- Author/agent: Gaille Amolong / Codex
+- Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
+- Summary: added `grape purge` as a preview-first command for deleting repo-local `.grape/` state. Confirmed purge deletes only `.grape/` and refuses symlinked state, Git-tracked `.grape/` paths, mismatched config roots, and locked or contended sessions.
+- Tests or checks run: focused TypeScript build and CLI purge behavior tests before broader verification.
+- Risks or follow-ups: purge does not provide selective row-level deletion or export archives. Unreadable local databases can limit session-lock inspection, but deletion stays scoped to `.grape/`.
+
 ### 2026-06-24 - Privacy Export Inventory Slice
 
 - Author/agent: Gaille Amolong / Codex
 - Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
 - Summary: added `grape export` as a read-only local inventory. The command reports sanitized paths, applied migrations, measured storage bytes, row counts by data class, source-text storage disclosure, and omitted raw-body notes. It does not return raw source, FTS, artifact, database, backing-file, command-output, or rejected-file bodies.
 - Tests or checks run: focused TypeScript build and CLI export behavior tests before broader verification.
-- Risks or follow-ups: `grape purge` remains deferred until a scoped deletion contract and confirmation flow exist.
+- Risks or follow-ups: richer export formats remain deferred until they have a scoped archive contract.
 
 ### 2026-06-24 - TypeScript Checker Call-Target Slice
 
@@ -495,7 +503,7 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: added shared local-project recovery guidance for setup diagnostics, unsafe compile results, lock-conflict errors, stale restore paths, missing Git metadata, root mismatch, and privacy/redaction failures. CLI renders guidance in human/error output, and JSON/MCP surfaces include machine-readable guidance arrays.
 - Checks run: focused CLI/MCP behavior tests before full verification.
-- Risks/follow-ups: future privacy approval/export/purge flows and remaining MCP write tools must add matching recovery guidance when implemented.
+- Risks/follow-ups: future privacy approval flows and remaining MCP write tools must add matching recovery guidance when implemented.
 
 ### 2026-05-26 - Restricted MCP Write Surface
 
@@ -593,7 +601,7 @@ Keep entries simple:
 - Author/agent: Gaille Amolong / Codex
 - Summary: implemented `grape doctor --privacy` as a privacy-focused diagnostic view over local-first defaults, `.grape/` Git exclusion, aggregate scanner rejection counts, ignored/private handling, and artifact secret-scan coverage without returning secret values or rejected-file bodies.
 - Checks run: focused CLI privacy/local-project behavior tests; `npm run check`; `npm run build`.
-- Risks/follow-ups: broader privacy purge and scoped ignored-file approvals remain deferred until their data contracts are implemented.
+- Risks/follow-ups: scoped ignored-file approvals remain deferred until their data contracts are implemented. Broader selective purge is outside the current whole-`.grape/` purge slice.
 
 ### 2026-05-28 - Context Pack Budget Pruning
 
@@ -878,7 +886,7 @@ Keep entries simple:
 ### 2026-06-04 - Documentation Simplification Audit
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: audited docs and TypeScript reachability for unused or confusing surfaces. Simplified current CLI examples so runnable code blocks only show implemented beta transport commands, preserved deferred decision/export/purge/claim-linked proof commands as still-planned V1.0 surfaces, and aligned runtime/beta-readiness wording with the Node.js 22.13+ package floor and latest behavior-test count.
+- Summary: audited docs and TypeScript reachability for unused or confusing surfaces. Simplified current CLI examples so runnable code blocks only show implemented beta transport commands, preserved deferred decision and claim-linked proof commands as still-planned V1.0 surfaces, and aligned runtime/beta-readiness wording with the Node.js 22.13+ package floor and latest behavior-test count.
 - Checks run: `npm run check` (pass, behavior suite included), `npm run docs:check` after final wording updates, `npm run architecture:check`, strict TypeScript unused-symbol audit, markdown relative-link scan (pass, 55 markdown files), and a TypeScript reachability audit.
 - Risks/follow-ups: empty `src/core/scope/` and `src/core/sessions/` ownership placeholders remain intentional because architecture docs and import-boundary rules reserve those module boundaries for future scope/session implementations.
 

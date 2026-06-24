@@ -258,14 +258,15 @@ Grape does not send repository content, artifacts, proofs, summaries, embeddings
 
 New `.grape/config.json` files include retention defaults: 30 days or 500 rows for context artifacts, 30 days or 200 rows for snapshots, 30 days or 250000 rows for FTS rows, compression inputs, and derived metadata, and 14 days or 50000 rows for invalidated records. `grape compact` previews context artifact, compression cache, FTS, derived metadata, orphan snapshot, and invalidated ledger cleanup by default. Run `grape compact --confirm` only when you want it to delete eligible old artifact rows, regular artifact files, unreferenced compression cache rows, old searchable text rows, old symbol metadata rows, old orphan snapshot rows, and old closed invalidation pairs. FTS and symbol cleanup delete whole snapshot groups from their own tables. Snapshot cleanup deletes only `repo_snapshots` that have no source rows, context, indexes, compression rows, or dependencies; SQLite deletes their matching `worktree_states`. Invalidated ledger cleanup deletes a stale sent row only with the marker that kept it inactive and that stale row's original pack row. Compact does not delete source files, source records, claims, or proofs.
 
-Manual cleanup while `grape purge` is deferred:
+To remove local Grape state for this repository, preview first and then confirm:
 
 ```bash
-rm -rf .grape
+grape purge
+grape purge --confirm
 grape init --connect
 ```
 
-This removes local Grape state for that repository. It does not change source files or Git history.
+`grape purge --confirm` deletes only `.grape/` after safety checks. It does not change source files, Git history, editor config, or MCP config.
 
 ## Common errors
 

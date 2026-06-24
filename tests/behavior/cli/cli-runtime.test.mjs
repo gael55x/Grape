@@ -41,5 +41,6 @@ test("cli runtime guard blocks storage-backed commands on old Node", () => {
 
   assert.equal(checkCliNodeRuntime("mcp", new Set(["--stdio"]), "22.4.0")?.runtime.supported, false);
   assert.equal(checkCliNodeRuntime("export", new Set(), "22.4.0")?.runtime.supported, false);
+  assert.equal(checkCliNodeRuntime("purge", new Set(), "22.4.0")?.runtime.supported, false);
   assert.equal(checkCliNodeRuntime("status", new Set(), "23.6.1"), undefined);
 });
