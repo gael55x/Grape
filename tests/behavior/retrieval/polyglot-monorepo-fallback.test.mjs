@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { cpSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -14,6 +14,34 @@ function withFixtureGitRepo(fixtureName, fn) {
 
   try {
     cpSync(path.join(fixturesRoot, fixtureName), repoPath, { recursive: true });
+    execGit(repoPath, ["init", "-b", "main"]);
+    execGit(repoPath, ["add", "."]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "initial fixture"
+    ]);
+    fn(repoPath);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function withGeneratedGitRepo(fixtureName, files, fn) {
+  const dir = mkdtempSync(path.join(tmpdir(), `grape-${fixtureName}-`));
+  const repoPath = path.join(dir, "repo");
+
+  try {
+    mkdirSync(repoPath, { recursive: true });
+    for (const [repoFile, content] of Object.entries(files)) {
+      const absolutePath = path.join(repoPath, repoFile);
+      mkdirSync(path.dirname(absolutePath), { recursive: true });
+      writeFileSync(absolutePath, content);
+    }
     execGit(repoPath, ["init", "-b", "main"]);
     execGit(repoPath, ["add", "."]);
     execGit(repoPath, [
@@ -275,18 +303,85 @@ test("monorepo fixture keeps task retrieval focused on package-local source and 
     assert.match(blindSpots.text, /Selected package provider capability summary:/);
     assert.match(
       blindSpots.text,
-      /packages\/api: typescript via typescript_ast; files 2; capabilities lexical_path, module_edges, symbols_ast, test_edges; gaps none\./
+      /packages\/api: typescript via typescript_ast; files 2; capabilities lexical_path, module_edges, symbols_ast, test_edges, type_aware_edges; gaps none\./
     );
     assert.match(blindSpots.text, /Indexed package provider capability summary:/);
     assert.match(
       blindSpots.text,
-      /packages\/api: typescript via typescript_ast; files 2; capabilities lexical_path, module_edges, symbols_ast, test_edges; gaps none\./
+      /packages\/api: typescript via typescript_ast; files 2; capabilities lexical_path, module_edges, symbols_ast, test_edges, type_aware_edges; gaps none\./
     );
     assert.match(
       blindSpots.text,
-      /packages\/web: typescript via typescript_ast; files 2; capabilities lexical_path, module_edges, symbols_ast, test_edges; gaps none\./
+      /packages\/web: typescript via typescript_ast; files 2; capabilities lexical_path, module_edges, symbols_ast, test_edges, type_aware_edges; gaps none\./
     );
   });
+});
+
+test("TypeScript checker-backed call edges select related tests without unrelated duplicates", () => {
+  withGeneratedGitRepo(
+    "typescript-checker-retrieval",
+    {
+      "tsconfig.json": JSON.stringify(
+        {
+          compilerOptions: {
+            module: "NodeNext",
+            moduleResolution: "NodeNext",
+            target: "ES2022"
+          }
+        },
+        null,
+        2
+      ),
+      "src/core/pricing.ts": [
+        "export function calculateTotal() { return 10; }",
+        "export function taxableTotal() { return 11; }",
+        "export default function defaultTotal() { return 12; }",
+        ""
+      ].join("\n"),
+      "src/core/barrel.ts": "export { default as defaultTotal, calculateTotal, taxableTotal } from './pricing';\n",
+      "src/unrelated/pricing.ts": [
+        "export function calculateTotal() { return 99; }",
+        "export function taxableTotal() { return 98; }",
+        "export default function defaultTotal() { return 97; }",
+        ""
+      ].join("\n"),
+      "tests/pricing.test.ts": [
+        "import * as pricing from '../src/core/barrel';",
+        "import { calculateTotal as calc } from '../src/core/barrel';",
+        "import defaultPricing from '../src/core/pricing';",
+        "export function verifiesPricing() {",
+        "  return pricing.taxableTotal() + calc() + defaultPricing();",
+        "}",
+        ""
+      ].join("\n")
+    },
+    (repoPath) => {
+      const { output, artifactJson } = runCompile(repoPath, [
+        "compile",
+        "--task",
+        "Fix calculateTotal in src/core/pricing.ts",
+        "--session",
+        "typescript-checker-retrieval"
+      ]);
+      const retrieval = section(artifactJson, "task-retrieval");
+      const exactEvidence = section(artifactJson, "exact-source-evidence");
+      const blindSpots = section(artifactJson, "index-blind-spots");
+
+      assert.equal(output.warnings.includes("task_retrieval_no_related_tests_found"), false);
+      assert.match(retrieval.text, /Related test refs:\n- tests\/pricing\.test\.ts/);
+      assert.match(
+        retrieval.text,
+        /tests\/pricing\.test\.ts calls src\/core\/pricing\.ts/
+      );
+      assert.match(exactEvidence.text, /Source: src\/core\/pricing\.ts/);
+      assert.match(exactEvidence.text, /Source: tests\/pricing\.test\.ts/);
+      assert.doesNotMatch(exactEvidence.text, /Source: src\/unrelated\/pricing\.ts/);
+      assert.match(
+        blindSpots.text,
+        /typescript via typescript_ast: capabilities lexical_path, module_edges, symbols_ast, test_edges, type_aware_edges; gaps none\./
+      );
+    }
+  );
 });
 
 function assertExactEvidenceContains(exactEvidence, expectedPairs) {

@@ -32,7 +32,8 @@ const typescriptAstCapabilities: readonly LanguageProviderCapability[] = [
   "lexical_path",
   "symbols_ast",
   "module_edges",
-  "test_edges"
+  "test_edges",
+  "type_aware_edges"
 ];
 
 const genericTextCapabilities: readonly LanguageProviderCapability[] = [

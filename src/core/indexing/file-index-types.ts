@@ -7,6 +7,7 @@ import type {
 import type { LanguageProviderMetadata } from "./language-provider.js";
 import type { PackageRootMetadata } from "./package-roots.js";
 import type { TypeScriptAstIndexResult } from "./typescript-ast-index.js";
+import type { TypeScriptTypeAwareCallTarget } from "./typescript-type-aware-resolution.js";
 
 export interface FileIndexSource {
   readonly path: string;
@@ -76,4 +77,5 @@ export interface ParsedFileIndex {
   readonly provider: LanguageProviderMetadata;
   readonly packageRoot: PackageRootMetadata;
   readonly ast?: TypeScriptAstIndexResult;
+  readonly typeAwareCallTargets?: readonly TypeScriptTypeAwareCallTarget[];
 }

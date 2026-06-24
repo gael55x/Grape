@@ -4,6 +4,7 @@ import { fileIndexEdgesForParsedFiles } from "./file-index-edges.js";
 import { selectFileIndexProvider } from "./file-index-provider.js";
 import { createImportResolutionContext } from "./import-resolution.js";
 import { detectPackageRootEvidence, packageRootMetadataForFile } from "./package-roots.js";
+import { resolveTypeScriptTypeAwareCallTargets } from "./typescript-type-aware-resolution.js";
 import type {
   FileIndexInput,
   FileIndexNode,
@@ -56,10 +57,19 @@ export function buildFileIndex(input: FileIndexInput): FileIndexResult {
     files,
     fileTextByPath
   });
+  const typeAwareCallTargetsByPath = resolveTypeScriptTypeAwareCallTargets({
+    rootPath: input.rootPath,
+    files,
+    fileTextByPath
+  });
+  const parsedFilesWithTypeAwareCalls = parsedFiles.map((parsed) => ({
+    ...parsed,
+    typeAwareCallTargets: typeAwareCallTargetsByPath.get(parsed.file.path)
+  }));
 
   return {
     nodes,
-    edges: fileIndexEdgesForParsedFiles(input, parsedFiles, nodes, importResolutionContext),
+    edges: fileIndexEdgesForParsedFiles(input, parsedFilesWithTypeAwareCalls, nodes, importResolutionContext),
     skipped
   };
 }

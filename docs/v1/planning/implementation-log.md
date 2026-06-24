@@ -22,6 +22,14 @@ Keep entries simple:
 
 ## Entries
 
+### 2026-06-24 - TypeScript Checker Call-Target Slice
+
+- Author/agent: Gaille Amolong / Codex
+- Principles used: evidence over assumption, small reversible increments, privacy and safety by default, and measured claims with bounded behavior.
+- Summary: added bounded TypeScript checker-backed direct call-target resolution to TS/JS indexing. `calls` symbol edges now prefer checker-resolved declarations inside admitted snapshot files, record checker target metadata, and fall back to the existing AST heuristic when the checker cannot resolve safely. The signal remains retrieval selection evidence, not proof of behavior or correctness.
+- Tests or checks run: focused TypeScript build, file-index behavior tests, and compile-level retrieval fixture tests before broader verification.
+- Risks or follow-ups: checker-backed declaration targets and broader call-target coverage beyond direct calls remain future retrieval-correctness work.
+
 ### 2026-06-23 - Retrieval Confidence Reporting Slice
 
 - Author/agent: Gaille Amolong / Codex

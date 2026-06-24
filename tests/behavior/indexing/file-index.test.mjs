@@ -181,7 +181,8 @@ test("snapshot file indexing persists module nodes, symbols, and import relation
         "lexical_path",
         "symbols_ast",
         "module_edges",
-        "test_edges"
+        "test_edges",
+        "type_aware_edges"
       ]);
       assert.deepEqual(appMetadata.providerDiagnostics, []);
       assert.equal(pythonMetadata.providerId, "generic_text");
@@ -576,6 +577,142 @@ test("file indexing resolves TypeScript path aliases and workspace package expor
     assert.equal(edgeMetadata(workspaceExportEdge).specifier, "@repo/api/billing");
     assert.equal(edgeMetadata(workspaceExportEdge).resolutionMethod, "workspace_package_exports");
     assert.equal(edgeMetadata(workspaceExportEdge).targetPath, "packages/api/src/billing.ts");
+    assert.equal(JSON.stringify(result).includes(rootPath), false);
+  } finally {
+    rmSync(rootPath, { recursive: true, force: true });
+  }
+});
+
+test("file indexing resolves TypeScript checker-backed call targets", () => {
+  const rootPath = mkdtempSync(path.join(tmpdir(), "grape-file-index-ts-checker-"));
+
+  try {
+    mkdirSync(path.join(rootPath, "src", "core"), { recursive: true });
+    mkdirSync(path.join(rootPath, "src", "unrelated"), { recursive: true });
+    mkdirSync(path.join(rootPath, "tests"), { recursive: true });
+
+    const files = [
+      file(
+        rootPath,
+        "tsconfig.json",
+        JSON.stringify(
+          {
+            compilerOptions: {
+              module: "NodeNext",
+              moduleResolution: "NodeNext",
+              target: "ES2022"
+            }
+          },
+          null,
+          2
+        ),
+        "source:tsconfig",
+        "config"
+      ),
+      file(
+        rootPath,
+        "src/core/pricing.ts",
+        [
+          "export function calculateTotal() { return 10; }",
+          "export function taxableTotal() { return 11; }",
+          "export default function defaultTotal() { return 12; }",
+          ""
+        ].join("\n"),
+        "source:pricing"
+      ),
+      file(
+        rootPath,
+        "src/core/barrel.ts",
+        "export { default as defaultTotal, calculateTotal, taxableTotal } from './pricing';\n",
+        "source:barrel"
+      ),
+      file(
+        rootPath,
+        "src/unrelated/pricing.ts",
+        [
+          "export function calculateTotal() { return 99; }",
+          "export function taxableTotal() { return 98; }",
+          "export default function defaultTotal() { return 97; }",
+          ""
+        ].join("\n"),
+        "source:unrelated"
+      ),
+      file(
+        rootPath,
+        "tests/pricing.test.ts",
+        [
+          "import * as pricing from '../src/core/barrel';",
+          "import { calculateTotal as calc } from '../src/core/barrel';",
+          "import defaultPricing from '../src/core/pricing';",
+          "export function verifiesPricing() {",
+          "  return pricing.taxableTotal() + calc() + defaultPricing();",
+          "}",
+          ""
+        ].join("\n"),
+        "source:pricing-test",
+        "test"
+      )
+    ];
+
+    const result = buildFileIndex({
+      projectId: "project-1",
+      repoId: "repo-1",
+      snapshotId: "snapshot-1",
+      rootPath,
+      files,
+      createdAt: now
+    });
+    const nodeByPathAndName = new Map(result.nodes.map((node) => [`${node.path}:${node.name}`, node]));
+    const testFunction = nodeByPathAndName.get("tests/pricing.test.ts:verifiesPricing");
+    const pricingCalculate = nodeByPathAndName.get("src/core/pricing.ts:calculateTotal");
+    const pricingTaxable = nodeByPathAndName.get("src/core/pricing.ts:taxableTotal");
+    const pricingDefault = nodeByPathAndName.get("src/core/pricing.ts:defaultTotal");
+    const unrelatedCalculate = nodeByPathAndName.get("src/unrelated/pricing.ts:calculateTotal");
+    const unrelatedTaxable = nodeByPathAndName.get("src/unrelated/pricing.ts:taxableTotal");
+
+    const checkerCalls = result.edges.filter(
+      (edge) =>
+        edge.edgeType === "calls" &&
+        edge.fromSymbolId === testFunction?.symbolId &&
+        edgeMetadata(edge).callResolutionMethod === "typescript_checker"
+    );
+
+    assert.deepEqual(
+      checkerCalls.map((edge) => edge.toSymbolId).sort(),
+      [pricingCalculate?.symbolId, pricingDefault?.symbolId, pricingTaxable?.symbolId].sort()
+    );
+    assert.equal(checkerCalls.every((edge) => edge.confidence === "high"), true);
+    assert.equal(checkerCalls.every((edge) => edge.discoveryMethod === "ast"), true);
+    assert.equal(checkerCalls.some((edge) => edge.toSymbolId === unrelatedCalculate?.symbolId), false);
+    assert.equal(checkerCalls.some((edge) => edge.toSymbolId === unrelatedTaxable?.symbolId), false);
+    assert.equal(
+      checkerCalls.some(
+        (edge) =>
+          edge.toSymbolId === pricingCalculate?.symbolId &&
+          edgeMetadata(edge).targetPath === "src/core/pricing.ts" &&
+          edgeMetadata(edge).targetName === "calculateTotal" &&
+          edgeMetadata(edge).targetStartLine === 1
+      ),
+      true
+    );
+    assert.equal(
+      checkerCalls.some(
+        (edge) =>
+          edge.toSymbolId === pricingTaxable?.symbolId &&
+          edgeMetadata(edge).targetPath === "src/core/pricing.ts" &&
+          edgeMetadata(edge).targetName === "taxableTotal"
+      ),
+      true
+    );
+    assert.equal(
+      checkerCalls.some(
+        (edge) =>
+          edge.toSymbolId === pricingDefault?.symbolId &&
+          edgeMetadata(edge).targetPath === "src/core/pricing.ts" &&
+          edgeMetadata(edge).targetName === "defaultTotal"
+      ),
+      true
+    );
     assert.equal(JSON.stringify(result).includes(rootPath), false);
   } finally {
     rmSync(rootPath, { recursive: true, force: true });

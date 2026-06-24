@@ -9,7 +9,7 @@
 | Area | Status |
 |---|---|
 | CLI + MCP `grape_get_context`, session diff transport, restore, branch/dependency invalidation | **Implemented** |
-| TS/JS AST graph indexing (`symbols_ast`, `module_edges`, `test_edges`) | **Implemented** |
+| TS/JS indexing (`symbols_ast`, `module_edges`, `test_edges`, direct-call `type_aware_edges`) | **Implemented** |
 | Python, Go, Rust, Java, C#, Ruby, PHP, Swift, Kotlin, C, C++, shell, JSON, YAML, TOML, Markdown graph extraction | **Not proven** (safe exact/path/lexical fallback only) |
 | Narrow durable claims (source excerpts, symbol declarations, parsed rules, observed runs) | **Implemented** |
 | Deterministic compression cache (`symbol_outline`, `rule_digest`, `context_pack_summary`) | **Implemented** |
@@ -1568,7 +1568,7 @@ V1 static graph blind spots must be surfaced:
 - unknown nested package/workspace boundary
 - generated code or generated client packages
 - complex TypeScript package export conditions
-- TypeScript checker declaration targets that are not resolved by module path resolution
+- TypeScript checker declaration targets beyond direct calls resolved from admitted snapshot files
 
 ### 17.4 Monorepo boundary rule
 

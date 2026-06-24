@@ -6,7 +6,7 @@ Define how Grape stays language-agnostic without pretending V1 has a complete pa
 
 Grape's transport protocol is language-agnostic. The compile layer can snapshot, hash, redact, diff, omit, restore, and invalidate context for any allowed Git-visible text file. Internally this is graph-shaped: source refs, symbols, package manifests, proofs, dependency refs, pack items, omissions, restore handles, and invalidations form connected context. Language-specific indexing is primarily an orientation layer that helps choose exact source spans.
 
-**1.0 beta indexing strength:** TypeScript/JavaScript AST extraction is the strongest current signal (`symbols_ast`, `module_edges`, `test_edges`). Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, and shell use safe fallback with lexical search and conservative declaration anchors. JSON, YAML, TOML, and other config files use path and lexical fallback when the indexer reads them. Explicit Markdown paths can be selected as exact source evidence, while rule Markdown follows the project-rule path. Safe fallback means exact source evidence and path selection for any allowed Git-visible text file, plus lexical search and basic symbol anchors where the regex detector has a conservative language pattern. Grape must not claim full polyglot graph extraction from fallback paths.
+**1.0 beta indexing strength:** TypeScript/JavaScript AST extraction is the strongest current signal (`symbols_ast`, `module_edges`, `test_edges`) and now includes bounded checker-backed direct-call targets (`type_aware_edges`) for files already admitted into the current snapshot. Python, Java, Kotlin, Go, Rust, C#, Ruby, PHP, Swift, C, C++, and shell use safe fallback with lexical search and conservative declaration anchors. JSON, YAML, TOML, and other config files use path and lexical fallback when the indexer reads them. Explicit Markdown paths can be selected as exact source evidence, while rule Markdown follows the project-rule path. Safe fallback means exact source evidence and path selection for any allowed Git-visible text file, plus lexical search and basic symbol anchors where the regex detector has a conservative language pattern. Grape must not claim full polyglot graph extraction from fallback paths.
 
 Provider output is not proof, durable truth, or a complete impact graph unless a separate Trust Kernel policy promotes a narrow provider-backed claim with exact source hashes and current-valid scope.
 
@@ -47,7 +47,7 @@ Each language or framework provider should declare what it can do. Retrieval mus
 | `module_edges` | imports, exports, package-local dependency refs | TS/JS static imports, Python imports, Java/Kotlin packages, Go packages | TS/JS only today |
 | `test_edges` | test-to-source adjacency | test imports selected source | TS/JS only today |
 | `framework_edges` | routes, handlers, configs, migrations | Next routes, FastAPI, Django URLs | documented future/best-effort |
-| `type_aware_edges` | checker-backed declarations and call targets | TypeScript checker, Go packages | deferred |
+| `type_aware_edges` | checker-backed declarations and call targets | TypeScript checker, Go packages | TS/JS direct call targets today; declaration targets deferred |
 | `runtime_edges` | observed command/test/runtime traces | Grape-observed runs | narrow observed-result claims only |
 
 Unsupported or lower-capability providers must still emit a module/file node when safe, lexical rows when allowed, and diagnostics that describe missing graph coverage.
@@ -108,7 +108,7 @@ Invalidation should:
 
 Current implementation is useful but not broad language-aware indexing:
 
-- TypeScript/JavaScript files get deterministic AST-backed symbols, imports, exports, direct calls, and related-test orientation. Import and re-export edges use bounded TypeScript compiler module resolution for relative paths, `tsconfig` path aliases, and simple workspace package exports. The resolver only uses files already admitted into the current snapshot.
+- TypeScript/JavaScript files get deterministic AST-backed symbols, imports, exports, direct calls, and related-test orientation. Import and re-export edges use bounded TypeScript compiler module resolution for relative paths, `tsconfig` path aliases, and simple workspace package exports. Direct call edges use a bounded TypeScript checker pass when it can resolve the target declaration inside files already admitted into the current snapshot, then fall back to the older AST heuristic. The resolver only uses files already admitted into the current snapshot.
 - Every indexed file is tagged with normalized provider metadata. TypeScript/JavaScript AST rows use the `typescript_ast` provider. Safe fallback rows use the `generic_text` provider with explicit `module_edges` and `test_edges` capability-gap diagnostics.
 - Generic manifest detection tags package-root evidence for common manifests such as `package.json`, `pyproject.toml`, `requirements.txt`, `Cargo.toml`, `go.mod`, `pom.xml`, and Gradle build/settings files. Nested source files under those roots carry the manifest ref and manifest kind as index metadata.
 - High-confidence TypeScript/JavaScript AST declaration nodes can promote the narrow `repository_symbol_declaration_exists` claim only when covered by an accepted exact source excerpt window and `provider_symbol_declaration` proof; this proves declaration-span existence only.
@@ -130,7 +130,7 @@ This is acceptable for a controlled beta only if the promise stays: reliable con
 ## Known Failure Modes And Bad Assumptions
 
 - Shallow provider dispatch: `src/core/indexing/file-index-provider.ts` chooses between the TS/JS parser and generic text fallback. Grape does not yet have a per-language provider module tree.
-- JS/TS resolution is still bounded: Grape resolves relative paths, `tsconfig` path aliases, and simple workspace package exports from allowed snapshot files. It still does not resolve arbitrary `node_modules`, complex package export condition trees, generated code, framework routing, or full TypeScript checker declaration targets.
+- JS/TS resolution is still bounded: Grape resolves relative paths, `tsconfig` path aliases, simple workspace package exports, and direct call targets from allowed snapshot files. It still does not resolve arbitrary `node_modules`, complex package export condition trees, generated code, framework routing, or full TypeScript checker declaration targets.
 - Regex fallback is declaration-only: generic symbol detection recognizes conservative common declaration lines, but it can miss decorators, annotations, macros, overloads, generated code, nested declarations, language-specific type aliases, and framework entry points.
 - Language detection gaps: unknown extensions still collapse to `unknown`, and language labels do not imply graph extraction capability.
 - Monorepo flattening: repository snapshot and retrieval mostly treat the repo as one source pool. Explicit package-path tasks and package-scoped claim activation can use common-prefix scope metadata or manifest-backed package-root metadata from exact refs. Package manifests produce package-root index metadata, selected source retrieval can use manifest-derived package roots, and selected package context carries package-local manifest and lockfile dependency refs for common-prefix and manifest-derived package roots. Ranked tiers can spread across known package roots and indexed source languages before the global cap applies. Full package-aware budgets, dependency closure, and workspace graph policy are not implemented yet.
@@ -148,7 +148,7 @@ Before Grape claims broad polyglot or monorepo retrieval, it needs:
 - complete per-package capability metadata surfaced in artifacts or diagnostics
 - package/workspace boundary metadata consumed by retrieval, current-valid scope, and invalidation policy
 - per-package/per-language retrieval caps beyond the current explicit-path guard and in-tier package/language spreading
-- TypeScript checker-backed declaration and call-target resolution beyond module path resolution
+- TypeScript checker-backed declaration resolution and broader call-target coverage beyond direct calls
 - comparable external benchmarks and broader gold-label baselines for polyglot and monorepo scenarios beyond the current internal fixture estimates
 - tests that prove package-local manifest changes do not over-invalidate unrelated package context when dependency refs are scoped
 

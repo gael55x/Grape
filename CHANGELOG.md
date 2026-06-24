@@ -21,6 +21,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 ### Changed
 
 - TypeScript/JavaScript import graph indexing now resolves relative paths, `tsconfig` path aliases, and simple workspace package `exports` from allowed snapshot files before falling back to low-confidence unresolved edges.
+- TypeScript/JavaScript call graph indexing now uses a bounded TypeScript checker pass for direct call targets inside allowed snapshot files, then falls back to the older AST heuristic.
 - Compacted compression dependency metadata in public context artifacts and MCP payloads. Detailed compression input refs and hashes remain in local storage for inspection.
 - Added retention defaults to local `.grape/config.json`; older schema-1 configs without the field still read with the same defaults.
 - Added `grape compact` for preview-first context artifact, compression cache, FTS, derived symbol metadata, orphan snapshot, and invalidated ledger retention cleanup. It requires `--confirm` before deleting eligible old artifact rows, regular artifact files, unreferenced compression cache rows, old searchable text rows, old symbol metadata rows, old orphan snapshot rows, or old closed invalidation pairs.

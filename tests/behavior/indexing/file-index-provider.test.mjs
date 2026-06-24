@@ -24,7 +24,8 @@ test("file index provider dispatch selects TypeScript AST extraction for JS and 
       "lexical_path",
       "symbols_ast",
       "module_edges",
-      "test_edges"
+      "test_edges",
+      "type_aware_edges"
     ]);
     assert.deepEqual(selection.provider.providerDiagnostics, []);
     assert.ok(selection.ast);

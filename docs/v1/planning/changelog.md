@@ -8,6 +8,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- Added bounded TypeScript checker-backed direct call-target resolution to TS/JS indexing. Call edges now prefer checker-resolved declarations inside admitted snapshot files and fall back to the existing AST heuristic when the checker cannot resolve safely.
 - Added current-session observed failure-span links to task retrieval. Later compiles can use current-valid `observed_test_failure_span_link` claims to select linked candidate source/test refs, while rendering the link as selection evidence only.
 - Added retrieval confidence reporting to task source retrieval, repository artifacts, public context artifacts, MCP `grape_get_context` output, CLI compile output, and Markdown renderers. The state is `safe`, `partial`, or `missing_likely_files`, and `missing_likely_files` also adds `missing:task_retrieval_missing_likely_files` to public `missingContext`.
 - Added bounded TypeScript module resolution for indexing. TS/JS import and re-export edges now record whether a target was resolved by relative path, TypeScript compiler module resolution, workspace package exports, or left unresolved. Resolution only uses files already admitted into the current snapshot.

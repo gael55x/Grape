@@ -3,6 +3,7 @@ import { resolveImport, type ImportResolutionContext, type ImportResolutionMetho
 import { languageProviderMetadataFields, type LanguageProviderMetadata } from "./language-provider.js";
 import { packageRootMetadataFields, type PackageRootMetadata } from "./package-roots.js";
 import type { AstCallCandidate } from "./typescript-ast-index.js";
+import { typeAwareTargetForCall, type TypeScriptTypeAwareCallTarget } from "./typescript-type-aware-resolution.js";
 import type { FileIndexEdge, FileIndexInput, FileIndexNode, ParsedFileIndex } from "./file-index-types.js";
 import { moduleSymbolId } from "./file-index-nodes.js";
 
@@ -132,15 +133,16 @@ function detectCallEdges(
 ): FileIndexEdge[] {
   return (parsed.ast?.calls ?? []).map((call) => {
     const fromSymbol = containingSymbol(parsed, call) ?? parsed.moduleNode;
-    const targetSymbol = resolveCallTarget(parsed, call, symbolLookup, importResolutionContext);
-    const toRef = targetSymbol ? targetSymbol.name : call.name;
+    const target = resolveCallTarget(parsed, call, symbolLookup, importResolutionContext);
+    const targetSymbol = target?.symbol;
+    const toRef = targetSymbol ? targetSymbol.name : target?.targetPath ?? call.name;
     return {
       edgeId: `symbol_edge:${hashStableParts([
         input.repoId,
         input.snapshotId,
         fromSymbol.symbolId,
         "calls",
-        targetSymbol?.symbolId ?? toRef,
+        targetSymbol?.symbolId ?? target?.targetPath ?? toRef,
         String(call.line),
         String(call.column),
         call.expression
@@ -152,7 +154,7 @@ function detectCallEdges(
       toSymbolId: targetSymbol?.symbolId,
       toRef,
       edgeType: "calls",
-      confidence: targetSymbol ? "medium" : "low",
+      confidence: target?.resolutionMethod === "typescript_checker" ? "high" : targetSymbol ? "medium" : "low",
       discoveryMethod: "ast",
       metadata: {
         ...languageProviderMetadataFields(parsed.provider),
@@ -161,6 +163,11 @@ function detectCallEdges(
         expression: call.expression,
         line: call.line,
         column: call.column,
+        targetPath: target?.targetPath,
+        targetName: target?.targetName,
+        targetStartLine: target?.targetStartLine,
+        targetEndLine: target?.targetEndLine,
+        callResolutionMethod: target?.resolutionMethod ?? "unresolved",
         extractor: "typescript_ast"
       },
       createdAt: input.createdAt
@@ -254,26 +261,82 @@ function containingSymbol(parsed: ParsedFileIndex, call: AstCallCandidate): File
     .sort((left, right) => (left.endLine - left.startLine) - (right.endLine - right.startLine))[0];
 }
 
+interface ResolvedCallTarget {
+  readonly symbol?: FileIndexNode;
+  readonly targetPath?: string;
+  readonly targetName?: string;
+  readonly targetStartLine?: number;
+  readonly targetEndLine?: number;
+  readonly resolutionMethod: "typescript_checker" | "ast_heuristic";
+}
+
 function resolveCallTarget(
   parsed: ParsedFileIndex,
   call: AstCallCandidate,
   symbolLookup: SymbolLookup,
   importResolutionContext: ImportResolutionContext
-): FileIndexNode | undefined {
+): ResolvedCallTarget | undefined {
+  const typeAwareTarget = typeAwareTargetForCall(parsed.typeAwareCallTargets, call);
+  if (typeAwareTarget) {
+    const targetSymbol = symbolForTypeAwareTarget(typeAwareTarget, symbolLookup);
+    return {
+      symbol: targetSymbol,
+      targetPath: typeAwareTarget.targetPath,
+      targetName: typeAwareTarget.targetName,
+      targetStartLine: typeAwareTarget.targetStartLine,
+      targetEndLine: typeAwareTarget.targetEndLine,
+      resolutionMethod: "typescript_checker"
+    };
+  }
+
   const sameFile = symbolLookup.byPathAndName.get(`${parsed.file.path}:${call.name}`);
-  if (sameFile) return sameFile;
+  if (sameFile) {
+    return {
+      symbol: sameFile,
+      targetPath: sameFile.path,
+      targetName: sameFile.name,
+      resolutionMethod: "ast_heuristic"
+    };
+  }
 
   for (const candidate of parsed.ast?.imports ?? []) {
     const binding = candidate.bindings.find((entry) => entry.localName === call.name);
     if (!binding) continue;
     const resolvedImport = resolveImport(parsed.file.path, candidate.specifier, importResolutionContext);
     if (!resolvedImport) continue;
-    return symbolLookup.byPathAndName.get(`${resolvedImport.targetPath}:${binding.importedName}`) ??
+    const targetSymbol = symbolLookup.byPathAndName.get(`${resolvedImport.targetPath}:${binding.importedName}`) ??
       symbolLookup.byPathAndName.get(`${resolvedImport.targetPath}:${call.name}`);
+    if (targetSymbol) {
+      return {
+        symbol: targetSymbol,
+        targetPath: targetSymbol.path,
+        targetName: targetSymbol.name,
+        resolutionMethod: "ast_heuristic"
+      };
+    }
   }
 
   const matches = symbolLookup.byName.get(call.name) ?? [];
-  return matches.length === 1 ? matches[0] : undefined;
+  if (matches.length !== 1) return undefined;
+  return {
+    symbol: matches[0],
+    targetPath: matches[0].path,
+    targetName: matches[0].name,
+    resolutionMethod: "ast_heuristic"
+  };
+}
+
+function symbolForTypeAwareTarget(
+  target: TypeScriptTypeAwareCallTarget,
+  symbolLookup: SymbolLookup
+): FileIndexNode | undefined {
+  const sameLineSymbol = (symbolLookup.byName.get(target.targetName) ?? []).find((symbol) =>
+    symbol.path === target.targetPath &&
+    symbol.startLine === target.targetStartLine
+  );
+  if (sameLineSymbol) return sameLineSymbol;
+  return symbolLookup.byPathAndName.get(`${target.targetPath}:${target.targetName}`) ??
+    symbolLookup.byPathAndName.get(`${target.targetPath}:default`);
 }
 
 function resolutionMethodForMetadata(method: ImportResolutionMethod | undefined): string {
