@@ -1,6 +1,6 @@
 import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
-import { collectBenchmarkFailures, roundBenchmarkMetric } from "./rules.js";
+import { benchmarkRules } from "./rules.js";
 import type {
   BenchmarkTurnMetric,
   NoChangeSyncBenchmarkGate,
@@ -48,14 +48,14 @@ export function runTokenReductionBenchmark(
     const noChangeSync = noChangeSyncGate(first, second);
     const failures = [
       ...tokenReductionFailures(first, second),
-      ...noChangeSync.failures.map((failure) => `${noChangeSync.benchmark}:${failure}`)
+      ...benchmarkRules.prefixFailures(noChangeSync.benchmark, noChangeSync.failures)
     ];
 
     return {
       benchmark: "bench_token_reduction_after_first_turn",
       fixture: input.fixtureName,
       task: input.task,
-      status: failures.length === 0 ? "pass" : "fail",
+      status: benchmarkRules.status(failures),
       workspacePath: input.keepWorkspace ? prepared.workspacePath : undefined,
       thresholds: {
         minSecondTurnReductionPercent,
@@ -96,7 +96,7 @@ function tokenReductionFailures(
     };
   }
 ): string[] {
-  return collectBenchmarkFailures([
+  return benchmarkRules.collectFailures([
     ["first_turn_overhead_above_threshold", firstTurn.overheadPercent <= maxFirstTurnOverheadPercent],
     [
       "first_turn_agent_output_overhead_above_threshold",
@@ -119,9 +119,8 @@ function noChangeSyncGate(
   firstTurn: BenchmarkTurnMetric,
   secondTurn: BenchmarkTurnMetric
 ): NoChangeSyncBenchmarkGate {
-  const secondTurnDurationRatio =
-    firstTurn.durationMs > 0 ? roundBenchmarkMetric(secondTurn.durationMs / firstTurn.durationMs) : 0;
-  const failures = collectBenchmarkFailures([
+  const secondTurnDurationRatio = benchmarkRules.durationRatio(firstTurn.durationMs, secondTurn.durationMs);
+  const failures = benchmarkRules.collectFailures([
     [
       "second_turn_duration_ratio_above_threshold",
       secondTurnDurationRatio <= maxNoChangeSyncSecondTurnDurationRatio
@@ -134,7 +133,7 @@ function noChangeSyncGate(
 
   return {
     benchmark: "bench_no_change_sync_time",
-    status: failures.length === 0 ? "pass" : "fail",
+    status: benchmarkRules.status(failures),
     thresholds: {
       maxSecondTurnDurationRatio: maxNoChangeSyncSecondTurnDurationRatio,
       requireCleanSecondTurn: true,
@@ -152,43 +151,28 @@ function noChangeSyncGate(
   };
 }
 
-function totalsFor(turns: readonly {
-  readonly durationMs: number;
-  readonly grapeTokens: number;
-  readonly naiveTokens: number;
-  readonly reductionPercent: number;
-  readonly overheadPercent: number;
-  readonly agentOutputOverheadPercent: number;
-  readonly serializedPackTokens: number;
-  readonly serializedAgentOutputTokens: number;
-  readonly omittedUnchangedTokens: number;
-  readonly pinnedOverheadTokens: number;
-  readonly invalidationOverheadTokens: number;
-  readonly invalidationItemCount: number;
-  readonly restoreAvailableCount: number;
-  readonly storageFootprint: {
-    readonly grapeBytes: number;
-  };
-}[]): TokenReductionBenchmarkResult["totals"] {
+function totalsFor(turns: readonly BenchmarkTurnMetric[]): TokenReductionBenchmarkResult["totals"] {
   const [first, second] = turns;
+  const total = (select: (turn: BenchmarkTurnMetric) => number): number =>
+    benchmarkRules.sum(turns, select);
   const secondTurnStorageGrowthBytes =
     second && first ? second.storageFootprint.grapeBytes - first.storageFootprint.grapeBytes : 0;
   return {
-    wallClockMs: Math.round(turns.reduce((total, turn) => total + turn.durationMs, 0) * 100) / 100,
+    wallClockMs: benchmarkRules.round(total((turn) => turn.durationMs)),
     firstTurnTokens: first?.grapeTokens ?? 0,
     firstTurnNaiveTokens: first?.naiveTokens ?? 0,
     firstTurnOverheadPercent: first?.overheadPercent ?? 0,
     secondTurnTokens: second?.grapeTokens ?? 0,
     secondTurnNaiveTokens: second?.naiveTokens ?? 0,
     secondTurnReductionPercent: second?.reductionPercent ?? 0,
-    serializedPackTokens: turns.reduce((total, turn) => total + turn.serializedPackTokens, 0),
-    serializedAgentOutputTokens: turns.reduce((total, turn) => total + turn.serializedAgentOutputTokens, 0),
+    serializedPackTokens: total((turn) => turn.serializedPackTokens),
+    serializedAgentOutputTokens: total((turn) => turn.serializedAgentOutputTokens),
     firstTurnAgentOutputOverheadPercent: first?.agentOutputOverheadPercent ?? 0,
-    omittedUnchangedTokens: turns.reduce((total, turn) => total + turn.omittedUnchangedTokens, 0),
-    pinnedOverheadTokens: turns.reduce((total, turn) => total + turn.pinnedOverheadTokens, 0),
-    invalidationOverheadTokens: turns.reduce((total, turn) => total + turn.invalidationOverheadTokens, 0),
-    invalidationItemCount: turns.reduce((total, turn) => total + turn.invalidationItemCount, 0),
-    restoreAvailableCount: turns.reduce((total, turn) => total + turn.restoreAvailableCount, 0),
+    omittedUnchangedTokens: total((turn) => turn.omittedUnchangedTokens),
+    pinnedOverheadTokens: total((turn) => turn.pinnedOverheadTokens),
+    invalidationOverheadTokens: total((turn) => turn.invalidationOverheadTokens),
+    invalidationItemCount: total((turn) => turn.invalidationItemCount),
+    restoreAvailableCount: total((turn) => turn.restoreAvailableCount),
     secondTurnStorageGrowthBytes
   };
 }

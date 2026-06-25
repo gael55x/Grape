@@ -1,6 +1,6 @@
 import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
-import { collectBenchmarkFailures } from "./rules.js";
+import { benchmarkRules } from "./rules.js";
 import type { SessionResetBenchmarkInput, SessionResetBenchmarkResult } from "./types.js";
 
 export function runSessionResetBenchmark(input: SessionResetBenchmarkInput): SessionResetBenchmarkResult {
@@ -41,7 +41,7 @@ export function runSessionResetBenchmark(input: SessionResetBenchmarkInput): Ses
       benchmark: "bench_diff_vs_naive_resend",
       fixture: input.fixtureName,
       task,
-      status: failures.length === 0 ? "pass" : "fail",
+      status: benchmarkRules.status(failures),
       workspacePath: input.keepWorkspace ? prepared.workspacePath : undefined,
       turns: [first, second],
       failures
@@ -56,7 +56,7 @@ function sessionResetFailures(secondTurn: {
   readonly unsafeOmissions: number;
   readonly staleItemsSent: number;
 }): string[] {
-  return collectBenchmarkFailures([
+  return benchmarkRules.collectFailures([
     ["session_reset_missing_invalidate_previous", (secondTurn.stateCounts.INVALIDATE_PREVIOUS ?? 0) > 0],
     ["session_reset_missing_full_resend_new_items", (secondTurn.stateCounts.NEW ?? 0) > 0],
     ["session_reset_must_not_omit_unchanged", (secondTurn.stateCounts.OMIT_UNCHANGED ?? 0) === 0],

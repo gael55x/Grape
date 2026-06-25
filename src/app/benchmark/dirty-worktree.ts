@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { execGitInBenchmarkRepo, prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
-import { collectBenchmarkFailures } from "./rules.js";
+import { benchmarkRules } from "./rules.js";
 import type { DirtyWorktreeBenchmarkInput, DirtyWorktreeBenchmarkResult } from "./types.js";
 
 const editedSourceRef = "src/calculateDiscount.ts";
@@ -62,7 +62,7 @@ export function runDirtyWorktreeBenchmark(input: DirtyWorktreeBenchmarkInput): D
       benchmark: "bench_dirty_worktree_invalidation",
       fixture: input.fixtureName,
       task,
-      status: failures.length === 0 ? "pass" : "fail",
+      status: benchmarkRules.status(failures),
       workspacePath: input.keepWorkspace ? prepared.workspacePath : undefined,
       scenario,
       turns: [first, second],
@@ -110,7 +110,7 @@ function dirtyWorktreeFailures(input: {
   };
 }): string[] {
   const { scenario, second } = input;
-  return collectBenchmarkFailures([
+  return benchmarkRules.collectFailures([
     ["dirty_worktree_source_not_tracked", scenario.sourceWasTracked],
     ["dirty_worktree_source_not_clean_before_edit", scenario.sourceCleanBeforeEdit],
     ["dirty_worktree_source_not_dirty_after_edit", scenario.sourceDirtyAfterEdit],

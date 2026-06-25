@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { execGitInBenchmarkRepo, prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
-import { collectBenchmarkFailures } from "./rules.js";
+import { benchmarkRules } from "./rules.js";
 import type { BranchSwitchBenchmarkInput, BranchSwitchBenchmarkResult } from "./types.js";
 
 export function runBranchSwitchBenchmark(input: BranchSwitchBenchmarkInput): BranchSwitchBenchmarkResult {
@@ -62,7 +62,7 @@ export function runBranchSwitchBenchmark(input: BranchSwitchBenchmarkInput): Bra
       benchmark: "bench_branch_switch_invalidation",
       fixture: input.fixtureName,
       task,
-      status: failures.length === 0 ? "pass" : "fail",
+      status: benchmarkRules.status(failures),
       workspacePath: input.keepWorkspace ? prepared.workspacePath : undefined,
       turns: [first, second],
       failures
@@ -77,7 +77,7 @@ function branchSwitchFailures(secondTurn: {
   readonly unsafeOmissions: number;
   readonly staleItemsSent: number;
 }): string[] {
-  return collectBenchmarkFailures([
+  return benchmarkRules.collectFailures([
     ["branch_switch_missing_invalidate_previous", (secondTurn.stateCounts.INVALIDATE_PREVIOUS ?? 0) > 0],
     ["unsafe_omissions_present", secondTurn.unsafeOmissions === 0],
     ["stale_items_sent_present", secondTurn.staleItemsSent === 0]

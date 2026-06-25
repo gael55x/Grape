@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
-import { collectBenchmarkFailures, roundBenchmarkMetric } from "./rules.js";
+import { benchmarkRules } from "./rules.js";
 import type {
   BenchmarkTurnMetric,
   ChangedFileInvalidationBenchmarkGate,
@@ -62,15 +62,16 @@ export function runStaleSourceBenchmark(input: StaleSourceBenchmarkInput): Stale
     });
     const failures = [
       ...staleSourceFailures(second),
-      ...changedFileInvalidation.failures.map(
-        (failure) => `${changedFileInvalidation.benchmark}:${failure}`
+      ...benchmarkRules.prefixFailures(
+        changedFileInvalidation.benchmark,
+        changedFileInvalidation.failures
       )
     ];
     return {
       benchmark: "bench_stale_source_invalidation",
       fixture: input.fixtureName,
       task,
-      status: failures.length === 0 ? "pass" : "fail",
+      status: benchmarkRules.status(failures),
       workspacePath: input.keepWorkspace ? prepared.workspacePath : undefined,
       changedFileInvalidation,
       turns: [first, second],
@@ -86,7 +87,7 @@ function staleSourceFailures(secondTurn: {
   readonly unsafeOmissions: number;
   readonly staleItemsSent: number;
 }): string[] {
-  return collectBenchmarkFailures([
+  return benchmarkRules.collectFailures([
     ["stale_source_missing_invalidate_previous", (secondTurn.stateCounts.INVALIDATE_PREVIOUS ?? 0) > 0],
     ["unsafe_omissions_present", secondTurn.unsafeOmissions === 0],
     ["stale_items_sent_present", secondTurn.staleItemsSent === 0]
@@ -103,9 +104,8 @@ function changedFileInvalidationGate(input: {
     (entry) => entry.state === "INVALIDATE_PREVIOUS" && entry.inputRefs.includes(changedSourceRef)
   ).length;
   const secondTurnOmitUnchangedCount = secondTurn.stateCounts.OMIT_UNCHANGED ?? 0;
-  const secondTurnDurationRatio =
-    firstTurn.durationMs > 0 ? roundBenchmarkMetric(secondTurn.durationMs / firstTurn.durationMs) : 0;
-  const failures = collectBenchmarkFailures([
+  const secondTurnDurationRatio = benchmarkRules.durationRatio(firstTurn.durationMs, secondTurn.durationMs);
+  const failures = benchmarkRules.collectFailures([
     ["changed_file_edit_not_applied", input.changedSourceEditApplied],
     [
       "second_turn_duration_above_threshold",
@@ -123,7 +123,7 @@ function changedFileInvalidationGate(input: {
 
   return {
     benchmark: "bench_changed_file_invalidation_time",
-    status: failures.length === 0 ? "pass" : "fail",
+    status: benchmarkRules.status(failures),
     thresholds: {
       maxSecondTurnDurationMs: maxChangedFileInvalidationSecondTurnDurationMs,
       requireSourceEditApplied: true,
