@@ -32,7 +32,7 @@ The goal is small: let the agent call `grape_get_context` from the repo it is ed
 
 Cursor auto-install writes project-local `.cursor/mcp.json`. Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely. Codex auto-install writes project-local `.codex/config.toml` for trusted Codex projects.
 
-Grape does not silently touch unsupported client config files. Other clients, and published beta builds that do not recognize `grape mcp --install`, remain on the manual path:
+Grape does not silently touch unsupported client config files. Other clients, and installed CLI builds that do not recognize `grape mcp --install`, remain on the manual path:
 
 ```bash
 grape mcp --print-config
@@ -58,8 +58,6 @@ Run those commands from the repository root. The plugin lives in `plugins/grape`
 Run `npm run build` and `npm run codex:check` to verify the local Codex path. The check uses temp repositories and an isolated Codex home.
 
 Use `--dry-run` to preview the target path and final JSON without writing. If an existing `mcpServers.grape` entry differs, Grape requires `--force` before replacing only that entry. It preserves unrelated MCP servers.
-
-This auto-install behavior is separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write client config files.
 
 The default response mode is `agent_pack`. It is the normal mode for coding agents because it returns compact previews, diff state, restore IDs, invalidation IDs, artifact refs, warnings, and recovery guidance. Use `outputMode: "full"` only for inspection or compatibility.
 

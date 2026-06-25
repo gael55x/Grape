@@ -110,7 +110,7 @@ Run those commands from the repository root. The plugin lives in `plugins/grape`
 
 Run `npm run build` and `npm run codex:check` to verify the local Codex path. The check uses temp repositories and an isolated Codex home.
 
-Other clients remain manual unless their config paths can be handled safely. That is intentional. Grape should not guess where to write global editor config. If a published beta build does not recognize `grape mcp --install`, use the manual fallback until the next build that includes client auto-install is published.
+Other clients remain manual unless their config paths can be handled safely. That is intentional. Grape should not guess where to write global editor config. If your installed CLI does not recognize `grape mcp --install`, use the manual fallback and check `grape --version`.
 
 Manual fallback:
 
@@ -133,8 +133,6 @@ Typical stdio MCP entry:
 ```
 
 The `cwd` and `--repo` path must point at the same repository root.
-
-The auto-install commands are separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write Cursor, Claude Desktop, or Codex config files.
 
 What the client runs:
 

@@ -177,7 +177,7 @@ npm run build
 npm run codex:check
 ```
 
-For other MCP clients, or for published beta builds that do not recognize `grape mcp --install`, use the manual config fallback:
+For other MCP clients, or if your installed CLI does not recognize `grape mcp --install`, use the manual config fallback:
 
 ```bash
 grape mcp --print-config
@@ -190,8 +190,6 @@ grape mcp --stdio --repo <repo-root>
 ```
 
 Use the repository root for both `cwd` and `--repo`. MCP stdio messages are newline-delimited JSON-RPC objects. Do not use `Content-Length` header framing.
-
-The auto-install commands are separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write Cursor, Claude Desktop, or Codex config files.
 
 After setup, your MCP-capable coding agent calls:
 

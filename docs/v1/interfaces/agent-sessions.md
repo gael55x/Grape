@@ -76,7 +76,7 @@ codex plugin add grape@grape-local
 
 Run those commands from the repository root. The plugin exposes `grape mcp --stdio` and a Grape skill. It assumes `grape` is on `PATH`. Use the direct Codex installer when you need `.codex/config.toml` to pin the repository working directory.
 
-Manual fallback for other MCP clients, or for published beta builds that do not recognize `grape mcp --install`:
+Manual fallback for other MCP clients, or for installed CLI builds that do not recognize `grape mcp --install`:
 
 ```bash
 grape mcp --print-config
@@ -99,8 +99,6 @@ Minimal stdio example (replace `<repo-root>` with your repository path):
 The `cwd` and `--repo` path must point at the same repository root. See [`getting-started.md`](getting-started.md) for the full onboarding path and troubleshooting checklist.
 
 Put this JSON in the MCP server configuration for your coding agent or editor. Grape's automated trial verifies stdio JSON-RPC behavior and installed-package dry-runs, not every editor's UI placement. Treat client-specific UI steps as verified only when a human client trial records them.
-
-The auto-install commands are separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made the stdio server connect correctly; it did not write Cursor or Claude Desktop config.
 
 Copy-ready agent instruction:
 

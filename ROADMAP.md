@@ -21,9 +21,9 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 ## Done
 
 - `grape-context@0.1.0-alpha.2` and `0.1.0-alpha.3` are published on npm with GitHub releases (historical alpha milestones).
-- `grape-context@1.0.0-beta.6` is published on npm under the `latest` and `beta` dist-tags. `1.0.0-beta.0` remains the first beta tag and the version tied to the first committed post-beta benchmark baseline.
+- `grape-context@1.0.0-beta.9` is published on npm under the `latest` and `beta` dist-tags. `1.0.0-beta.0` remains the first beta tag and the version tied to the first committed post-beta benchmark baseline.
 - The context transport wedge is proven through CLI and MCP `grape_get_context`.
-- MCP stdio smoke exists, including framed JSON-RPC transport.
+- MCP stdio smoke exists, including newline-delimited JSON-RPC transport.
 - Same-session two-turn omission works when task/session identity is stable.
 - `PINNED`, `OMIT_UNCHANGED`, `RESTORE_AVAILABLE`, and `INVALIDATE_PREVIOUS` are implemented in the current transport slice.
 - Branch, dependency, session reset, and restore-path invalidation are proven through behavior coverage.
@@ -63,7 +63,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - Broader benchmark fixtures and labeled benchmark expectations.
 - Provider capability diagnostics plus deeper polyglot and monorepo scenarios.
 - Better dirty-worktree, branch, and session handling for normal agent workflows.
-- Parsed durable project rules and richer conflict creation/resolution.
+- Richer rule scope, candidate/generated rule promotion, and conflict creation/resolution.
 
 ## Later
 

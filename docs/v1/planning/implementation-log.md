@@ -145,7 +145,7 @@ Keep entries simple:
 ### 2026-06-17 - MCP Client Config Auto-Wiring
 
 - Author/agent: Gaille Amolong / Codex
-- Summary: added actual Cursor and Claude Desktop MCP client config installation through `grape mcp --install --client cursor` and `grape mcp --install --client claude`. Cursor writes project-local `.cursor/mcp.json`; Claude Desktop writes `claude_desktop_config.json` only when the platform path can be resolved safely. The flow supports dry-run previews, preserves unrelated config, refuses invalid JSON, treats identical Grape entries as already configured, and requires `--force` before replacing a conflicting existing `mcpServers.grape` entry. This is separate from the 1.0.0-beta.7 stdio framing fix, which did not write client config files.
+- Summary: added actual Cursor and Claude Desktop MCP client config installation through `grape mcp --install --client cursor` and `grape mcp --install --client claude`. Cursor writes project-local `.cursor/mcp.json`; Claude Desktop writes `claude_desktop_config.json` only when the platform path can be resolved safely. The flow supports dry-run previews, preserves unrelated config, refuses invalid JSON, treats identical Grape entries as already configured, and requires `--force` before replacing a conflicting existing `mcpServers.grape` entry. The CLI install flow is tracked separately from the stdio JSON-line transport fix.
 - Tests or checks run: focused MCP client install behavior tests before the full validation gate.
 - Risks or follow-ups: Cline, Continue, generic VS Code, and other clients remain on `grape mcp --print-config` until their config paths can be handled safely.
 
@@ -904,3 +904,10 @@ Keep entries simple:
 - Summary: hardened the beta release contract around privacy, current-valid truth, and compact MCP transport. Repo-scoped CLI and benchmark output now sanitize against the active repo root and common local path aliases. Current-valid retrieval now excludes claims blocked by explicit active `contradicts`, `violates`, and `supersedes` edges while keeping `needs_review` as inspection metadata. `grape_get_artifact` defaults to metadata and returns stored public artifact JSON only through explicit `outputMode: "full"` / `artifactRef.fullArtifactTool`. GitHub Actions now runs the full `beta:check` gate.
 - Checks run: `npm run build:test`; `npm run docs:check`; focused CLI privacy, claim-conflict, and MCP stdio behavior tests; `npm run beta:check` (pass, 199/199 behavior tests plus benchmark suite and alpha e2e smoke).
 - Risks/follow-ups: this does not add broad durable memory, automatic conflict resolution, root-cause/correctness claims, semantic retrieval, or real Composer/Graphify/Grape benchmark results. Those remain explicit beta/1.0 validation work.
+
+### 2026-06-25 - Functional-Core Simplification Pass
+
+- Author/agent: Gaille Amolong / Codex
+- Summary: audited V1 code and docs for a 1.0 simplification pass. Moved purge session-lock inspection behind the privacy storage repository, shared MCP read-tool input parsing, centralized proof-backed claim candidate/claim/proof persistence, removed a hidden beta-doc retrieval exclusion, table-drove retrieval tier classification, and trimmed stale setup/release-history docs.
+- Checks run: `npm run build:test`; `npm run typecheck`; `npm run docs:check`; focused CLI, MCP, claim persistence, observed-run, observed-test-failure, and task-source retrieval behavior tests.
+- Risks/follow-ups: this intentionally avoids broad retention-policy rewrites and large compile/retrieval reshaping. Stable 1.0 still needs broader durable claim/proof retrieval hardening, richer exact-span ranking, human MCP client trial evidence when release policy requires it, and continued docs alignment as the contract narrows.
