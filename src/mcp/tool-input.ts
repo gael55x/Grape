@@ -27,6 +27,13 @@ export function optionalString(value: Record<string, unknown>, key: string): str
   return field;
 }
 
+export function optionalNonEmptyString(value: Record<string, unknown>, key: string): string | undefined {
+  const field = value[key];
+  if (field === undefined) return undefined;
+  if (typeof field !== "string" || field.trim() === "") throw new Error(`${key} must be a non-empty string`);
+  return field;
+}
+
 export function requiredInteger(value: Record<string, unknown>, key: string): number {
   const field = value[key];
   if (!Number.isInteger(field)) throw new Error(`${key} must be an integer`);
@@ -35,6 +42,13 @@ export function requiredInteger(value: Record<string, unknown>, key: string): nu
 
 export function requiredBoolean(value: Record<string, unknown>, key: string): boolean {
   const field = value[key];
+  if (typeof field !== "boolean") throw new Error(`${key} must be a boolean`);
+  return field;
+}
+
+export function optionalBoolean(value: Record<string, unknown>, key: string): boolean | undefined {
+  const field = value[key];
+  if (field === undefined) return undefined;
   if (typeof field !== "boolean") throw new Error(`${key} must be a boolean`);
   return field;
 }

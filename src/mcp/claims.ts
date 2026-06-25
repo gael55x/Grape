@@ -1,5 +1,6 @@
 import { listLocalClaims } from "../app/local-project/index.js";
 import type { ListLocalClaimsResult } from "../app/local-project/index.js";
+import { assertAllowedFields, isRecord, optionalBoolean } from "./tool-input.js";
 
 export interface GrapeGetClaimsInput {
   readonly activeOnly?: boolean;
@@ -19,27 +20,10 @@ export function runGrapeGetClaimsTool(input: unknown, rootPath: string): GrapeGe
 
 function parseInput(input: unknown): GrapeGetClaimsInput {
   if (!isRecord(input)) throw new Error("grape_get_claims arguments must be an object");
-  assertAllowedFields(input, ["activeOnly"]);
+  assertAllowedFields(input, ["activeOnly"], "grape_get_claims");
   return {
-    activeOnly: optionalBoolean(input.activeOnly, "activeOnly")
+    activeOnly: optionalBoolean(input, "activeOnly")
   };
-}
-
-function optionalBoolean(value: unknown, field: string): boolean | undefined {
-  if (value === undefined) return undefined;
-  if (typeof value !== "boolean") throw new Error(`${field} must be a boolean`);
-  return value;
-}
-
-function assertAllowedFields(value: Record<string, unknown>, allowed: readonly string[]): void {
-  const allowedSet = new Set(allowed);
-  for (const key of Object.keys(value)) {
-    if (!allowedSet.has(key)) throw new Error(`unsupported grape_get_claims argument: ${key}`);
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function omitRootPath(result: ListLocalClaimsResult): GrapeGetClaimsOutput {

@@ -1,5 +1,6 @@
 import { listLocalConflicts } from "../app/local-project/index.js";
 import type { ListLocalConflictsResult } from "../app/local-project/inspection/conflicts.js";
+import { assertAllowedFields, isRecord } from "./tool-input.js";
 
 export interface GrapeGetConflictsInput {}
 
@@ -12,19 +13,8 @@ export function runGrapeGetConflictsTool(input: unknown, rootPath: string): Grap
 
 function parseInput(input: unknown): GrapeGetConflictsInput {
   if (!isRecord(input)) throw new Error("grape_get_conflicts arguments must be an object");
-  assertAllowedFields(input, []);
+  assertAllowedFields(input, [], "grape_get_conflicts");
   return {};
-}
-
-function assertAllowedFields(value: Record<string, unknown>, allowed: readonly string[]): void {
-  const allowedSet = new Set(allowed);
-  for (const key of Object.keys(value)) {
-    if (!allowedSet.has(key)) throw new Error(`unsupported grape_get_conflicts argument: ${key}`);
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function omitRootPath(result: ListLocalConflictsResult): GrapeGetConflictsOutput {

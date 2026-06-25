@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { getLocalArtifact } from "../app/local-project/index.js";
 import type { GetLocalArtifactResult } from "../app/local-project/index.js";
+import { assertAllowedFields, isRecord, requiredString } from "./tool-input.js";
 
 const artifactOutputModes = ["metadata", "full"] as const;
 type GrapeGetArtifactOutputMode = (typeof artifactOutputModes)[number];
@@ -38,25 +39,11 @@ export function runGrapeGetArtifactTool(input: unknown, rootPath: string): Grape
 
 function parseInput(input: unknown): GrapeGetArtifactInput {
   if (!isRecord(input)) throw new Error("grape_get_artifact arguments must be an object");
-  assertAllowedFields(input, ["artifactId", "outputMode"]);
+  assertAllowedFields(input, ["artifactId", "outputMode"], "grape_get_artifact");
   return {
-    artifactId: requiredString(input.artifactId, "artifactId"),
+    artifactId: requiredString(input, "artifactId"),
     outputMode: optionalOutputMode(input.outputMode)
   };
-}
-
-function requiredString(value: unknown, field: string): string {
-  if (typeof value !== "string" || value.trim() === "") {
-    throw new Error(`${field} must be a non-empty string`);
-  }
-  return value;
-}
-
-function assertAllowedFields(value: Record<string, unknown>, allowed: readonly string[]): void {
-  const allowedSet = new Set(allowed);
-  for (const key of Object.keys(value)) {
-    if (!allowedSet.has(key)) throw new Error(`unsupported grape_get_artifact argument: ${key}`);
-  }
 }
 
 function optionalOutputMode(value: unknown): GrapeGetArtifactOutputMode | undefined {
@@ -65,10 +52,6 @@ function optionalOutputMode(value: unknown): GrapeGetArtifactOutputMode | undefi
     throw new Error("outputMode must be metadata or full");
   }
   return value as GrapeGetArtifactOutputMode;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function omitRootPath(result: GetLocalArtifactResult): GrapeGetArtifactOutput {
