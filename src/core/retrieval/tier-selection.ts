@@ -14,6 +14,7 @@ export type SelectionReason =
   | "lexical_match";
 
 type SelectionTier = "1a" | "1b" | "2" | "3";
+type TierBucket = "tier1a" | "tier1b" | "tier2" | "tier3";
 
 export interface SelectTieredSourceRefsInput {
   readonly selectedReasons: ReadonlyMap<string, ReadonlySet<SelectionReason>>;
@@ -28,6 +29,31 @@ export interface TieredSourceSelectionResult {
   readonly selectedSourceRefs: readonly string[];
   readonly omittedWarnings: readonly string[];
 }
+
+const selectionTierOrder = ["1a", "1b", "2", "3"] as const satisfies readonly SelectionTier[];
+
+const tierBucketBySelectionTier = {
+  "1a": "tier1a",
+  "1b": "tier1b",
+  "2": "tier2",
+  "3": "tier3"
+} as const satisfies Record<SelectionTier, TierBucket>;
+
+const selectionTierByReason = {
+  explicit_seed: "1a",
+  test_seed: "1b",
+  observed_failure_link: "2",
+  related_test: "2",
+  symbol_match: "2",
+  graph_related: "3",
+  lexical_match: "3"
+} as const satisfies Record<SelectionReason, SelectionTier>;
+
+const exactEvidenceRolePriority = [
+  "observed_failure_link",
+  "related_test",
+  "symbol_match"
+] as const satisfies readonly SelectionReason[];
 
 export function selectTieredSourceRefs(input: SelectTieredSourceRefsInput): TieredSourceSelectionResult {
   const allCandidateRefs = [...input.selectedReasons.keys()];
@@ -125,38 +151,27 @@ function partitionByTier(selectedReasons: ReadonlyMap<string, ReadonlySet<Select
   readonly tier2: readonly string[];
   readonly tier3: readonly string[];
 } {
-  const tier1a: string[] = [];
-  const tier1b: string[] = [];
-  const tier2: string[] = [];
-  const tier3: string[] = [];
+  const tiers: Record<TierBucket, string[]> = {
+    tier1a: [],
+    tier1b: [],
+    tier2: [],
+    tier3: []
+  };
 
   for (const [sourceRef, reasons] of selectedReasons) {
-    switch (strongestTier(reasons)) {
-      case "1a":
-        tier1a.push(sourceRef);
-        break;
-      case "1b":
-        tier1b.push(sourceRef);
-        break;
-      case "2":
-        tier2.push(sourceRef);
-        break;
-      case "3":
-        tier3.push(sourceRef);
-        break;
-    }
+    tiers[tierBucketBySelectionTier[strongestTier(reasons)]].push(sourceRef);
   }
 
-  return { tier1a, tier1b, tier2, tier3 };
+  return tiers;
 }
 
 function strongestTier(reasons: ReadonlySet<SelectionReason>): SelectionTier {
-  if (reasons.has("explicit_seed")) return "1a";
-  if (reasons.has("test_seed")) return "1b";
-  if (reasons.has("symbol_match") || reasons.has("related_test") || reasons.has("observed_failure_link")) {
-    return "2";
-  }
-  return "3";
+  const reasonList = [...reasons];
+  return (
+    selectionTierOrder.find((tier) =>
+      reasonList.some((reason) => selectionTierByReason[reason] === tier)
+    ) ?? "3"
+  );
 }
 
 function evidenceRolesBySourceRef(
@@ -173,10 +188,7 @@ function evidenceRolesBySourceRef(
 
 function exactEvidenceRole(reasons: ReadonlySet<SelectionReason> | undefined): string | undefined {
   if (!reasons) return undefined;
-  if (reasons.has("observed_failure_link")) return "observed_failure_link";
-  if (reasons.has("related_test")) return "related_test";
-  if (reasons.has("symbol_match")) return "symbol_match";
-  return undefined;
+  return exactEvidenceRolePriority.find((reason) => reasons.has(reason));
 }
 
 function rankTierRefs(
