@@ -101,6 +101,30 @@ export interface NoChangeSyncBenchmarkGate {
   readonly failures: readonly string[];
 }
 
+export interface ChangedFileInvalidationBenchmarkGate {
+  readonly benchmark: "bench_changed_file_invalidation_time";
+  readonly status: BenchmarkStatus;
+  readonly thresholds: {
+    readonly maxSecondTurnDurationMs: number;
+    readonly requireSourceEditApplied: true;
+    readonly requireInvalidatePrevious: true;
+    readonly requireChangedSourceInvalidation: true;
+    readonly requireNoOmitUnchangedAfterChange: true;
+    readonly requireZeroUnsafeOmissions: true;
+    readonly requireZeroStaleItemsSent: true;
+  };
+  readonly changedSourceRef: string;
+  readonly firstTurnDurationMs: number;
+  readonly secondTurnDurationMs: number;
+  readonly secondTurnDurationRatio: number;
+  readonly secondTurnInvalidationItemCount: number;
+  readonly secondTurnOmitUnchangedCount: number;
+  readonly invalidationItemsReferencingChangedSource: number;
+  readonly changedSourceEditApplied: boolean;
+  readonly secondTurnDirtyWorktree: boolean;
+  readonly failures: readonly string[];
+}
+
 export interface TokenReductionBenchmarkResult {
   readonly benchmark: "bench_token_reduction_after_first_turn";
   readonly fixture: string;
@@ -156,6 +180,7 @@ export interface StaleSourceBenchmarkResult {
   readonly task: string;
   readonly status: BenchmarkStatus;
   readonly workspacePath?: string;
+  readonly changedFileInvalidation: ChangedFileInvalidationBenchmarkGate;
   readonly turns: readonly BenchmarkTurnMetric[];
   readonly failures: readonly string[];
 }

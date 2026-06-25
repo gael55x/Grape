@@ -62,7 +62,7 @@ Do not change runtime source hashing to compensate for fixture checkout differen
 | `clean-typescript-app` | `bench_token_reduction_after_first_turn` | two-turn compile; `OMIT_UNCHANGED` + `RESTORE_AVAILABLE`; token reduction threshold; zero unsafe omissions |
 | `branch-switch-typescript-app` | `bench_branch_switch_invalidation` | turn 2 on `feature/context` emits `INVALIDATE_PREVIOUS`; zero unsafe omissions |
 | `dirty-worktree-typescript-app` | `bench_dirty_worktree_invalidation` | turn 2 after an uncommitted tracked source edit reports dirty worktree, emits source-specific `INVALIDATE_PREVIOUS`, emits no `OMIT_UNCHANGED`, and has zero unsafe omissions or stale sends |
-| `stale-source-typescript-app` | `bench_stale_source_invalidation` | turn 2 after source edit emits `INVALIDATE_PREVIOUS`; zero unsafe omissions |
+| `stale-source-typescript-app` | `bench_stale_source_invalidation`, `bench_changed_file_invalidation_time` | turn 2 after source edit emits `INVALIDATE_PREVIOUS`, reports changed-file duration, references the edited source in invalidation evidence, and has zero unsafe omissions |
 | `session-reset-typescript-app` | `bench_diff_vs_naive_resend` | turn 2 with reset emits `INVALIDATE_PREVIOUS`, sends new current context, and emits no `OMIT_UNCHANGED`; zero unsafe omissions |
 | `polyglot-fallback-repo` | `bench_token_reduction_after_first_turn` | fixture-owned task exercises Python fallback context, provider blind spots, two-turn `OMIT_UNCHANGED`, restore hints, and zero unsafe omissions |
 | `monorepo-lite-repo` | `bench_token_reduction_after_first_turn` | fixture-owned task exercises package-local TS source/test context, two-turn `OMIT_UNCHANGED`, restore hints, and zero unsafe omissions |

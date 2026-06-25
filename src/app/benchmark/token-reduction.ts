@@ -1,6 +1,6 @@
 import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
-import { collectBenchmarkFailures } from "./rules.js";
+import { collectBenchmarkFailures, roundBenchmarkMetric } from "./rules.js";
 import type {
   BenchmarkTurnMetric,
   NoChangeSyncBenchmarkGate,
@@ -120,7 +120,7 @@ function noChangeSyncGate(
   secondTurn: BenchmarkTurnMetric
 ): NoChangeSyncBenchmarkGate {
   const secondTurnDurationRatio =
-    firstTurn.durationMs > 0 ? roundMetric(secondTurn.durationMs / firstTurn.durationMs) : 0;
+    firstTurn.durationMs > 0 ? roundBenchmarkMetric(secondTurn.durationMs / firstTurn.durationMs) : 0;
   const failures = collectBenchmarkFailures([
     [
       "second_turn_duration_ratio_above_threshold",
@@ -191,8 +191,4 @@ function totalsFor(turns: readonly {
     restoreAvailableCount: turns.reduce((total, turn) => total + turn.restoreAvailableCount, 0),
     secondTurnStorageGrowthBytes
   };
-}
-
-function roundMetric(value: number): number {
-  return Math.round(value * 100) / 100;
 }

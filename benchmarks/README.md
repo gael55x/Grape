@@ -57,6 +57,8 @@ Current fixture runs also report per-turn storage footprint diagnostics for the 
 
 No-change fixture runs also report the `bench_no_change_sync_time` gate. It checks the turn 2 full compile duration ratio, clean worktree state, safe unchanged omission, unsafe omission count, and stale send count. It is a repeated-turn fixture guard, not a broad latency claim.
 
+The stale-source fixture also reports the `bench_changed_file_invalidation_time` gate. It checks that the fixture edit applied, then checks turn 2 full compile duration after one tracked source edit plus source-specific invalidation evidence. It is a changed-file fixture guard, not a broad latency claim.
+
 `npm run bench` is the **beta candidate transport** path: it does **not** benchmark the published registry package and does **not** use the dev source-checkout CLI unless you pass `--include-dev-source`.
 
 Full beta gate (unchanged):

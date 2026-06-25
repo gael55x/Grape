@@ -94,6 +94,12 @@ for (const fixture of fixtures) {
     noChangeSyncStatus: output.noChangeSync?.status,
     noChangeSyncDurationRatio: output.noChangeSync?.secondTurnDurationRatio,
     noChangeSyncMaxDurationRatio: output.noChangeSync?.thresholds?.maxSecondTurnDurationRatio,
+    changedFileInvalidationStatus: output.changedFileInvalidation?.status,
+    changedFileInvalidationDurationMs: output.changedFileInvalidation?.secondTurnDurationMs,
+    changedFileInvalidationMaxDurationMs:
+      output.changedFileInvalidation?.thresholds?.maxSecondTurnDurationMs,
+    changedFileInvalidationSourceInvalidations:
+      output.changedFileInvalidation?.invalidationItemsReferencingChangedSource,
     dirtyScenario: output.scenario,
     omitUnchanged: second?.stateCounts?.OMIT_UNCHANGED ?? 0,
     invalidatePrevious: second?.stateCounts?.INVALIDATE_PREVIOUS ?? 0,
@@ -118,6 +124,9 @@ for (const row of rows) {
       `  storageArtifactBytesFinal=${row.storageArtifactBytesFinal ?? "n/a"} storageArtifactBytesGrowth=${row.storageArtifactBytesGrowth ?? "n/a"} artifactJson=${row.storageArtifactJsonBytesFinal ?? "n/a"} artifactMarkdown=${row.storageArtifactMarkdownBytesFinal ?? "n/a"} artifactRepository=${row.storageArtifactRepositoryBytesFinal ?? "n/a"}`,
       row.noChangeSyncStatus
         ? `  noChangeSync=${row.noChangeSyncStatus} turn2OverTurn1=${row.noChangeSyncDurationRatio ?? "n/a"}x max=${row.noChangeSyncMaxDurationRatio ?? "n/a"}x`
+        : undefined,
+      row.changedFileInvalidationStatus
+        ? `  changedFileInvalidation=${row.changedFileInvalidationStatus} turn2DurationMs=${row.changedFileInvalidationDurationMs ?? "n/a"} max=${row.changedFileInvalidationMaxDurationMs ?? "n/a"} sourceInvalidations=${row.changedFileInvalidationSourceInvalidations ?? "n/a"}`
         : undefined,
       row.dirtyScenario
         ? `  dirtyScenario source=${row.dirtyScenario.editedSourceRef} tracked=${row.dirtyScenario.sourceWasTracked} dirty=${row.dirtyScenario.sourceDirtyAfterEdit} compileDirty=${row.dirtyScenario.dirtyWorktreeReported} sourceInvalidations=${row.dirtyScenario.invalidationItemsReferencingEditedSource} omitUnchanged=${row.dirtyScenario.omittedUnchangedAfterEdit}`

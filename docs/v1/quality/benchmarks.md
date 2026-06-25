@@ -79,6 +79,8 @@ Each benchmark turn also reports measured local storage bytes after that turn. T
 
 No-change token fixtures also report a `noChangeSync` gate. This gate has benchmark id `bench_no_change_sync_time`. It compares turn 2 full compile duration with turn 1 full compile duration, requires a clean turn 2 worktree, requires at least one safe unchanged omission, and fails on unsafe omissions or stale sends. It is a fixture guard for repeated-turn regressions. It is not an isolated filesystem sync benchmark and is not a general runtime claim.
 
+The stale-source fixture also reports a `changedFileInvalidation` gate. This gate has benchmark id `bench_changed_file_invalidation_time`. It checks turn 2 full compile duration after one tracked source edit, requires the fixture edit to apply, requires `INVALIDATE_PREVIOUS`, requires at least one invalidation item that references the edited source, requires no `OMIT_UNCHANGED` diff states after the edit, and fails on unsafe omissions or stale sends. It is a fixture guard for changed-file invalidation regressions. It is not an isolated filesystem sync benchmark.
+
 Run all fixtures:
 
 ```bash
@@ -188,6 +190,7 @@ Current benchmark thresholds:
 - second-turn reduction must be at least 30 percent (internal CI harness threshold on gated no-change fixtures; not a user-facing savings claim)
 - second-turn `.grape/` byte growth must stay under 5 MB on gated no-change fixtures
 - no-change fixture turn 2 full compile duration must stay at or below 2x turn 1 full compile duration
+- stale-source fixture turn 2 full compile duration must stay at or below 5 seconds after one tracked source edit
 - unsafe omissions must be zero
 - stale items sent must be zero
 - second turn must include at least one `OMIT_UNCHANGED`
@@ -198,6 +201,8 @@ Benchmark output also reports serialized context-pack token estimates, serialize
 Benchmark output also reports storage footprint diagnostics per turn. Storage bytes are measured from the temporary fixture workspace after each compile. The repeated-turn growth threshold catches obvious fixture regressions, but it is not a general production storage claim.
 
 Benchmark output also reports the `noChangeSync` gate on no-change fixtures. This is a repeated-turn fixture check over full compile duration, not proof of fixed production sync latency.
+
+Benchmark output also reports the `changedFileInvalidation` gate on the stale-source fixture. This is a changed-file fixture check over full compile duration, not proof of fixed production sync latency.
 
 These numbers are deterministic approximate token estimates from named fixtures. They are valid as local harness checks because they fail on unsafe omission or stale send counters. They are not proof of production token savings or external tool superiority.
 
@@ -279,6 +284,34 @@ interface NoChangeSyncBenchmarkGate {
 }
 ```
 
+Stale-source benchmark JSON also includes:
+
+```ts
+interface ChangedFileInvalidationBenchmarkGate {
+  benchmark: "bench_changed_file_invalidation_time";
+  status: "pass" | "fail";
+  thresholds: {
+    maxSecondTurnDurationMs: number;
+    requireSourceEditApplied: true;
+    requireInvalidatePrevious: true;
+    requireChangedSourceInvalidation: true;
+    requireNoOmitUnchangedAfterChange: true;
+    requireZeroUnsafeOmissions: true;
+    requireZeroStaleItemsSent: true;
+  };
+  changedSourceRef: string;
+  firstTurnDurationMs: number;
+  secondTurnDurationMs: number;
+  secondTurnDurationRatio: number;
+  secondTurnInvalidationItemCount: number;
+  secondTurnOmitUnchangedCount: number;
+  invalidationItemsReferencingChangedSource: number;
+  changedSourceEditApplied: boolean;
+  secondTurnDirtyWorktree: boolean;
+  failures: string[];
+}
+```
+
 ## Required Metrics
 
 | Metric | Purpose | Input fixture | Expected output | Failure threshold | Why it matters |
@@ -307,7 +340,7 @@ interface NoChangeSyncBenchmarkGate {
 - Zero stale proof dependencies in active artifacts.
 - Zero omitted pinned safety sections.
 - First-turn token cost reported separately from later-turn cost.
-- Later-turn token reduction and no-change full-turn duration ratio are measured on the no-change fixtures above. Invalidation behavior is gated on the branch-switch, dirty-worktree, stale-source, and session-reset fixtures. Broader gold-label fixtures and isolated sync-time fixtures in the metrics table below are not yet bench-gated.
+- Later-turn token reduction and no-change full-turn duration ratio are measured on the no-change fixtures above. Changed-file invalidation duration is measured on the stale-source fixture. Invalidation behavior is gated on the branch-switch, dirty-worktree, stale-source, and session-reset fixtures. Broader gold-label fixtures and isolated sync-time fixtures in the metrics table below are not yet bench-gated.
 
 ## Required Benchmark Names
 

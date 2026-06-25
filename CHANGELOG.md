@@ -30,6 +30,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - `grape compact` now reports measured `.grape`, database, WAL, SHM, artifact JSON, artifact Markdown, and artifact repository bytes before and after cleanup.
 - `grape bench` now reports per-turn `.grape`, database, WAL, SHM, and artifact byte diagnostics, with a repeated-turn storage-growth threshold on no-change fixtures.
 - `grape bench` now reports a `bench_no_change_sync_time` sub-gate on no-change fixtures. It checks turn 2 full compile duration against turn 1, clean worktree state, safe unchanged omission, unsafe omissions, and stale sends.
+- `grape bench --fixture stale-source-typescript-app` now reports a `bench_changed_file_invalidation_time` sub-gate for one tracked source edit, including full turn 2 compile duration and source-specific invalidation evidence.
 - `grape bench --fixture dirty-worktree-typescript-app` now covers an uncommitted tracked source edit and fails if turn 2 does not report dirty worktree, source-specific invalidation, zero unchanged omission, zero unsafe omission, and zero stale sends.
 - `grape purge` refuses symlinked local state, Git-tracked files under `.grape`, mismatched config roots, and locked or contended context sessions. It does not delete source files, Git history, editor config, or MCP config.
 

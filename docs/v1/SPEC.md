@@ -3603,6 +3603,12 @@ No-change duration target (internal fixture gate only; not a production latency 
 On gated no-change fixtures, turn 2 full compile duration stays at or below 2x turn 1 full compile duration.
 ```
 
+Changed-file duration target (internal fixture gate only; not a production latency claim):
+
+```text
+On the stale-source fixture, turn 2 full compile duration stays below the changed-file benchmark threshold after one tracked source edit and emits source-specific invalidation.
+```
+
 Stretch target (harness stretch only; not proven and not release-facing):
 
 ```text

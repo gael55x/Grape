@@ -30,6 +30,7 @@
 | --- | --- |
 | Compile/index time | `grape bench` `durationMs` per turn |
 | No-change repeated-turn duration | `grape bench` `noChangeSync` gate on no-change fixtures |
+| Changed-file invalidation duration | `grape bench` `changedFileInvalidation` gate on `stale-source-typescript-app` |
 | Retrieval time | Not isolated in current harness |
 | Artifact / payload size | `serializedPackTokens`, `serializedAgentOutputTokens` |
 | P50/P95 | Requires repeated runs. Not yet automated |
@@ -77,6 +78,8 @@ Every `run-*.json` includes:
 - `gitCommit`, `grapePackageVersion`, `nodeVersion`, `npmVersion`, `platform`, `capturedAt`
 
 Cold vs warm: current harness uses fresh temp repos per fixture. The `bench_no_change_sync_time` gate compares turn 2 full compile duration with turn 1 full compile duration inside that copied fixture. It is not an isolated warm-cache filesystem sync benchmark.
+
+Changed-file timing: `bench_changed_file_invalidation_time` runs inside the stale-source fixture after one tracked source edit. It measures the full turn 2 compile path and source-specific invalidation evidence, not isolated `grape sync` latency.
 
 ## Invalid comparisons to avoid
 

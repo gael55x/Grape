@@ -96,6 +96,15 @@ function renderBenchmarkReport(result: {
       readonly maxSecondTurnDurationRatio: number;
     };
   };
+  readonly changedFileInvalidation?: {
+    readonly status: string;
+    readonly changedSourceRef: string;
+    readonly secondTurnDurationMs: number;
+    readonly thresholds: {
+      readonly maxSecondTurnDurationMs: number;
+    };
+    readonly invalidationItemsReferencingChangedSource: number;
+  };
   readonly totals?: {
     readonly secondTurnReductionPercent: number;
     readonly omittedUnchangedTokens: number;
@@ -150,6 +159,14 @@ function renderBenchmarkReport(result: {
       `Compile reported dirty worktree: ${result.scenario.dirtyWorktreeReported}`,
       `Source-specific invalidations: ${result.scenario.invalidationItemsReferencingEditedSource}`,
       `Omitted unchanged after edit: ${result.scenario.omittedUnchangedAfterEdit}`
+    );
+  }
+
+  if (result.changedFileInvalidation) {
+    lines.push(
+      "",
+      `Changed-file invalidation gate: ${result.changedFileInvalidation.status} (${result.changedFileInvalidation.changedSourceRef}, turn2 duration ${result.changedFileInvalidation.secondTurnDurationMs}ms, max ${result.changedFileInvalidation.thresholds.maxSecondTurnDurationMs}ms)`,
+      `Changed-source invalidations: ${result.changedFileInvalidation.invalidationItemsReferencingChangedSource}`
     );
   }
 

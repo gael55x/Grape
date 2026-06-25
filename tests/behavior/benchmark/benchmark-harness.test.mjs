@@ -191,8 +191,48 @@ test("cli bench stale-source fixture reports invalidation after source edit", ()
   assert.equal(output.benchmark, "bench_stale_source_invalidation");
   assert.equal(output.fixture, "stale-source-typescript-app");
   assert.equal(output.status, "pass");
+  assert.equal(output.changedFileInvalidation.benchmark, "bench_changed_file_invalidation_time");
+  assert.equal(output.changedFileInvalidation.status, "pass");
+  assert.equal(output.changedFileInvalidation.changedSourceRef, "src/calculateDiscount.ts");
+  assert.equal(output.changedFileInvalidation.thresholds.maxSecondTurnDurationMs, 5000);
+  assert.equal(output.changedFileInvalidation.thresholds.requireSourceEditApplied, true);
+  assert.equal(output.changedFileInvalidation.thresholds.requireInvalidatePrevious, true);
+  assert.equal(output.changedFileInvalidation.thresholds.requireChangedSourceInvalidation, true);
+  assert.equal(output.changedFileInvalidation.thresholds.requireNoOmitUnchangedAfterChange, true);
+  assert.equal(output.changedFileInvalidation.thresholds.requireZeroUnsafeOmissions, true);
+  assert.equal(output.changedFileInvalidation.thresholds.requireZeroStaleItemsSent, true);
+  assert.equal(output.changedFileInvalidation.firstTurnDurationMs, output.turns[0].durationMs);
+  assert.equal(output.changedFileInvalidation.secondTurnDurationMs, output.turns[1].durationMs);
+  assert.equal(
+    output.changedFileInvalidation.secondTurnDurationMs <=
+      output.changedFileInvalidation.thresholds.maxSecondTurnDurationMs,
+    true
+  );
+  assert.equal(output.changedFileInvalidation.secondTurnInvalidationItemCount, output.turns[1].invalidationItemCount);
+  assert.equal(
+    output.changedFileInvalidation.secondTurnOmitUnchangedCount,
+    output.turns[1].stateCounts.OMIT_UNCHANGED ?? 0
+  );
+  assert.equal(output.changedFileInvalidation.invalidationItemsReferencingChangedSource > 0, true);
+  assert.equal(output.changedFileInvalidation.changedSourceEditApplied, true);
+  assert.equal(output.changedFileInvalidation.secondTurnDirtyWorktree, true);
+  assert.deepEqual(output.changedFileInvalidation.failures, []);
   assert.equal(output.turns[1].stateCounts.INVALIDATE_PREVIOUS > 0, true);
   assert.deepEqual(output.failures, []);
+});
+
+test("cli bench stale-source human output reports changed-file invalidation gate", () => {
+  const result = runCli([
+    "bench",
+    "--fixture",
+    "stale-source-typescript-app",
+    "--fixture-path",
+    staleFixturePath
+  ]);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Changed-file invalidation gate: pass/);
+  assert.match(result.stdout, /Changed-source invalidations: [1-9]/);
 });
 
 test("cli bench session-reset fixture reports invalidation and full resend after reset", () => {

@@ -57,6 +57,7 @@
     "context_pack_summary_excludes_currently_invalidated_sent_items"
   ],
   "relatedBenchmarks": [
-    "bench_stale_source_invalidation"
+    "bench_stale_source_invalidation",
+    "bench_changed_file_invalidation_time"
   ]
 }
