@@ -3597,6 +3597,12 @@ Storage target (internal fixture gate only; not a production storage claim):
 On gated no-change fixtures, second-turn .grape byte growth stays below the benchmark storage threshold.
 ```
 
+No-change duration target (internal fixture gate only; not a production latency claim):
+
+```text
+On gated no-change fixtures, turn 2 full compile duration stays at or below 2x turn 1 full compile duration.
+```
+
 Stretch target (harness stretch only; not proven and not release-facing):
 
 ```text
@@ -3670,6 +3676,8 @@ E2E assertions:
 - final artifact has no raw secrets
 
 ### 37.4 Performance tests
+
+The table below names product targets for isolated operations. The current `grape bench` no-change gate does not isolate filesystem sync time. It measures the full compile turn in a copied fixture and compares turn 2 duration with turn 1 duration.
 
 | Operation | V1 target |
 |---|---:|

@@ -82,6 +82,25 @@ export interface BenchmarkTurnMetric {
   readonly sectionTokenBreakdown: readonly BenchmarkSectionTokenBreakdown[];
 }
 
+export interface NoChangeSyncBenchmarkGate {
+  readonly benchmark: "bench_no_change_sync_time";
+  readonly status: BenchmarkStatus;
+  readonly thresholds: {
+    readonly maxSecondTurnDurationRatio: number;
+    readonly requireCleanSecondTurn: true;
+    readonly requireSecondTurnOmission: true;
+    readonly requireZeroUnsafeOmissions: true;
+    readonly requireZeroStaleItemsSent: true;
+  };
+  readonly firstTurnDurationMs: number;
+  readonly secondTurnDurationMs: number;
+  readonly secondTurnDurationRatio: number;
+  readonly secondTurnOmittedItemCount: number;
+  readonly secondTurnRestoreAvailableCount: number;
+  readonly secondTurnDirtyWorktree: boolean;
+  readonly failures: readonly string[];
+}
+
 export interface TokenReductionBenchmarkResult {
   readonly benchmark: "bench_token_reduction_after_first_turn";
   readonly fixture: string;
@@ -98,6 +117,7 @@ export interface TokenReductionBenchmarkResult {
     readonly requireSecondTurnOmission: true;
     readonly requireRestoreAvailable: true;
   };
+  readonly noChangeSync: NoChangeSyncBenchmarkGate;
   readonly turns: readonly BenchmarkTurnMetric[];
   readonly totals: {
     readonly wallClockMs: number;

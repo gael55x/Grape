@@ -45,6 +45,23 @@ test("cli bench reports deterministic token reduction for a named fixture", () =
   assert.equal(output.thresholds.maxFirstTurnOverheadPercent, 10);
   assert.equal(output.thresholds.maxFirstTurnAgentOutputOverheadPercent, 400);
   assert.equal(output.thresholds.maxSecondTurnStorageGrowthBytes, 5 * 1024 * 1024);
+  assert.equal(output.noChangeSync.benchmark, "bench_no_change_sync_time");
+  assert.equal(output.noChangeSync.status, "pass");
+  assert.equal(output.noChangeSync.thresholds.maxSecondTurnDurationRatio, 2);
+  assert.equal(output.noChangeSync.thresholds.requireCleanSecondTurn, true);
+  assert.equal(output.noChangeSync.thresholds.requireSecondTurnOmission, true);
+  assert.equal(output.noChangeSync.thresholds.requireZeroUnsafeOmissions, true);
+  assert.equal(output.noChangeSync.thresholds.requireZeroStaleItemsSent, true);
+  assert.equal(output.noChangeSync.firstTurnDurationMs, output.turns[0].durationMs);
+  assert.equal(output.noChangeSync.secondTurnDurationMs, output.turns[1].durationMs);
+  assert.equal(
+    output.noChangeSync.secondTurnDurationRatio <= output.noChangeSync.thresholds.maxSecondTurnDurationRatio,
+    true
+  );
+  assert.equal(output.noChangeSync.secondTurnOmittedItemCount, output.turns[1].omittedItemCount);
+  assert.equal(output.noChangeSync.secondTurnRestoreAvailableCount, output.turns[1].restoreAvailableCount);
+  assert.equal(output.noChangeSync.secondTurnDirtyWorktree, false);
+  assert.deepEqual(output.noChangeSync.failures, []);
   assert.equal(output.turns[0].overheadPercent <= output.thresholds.maxFirstTurnOverheadPercent, true);
   assert.equal(
     output.turns[0].agentOutputOverheadPercent <= output.thresholds.maxFirstTurnAgentOutputOverheadPercent,
@@ -98,6 +115,7 @@ test("cli bench human output reports storage footprint", () => {
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /storage bytes: \.grape=/);
   assert.match(result.stdout, /Second-turn \.grape byte growth:/);
+  assert.match(result.stdout, /No-change sync gate: pass/);
 });
 
 test("cli bench branch-switch fixture reports invalidation on feature branch", () => {

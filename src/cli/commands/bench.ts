@@ -89,6 +89,13 @@ function renderBenchmarkReport(result: {
     };
   }[];
   readonly failures: readonly string[];
+  readonly noChangeSync?: {
+    readonly status: string;
+    readonly secondTurnDurationRatio: number;
+    readonly thresholds: {
+      readonly maxSecondTurnDurationRatio: number;
+    };
+  };
   readonly totals?: {
     readonly secondTurnReductionPercent: number;
     readonly omittedUnchangedTokens: number;
@@ -117,6 +124,12 @@ function renderBenchmarkReport(result: {
       `Invalidation items: ${result.totals.invalidationItemCount}`,
       `Second-turn .grape byte growth: ${result.totals.secondTurnStorageGrowthBytes ?? "n/a"}`
     );
+
+    if (result.noChangeSync) {
+      lines.push(
+        `No-change sync gate: ${result.noChangeSync.status} (turn2/turn1 duration ${result.noChangeSync.secondTurnDurationRatio}x, max ${result.noChangeSync.thresholds.maxSecondTurnDurationRatio}x)`
+      );
+    }
   } else {
     const second = result.turns[1];
     if (second) {

@@ -1,12 +1,18 @@
 import { benchmarkSessionId, runBenchmarkCompileTurn } from "./compile-turn.js";
 import { prepareBenchmarkFixtureRepository } from "./fixture-repo.js";
 import { collectBenchmarkFailures } from "./rules.js";
-import type { TokenReductionBenchmarkInput, TokenReductionBenchmarkResult } from "./types.js";
+import type {
+  BenchmarkTurnMetric,
+  NoChangeSyncBenchmarkGate,
+  TokenReductionBenchmarkInput,
+  TokenReductionBenchmarkResult
+} from "./types.js";
 
 const minSecondTurnReductionPercent = 30;
 const maxFirstTurnOverheadPercent = 10;
 const maxFirstTurnAgentOutputOverheadPercent = 400;
 const maxSecondTurnStorageGrowthBytes = 5 * 1024 * 1024;
+const maxNoChangeSyncSecondTurnDurationRatio = 2;
 
 export function runTokenReductionBenchmark(
   input: TokenReductionBenchmarkInput
@@ -39,7 +45,11 @@ export function runTokenReductionBenchmark(
       migrationsDir: input.migrationsDir
     });
     const turns = [first, second];
-    const failures = tokenReductionFailures(first, second);
+    const noChangeSync = noChangeSyncGate(first, second);
+    const failures = [
+      ...tokenReductionFailures(first, second),
+      ...noChangeSync.failures.map((failure) => `${noChangeSync.benchmark}:${failure}`)
+    ];
 
     return {
       benchmark: "bench_token_reduction_after_first_turn",
@@ -57,6 +67,7 @@ export function runTokenReductionBenchmark(
         requireSecondTurnOmission: true,
         requireRestoreAvailable: true
       },
+      noChangeSync,
       turns,
       totals: totalsFor(turns),
       failures
@@ -104,6 +115,43 @@ function tokenReductionFailures(
   ]);
 }
 
+function noChangeSyncGate(
+  firstTurn: BenchmarkTurnMetric,
+  secondTurn: BenchmarkTurnMetric
+): NoChangeSyncBenchmarkGate {
+  const secondTurnDurationRatio =
+    firstTurn.durationMs > 0 ? roundMetric(secondTurn.durationMs / firstTurn.durationMs) : 0;
+  const failures = collectBenchmarkFailures([
+    [
+      "second_turn_duration_ratio_above_threshold",
+      secondTurnDurationRatio <= maxNoChangeSyncSecondTurnDurationRatio
+    ],
+    ["second_turn_dirty_worktree", !secondTurn.dirtyWorktree],
+    ["second_turn_missing_omit_unchanged", (secondTurn.stateCounts.OMIT_UNCHANGED ?? 0) > 0],
+    ["unsafe_omissions_present", secondTurn.unsafeOmissions === 0],
+    ["stale_items_sent_present", secondTurn.staleItemsSent === 0]
+  ]);
+
+  return {
+    benchmark: "bench_no_change_sync_time",
+    status: failures.length === 0 ? "pass" : "fail",
+    thresholds: {
+      maxSecondTurnDurationRatio: maxNoChangeSyncSecondTurnDurationRatio,
+      requireCleanSecondTurn: true,
+      requireSecondTurnOmission: true,
+      requireZeroUnsafeOmissions: true,
+      requireZeroStaleItemsSent: true
+    },
+    firstTurnDurationMs: firstTurn.durationMs,
+    secondTurnDurationMs: secondTurn.durationMs,
+    secondTurnDurationRatio,
+    secondTurnOmittedItemCount: secondTurn.omittedItemCount,
+    secondTurnRestoreAvailableCount: secondTurn.restoreAvailableCount,
+    secondTurnDirtyWorktree: secondTurn.dirtyWorktree,
+    failures
+  };
+}
+
 function totalsFor(turns: readonly {
   readonly durationMs: number;
   readonly grapeTokens: number;
@@ -143,4 +191,8 @@ function totalsFor(turns: readonly {
     restoreAvailableCount: turns.reduce((total, turn) => total + turn.restoreAvailableCount, 0),
     secondTurnStorageGrowthBytes
   };
+}
+
+function roundMetric(value: number): number {
+  return Math.round(value * 100) / 100;
 }

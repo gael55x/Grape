@@ -91,6 +91,9 @@ for (const fixture of fixtures) {
     storageArtifactJsonBytesFinal: last?.storageFootprint?.artifactJsonBytes,
     storageArtifactMarkdownBytesFinal: last?.storageFootprint?.artifactMarkdownBytes,
     storageArtifactRepositoryBytesFinal: last?.storageFootprint?.artifactRepositoryBytes,
+    noChangeSyncStatus: output.noChangeSync?.status,
+    noChangeSyncDurationRatio: output.noChangeSync?.secondTurnDurationRatio,
+    noChangeSyncMaxDurationRatio: output.noChangeSync?.thresholds?.maxSecondTurnDurationRatio,
     dirtyScenario: output.scenario,
     omitUnchanged: second?.stateCounts?.OMIT_UNCHANGED ?? 0,
     invalidatePrevious: second?.stateCounts?.INVALIDATE_PREVIOUS ?? 0,
@@ -113,6 +116,9 @@ for (const row of rows) {
       `  serializedPackTokens=${row.serializedPackTokens ?? "n/a"} serializedAgentOutputTokens=${row.serializedAgentOutputTokens ?? "n/a"} agentOutputOverhead=${row.firstTurnAgentOutputOverheadPercent ?? "n/a"}%`,
       `  storageGrapeBytesFinal=${row.storageGrapeBytesFinal ?? "n/a"} storageGrapeBytesGrowth=${row.storageGrapeBytesGrowth ?? "n/a"} storageDbBytesFinal=${row.storageDatabaseBytesFinal ?? "n/a"} storageWalBytesFinal=${row.storageWalBytesFinal ?? "n/a"} storageShmBytesFinal=${row.storageShmBytesFinal ?? "n/a"}`,
       `  storageArtifactBytesFinal=${row.storageArtifactBytesFinal ?? "n/a"} storageArtifactBytesGrowth=${row.storageArtifactBytesGrowth ?? "n/a"} artifactJson=${row.storageArtifactJsonBytesFinal ?? "n/a"} artifactMarkdown=${row.storageArtifactMarkdownBytesFinal ?? "n/a"} artifactRepository=${row.storageArtifactRepositoryBytesFinal ?? "n/a"}`,
+      row.noChangeSyncStatus
+        ? `  noChangeSync=${row.noChangeSyncStatus} turn2OverTurn1=${row.noChangeSyncDurationRatio ?? "n/a"}x max=${row.noChangeSyncMaxDurationRatio ?? "n/a"}x`
+        : undefined,
       row.dirtyScenario
         ? `  dirtyScenario source=${row.dirtyScenario.editedSourceRef} tracked=${row.dirtyScenario.sourceWasTracked} dirty=${row.dirtyScenario.sourceDirtyAfterEdit} compileDirty=${row.dirtyScenario.dirtyWorktreeReported} sourceInvalidations=${row.dirtyScenario.invalidationItemsReferencingEditedSource} omitUnchanged=${row.dirtyScenario.omittedUnchangedAfterEdit}`
         : undefined,
