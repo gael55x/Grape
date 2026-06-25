@@ -115,9 +115,13 @@ const currentValidRejectionRules = [
   },
   {
     reason: "scope_invalid",
-    rejects: (candidate) => candidate.scopeResult !== "match"
+    rejects: (candidate) => !hasCurrentValidScopeMatch(candidate)
   }
 ] satisfies readonly CurrentValidRejectionRule[];
+
+function hasCurrentValidScopeMatch(candidate: CurrentValidCandidate): boolean {
+  return candidate.scopeResult === "match";
+}
 
 export function resolveInMemoryCurrentValidCandidates(
   candidates: readonly CurrentValidCandidate[]
