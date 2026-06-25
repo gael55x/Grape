@@ -9,8 +9,12 @@ import {
   unlinkSync
 } from "node:fs";
 import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
 
+import {
+  inspectPrivacySessionLocks,
+  type PrivacySessionLockStatus,
+  type PrivacySessionLockSummary
+} from "../../../core/storage/index.js";
 import {
   assertSafeExistingLocalProjectLayout,
   existingLocalProjectLayout
@@ -32,12 +36,8 @@ export interface PurgeLocalProjectCounts {
 }
 
 export type PurgeConfigRootStatus = "missing" | "matches" | "mismatch" | "unreadable";
-export type PurgeSessionLockStatus = "not_present" | "checked" | "unreadable";
-
-export interface PurgeSessionLockSummary {
-  readonly status: PurgeSessionLockStatus;
-  readonly lockedOrContended: number;
-}
+export type PurgeSessionLockStatus = PrivacySessionLockStatus;
+export type PurgeSessionLockSummary = PrivacySessionLockSummary;
 
 export interface PurgeLocalProjectResult {
   readonly formatVersion: 1;
@@ -117,7 +117,7 @@ export function purgeLocalProject(input: PurgeLocalProjectInput): PurgeLocalProj
   }
 
   notes.push(...configInspection.notes);
-  const sessionLocks = inspectSessionLocks(layout.databasePath);
+  const sessionLocks = inspectPrivacySessionLocks(layout.databasePath);
   if (sessionLocks.status === "unreadable") {
     notes.push("Session locks could not be checked because .grape/grape.db could not be read.");
   }
@@ -210,27 +210,6 @@ function trackedGrapePathCount(rootPath: string): number {
     stdio: ["ignore", "pipe", "pipe"]
   });
   return output.split("\0").filter(Boolean).length;
-}
-
-function inspectSessionLocks(databasePath: string): PurgeSessionLockSummary {
-  if (!existsSync(databasePath)) return { status: "not_present", lockedOrContended: 0 };
-
-  try {
-    const database = new DatabaseSync(databasePath, { readOnly: true });
-    try {
-      const row = database
-        .prepare("SELECT count(*) AS count FROM context_sessions WHERE lock_status IN ('locked', 'contended')")
-        .get() as { count?: number | bigint } | undefined;
-      return {
-        status: "checked",
-        lockedOrContended: Number(row?.count ?? 0)
-      };
-    } finally {
-      database.close();
-    }
-  } catch {
-    return { status: "unreadable", lockedOrContended: 0 };
-  }
 }
 
 function planPurgeTarget(grapeDirPath: string): PurgeLocalProjectCounts {

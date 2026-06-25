@@ -1,4 +1,6 @@
+import { existsSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
+import { DatabaseSync as SqliteDatabaseSync } from "node:sqlite";
 
 import { applySqliteConnectionPolicy } from "../sqlite-policy.js";
 
@@ -48,6 +50,14 @@ export interface LocalDataInventoryCounts {
 
 export interface PrivacyStorageRepositories {
   countLocalDataRows(): LocalDataInventoryCounts;
+  countLockedOrContendedSessions(): number;
+}
+
+export type PrivacySessionLockStatus = "not_present" | "checked" | "unreadable";
+
+export interface PrivacySessionLockSummary {
+  readonly status: PrivacySessionLockStatus;
+  readonly lockedOrContended: number;
 }
 
 export function createPrivacyStorageRepositories(database: DatabaseSync): PrivacyStorageRepositories {
@@ -98,8 +108,32 @@ export function createPrivacyStorageRepositories(database: DatabaseSync): Privac
           auditEvents: countTableRows(database, "audit_events")
         }
       };
+    },
+    countLockedOrContendedSessions() {
+      const row = database
+        .prepare("SELECT count(*) AS count FROM context_sessions WHERE lock_status IN ('locked', 'contended')")
+        .get() as { count?: number | bigint } | undefined;
+      return Number(row?.count ?? 0);
     }
   };
+}
+
+export function inspectPrivacySessionLocks(databasePath: string): PrivacySessionLockSummary {
+  if (!existsSync(databasePath)) return { status: "not_present", lockedOrContended: 0 };
+
+  try {
+    const database = new SqliteDatabaseSync(databasePath, { readOnly: true });
+    try {
+      return {
+        status: "checked",
+        lockedOrContended: createPrivacyStorageRepositories(database).countLockedOrContendedSessions()
+      };
+    } finally {
+      database.close();
+    }
+  } catch {
+    return { status: "unreadable", lockedOrContended: 0 };
+  }
 }
 
 function countTableRows(database: DatabaseSync, tableName: string): number {
