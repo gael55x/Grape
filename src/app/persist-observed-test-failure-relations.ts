@@ -13,6 +13,12 @@ import {
 } from "../core/proofs/index.js";
 import { readLocalSourceExcerpts } from "./local-project/source-excerpts/read.js";
 import { normalizeRepoRelativePath } from "./local-project/observation/path.js";
+import {
+  assertMatchingProof,
+  attachProofToClaim,
+  insertClaimCandidate,
+  insertVerifiedClaim
+} from "./persist-claim-records.js";
 import { persistSourceProofs } from "./persist-source-proofs.js";
 import type {
   ClaimStorageRepositories,
@@ -155,15 +161,12 @@ export function persistObservedTestFailureRelations(
     relation: built.relation
   });
   const rejectionReason = gate.accepted ? undefined : gate.reason;
-  const candidatesInserted = input.repositories.claimCandidates.insertOrIgnore({
-    candidateId: draft.candidateId,
+  const candidatesInserted = insertClaimCandidate({
+    repositories: input.repositories,
+    draft,
     sourceId: input.source.sourceId,
-    subject: draft.subject,
-    claimType: draft.claimType,
-    claimText: draft.claimText,
-    scopeJson: JSON.stringify(draft.scope),
     rejectionReason,
-    createdAt: input.now
+    now: input.now
   })
     ? 1
     : 0;
@@ -182,21 +185,15 @@ export function persistObservedTestFailureRelations(
     };
   }
 
-  const scopeJson = JSON.stringify(draft.scope);
-  const claimsInserted = input.repositories.claims.insertOrIgnore({
-    claimId: draft.claimId,
-    subject: draft.subject,
-    claimType: draft.claimType,
-    claimText: draft.claimText,
-    scopeJson,
-    scopeHash: sha256(scopeJson),
-    verificationStatus: "verified",
-    createdAt: input.now,
-    updatedAt: input.now
-  })
+  const claimsInserted = insertVerifiedClaim({ repositories: input.repositories, draft, now: input.now })
     ? 1
     : 0;
-  attachProofToClaim(input.proofRepositories.proofs, storedProof, draft.claimId);
+  attachProofToClaim(
+    input.proofRepositories.proofs,
+    storedProof,
+    draft.claimId,
+    "observed test failure relation"
+  );
 
   let claimEdgesInserted = 0;
   if (
@@ -286,34 +283,11 @@ function insertRelationProof(
   proof: ProofRecord
 ): boolean {
   if (proofs.insertOrIgnore(proof)) return true;
-  assertMatchingProof(proofs.get(proof.proofId), proof);
+  assertMatchingProof(proofs.get(proof.proofId), proof, {
+    context: "observed test failure relation",
+    excerptHashLabel: "proof relation hash"
+  });
   return false;
-}
-
-function attachProofToClaim(
-  proofs: ProofStorageRepositories["proofs"],
-  proof: ProofRecord | undefined,
-  claimId: string
-): void {
-  if (!proof) throw new Error("cannot attach missing proof to observed test failure relation claim");
-  if (proof.claimId === claimId) return;
-  if (proof.claimId && proof.claimId !== claimId) {
-    throw new Error(`proof ${proof.proofId} is already attached to another claim`);
-  }
-  if (!proofs.attachClaim({ proofId: proof.proofId, claimId })) {
-    throw new Error(`proof ${proof.proofId} could not be attached to claim ${claimId}`);
-  }
-}
-
-function assertMatchingProof(existing: ProofRecord | undefined, next: ProofRecord): void {
-  if (!existing) {
-    throw new Error(`proof insert conflict without stored row: ${next.proofId}`);
-  }
-  if (existing.sourceId !== next.sourceId) throw new Error("proof source mismatch");
-  if (existing.proofType !== next.proofType) throw new Error("proof type mismatch");
-  if (existing.sourceHash !== next.sourceHash) throw new Error("proof source hash mismatch");
-  if (existing.excerptHash !== next.excerptHash) throw new Error("proof relation hash mismatch");
-  if (existing.supportStatus !== next.supportStatus) throw new Error("proof support status mismatch");
 }
 
 function emptyResult(reason?: string): PersistObservedTestFailureRelationsResult {
