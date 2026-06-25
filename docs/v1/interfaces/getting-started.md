@@ -67,7 +67,7 @@ Grape adds `.grape/` to `.git/info/exclude` so local runtime state stays out of 
 
 MCP is the normal path. After this step, the agent can call Grape during the task instead of asking you to paste context.
 
-Choose the client you actually use when your installed build supports the safe installer:
+Choose the client you actually use:
 
 - Cursor: run `grape mcp --install --client cursor` from the repository root.
 - Claude Desktop: run `grape mcp --install --client claude` from the repository root.

@@ -95,7 +95,7 @@ grape help
 
 1. Install: `npm install -g grape-context@beta`
 2. Initialize: `grape init --connect` (from your repository root)
-3. Connect MCP: `grape mcp --install --client cursor`, `grape mcp --install --client claude`, or `grape mcp --install --client codex` when your installed build supports it
+3. Connect MCP: `grape mcp --install --client cursor`, `grape mcp --install --client claude`, or `grape mcp --install --client codex`
 4. Agent loop: the agent calls `grape_get_context` each turn with a stable `sessionId` and stable task text
 
 Full walkthrough: [Getting started](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/getting-started.md).
@@ -119,7 +119,7 @@ grape doctor --privacy
 
 Grape works best through MCP.
 
-For Cursor, write the project-local MCP config when your installed build supports the safe installer:
+For Cursor, write the project-local MCP config:
 
 ```bash
 grape mcp --install --client cursor
@@ -127,7 +127,7 @@ grape mcp --install --client cursor
 
 This writes or merges `.cursor/mcp.json`.
 
-For Claude Desktop, write the global Claude Desktop MCP config when your installed build supports the safe installer and Grape can resolve the platform path safely:
+For Claude Desktop, write the global Claude Desktop MCP config when Grape can resolve the platform path safely:
 
 ```bash
 grape mcp --install --client claude
@@ -135,7 +135,7 @@ grape mcp --install --client claude
 
 This writes or merges `claude_desktop_config.json`.
 
-For Codex, write the project-local Codex MCP config when your installed build supports the safe installer:
+For Codex, write the project-local Codex MCP config:
 
 ```bash
 grape mcp --install --client codex
@@ -498,27 +498,41 @@ APIs, schemas, command names, setup guidance, and internal contracts may still c
 
 ## Development
 
-Install dependencies:
+Use the pinned toolchain:
 
 ```bash
 npm ci
 ```
 
-Run the local gate:
+For most changes, run the local gate before you commit:
 
 ```bash
 npm run check
 ```
 
-Run the extended beta-readiness gate:
+`npm run check` runs docs, fixtures, memory smoke, architecture, storage, platform helpers, typecheck, package dry-run, Codex workflow, install smoke, and behavior tests.
+
+Run narrower checks while you are iterating:
+
+| You changed | Run first | Run before commit |
+|---|---|---|
+| Docs or examples | `npm run docs:check` | `npm run check` |
+| Fixture metadata | `npm run fixtures:check` | `npm run check` |
+| TypeScript code | `npm run typecheck` and `npm run test:behavior` | `npm run check` |
+| Storage migrations | `npm run storage:check` and `npm run test:behavior` | `npm run check` |
+| Codex plugin or installer | `npm run plugin:check` and `npm run codex:check` | `npm run check` |
+| Benchmark harness or fixtures | `npm run benchmark:run` | `npm run check` and `npm run benchmark:run` |
+| Package contents | `npm run package:check` and `npm run install:check` | `npm run check` |
+
+Use the release-candidate gate when you need packaged workflow evidence:
 
 ```bash
 npm run beta:check
 ```
 
-`npm run check` covers documentation structure, fixtures, in-memory context loop checks, architecture boundaries, storage migrations, TypeScript typechecking, package dry-run contents, and behavior tests.
-
 `npm run beta:check` runs the local check suite, benchmark fixtures, and packaged beta client trial. The packaged trial validates installed CLI core workflows, Cursor and Claude Desktop install dry-runs, and stdio MCP behavior from an installed package. It is not a replacement for a human Cursor, Claude Desktop, or Claude Code UI trial when release policy requires one.
+
+If a behavior test fails, start with the named folder under `tests/behavior/`. If a docs check fails, update the owning contract or example instead of patching around the script. Use `docs/v1/README.md` to find the owning domain doc before changing behavior.
 
 After installing the published package globally, run:
 

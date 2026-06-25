@@ -10,7 +10,7 @@ This page is the practical contract for agents, MCP clients, and CLI users that 
 
 | If you are... | Do this |
 |---|---|
-| Setting up Cursor or Claude Desktop | When the installed build supports it, use `grape mcp --install --client cursor` or `grape mcp --install --client claude`; keep `cwd` plus `--repo` on the same repository root. |
+| Setting up Cursor, Claude Desktop, or Codex | Use `grape mcp --install --client cursor`, `grape mcp --install --client claude`, or `grape mcp --install --client codex`; keep `cwd` plus `--repo` on the same repository root. |
 | Setting up another MCP client | Use `grape mcp --print-config` and paste the manual config. |
 | Building or debugging stdio transport | Send one compact JSON-RPC object per line. Do not send `Content-Length` headers. |
 | Calling `grape_get_context` | Pass a stable `sessionId` and stable `query` for continued turns on the same task. |
@@ -55,7 +55,7 @@ After `grape init --connect`, the intended path is a normal MCP-capable coding a
 
 ## MCP Client Configuration
 
-Use auto-install first for the clients Grape can write safely when your installed build supports it:
+Use auto-install first for the clients Grape can write safely:
 
 ```bash
 grape mcp --install --client cursor
