@@ -15,6 +15,12 @@ import type {
   ProofStorageRepositories,
   SourceRecord
 } from "../core/storage/index.js";
+import {
+  assertMatchingProof,
+  attachProofToClaim,
+  insertClaimCandidate,
+  insertVerifiedClaim
+} from "./persist-claim-records.js";
 
 export interface PersistPackageManifestDependencyClaimsInput {
   readonly repositories: ClaimStorageRepositories;
@@ -60,7 +66,10 @@ export function persistPackageManifestDependencyClaims(
     if (input.proofRepositories.proofs.insertOrIgnore(proof)) {
       proofsInserted += 1;
     } else {
-      assertMatchingProof(input.proofRepositories.proofs.get(proof.proofId), proof);
+      assertMatchingProof(input.proofRepositories.proofs.get(proof.proofId), proof, {
+        context: "package manifest dependency",
+        excerptHashLabel: "proof entry hash"
+      });
     }
 
     const storedProof = input.proofRepositories.proofs.get(proof.proofId);
@@ -71,15 +80,12 @@ export function persistPackageManifestDependencyClaims(
     });
     const rejectionReason = gate.accepted ? undefined : gate.reason;
 
-    if (input.repositories.claimCandidates.insertOrIgnore({
-      candidateId: draft.candidateId,
+    if (insertClaimCandidate({
+      repositories: input.repositories,
+      draft,
       sourceId: entry.sourceId,
-      subject: draft.subject,
-      claimType: draft.claimType,
-      claimText: draft.claimText,
-      scopeJson: JSON.stringify(draft.scope),
       rejectionReason,
-      createdAt: input.now
+      now: input.now
     })) {
       candidatesInserted += 1;
     }
@@ -89,20 +95,9 @@ export function persistPackageManifestDependencyClaims(
       continue;
     }
 
-    const scopeJson = JSON.stringify(draft.scope);
-    const inserted = input.repositories.claims.insertOrIgnore({
-      claimId: draft.claimId,
-      subject: draft.subject,
-      claimType: draft.claimType,
-      claimText: draft.claimText,
-      scopeJson,
-      scopeHash: sha256(scopeJson),
-      verificationStatus: "verified",
-      createdAt: input.now,
-      updatedAt: input.now
-    });
+    const inserted = insertVerifiedClaim({ repositories: input.repositories, draft, now: input.now });
     if (inserted) claimsInserted += 1;
-    attachProofToClaim(input.proofRepositories.proofs, storedProof, draft.claimId);
+    attachProofToClaim(input.proofRepositories.proofs, storedProof, draft.claimId, "package manifest dependency");
   }
 
   return {
@@ -179,39 +174,6 @@ function toProofRecord(
   };
 }
 
-function attachProofToClaim(
-  proofs: ProofStorageRepositories["proofs"],
-  proof: ProofRecord | undefined,
-  claimId: string
-): void {
-  if (!proof) throw new Error("cannot attach missing proof to package manifest dependency claim");
-  if (proof.claimId === claimId) return;
-  if (proof.claimId && proof.claimId !== claimId) {
-    throw new Error(`proof ${proof.proofId} is already attached to another claim`);
-  }
-  if (!proofs.attachClaim({ proofId: proof.proofId, claimId })) {
-    throw new Error(`proof ${proof.proofId} could not be attached to claim ${claimId}`);
-  }
-}
-
-function assertMatchingProof(existing: ProofRecord | undefined, next: ProofRecord): void {
-  if (!existing) {
-    throw new Error(`proof insert conflict without stored row: ${next.proofId}`);
-  }
-
-  assertField("proof source", existing.sourceId, next.sourceId);
-  assertField("proof type", existing.proofType, next.proofType);
-  assertField("proof source hash", existing.sourceHash, next.sourceHash);
-  assertField("proof entry hash", existing.excerptHash, next.excerptHash);
-  assertField("proof support status", existing.supportStatus, next.supportStatus);
-}
-
-function assertField(label: string, existing: string | undefined, next: string | undefined): void {
-  if (existing !== next) {
-    throw new Error(`${label} mismatch while persisting package manifest dependency proof`);
-  }
-}
-
 function isInsideRoot(rootPath: string, absolutePath: string): boolean {
   const relativePath = path.relative(rootPath, absolutePath);
   return relativePath !== "" && !relativePath.startsWith("..") && !path.isAbsolute(relativePath);
@@ -232,10 +194,6 @@ function normalizeRepoPath(inputPath: string): string | undefined {
     return undefined;
   }
   return normalized;
-}
-
-function sha256(text: string): string {
-  return createHash("sha256").update(text).digest("hex");
 }
 
 function sha256Buffer(bytes: Buffer): string {

@@ -1,5 +1,3 @@
-import { createHash } from "node:crypto";
-
 import {
   createSourceExcerptClaimDraft,
   evaluateSourceExcerptClaimGate
@@ -8,10 +6,14 @@ import type { RepositoryArtifactSourceExcerptInput } from "../core/compiler/inde
 import { packageRootsBySourceRefFromMetadata } from "../core/scope/index.js";
 import type {
   ClaimStorageRepositories,
-  ProofRecord,
   ProofStorageRepositories,
   SourceRecord
 } from "../core/storage/index.js";
+import {
+  attachProofToClaim,
+  insertClaimCandidate,
+  insertVerifiedClaim
+} from "./persist-claim-records.js";
 
 export interface PersistSourceClaimsInput {
   readonly repositories: ClaimStorageRepositories;
@@ -54,15 +56,12 @@ export function persistSourceExcerptClaims(input: PersistSourceClaimsInput): Per
     const gate = evaluateSourceExcerptClaimGate({ source, proof, excerpt });
     const rejectionReason = gate.accepted ? undefined : gate.reason;
 
-    if (input.repositories.claimCandidates.insertOrIgnore({
-      candidateId: draft.candidateId,
+    if (insertClaimCandidate({
+      repositories: input.repositories,
+      draft,
       sourceId: excerpt.sourceId,
-      subject: draft.subject,
-      claimType: draft.claimType,
-      claimText: draft.claimText,
-      scopeJson: JSON.stringify(draft.scope),
       rejectionReason,
-      createdAt: input.now
+      now: input.now
     })) {
       candidatesInserted += 1;
     }
@@ -72,20 +71,9 @@ export function persistSourceExcerptClaims(input: PersistSourceClaimsInput): Per
       continue;
     }
 
-    const scopeJson = JSON.stringify(draft.scope);
-    const inserted = input.repositories.claims.insertOrIgnore({
-      claimId: draft.claimId,
-      subject: draft.subject,
-      claimType: draft.claimType,
-      claimText: draft.claimText,
-      scopeJson,
-      scopeHash: sha256(scopeJson),
-      verificationStatus: "verified",
-      createdAt: input.now,
-      updatedAt: input.now
-    });
+    const inserted = insertVerifiedClaim({ repositories: input.repositories, draft, now: input.now });
     if (inserted) claimsInserted += 1;
-    attachProofToClaim(input.proofRepositories.proofs, proof, draft.claimId);
+    attachProofToClaim(input.proofRepositories.proofs, proof, draft.claimId, "source excerpt");
   }
 
   return {
@@ -94,25 +82,6 @@ export function persistSourceExcerptClaims(input: PersistSourceClaimsInput): Per
     claimsInserted,
     rejectedCandidates
   };
-}
-
-function attachProofToClaim(
-  proofs: ProofStorageRepositories["proofs"],
-  proof: ProofRecord | undefined,
-  claimId: string
-): void {
-  if (!proof) throw new Error("cannot attach missing proof to source excerpt claim");
-  if (proof.claimId === claimId) return;
-  if (proof.claimId && proof.claimId !== claimId) {
-    throw new Error(`proof ${proof.proofId} is already attached to another claim`);
-  }
-  if (!proofs.attachClaim({ proofId: proof.proofId, claimId })) {
-    throw new Error(`proof ${proof.proofId} could not be attached to claim ${claimId}`);
-  }
-}
-
-function sha256(text: string): string {
-  return createHash("sha256").update(text).digest("hex");
 }
 
 function sourceMetadataBySourceRef(

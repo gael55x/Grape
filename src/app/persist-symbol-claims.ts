@@ -1,5 +1,3 @@
-import { createHash } from "node:crypto";
-
 import {
   createSymbolDeclarationClaimDraft,
   evaluateSymbolDeclarationClaimGate,
@@ -13,6 +11,12 @@ import type {
   SourceRecord,
   SymbolNodeRecord
 } from "../core/storage/index.js";
+import {
+  assertMatchingProof,
+  attachProofToClaim,
+  insertClaimCandidate,
+  insertVerifiedClaim
+} from "./persist-claim-records.js";
 
 export interface PersistSymbolDeclarationClaimsInput {
   readonly repositories: ClaimStorageRepositories;
@@ -60,15 +64,12 @@ export function persistSymbolDeclarationClaims(
     const gate = evaluateSymbolDeclarationClaimGate({ source, symbol, proof });
     const rejectionReason = gate.accepted ? undefined : gate.reason;
 
-    if (input.repositories.claimCandidates.insertOrIgnore({
-      candidateId: draft.candidateId,
+    if (insertClaimCandidate({
+      repositories: input.repositories,
+      draft,
       sourceId: source.sourceId,
-      subject: draft.subject,
-      claimType: draft.claimType,
-      claimText: draft.claimText,
-      scopeJson: JSON.stringify(draft.scope),
       rejectionReason,
-      createdAt: input.now
+      now: input.now
     })) {
       candidatesInserted += 1;
     }
@@ -81,23 +82,19 @@ export function persistSymbolDeclarationClaims(
     if (input.proofRepositories.proofs.insertOrIgnore(proof)) {
       proofsInserted += 1;
     } else {
-      assertMatchingProof(input.proofRepositories.proofs.get(proof.proofId), proof);
+      assertMatchingProof(input.proofRepositories.proofs.get(proof.proofId), proof, {
+        context: "symbol declaration"
+      });
     }
 
-    const scopeJson = JSON.stringify(draft.scope);
-    const inserted = input.repositories.claims.insertOrIgnore({
-      claimId: draft.claimId,
-      subject: draft.subject,
-      claimType: draft.claimType,
-      claimText: draft.claimText,
-      scopeJson,
-      scopeHash: sha256(scopeJson),
-      verificationStatus: "verified",
-      createdAt: input.now,
-      updatedAt: input.now
-    });
+    const inserted = insertVerifiedClaim({ repositories: input.repositories, draft, now: input.now });
     if (inserted) claimsInserted += 1;
-    attachProofToClaim(input.proofRepositories.proofs, input.proofRepositories.proofs.get(proof.proofId), draft.claimId);
+    attachProofToClaim(
+      input.proofRepositories.proofs,
+      input.proofRepositories.proofs.get(proof.proofId),
+      draft.claimId,
+      "symbol declaration"
+    );
   }
 
   return {
@@ -151,36 +148,4 @@ function toSymbolDeclarationProofRecord(
     supportStatus: "direct",
     createdAt: now
   };
-}
-
-function attachProofToClaim(
-  proofs: ProofStorageRepositories["proofs"],
-  proof: ProofRecord | undefined,
-  claimId: string
-): void {
-  if (!proof) throw new Error("cannot attach missing proof to symbol declaration claim");
-  if (proof.claimId === claimId) return;
-  if (proof.claimId && proof.claimId !== claimId) {
-    throw new Error(`proof ${proof.proofId} is already attached to another claim`);
-  }
-  if (!proofs.attachClaim({ proofId: proof.proofId, claimId })) {
-    throw new Error(`proof ${proof.proofId} could not be attached to claim ${claimId}`);
-  }
-}
-
-function assertMatchingProof(existing: ProofRecord | undefined, next: ProofRecord): void {
-  if (!existing) throw new Error(`proof insert conflict without stored row: ${next.proofId}`);
-  assertField("proof source", existing.sourceId, next.sourceId);
-  assertField("proof type", existing.proofType, next.proofType);
-  assertField("proof source hash", existing.sourceHash, next.sourceHash);
-  assertField("proof excerpt hash", existing.excerptHash, next.excerptHash);
-  assertField("proof support status", existing.supportStatus, next.supportStatus);
-}
-
-function assertField(label: string, existing: string | undefined, next: string | undefined): void {
-  if (existing !== next) throw new Error(`${label} mismatch while persisting symbol declaration proof`);
-}
-
-function sha256(text: string): string {
-  return createHash("sha256").update(text).digest("hex");
 }
