@@ -568,12 +568,9 @@ function taskMentionedSourceRefs(
 function taskExcludedPathPrefixes(task: string): readonly string[] {
   const prefixes: string[] = [];
   const normalizedTask = task.replace(/\\/g, "/");
-  for (const match of normalizedTask.matchAll(/without\s+(?:pulling\s+)?([^\s,]+?)(?:\s+context)?/gi)) {
+  for (const match of normalizedTask.matchAll(/without\s+(?:pulling\s+)?([^\s,]+)(?:\s+context)?/gi)) {
     const prefix = normalizeSeedFile(match[1]);
     if (prefix) prefixes.push(prefix);
-  }
-  if (/(post-beta|1\.0\.0-beta|1\.0 beta)/i.test(task) && !/\b(legacy|alpha)\b/i.test(task)) {
-    prefixes.push("docs/v1/legacy");
   }
   return prefixes;
 }

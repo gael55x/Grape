@@ -265,6 +265,33 @@ test("task source retrieval excludes paths named in negative package exclusion p
   assert.equal(result.selectedSourceRefs.includes("packages/web/src/cart.test.ts"), false);
 });
 
+test("task source retrieval does not apply hidden beta-era legacy doc exclusions", () => {
+  const inputs = {
+    sources: [
+      source("source-current-docs", "docs/v1/README.md"),
+      source("source-legacy-docs", "docs/v1/legacy/alpha/README.md")
+    ],
+    symbols: [],
+    lexicalMatches: [
+      { sourceId: "source-current-docs", sourceRef: "docs/v1/README.md", matchedTerm: "docs" },
+      { sourceId: "source-legacy-docs", sourceRef: "docs/v1/legacy/alpha/README.md", matchedTerm: "docs" }
+    ],
+    maxSelectedSources: 4
+  };
+
+  const implicit = resolveTaskSourceRetrieval({
+    task: "Review post-beta docs release notes",
+    ...inputs
+  });
+  assert.equal(implicit.selectedSourceRefs.includes("docs/v1/legacy/alpha/README.md"), true);
+
+  const explicit = resolveTaskSourceRetrieval({
+    task: "Review post-beta docs release notes without docs/v1/legacy context",
+    ...inputs
+  });
+  assert.equal(explicit.selectedSourceRefs.includes("docs/v1/legacy/alpha/README.md"), false);
+});
+
 test("task source retrieval scopes broad matches when a package test seed is exact input", () => {
   const result = resolveTaskSourceRetrieval({
     task: "Fix package total calculation",
