@@ -49,6 +49,76 @@ export interface CurrentValidResolution {
   warnings: string[];
 }
 
+interface CurrentValidRejectionRule {
+  readonly reason: CurrentValidRejectionReason;
+  readonly rejects: (candidate: CurrentValidCandidate) => boolean;
+  readonly warning?: (candidate: CurrentValidCandidate) => string;
+}
+
+const currentValidRejectionRules = [
+  {
+    reason: "not_verified",
+    rejects: (candidate) => candidate.verificationStatus !== "verified"
+  },
+  {
+    reason: "missing_proof",
+    rejects: (candidate) => candidate.proofRefs.length === 0
+  },
+  {
+    reason: "source_hash_mismatch",
+    rejects: (candidate) => candidate.sourceHashStatus === "mismatch"
+  },
+  {
+    reason: "proof_hash_mismatch",
+    rejects: (candidate) => candidate.proofHashStatus === "mismatch"
+  },
+  {
+    reason: "hash_unknown",
+    rejects: (candidate) => candidate.sourceHashStatus === "unknown" || candidate.proofHashStatus === "unknown",
+    warning: (candidate) => `Hash status is unknown, not current-valid: ${candidate.id}`
+  },
+  {
+    reason: "active_contradiction",
+    rejects: (candidate) => candidate.contradictionStatus === "active"
+  },
+  {
+    reason: "privacy_blocked",
+    rejects: (candidate) => candidate.privacyStatus === "blocked"
+  },
+  {
+    reason: "dirty_scope_mismatch",
+    rejects: (candidate) => candidate.dirtyScopeStatus === "mismatch"
+  },
+  {
+    reason: "dirty_scope_unknown",
+    rejects: (candidate) => candidate.dirtyScopeStatus === "unknown",
+    warning: (candidate) => `Dirty worktree scope is unknown, not current-valid: ${candidate.id}`
+  },
+  {
+    reason: "claim_policy_blocked",
+    rejects: (candidate) => candidate.claimPolicyStatus === "blocked",
+    warning: (candidate) => `Durable claim policy blocked current-valid claim: ${candidate.id}`
+  },
+  {
+    reason: "scope_mismatch",
+    rejects: (candidate) => candidate.scopeResult === "mismatch"
+  },
+  {
+    reason: "scope_partial",
+    rejects: (candidate) => candidate.scopeResult === "partial",
+    warning: (candidate) => `Partial scope is not current-valid: ${candidate.id}`
+  },
+  {
+    reason: "scope_unknown",
+    rejects: (candidate) => candidate.scopeResult === "unknown",
+    warning: (candidate) => `Unknown scope is not current-valid: ${candidate.id}`
+  },
+  {
+    reason: "scope_invalid",
+    rejects: (candidate) => candidate.scopeResult !== "match"
+  }
+] satisfies readonly CurrentValidRejectionRule[];
+
 export function resolveInMemoryCurrentValidCandidates(
   candidates: readonly CurrentValidCandidate[]
 ): CurrentValidResolution {
@@ -57,82 +127,14 @@ export function resolveInMemoryCurrentValidCandidates(
   const warnings: string[] = [];
 
   for (const candidate of candidates) {
-    if (candidate.verificationStatus !== "verified") {
-      rejected.push({ candidate, reason: "not_verified" });
+    const rejection = currentValidRejectionRules.find((rule) => rule.rejects(candidate));
+    if (rejection) {
+      rejected.push({ candidate, reason: rejection.reason });
+      if (rejection.warning) warnings.push(rejection.warning(candidate));
       continue;
     }
 
-    if (candidate.proofRefs.length === 0) {
-      rejected.push({ candidate, reason: "missing_proof" });
-      continue;
-    }
-
-    if (candidate.sourceHashStatus === "mismatch") {
-      rejected.push({ candidate, reason: "source_hash_mismatch" });
-      continue;
-    }
-
-    if (candidate.proofHashStatus === "mismatch") {
-      rejected.push({ candidate, reason: "proof_hash_mismatch" });
-      continue;
-    }
-
-    if (candidate.sourceHashStatus === "unknown" || candidate.proofHashStatus === "unknown") {
-      rejected.push({ candidate, reason: "hash_unknown" });
-      warnings.push(`Hash status is unknown, not current-valid: ${candidate.id}`);
-      continue;
-    }
-
-    if (candidate.contradictionStatus === "active") {
-      rejected.push({ candidate, reason: "active_contradiction" });
-      continue;
-    }
-
-    if (candidate.privacyStatus === "blocked") {
-      rejected.push({ candidate, reason: "privacy_blocked" });
-      continue;
-    }
-
-    if (candidate.dirtyScopeStatus === "mismatch") {
-      rejected.push({ candidate, reason: "dirty_scope_mismatch" });
-      continue;
-    }
-
-    if (candidate.dirtyScopeStatus === "unknown") {
-      rejected.push({ candidate, reason: "dirty_scope_unknown" });
-      warnings.push(`Dirty worktree scope is unknown, not current-valid: ${candidate.id}`);
-      continue;
-    }
-
-    if (candidate.claimPolicyStatus === "blocked") {
-      rejected.push({ candidate, reason: "claim_policy_blocked" });
-      warnings.push(`Durable claim policy blocked current-valid claim: ${candidate.id}`);
-      continue;
-    }
-
-    if (candidate.scopeResult === "match") {
-      active.push(candidate);
-      continue;
-    }
-
-    if (candidate.scopeResult === "mismatch") {
-      rejected.push({ candidate, reason: "scope_mismatch" });
-      continue;
-    }
-
-    if (candidate.scopeResult === "partial") {
-      rejected.push({ candidate, reason: "scope_partial" });
-      warnings.push(`Partial scope is not current-valid: ${candidate.id}`);
-      continue;
-    }
-
-    if (candidate.scopeResult === "unknown") {
-      rejected.push({ candidate, reason: "scope_unknown" });
-      warnings.push(`Unknown scope is not current-valid: ${candidate.id}`);
-      continue;
-    }
-
-    rejected.push({ candidate, reason: "scope_invalid" });
+    active.push(candidate);
   }
 
   return { active, rejected, warnings };
