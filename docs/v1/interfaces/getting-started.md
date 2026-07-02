@@ -30,6 +30,7 @@ Skip Grape for a one-line edit where the agent already has the whole file in vie
 npm install -g grape-context
 grape --version
 grape help
+grape init --dry-run
 ```
 
 If install resolves an older package, clear the npm cache and reinstall:

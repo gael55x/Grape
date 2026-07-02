@@ -42,6 +42,22 @@ export interface InitializeLocalProjectResult {
   readonly mcp: McpConnectionGuide;
 }
 
+export interface InitializeLocalProjectPreview {
+  readonly rootPath: string;
+  readonly grapeDirPath: string;
+  readonly configPath: string;
+  readonly databasePath: string;
+  readonly projectId: string;
+  readonly repoId: string;
+  readonly branch: string;
+  readonly headCommit: string;
+  readonly dirtyWorktree: boolean;
+  readonly bootstrap: LocalBootstrapDetection;
+  readonly scan: LocalScanDiagnostics;
+  readonly mcp: McpConnectionGuide;
+  readonly plannedWrites: readonly string[];
+}
+
 export interface LocalProjectStatus {
   readonly rootPath: string;
   readonly initialized: boolean;

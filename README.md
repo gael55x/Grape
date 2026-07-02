@@ -89,6 +89,7 @@ Verify the install:
 ```bash
 grape --version
 grape help
+grape init --dry-run
 ```
 
 ## Quick start

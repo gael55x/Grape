@@ -86,6 +86,7 @@ export function helpText(): string {
     "  grape --version             Print the installed package version",
     "  grape version               Print the installed package version",
     "  grape init                  Initialize local .grape state without MCP guidance",
+    "  grape init --dry-run        Preview local setup without writing files",
     "  grape init --connect        Initialize local .grape state and show MCP guidance",
     "  grape mcp --print-config    Print MCP client configuration",
     "  grape mcp --install --client cursor",
@@ -166,7 +167,7 @@ export function helpText(): string {
     "  --test-framework <name>     Label a Grape-observed test run",
     "  --client <name>             MCP install client: cursor, claude, codex, or generic",
     "  --config-path <path>        Explicit MCP config file path for install",
-    "  --dry-run                   Preview MCP client config writes without changing files",
+    "  --dry-run                   Preview supported writes without changing files",
     "  --confirm                   Apply a destructive local maintenance command",
     "  --force                     Replace a conflicting existing Grape MCP server entry",
     "  --json                      Emit machine-readable JSON"
@@ -176,10 +177,11 @@ export function helpText(): string {
 export function initHelpText(): string {
   return [
     "Usage:",
+    "  grape init --dry-run [--repo <path>] [--json]",
     "  grape init --connect [--repo <path>] [--json]",
     "",
     "Creates local .grape state, applies SQLite migrations, captures the first Git snapshot,",
-    "and prints MCP connection guidance."
+    "and prints MCP connection guidance. Use --dry-run to preview paths and bootstrap detection without writing."
   ].join("\n");
 }
 
@@ -190,10 +192,11 @@ export function commandHelpText(command: string): string | undefined {
 const COMMAND_HELP: Readonly<Record<string, string>> = {
   init: [
     "Usage:",
+    "  grape init --dry-run [--repo <path>] [--json]",
     "  grape init --connect [--repo <path>] [--json]",
     "  grape init [--repo <path>] [--json]",
     "",
-    "Creates or repairs local .grape state, applies SQLite migrations, captures the first Git snapshot, and prints MCP setup guidance when --connect is present.",
+    "Creates or repairs local .grape state, applies SQLite migrations, captures the first Git snapshot, and prints MCP setup guidance when --connect is present. Use --dry-run to preview paths and bootstrap detection without writing.",
     "",
     "Recovery:",
     "  Run from a Git worktree with at least one commit, or pass --repo <repo-root>."

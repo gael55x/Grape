@@ -32,7 +32,7 @@ Also run the smoke commands from the packaged or built CLI:
 ```bash
 grape --version
 grape help
-grape init --connect
+grape init --dry-run
 grape mcp --help
 grape mcp --install --client cursor --dry-run
 grape mcp --install --client codex --dry-run
