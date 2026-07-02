@@ -5,12 +5,12 @@ import path from "node:path";
 import { mcpServerConfig } from "./mcp-guide.js";
 import type { McpServerConfig } from "./setup-types.js";
 
-export type McpInstallClient = "cursor" | "claude" | "codex";
-export type McpInstallStatus = "created" | "updated" | "already_configured" | "dry_run";
+export type McpInstallClient = "cursor" | "claude" | "codex" | "generic";
+export type McpInstallStatus = "created" | "updated" | "already_configured" | "dry_run" | "manual";
 export type McpInstallChange = "create" | "update" | "none";
 
 export const unsupportedAutoInstallMessage =
-  "Auto-install is currently supported for Cursor, Claude Desktop, and Codex only. Use `grape mcp --print-config` for manual setup.";
+  "Auto-install is currently supported for Cursor, Claude Desktop, Codex, or a generic JSON config path. Use `grape mcp --install --client generic --config-path <file>` or `grape mcp --print-config` for manual setup.";
 
 export class McpClientConfigInstallError extends Error {
   constructor(
@@ -32,6 +32,7 @@ export interface McpClientConfigInstallInput {
   readonly client: McpInstallClient;
   readonly dryRun?: boolean;
   readonly force?: boolean;
+  readonly configPath?: string;
   readonly platform?: NodeJS.Platform;
   readonly env?: NodeJS.ProcessEnv;
   readonly homeDir?: string;
@@ -79,6 +80,7 @@ export function installMcpClientConfig(
   const rootPath = path.resolve(input.rootPath);
   const targetPath = resolveMcpClientConfigPath(input.client, {
     rootPath,
+    configPath: input.configPath,
     platform: input.platform,
     env: input.env,
     homeDir: input.homeDir,
@@ -86,6 +88,12 @@ export function installMcpClientConfig(
     codexConfigPath: input.codexConfigPath
   });
   const serverConfig = mcpServerConfig(rootPath);
+  if (input.client === "generic" && !targetPath) {
+    return genericManualConfig({ rootPath, serverConfig, dryRun: input.dryRun === true });
+  }
+  if (!targetPath) {
+    throw new McpClientConfigInstallError(unsupportedAutoInstallMessage, "unsupported_path");
+  }
   if (input.client === "codex") {
     return installCodexClientConfig({
       rootPath,
@@ -166,13 +174,16 @@ export function resolveClaudeDesktopConfigPath(
 
 interface ResolveConfigPathInput extends ClaudeConfigPathInput {
   readonly rootPath: string;
+  readonly configPath?: string;
   readonly claudeConfigPath?: string;
   readonly codexConfigPath?: string;
 }
 
-function resolveMcpClientConfigPath(client: McpInstallClient, input: ResolveConfigPathInput): string {
+function resolveMcpClientConfigPath(client: McpInstallClient, input: ResolveConfigPathInput): string | undefined {
+  if (input.configPath) return path.resolve(input.rootPath, input.configPath);
   if (client === "cursor") return path.join(input.rootPath, ".cursor", "mcp.json");
   if (client === "codex") return input.codexConfigPath ?? path.join(input.rootPath, ".codex", "config.toml");
+  if (client === "generic") return undefined;
 
   const resolved = input.claudeConfigPath
     ? { status: "resolved" as const, configPath: input.claudeConfigPath }
@@ -275,7 +286,29 @@ function unsupportedClaudePath(reason: string): ClaudeConfigPathResult {
 function clientLabel(client: McpInstallClient): string {
   if (client === "cursor") return "Cursor";
   if (client === "claude") return "Claude Desktop";
+  if (client === "generic") return "Generic MCP client";
   return "Codex";
+}
+
+function genericManualConfig(input: {
+  readonly rootPath: string;
+  readonly serverConfig: McpServerConfig;
+  readonly dryRun: boolean;
+}): McpClientConfigInstallResult {
+  return {
+    client: "generic",
+    clientLabel: "Generic MCP client",
+    targetPath: "manual MCP client config",
+    serverName: "grape",
+    serverConfig: input.serverConfig,
+    finalConfig: { mcpServers: { grape: input.serverConfig } },
+    configFormat: "json",
+    targetExisted: false,
+    dryRun: input.dryRun,
+    wrote: false,
+    status: input.dryRun ? "dry_run" : "manual",
+    change: "none"
+  };
 }
 
 interface InstallCodexInput {

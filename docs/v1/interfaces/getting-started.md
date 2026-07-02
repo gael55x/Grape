@@ -72,6 +72,7 @@ Choose the client you actually use:
 - Cursor: run `grape mcp --install --client cursor` from the repository root.
 - Claude Desktop: run `grape mcp --install --client claude` from the repository root.
 - Codex: run `grape mcp --install --client codex` from the repository root.
+- Generic JSON MCP client: run `grape mcp --install --client generic` to print JSON, or add `--config-path <path>` to merge a specific JSON config file.
 
 Then restart or reload the MCP client if it does not pick up config changes automatically. Ask the agent to call `grape_get_context` at the start of each repo task. Keep the same `sessionId` and task text for continued turns on the same task.
 
@@ -80,6 +81,7 @@ Grape only writes known MCP config files:
 - Cursor auto-install writes project-local `.cursor/mcp.json`.
 - Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely.
 - Codex auto-install writes project-local `.codex/config.toml` for trusted Codex projects.
+- Generic install writes nothing unless `--config-path` names a JSON MCP config file.
 
 Preview the config without writing:
 
@@ -87,9 +89,10 @@ Preview the config without writing:
 grape mcp --install --client cursor --dry-run
 grape mcp --install --client claude --dry-run
 grape mcp --install --client codex --dry-run
+grape mcp --install --client generic --dry-run
 ```
 
-If an existing Grape MCP entry differs, Grape refuses to replace it unless you pass `--force`. It preserves unrelated MCP server entries.
+Use `--config-path <path>` to override the target config file. If an existing Grape MCP entry differs, Grape refuses to replace it unless you pass `--force`. It preserves unrelated MCP server entries.
 
 Print a path-neutral AGENTS.md snippet when you want checked-in agent guidance:
 
@@ -110,7 +113,7 @@ Run those commands from the repository root. The plugin lives in `plugins/grape`
 
 Run `npm run build` and `npm run codex:check` to verify the local Codex path. The check uses temp repositories and an isolated Codex home.
 
-Other clients remain manual unless their config paths can be handled safely. That is intentional. Grape should not guess where to write global editor config. If a published beta build does not recognize `grape mcp --install`, use the manual fallback until the next build that includes client auto-install is published.
+Other clients should use `grape mcp --install --client generic` with an explicit `--config-path` only when you know the correct JSON config file. Grape should not guess where to write global editor config. If a published beta build does not recognize `grape mcp --install`, use the manual fallback until the next build that includes client auto-install is published.
 
 Manual fallback:
 

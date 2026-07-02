@@ -95,7 +95,7 @@ grape help
 
 1. Install: `npm install -g grape-context@beta`
 2. Initialize: `grape init --connect` (from your repository root)
-3. Connect MCP: `grape mcp --install --client cursor`, `grape mcp --install --client claude`, or `grape mcp --install --client codex`
+3. Connect MCP: `grape mcp --install --client cursor`, `grape mcp --install --client claude`, `grape mcp --install --client codex`, or `grape mcp --install --client generic`
 4. Agent loop: the agent calls `grape_get_context` each turn with a stable `sessionId` and stable task text
 
 Full walkthrough: [Getting started](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/getting-started.md).
@@ -143,15 +143,25 @@ grape mcp --install --client codex
 
 This writes or merges `.codex/config.toml` for trusted Codex projects. It preserves unrelated TOML and refuses to replace an existing `[mcp_servers.grape]` table unless you pass `--force`.
 
+For a generic JSON MCP client, print the config or merge an explicit config file:
+
+```bash
+grape mcp --install --client generic
+grape mcp --install --client generic --config-path ./mcp.json
+```
+
+Generic has no default write path. Without `--config-path`, it prints the JSON and writes nothing.
+
 Preview any change without writing:
 
 ```bash
 grape mcp --install --client cursor --dry-run
 grape mcp --install --client claude --dry-run
 grape mcp --install --client codex --dry-run
+grape mcp --install --client generic --dry-run
 ```
 
-If an existing Grape MCP entry differs, Grape refuses to replace it unless you pass `--force`. Unrelated MCP servers are preserved.
+Use `--config-path <path>` to override the target config file. If an existing Grape MCP entry differs, Grape refuses to replace it unless you pass `--force`. Unrelated MCP servers are preserved.
 
 To add project guidance for agents, print a path-neutral AGENTS.md snippet:
 
@@ -177,7 +187,7 @@ npm run build
 npm run codex:check
 ```
 
-For other MCP clients, or for published beta builds that do not recognize `grape mcp --install`, use the manual config fallback:
+For published beta builds that do not recognize `grape mcp --install`, use the manual config fallback:
 
 ```bash
 grape mcp --print-config

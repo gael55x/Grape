@@ -46,6 +46,10 @@ function codexConfigPath(rootPath) {
   return path.join(rootPath, ".codex", "config.toml");
 }
 
+function genericConfigPath(rootPath) {
+  return path.join(rootPath, "generic-mcp.json");
+}
+
 function writeJson(filePath, value) {
   mkdirSync(path.dirname(filePath), { recursive: true });
   writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
@@ -102,8 +106,10 @@ test("cli help exposes MCP client install flags", () => {
   assert.match(help.stdout, /grape mcp --install --client cursor/);
   assert.match(help.stdout, /grape mcp --install --client claude/);
   assert.match(help.stdout, /grape mcp --install --client codex/);
+  assert.match(help.stdout, /grape mcp --install --client generic/);
   assert.match(help.stdout, /grape mcp --print-agents-snippet/);
   assert.match(help.stdout, /--client <name>/);
+  assert.match(help.stdout, /--config-path <path>/);
   assert.match(help.stdout, /--dry-run/);
   assert.match(help.stdout, /--force/);
 
@@ -112,7 +118,9 @@ test("cli help exposes MCP client install flags", () => {
   assert.match(mcpHelp.stdout, /grape mcp --install --client cursor/);
   assert.match(mcpHelp.stdout, /grape mcp --install --client claude/);
   assert.match(mcpHelp.stdout, /grape mcp --install --client codex/);
+  assert.match(mcpHelp.stdout, /grape mcp --install --client generic/);
   assert.match(mcpHelp.stdout, /grape mcp --print-agents-snippet/);
+  assert.match(mcpHelp.stdout, /--config-path overrides the target config file/);
   assert.match(mcpHelp.stdout, /--dry-run prints the target path and final config/);
 });
 
@@ -493,6 +501,60 @@ test("codex MCP install fails safely on malformed TOML header without overwritin
     assert.equal(result.status, 1);
     assert.match(result.stderr, /malformed TOML table header/);
     assert.equal(readFileSync(targetPath, "utf8"), invalidToml);
+  });
+});
+
+test("generic MCP install prints manual JSON when no config path is provided", () => {
+  withTempDir("grape-mcp-install-generic-manual-", (rootPath) => {
+    const result = runCli(rootPath, ["mcp", "--install", "--client", "generic"]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stderr, "");
+    assert.match(result.stdout, /Generic MCP config: no changes written/);
+    assert.match(result.stdout, /Client: Generic MCP client/);
+    assert.match(result.stdout, /Target: manual MCP client config/);
+    assert.match(result.stdout, /"mcpServers"/);
+    assert.match(result.stdout, /"grape"/);
+    assert.equal(existsSync(genericConfigPath(rootPath)), false);
+  });
+});
+
+test("generic MCP install merges explicit JSON config path", () => {
+  withTempDir("grape-mcp-install-generic-path-", (rootPath) => {
+    const targetPath = genericConfigPath(rootPath);
+    writeJson(targetPath, {
+      mcpServers: {
+        docs: {
+          command: "docs-server"
+        }
+      }
+    });
+
+    const result = runCli(rootPath, ["mcp", "--install", "--client", "generic", "--config-path", targetPath]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /Updated Grape MCP server config for Generic MCP client/);
+    assert.match(result.stdout, /Target: <repo-root>[\\/]generic-mcp\.json/);
+    const config = readJson(targetPath);
+    assert.deepEqual(config.mcpServers.docs, { command: "docs-server" });
+    assertGrapeServer(config, rootPath);
+  });
+});
+
+test("MCP install config path override works for Cursor and Codex", () => {
+  withTempDir("grape-mcp-install-path-override-", (rootPath) => {
+    const cursorPath = path.join(rootPath, "cursor-custom.json");
+    const codexPath = path.join(rootPath, "codex-custom.toml");
+
+    const cursor = runCli(rootPath, ["mcp", "--install", "--client", "cursor", "--config-path", cursorPath]);
+    assert.equal(cursor.status, 0, cursor.stderr);
+    assert.equal(existsSync(cursorConfigPath(rootPath)), false);
+    assertGrapeServer(readJson(cursorPath), rootPath);
+
+    const codex = runCli(rootPath, ["mcp", "--install", "--client", "codex", "--config-path", codexPath]);
+    assert.equal(codex.status, 0, codex.stderr);
+    assert.equal(existsSync(codexConfigPath(rootPath)), false);
+    assertCodexGrapeServer(readFileSync(codexPath, "utf8"), rootPath);
   });
 });
 

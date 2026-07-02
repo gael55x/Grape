@@ -22,6 +22,7 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 - Added Codex MCP client config auto-wiring. `grape mcp --install --client codex` writes project-local `.codex/config.toml`, preserves unrelated TOML, refuses malformed Codex table headers, treats identical `[mcp_servers.grape]` entries as already configured, and requires `--force` before replacing a conflicting Grape MCP table.
 - Added MCP server instructions to the `initialize` response so Codex-style clients receive session identity, invalidation, and omitted-restore guidance from `grape mcp --stdio`.
 - Added `grape mcp --print-agents-snippet` to print path-neutral AGENTS.md guidance for Grape MCP usage without editing repository rules.
+- Added `grape mcp --install --client generic` and `--config-path <path>` so generic JSON MCP clients can use the same merge-safe setup path without Grape guessing a global config location.
 - Added a repo-local Codex plugin at `plugins/grape` with `grape mcp --stdio` config, a Grape skill, and `.agents/plugins/marketplace.json` for local Codex installation.
 - Added `npm run codex:check` to verify the local Codex workflow: Grape Codex config install, AGENTS snippet output, MCP initialize/context/restore, plugin config shape, and isolated Codex CLI plugin install when the Codex CLI is available.
 - Compacted compression artifact dependency scope. Public artifacts now keep aggregate `inputHash`, `inputCount`, policy/scope hashes, and output hash while detailed compression input refs and hashes remain in `compression_inputs`.
