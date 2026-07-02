@@ -27,7 +27,7 @@ Skip Grape for a one-line edit where the agent already has the whole file in vie
 ## Install
 
 ```bash
-npm install -g grape-context@beta
+npm install -g grape-context
 grape --version
 grape help
 ```
@@ -36,7 +36,7 @@ If install resolves an older package, clear the npm cache and reinstall:
 
 ```bash
 npm cache clean --force
-npm install -g grape-context@beta
+npm install -g grape-context
 ```
 
 ## Initialize a repository
@@ -113,7 +113,7 @@ Run those commands from the repository root. The plugin lives in `plugins/grape`
 
 Run `npm run build` and `npm run codex:check` to verify the local Codex path. The check uses temp repositories and an isolated Codex home.
 
-Other clients should use `grape mcp --install --client generic` with an explicit `--config-path` only when you know the correct JSON config file. Grape should not guess where to write global editor config. If a published beta build does not recognize `grape mcp --install`, use the manual fallback until the next build that includes client auto-install is published.
+Other clients should use `grape mcp --install --client generic` with an explicit `--config-path` only when you know the correct JSON config file. Grape should not guess where to write global editor config. If an older build does not recognize `grape mcp --install`, use the manual fallback until you upgrade.
 
 Manual fallback:
 
@@ -137,7 +137,7 @@ Typical stdio MCP entry:
 
 The `cwd` and `--repo` path must point at the same repository root.
 
-The auto-install commands are separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write Cursor, Claude Desktop, or Codex config files.
+The auto-install commands write config only. The configured MCP server still runs `grape mcp --stdio --repo <repo-root>` and exchanges newline-delimited JSON-RPC over stdio.
 
 What the client runs:
 
@@ -168,7 +168,7 @@ Quick checks if a client does not connect:
 - Confirm no wrapper script prints banners, logs, or prompts to stdout.
 - Run `grape doctor` and `grape doctor --privacy` from the repository root.
 
-Grape's automated packaged beta trial verifies installed CLI and stdio MCP behavior. A specific editor UI is verified only when a human client trial records it.
+Grape's automated packaged client trial verifies installed CLI and stdio MCP behavior. A specific editor UI is verified only when a human client trial records it.
 
 ## Normal Agent Loop
 
@@ -284,9 +284,9 @@ grape init --connect
 | `benchmark fixture not found` | Use `grape bench --fixture <name>` with a fixture under `tests/fixtures/`, or pass `--fixture-path`. |
 | Feature flags not allowlisted | Add flag names to the scope allowlist in `.grape/config.json`, or omit `--feature-flags`. |
 
-## Beta limits
+## 1.0 scope
 
-Grape 1.0 beta focuses on local context transport. It does not promise cloud memory, embeddings search, or production-grade multi-tenant hosting. See the root [`README.md`](../../../README.md) for the current "not promised yet" list.
+Grape 1.0 focuses on local context transport, session continuity, stale-context invalidation, proof-backed excerpts, MCP setup, and privacy-safe local storage. It does not promise cloud memory, embeddings search, or production-grade multi-tenant hosting. See the root [`README.md`](../../../README.md) for the current "not promised yet" list and [`1-0-readiness.md`](../planning/1-0-readiness.md) for the release checklist.
 
 ## Related docs
 

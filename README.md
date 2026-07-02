@@ -81,7 +81,7 @@ Requirements:
 Install Grape:
 
 ```bash
-npm install -g grape-context@beta
+npm install -g grape-context
 ```
 
 Verify the install:
@@ -93,7 +93,7 @@ grape help
 
 ## Quick start
 
-1. Install: `npm install -g grape-context@beta`
+1. Install: `npm install -g grape-context`
 2. Initialize: `grape init --connect` (from your repository root)
 3. Connect MCP: `grape mcp --install --client cursor`, `grape mcp --install --client claude`, `grape mcp --install --client codex`, or `grape mcp --install --client generic`
 4. Agent loop: the agent calls `grape_get_context` each turn with a stable `sessionId` and stable task text
@@ -187,7 +187,7 @@ npm run build
 npm run codex:check
 ```
 
-For published beta builds that do not recognize `grape mcp --install`, use the manual config fallback:
+For older builds that do not recognize `grape mcp --install`, use the manual config fallback:
 
 ```bash
 grape mcp --print-config
@@ -201,7 +201,7 @@ grape mcp --stdio --repo <repo-root>
 
 Use the repository root for both `cwd` and `--repo`. MCP stdio messages are newline-delimited JSON-RPC objects. Do not use `Content-Length` header framing.
 
-The auto-install commands are separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write Cursor, Claude Desktop, or Codex config files.
+The auto-install commands are separate from MCP stdio framing. Client configs launch `grape mcp --stdio --repo <repo-root>` and expect newline-delimited JSON-RPC over stdio.
 
 After setup, your MCP-capable coding agent calls:
 
@@ -457,7 +457,7 @@ Current benchmark output also reports per-turn local storage bytes for the tempo
 
 The current benchmark suite also covers branch-switch, dirty-worktree, stale-source, and session-reset invalidation fixtures.
 
-That supports the core beta transport claim on these fixtures: Grape can omit unchanged same-session context, keep restore metadata for omitted items, and invalidate prior context when files, branches, or sessions change.
+That supports the core transport claim on these fixtures: Grape can omit unchanged same-session context, keep restore metadata for omitted items, and invalidate prior context when files, branches, or sessions change.
 
 ### Published-package baselines
 
@@ -469,9 +469,9 @@ See [Benchmarks](https://github.com/gael55x/Grape/blob/main/docs/v1/quality/benc
 
 ## Project status
 
-Grape is currently in 1.0 beta.
+Grape is preparing for 1.0.
 
-The beta focuses on local context transport, session-aware diffs, restore behavior, stale context invalidation, proof separation, and MCP integration.
+The 1.0 scope is local context transport, session-aware diffs, restore behavior, stale context invalidation, proof separation, MCP integration, client config helpers, and privacy-safe local storage.
 
 Implemented today:
 
@@ -490,9 +490,8 @@ Implemented today:
 * observed command and test evidence through `grape run` and `grape test`
 * local check suite, benchmark fixtures, package smoke, and packaged MCP smoke
 
-Not promised yet:
+Experimental or not promised in 1.0:
 
-* production stability
 * cloud sync
 * broad agent memory
 * full semantic ranking
@@ -504,7 +503,7 @@ Not promised yet:
 * benchmark superiority claims
 * guaranteed behavior in every IDE MCP client without a human client trial
 
-APIs, schemas, command names, setup guidance, and internal contracts may still change before stable 1.0.
+The package should not be published as stable 1.0 until the release checklist passes on the intended commit. See [1.0 readiness](https://github.com/gael55x/Grape/blob/main/docs/v1/planning/1-0-readiness.md).
 
 ## Development
 
@@ -540,7 +539,7 @@ Use the release-candidate gate when you need packaged workflow evidence:
 npm run beta:check
 ```
 
-`npm run beta:check` runs the local check suite, benchmark fixtures, and packaged beta client trial. The packaged trial validates installed CLI core workflows, Cursor and Claude Desktop install dry-runs, and stdio MCP behavior from an installed package. It is not a replacement for a human Cursor, Claude Desktop, or Claude Code UI trial when release policy requires one.
+`npm run beta:check` runs the local check suite, benchmark fixtures, and packaged client trial. The packaged trial validates installed CLI core workflows, Cursor and Claude Desktop install dry-runs, and stdio MCP behavior from an installed package. It is not a replacement for a human Cursor, Claude Desktop, or Claude Code UI trial when release policy requires one.
 
 If a behavior test fails, start with the named folder under `tests/behavior/`. If a docs check fails, update the owning contract or example instead of patching around the script. Use `docs/v1/README.md` to find the owning domain doc before changing behavior.
 
