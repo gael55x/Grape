@@ -4,7 +4,7 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
       {
         name: "grape_get_context",
         description:
-          "Compile a branch-aware, dependency-tracked context pack for the current repository and session.",
+          "Get compact, current repo context for one coding task and session.",
         inputSchema: {
           type: "object",
           required: ["query"],
@@ -14,7 +14,7 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
             query: {
               type: "string",
               minLength: 1,
-              description: "Task or question the coding agent needs grounded context for."
+              description: "Current coding task or question."
             },
             taskType: {
               type: "string",
@@ -48,12 +48,12 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
               type: "string",
               enum: ["agent_pack", "full"],
               description:
-                "agent_pack returns the compact beta transport graph cut; full also embeds the full ContextArtifact."
+                "agent_pack returns compact context; full also embeds the full artifact and item bodies."
             }
           }
         }
       },
-      readTool("grape_get_artifact", "Inspect stored context artifact metadata and optionally fetch the stored public artifact JSON.", {
+      readTool("grape_get_artifact", "Inspect artifact metadata; use full only when exact stored JSON is needed.", {
         artifactId: { type: "string", minLength: 1 },
         outputMode: {
           type: "string",
@@ -61,30 +61,30 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
           description: "metadata returns refs/dependencies only; full also returns the stored public artifact JSON."
         }
       }, ["artifactId"]),
-      readTool("grape_get_claims", "Inspect current-valid durable claims without returning raw source bodies.", {
+      readTool("grape_get_claims", "Inspect current-valid claims without raw source bodies.", {
         activeOnly: { type: "boolean" }
       }),
-      readTool("grape_get_proofs", "Inspect persisted exact-source proof rows without returning proof excerpts or raw source text.", {
+      readTool("grape_get_proofs", "Inspect exact-source proof metadata without raw excerpts.", {
         proofId: { type: "string", minLength: 1 },
         sourceId: { type: "string", minLength: 1 }
       }),
-      readTool("grape_get_rules", "Inspect current Git-visible project rule excerpts after source-hash and secret-scan checks.", {}),
-      readTool("grape_get_omitted_item", "Restore an omitted context item by session and restore token.", {
+      readTool("grape_get_rules", "Inspect current Git-visible project rule excerpts after safety checks.", {}),
+      readTool("grape_get_omitted_item", "Restore an omitted context item after dependency checks.", {
         sessionId: { type: "string", minLength: 1 },
         restoreToken: { type: "string", minLength: 1 }
       }, ["sessionId", "restoreToken"]),
-      readTool("grape_get_stale_items", "Inspect emitted stale-context invalidations without returning context bodies.", {
+      readTool("grape_get_stale_items", "List prior context Grape marked stale without returning bodies.", {
         sessionId: { type: "string", minLength: 1 }
       }),
-      readTool("grape_get_conflicts", "Inspect recorded claim conflict edges without resolving them.", {}),
+      readTool("grape_get_conflicts", "Inspect recorded claim conflicts without resolving them.", {}),
       readTool(
         "grape_get_status",
-        "Inspect local Grape bootstrap, migration, and repository state for the current working directory.",
+        "Check Grape setup, repository state, and recovery guidance.",
         {}
       ),
       {
         name: "grape_record_candidate",
-        description: "Record an agent-reported claim candidate as non-durable evidence requiring proof validation.",
+        description: "Record an agent claim candidate as non-durable evidence.",
         inputSchema: {
           type: "object",
           required: ["sessionId", "subject", "claimType", "claimText", "scope", "reportedBy"],
@@ -102,7 +102,7 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
       },
       {
         name: "grape_record_command_result",
-        description: "Record agent-reported command-result evidence as temporary, non-promoted local evidence.",
+        description: "Record agent-reported command metadata as temporary evidence.",
         inputSchema: {
           type: "object",
           required: [
@@ -122,7 +122,7 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
       },
       {
         name: "grape_record_test_result",
-        description: "Record agent-reported test-result evidence as temporary, non-promoted local evidence.",
+        description: "Record agent-reported test metadata as temporary evidence.",
         inputSchema: {
           type: "object",
           required: [
@@ -148,7 +148,7 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
       },
       {
         name: "grape_record_user_decision",
-        description: "Record a directly confirmed user decision as temporary, redacted evidence.",
+        description: "Record a directly confirmed user decision as temporary redacted evidence.",
         inputSchema: {
           type: "object",
           required: [
@@ -191,7 +191,7 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
       },
       {
         name: "grape_request_user_confirmation",
-        description: "Create a non-durable request ID for direct user confirmation of a prompt hash.",
+        description: "Create a non-durable request ID for direct user confirmation.",
         inputSchema: {
           type: "object",
           required: ["sessionId", "prompt", "promptHash", "scope", "reportedBy"],

@@ -38,7 +38,7 @@ Public stored artifact JSON and CLI compile responses that include a context pac
 - `contextPackItems`: array of pack items (see below)
 - `contextArtifact`: nested V1 artifact (`context-artifact.md`)
 
-MCP `grape_get_context` defaults to `outputMode: "agent_pack"` and returns compact preview `contextPackItems` plus `artifactRef`. It does not embed full item bodies, the full `contextArtifact`, inline `contextPackMarkdown`, or experimental `agentGraph` in this default response because the stored artifact file and full inspection output can inspect them on demand. MCP callers may request `outputMode: "full"` when they need the embedded artifact, full `ContextPackItem.content` payloads, inline inspection Markdown, and the graph cut.
+MCP `grape_get_context` defaults to `outputMode: "agent_pack"` and returns compact preview `contextPackItems` plus `artifactRef`. It does not embed full item bodies, the full `contextArtifact`, inline `contextPackMarkdown`, or experimental `agentGraph` in this default response because the stored artifact file and full inspection output can inspect them on demand. MCP callers may request `outputMode: "full"` when they need the embedded artifact, full `ContextPackItem.content` payloads, inline inspection Markdown, and the inspection graph.
 
 Pack items must use the canonical `state` values below. `INVALIDATE_PREVIOUS` items must include `invalidatesSentItemId`. Restorable omissions must surface as `RESTORE_AVAILABLE` with `restoreId` when policy allows restore.
 
