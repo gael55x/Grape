@@ -51,7 +51,7 @@ JSON output from `--json` commands and `grape mcp --print-config` stays plain te
 | Group | Commands |
 |---|---|
 | Everyday | `grape help`, `grape --version`, `grape version`, `grape status`, `grape doctor`, `grape doctor --privacy` |
-| Setup / MCP | `grape init --connect`, `grape sync`, `grape mcp --install --client cursor`, `grape mcp --install --client claude`, `grape mcp --install --client codex`, `grape mcp --print-agents-snippet`, `grape mcp --print-config`, `grape mcp --stdio` |
+| Setup / MCP | `grape init --connect`, `grape sync`, `grape mcp --install --client cursor`, `grape mcp --install --client claude`, `grape mcp --install --client codex`, `grape mcp --install --client generic`, `grape mcp --print-agents-snippet`, `grape mcp --print-config`, `grape mcp --stdio` |
 | Maintenance | `grape compact`, `grape export`, `grape purge` |
 | Fallback compile | `grape compile`, `grape diff-context` |
 | Observed runs | `grape run --session <id> -- <cmd...>`, `grape test --session <id> -- <cmd...>` |
@@ -73,7 +73,7 @@ These commands are not removed from V1.0. They remain planned command surfaces, 
 Implemented command groups:
 
 - everyday: `grape help`, `grape --version`, `grape version`, `grape status`, `grape doctor`, `grape doctor --privacy`
-- setup/MCP: `grape init --connect`, `grape sync`, `grape mcp`, `grape mcp --install --client cursor`, `grape mcp --install --client claude`, `grape mcp --install --client codex`, `grape mcp --print-agents-snippet`, `grape mcp --print-config`, `grape mcp --stdio`
+- setup/MCP: `grape init --connect`, `grape sync`, `grape mcp`, `grape mcp --install --client cursor`, `grape mcp --install --client claude`, `grape mcp --install --client codex`, `grape mcp --install --client generic`, `grape mcp --print-agents-snippet`, `grape mcp --print-config`, `grape mcp --stdio`
 - maintenance: `grape compact`, `grape export`, `grape purge`
 - fallback compile: `grape compile --task <text>`, `grape diff-context --task <text>`
 - observed runs: `grape run --session <id> -- <cmd...>`, `grape test --session <id> -- <cmd...>`
@@ -119,6 +119,7 @@ The current implementation includes the first CLI setup/debugging slice:
 - `grape mcp --install --client cursor`
 - `grape mcp --install --client claude`
 - `grape mcp --install --client codex`
+- `grape mcp --install --client generic`
 - `grape mcp --print-agents-snippet`
 - `grape mcp --print-config`
 - `grape mcp --stdio`
@@ -167,7 +168,7 @@ When `--reset-session` is supplied for an existing compile session, `grape compi
 
 `grape doctor --privacy` narrows doctor output to privacy and local-first diagnostics. It reports local-first defaults, `.grape/` Git exclusion, aggregate scanner rejection counts, ignored/private input handling, and artifact secret-scan coverage without returning file bodies, secret values, or raw rejected-file contents. It does not approve ignored/private reads, purge data, change scanner policy, or return export bodies.
 
-`grape mcp --install --client cursor` writes or merges project-local `.cursor/mcp.json`. `grape mcp --install --client claude` writes or merges Claude Desktop `claude_desktop_config.json` when Grape can resolve the platform path safely. `grape mcp --install --client codex` writes or merges project-local `.codex/config.toml` for trusted Codex projects. Cursor and Claude add or update only `mcpServers.grape`; Codex adds or updates only `[mcp_servers.grape]`. Installers preserve unrelated config, fail safely on invalid JSON or malformed Codex table headers, treat identical existing Grape entries as already configured, and require `--force` before replacing a conflicting existing Grape entry. `--dry-run` prints the target path and final config without writing. Human output reports the client, config path, server entry, server command, working directory, reload/restart instruction, verification guidance, and manual fallback. Auto-install is currently supported for Cursor, Claude Desktop, and Codex only; other clients use `grape mcp --print-config` for manual setup.
+`grape mcp --install --client cursor` writes or merges project-local `.cursor/mcp.json`. `grape mcp --install --client claude` writes or merges Claude Desktop `claude_desktop_config.json` when Grape can resolve the platform path safely. `grape mcp --install --client codex` writes or merges project-local `.codex/config.toml` for trusted Codex projects. `grape mcp --install --client generic` prints generic JSON and writes nothing unless `--config-path <path>` names a JSON MCP config file. Cursor, Claude, and generic JSON installs add or update only `mcpServers.grape`; Codex adds or updates only `[mcp_servers.grape]`. Installers preserve unrelated config, fail safely on invalid JSON or malformed Codex table headers, treat identical existing Grape entries as already configured, and require `--force` before replacing a conflicting existing Grape entry. `--dry-run` prints the target path and final config without writing. `--config-path` overrides the target config file. Human output reports the client, config path, server entry, server command, working directory, reload/restart instruction, verification guidance, and manual fallback. Auto-install is currently supported for Cursor, Claude Desktop, Codex, and generic JSON config files only; other clients use `grape mcp --print-config` for manual setup.
 
 `grape mcp --print-agents-snippet` prints a path-neutral AGENTS.md block that tells coding agents to call `grape_get_context`, keep stable session identity, treat invalidations as stale, restore omitted context only when needed, and treat Grape as a context continuity layer. It does not read, write, or merge AGENTS.md.
 

@@ -27,7 +27,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     "--fixture",
     "--fixture-path",
     "--test-framework",
-    "--client"
+    "--client",
+    "--config-path"
   ]);
   const positionals: string[] = [];
 

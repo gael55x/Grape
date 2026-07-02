@@ -138,6 +138,23 @@ test("cli version commands print the installed package version", () => {
   }
 });
 
+test("cli init dry-run previews setup without writing local state", () => {
+  withGitRepo((repoPath) => {
+    const result = runCli(repoPath, ["init", "--dry-run"]);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stderr, "");
+    assert.match(result.stdout, /Dry run: no changes written/);
+    assert.match(result.stdout, /Config: <repo-root>[\\/]\.grape[\\/]config\.json \(would create or repair\)/);
+    assert.match(result.stdout, /Database: <repo-root>[\\/]\.grape[\\/]grape\.db \(would create or migrate\)/);
+    assert.match(result.stdout, /Planned writes:/);
+    assert.match(result.stdout, /\.git\/info\/exclude/);
+    assert.match(result.stdout, /Bootstrap detection:/);
+    assert.match(result.stdout, /Scan diagnostics:/);
+    assert.equal(existsSync(path.join(repoPath, ".grape")), false);
+  });
+});
+
 test("cli public commands render command-specific help", () => {
   const commands = [
     "status",

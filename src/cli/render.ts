@@ -86,6 +86,7 @@ export function helpText(): string {
     "  grape --version             Print the installed package version",
     "  grape version               Print the installed package version",
     "  grape init                  Initialize local .grape state without MCP guidance",
+    "  grape init --dry-run        Preview local setup without writing files",
     "  grape init --connect        Initialize local .grape state and show MCP guidance",
     "  grape mcp --print-config    Print MCP client configuration",
     "  grape mcp --install --client cursor",
@@ -94,6 +95,8 @@ export function helpText(): string {
     "                              Write Claude Desktop MCP config",
     "  grape mcp --install --client codex",
     "                              Write project-local Codex MCP config",
+    "  grape mcp --install --client generic",
+    "                              Print or merge generic JSON MCP config",
     "  grape mcp --print-agents-snippet",
     "                              Print AGENTS.md setup guidance",
     "  grape mcp --stdio           Serve MCP tools over stdio",
@@ -128,6 +131,7 @@ export function helpText(): string {
     "  grape mcp --install --client cursor",
     "  grape mcp --install --client claude",
     "  grape mcp --install --client codex",
+    "  grape mcp --install --client generic",
     "  grape mcp --print-agents-snippet",
     "  Use your MCP-capable agent normally. The agent should call grape_get_context each turn with a stable sessionId.",
     "",
@@ -161,8 +165,9 @@ export function helpText(): string {
     "  --fixture-path <path>       Use an explicit benchmark fixture path",
     "  --keep-workspace            Keep benchmark temp workspace for debugging",
     "  --test-framework <name>     Label a Grape-observed test run",
-    "  --client <name>             MCP install client: cursor, claude, or codex",
-    "  --dry-run                   Preview MCP client config writes without changing files",
+    "  --client <name>             MCP install client: cursor, claude, codex, or generic",
+    "  --config-path <path>        Explicit MCP config file path for install",
+    "  --dry-run                   Preview supported writes without changing files",
     "  --confirm                   Apply a destructive local maintenance command",
     "  --force                     Replace a conflicting existing Grape MCP server entry",
     "  --json                      Emit machine-readable JSON"
@@ -172,10 +177,11 @@ export function helpText(): string {
 export function initHelpText(): string {
   return [
     "Usage:",
+    "  grape init --dry-run [--repo <path>] [--json]",
     "  grape init --connect [--repo <path>] [--json]",
     "",
     "Creates local .grape state, applies SQLite migrations, captures the first Git snapshot,",
-    "and prints MCP connection guidance."
+    "and prints MCP connection guidance. Use --dry-run to preview paths and bootstrap detection without writing."
   ].join("\n");
 }
 
@@ -186,10 +192,11 @@ export function commandHelpText(command: string): string | undefined {
 const COMMAND_HELP: Readonly<Record<string, string>> = {
   init: [
     "Usage:",
+    "  grape init --dry-run [--repo <path>] [--json]",
     "  grape init --connect [--repo <path>] [--json]",
     "  grape init [--repo <path>] [--json]",
     "",
-    "Creates or repairs local .grape state, applies SQLite migrations, captures the first Git snapshot, and prints MCP setup guidance when --connect is present.",
+    "Creates or repairs local .grape state, applies SQLite migrations, captures the first Git snapshot, and prints MCP setup guidance when --connect is present. Use --dry-run to preview paths and bootstrap detection without writing.",
     "",
     "Recovery:",
     "  Run from a Git worktree with at least one commit, or pass --repo <repo-root>."
@@ -293,6 +300,7 @@ const COMMAND_HELP: Readonly<Record<string, string>> = {
     "  grape mcp --install --client cursor [--repo <path>] [--dry-run] [--force]",
     "  grape mcp --install --client claude [--repo <path>] [--dry-run] [--force]",
     "  grape mcp --install --client codex [--repo <path>] [--dry-run] [--force]",
+    "  grape mcp --install --client generic [--repo <path>] [--config-path <path>] [--dry-run] [--force]",
     "  grape mcp --stdio [--repo <path>]",
     "",
     "Installs MCP client config, prints manual MCP client JSON, prints AGENTS.md setup guidance, or serves Grape tools over stdio.",
@@ -301,9 +309,11 @@ const COMMAND_HELP: Readonly<Record<string, string>> = {
     "  --client cursor writes project-local .cursor/mcp.json.",
     "  --client claude writes Claude Desktop claude_desktop_config.json when the platform path can be resolved.",
     "  --client codex writes project-local .codex/config.toml for trusted Codex projects.",
+    "  --client generic prints JSON unless --config-path is provided, then merges mcpServers.grape into that JSON file.",
     "  --dry-run prints the target path and final config without writing.",
-    "  --force replaces only a conflicting existing mcpServers.grape entry.",
-    "  Other clients use grape mcp --print-config for manual setup.",
+    "  --config-path overrides the target config file.",
+    "  --force replaces only a conflicting existing Grape MCP server entry.",
+    "  Unsupported clients use grape mcp --print-config for manual setup.",
     "",
     "Primary agent tool:",
     "  grape_get_context",

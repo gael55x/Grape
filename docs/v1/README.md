@@ -8,7 +8,7 @@ It **compiles** safe, current, task-specific `ContextArtifact` objects from repo
 
 Compression is cache, not truth. Proofs gate durable claims. Git branch/worktree and dependency hashes drive invalidation. See [`decisions/adr-0010-context-transport-protocol.md`](decisions/adr-0010-context-transport-protocol.md) and the root [`ROADMAP.md`](../../ROADMAP.md).
 
-**Published npm today:** `grape-context@beta` on `latest` and `beta`. The `alpha` dist-tag still points at `0.1.0-alpha.3`. Install and session setup: root [`README.md`](../../README.md), [`interfaces/getting-started.md`](interfaces/getting-started.md), and [`interfaces/agent-sessions.md`](interfaces/agent-sessions.md). Alpha-era docs: [`legacy/alpha/README.md`](legacy/alpha/README.md).
+**Release target:** stable `grape-context` 1.0 after the release checklist passes on the intended commit. Install and session setup: root [`README.md`](../../README.md), [`interfaces/getting-started.md`](interfaces/getting-started.md), and [`interfaces/agent-sessions.md`](interfaces/agent-sessions.md). Alpha-era docs: [`legacy/alpha/README.md`](legacy/alpha/README.md).
 
 ## Structure
 
@@ -39,6 +39,7 @@ docs/v1/
     testing.md
     benchmarks.md
   planning/
+    1-0-readiness.md
     beta-readiness.md
     beta-trial-checklist.md
     implementation-roadmap.md
@@ -76,6 +77,7 @@ docs/v1/
 | Interfaces | `interfaces/cli.md` | CLI commands, outputs, exit codes, inspection workflows. | CLI behavior changes. | CLI is adapter-only. |
 | Quality | `quality/testing.md` | Test categories, named tests, fixture mapping. | Test strategy or required tests change. | Required tests exist for touched invariant/transition. |
 | Quality | `quality/benchmarks.md` | Benchmark metrics, baselines, thresholds, and transport harness gates. | Benchmarks or transport benchmark claims change. | Baselines are scripted. Local fixture numbers are not production performance evidence. |
+| Planning | `planning/1-0-readiness.md` | Stable 1.0 release readiness checklist and remaining blockers. | Release gates, package readiness, or client readiness changes. | Checklist distinguishes automated proof from human client trials. |
 | Planning | `planning/implementation-roadmap.md` | Goal order, deliverables, exit criteria. | Scope or build order changes. | Work belongs to the current goal. |
 | Planning | `planning/implementation-status.md` | Acceptance matrix for the V1 core pipeline. | A core-pipeline area changes status. | Status reflects implementation, tests, docs, and known limitations honestly. |
 | Planning | `planning/beta-readiness.md` | Pre-beta review checklist, setup verification commands, and benchmark workspace alignment notes. | Alpha/beta readiness criteria, human-review checklist, or external benchmark alignment changes. | Checklist does not expand V1 scope or change benchmark methodology. |

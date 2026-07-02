@@ -3,7 +3,7 @@ import { errorMessage, repoOutputOptions, write, writeError, writeJson } from ".
 import { exitCodes } from "../exit-codes.js";
 
 export async function runMcp(parsed: ParsedArgs): Promise<number> {
-  const flag = unsupportedFlag(parsed, new Set(["--print-config", "--print-agents-snippet", "--stdio", "--install", "--repo", "--dry-run", "--force"]));
+  const flag = unsupportedFlag(parsed, new Set(["--print-config", "--print-agents-snippet", "--stdio", "--install", "--repo", "--dry-run", "--force", "--config-path"]));
   if (flag) {
     writeError(`Unsupported option for grape mcp: ${flag}`);
     writeError("Run grape help for supported options.");
@@ -22,7 +22,7 @@ export async function runMcp(parsed: ParsedArgs): Promise<number> {
     return exitCodes.usage;
   }
 
-  if ((parsed.flags.has("--dry-run") || parsed.flags.has("--force") || parsed.values.has("--client")) && !parsed.flags.has("--install")) {
+  if ((parsed.flags.has("--dry-run") || parsed.flags.has("--force") || parsed.values.has("--client") || parsed.values.has("--config-path")) && !parsed.flags.has("--install")) {
     writeError("MCP client install options require grape mcp --install.");
     return exitCodes.usage;
   }
@@ -58,12 +58,13 @@ export async function runMcp(parsed: ParsedArgs): Promise<number> {
     "  grape mcp --install --client cursor",
     "  grape mcp --install --client claude",
     "  grape mcp --install --client codex",
+    "  grape mcp --install --client generic",
     "  grape mcp --print-agents-snippet",
     "  grape mcp --print-config",
     "  grape mcp --stdio",
     "",
     "Most users should run grape mcp --install --client cursor, grape mcp --install --client claude, or grape mcp --install --client codex.",
-    "Use grape mcp --print-config when your MCP client is not supported by auto-install.",
+    "Use grape mcp --install --client generic to print a generic config, or add --config-path <file> to merge JSON.",
     "Then use the coding agent normally. The agent should call grape_get_context each turn with a stable sessionId.",
     "",
     "Tools:",
@@ -86,6 +87,7 @@ export async function runMcp(parsed: ParsedArgs): Promise<number> {
     "  grape mcp --install --client cursor",
     "  grape mcp --install --client claude",
     "  grape mcp --install --client codex",
+    "  grape mcp --install --client generic",
     "  grape mcp --print-agents-snippet",
     "  grape mcp --print-config",
     "  grape status",
@@ -103,8 +105,8 @@ async function runMcpInstall(parsed: ParsedArgs): Promise<number> {
     McpClientConfigInstallError
   } = await import("../../app/local-project/setup/mcp-client-config.js");
 
-  if (client !== "cursor" && client !== "claude" && client !== "codex") {
-    writeError(client ? unsupportedAutoInstallMessage : "grape mcp --install requires --client cursor, --client claude, or --client codex.");
+  if (client !== "cursor" && client !== "claude" && client !== "codex" && client !== "generic") {
+    writeError(client ? unsupportedAutoInstallMessage : "grape mcp --install requires --client cursor, --client claude, --client codex, or --client generic.");
     if (!client) writeError(unsupportedAutoInstallMessage);
     return exitCodes.usage;
   }
@@ -114,7 +116,8 @@ async function runMcpInstall(parsed: ParsedArgs): Promise<number> {
       rootPath,
       client,
       dryRun: parsed.flags.has("--dry-run"),
-      force: parsed.flags.has("--force")
+      force: parsed.flags.has("--force"),
+      configPath: parsed.values.get("--config-path")
     });
     renderMcpInstallResult(result, rootPath);
     return exitCodes.ok;
@@ -139,7 +142,7 @@ function renderMcpInstallResult(
     readonly finalConfigText?: string;
     readonly configFormat?: "json" | "toml";
     readonly fallbackCommand?: string;
-    readonly status: "created" | "updated" | "already_configured" | "dry_run";
+    readonly status: "created" | "updated" | "already_configured" | "dry_run" | "manual";
     readonly change: "create" | "update" | "none";
     readonly wrote: boolean;
     readonly dryRun: boolean;
@@ -149,6 +152,8 @@ function renderMcpInstallResult(
   const statusLine =
     result.status === "dry_run"
       ? "Dry run: no changes written."
+      : result.status === "manual"
+        ? "Generic MCP config: no changes written."
       : result.status === "already_configured"
         ? `Grape MCP server already configured for ${result.clientLabel}.`
         : result.status === "created"

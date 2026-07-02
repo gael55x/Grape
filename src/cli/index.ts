@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import type { LocalBootstrapDetection } from "../app/local-project/setup/bootstrap-detection.js";
+import type { LocalScanDiagnostics } from "../app/local-project/setup/scan-diagnostics.js";
 import { statusFreshnessLabel } from "../shared/trust-wording.js";
 import { runArtifacts } from "./commands/artifacts.js";
 import { runBench } from "./commands/bench.js";
@@ -130,7 +132,7 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
 }
 
 async function runInit(parsed: ParsedArgs): Promise<number> {
-  const usageError = rejectUnsupportedFlags(parsed, new Set(["--connect", "--json", "--repo", "--help"]));
+  const usageError = rejectUnsupportedFlags(parsed, new Set(["--connect", "--json", "--repo", "--help", "--dry-run"]));
   if (usageError) return usageError;
 
   if (parsed.flags.has("--help")) {
@@ -140,7 +142,47 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
 
   try {
     const rootPath = repoPath(parsed);
-    const { initializeLocalProject } = await import("../app/local-project/setup/initialize.js");
+    const { initializeLocalProject, previewInitializeLocalProject } = await import("../app/local-project/setup/initialize.js");
+
+    if (parsed.flags.has("--dry-run")) {
+      const result = previewInitializeLocalProject({
+        rootPath,
+        connect: parsed.flags.has("--connect")
+      });
+      const outputOptions = repoOutputOptions(rootPath, [result.rootPath]);
+
+      if (parsed.flags.has("--json")) {
+        writeJson(result, outputOptions);
+        return exitCodes.ok;
+      }
+
+      write([
+        "Dry run: no changes written.",
+        "",
+        `Project: ${result.projectId}`,
+        `Repo: ${result.repoId}`,
+        `Branch: ${result.branch}`,
+        `Head: ${result.headCommit}`,
+        `Worktree: ${result.dirtyWorktree ? "dirty" : "clean"}`,
+        `Config: ${result.configPath} (would create or repair)`,
+        `Database: ${result.databasePath} (would create or migrate)`,
+        "Privacy: would ensure .grape/ is in .git/info/exclude",
+        "",
+        "Planned writes:",
+        ...result.plannedWrites.map((plannedWrite) => `  ${plannedWrite}`),
+        "",
+        ...renderBootstrapDetection(result.bootstrap),
+        ...renderScanDiagnostics(result.scan),
+        "",
+        "Next:",
+        "  grape init --connect",
+        "  grape mcp --install --client cursor",
+        "  grape mcp --install --client claude",
+        "  grape mcp --install --client codex"
+      ].join("\n"), outputOptions);
+      return exitCodes.ok;
+    }
+
     const result = initializeLocalProject({
       rootPath,
       connect: parsed.flags.has("--connect")
@@ -169,23 +211,8 @@ async function runInit(parsed: ParsedArgs): Promise<number> {
         ? "Privacy: added .grape/ to .git/info/exclude"
         : "Privacy: .grape/ is already locally excluded",
       "",
-      "Bootstrap detection:",
-      `  Languages: ${renderInlineList(result.bootstrap.languages)}`,
-      `  Frameworks: ${renderInlineList(result.bootstrap.frameworks)}`,
-      `  Package manager: ${result.bootstrap.packageManager ?? "unknown"}`,
-      `  Scripts: ${renderInlineList(result.bootstrap.scripts)}`,
-      `  Commands: ${renderInlineList(result.bootstrap.commands)}`,
-      `  Test command: ${result.bootstrap.testCommand ?? "not detected"}`,
-      `  Entry points: ${renderInlineList(result.bootstrap.entryPoints)}`,
-      `  Config files: ${renderInlineList(result.bootstrap.configFiles)}`,
-      `  Confidence: language=${result.bootstrap.confidence.language}, framework=${result.bootstrap.confidence.framework}, packageManager=${result.bootstrap.confidence.packageManager}, testCommand=${result.bootstrap.confidence.testCommand}`,
-      ...renderIndentedList("  Candidate rules (not durable)", result.bootstrap.candidateRules),
-      ...renderIndentedList("  Bootstrap warnings", result.bootstrap.warnings),
-      "",
-      "Scan diagnostics:",
-      `  Visible files: ${result.scan.visibleFileCount}`,
-      `  Rejected files: ${result.scan.rejectedFileCount}`,
-      `  Rejection reasons: ${renderReasonCounts(result.scan.rejectionReasonCounts)}`,
+      ...renderBootstrapDetection(result.bootstrap),
+      ...renderScanDiagnostics(result.scan),
       "",
       ...(parsed.flags.has("--connect")
         ? [
@@ -333,6 +360,33 @@ function rejectUnsupportedFlags(parsed: ParsedArgs, allowed: ReadonlySet<string>
 
 function renderInlineList(values: readonly string[]): string {
   return values.length === 0 ? "none" : values.join(", ");
+}
+
+function renderBootstrapDetection(bootstrap: LocalBootstrapDetection): string[] {
+  return [
+    "Bootstrap detection:",
+    `  Languages: ${renderInlineList(bootstrap.languages)}`,
+    `  Frameworks: ${renderInlineList(bootstrap.frameworks)}`,
+    `  Package manager: ${bootstrap.packageManager ?? "unknown"}`,
+    `  Scripts: ${renderInlineList(bootstrap.scripts)}`,
+    `  Commands: ${renderInlineList(bootstrap.commands)}`,
+    `  Test command: ${bootstrap.testCommand ?? "not detected"}`,
+    `  Entry points: ${renderInlineList(bootstrap.entryPoints)}`,
+    `  Config files: ${renderInlineList(bootstrap.configFiles)}`,
+    `  Confidence: language=${bootstrap.confidence.language}, framework=${bootstrap.confidence.framework}, packageManager=${bootstrap.confidence.packageManager}, testCommand=${bootstrap.confidence.testCommand}`,
+    ...renderIndentedList("  Candidate rules (not durable)", bootstrap.candidateRules),
+    ...renderIndentedList("  Bootstrap warnings", bootstrap.warnings),
+    ""
+  ];
+}
+
+function renderScanDiagnostics(scan: LocalScanDiagnostics): string[] {
+  return [
+    "Scan diagnostics:",
+    `  Visible files: ${scan.visibleFileCount}`,
+    `  Rejected files: ${scan.rejectedFileCount}`,
+    `  Rejection reasons: ${renderReasonCounts(scan.rejectionReasonCounts)}`
+  ];
 }
 
 function renderIndentedList(title: string, values: readonly string[]): string[] {

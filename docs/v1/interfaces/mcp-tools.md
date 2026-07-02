@@ -26,13 +26,14 @@ The goal is small: let the agent call `grape_get_context` from the repo it is ed
 2. If you use Cursor, run `grape mcp --install --client cursor`.
 3. If you use Claude Desktop, run `grape mcp --install --client claude`.
 4. If you use Codex, run `grape mcp --install --client codex`.
-5. Make sure the client launches `grape mcp --stdio --repo <repo-root>`.
-6. Make sure the client sends one JSON-RPC object per line over stdio.
-7. Have the agent call `grape_get_context` with a stable `sessionId` and task `query`.
+5. If you use another JSON-config MCP client, run `grape mcp --install --client generic` to print config, or add `--config-path <path>` to merge a specific JSON config file.
+6. Make sure the client launches `grape mcp --stdio --repo <repo-root>`.
+7. Make sure the client sends one JSON-RPC object per line over stdio.
+8. Have the agent call `grape_get_context` with a stable `sessionId` and task `query`.
 
-Cursor auto-install writes project-local `.cursor/mcp.json`. Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely. Codex auto-install writes project-local `.codex/config.toml` for trusted Codex projects.
+Cursor auto-install writes project-local `.cursor/mcp.json`. Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely. Codex auto-install writes project-local `.codex/config.toml` for trusted Codex projects. Generic install writes nothing unless `--config-path` names a JSON MCP config file.
 
-Grape does not silently touch unsupported client config files. Other clients, and published beta builds that do not recognize `grape mcp --install`, remain on the manual path:
+Grape does not silently touch unsupported client config files. Other clients should use the generic path only when you know the correct JSON config file. Older builds that do not recognize `grape mcp --install` remain on the manual path:
 
 ```bash
 grape mcp --print-config
@@ -57,9 +58,9 @@ Run those commands from the repository root. The plugin lives in `plugins/grape`
 
 Run `npm run build` and `npm run codex:check` to verify the local Codex path. The check uses temp repositories and an isolated Codex home.
 
-Use `--dry-run` to preview the target path and final JSON without writing. If an existing `mcpServers.grape` entry differs, Grape requires `--force` before replacing only that entry. It preserves unrelated MCP servers.
+Use `--dry-run` to preview the target path and final JSON without writing. Use `--config-path <path>` to override the target config file. If an existing Grape entry differs, Grape requires `--force` before replacing only that entry. It preserves unrelated MCP servers.
 
-This auto-install behavior is separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made `grape mcp --stdio` connect correctly; it did not write client config files.
+This auto-install behavior writes client config only. The configured MCP server still runs `grape mcp --stdio --repo <repo-root>` and uses newline-delimited JSON-RPC over stdio.
 
 The default response mode is `agent_pack`. It is the normal mode for coding agents because it returns compact previews, diff state, restore IDs, invalidation IDs, artifact refs, warnings, and recovery guidance. Use `outputMode: "full"` only for inspection or compatibility.
 
@@ -134,15 +135,16 @@ Restricted write tools:
 
 ## Current Implementation Status
 
-The setup CLI now supports real client config installation for the two clients with safe paths in this slice:
+The setup CLI now supports real client config installation for clients with safe paths in this slice:
 
 - `grape mcp --install --client cursor` writes `.cursor/mcp.json` in the current repository.
 - `grape mcp --install --client claude` writes Claude Desktop `claude_desktop_config.json` when the platform path can be resolved.
 - `grape mcp --install --client codex` writes `.codex/config.toml` in the current repository.
+- `grape mcp --install --client generic` prints JSON, or merges `mcpServers.grape` into a JSON file when `--config-path` is provided.
 - `grape mcp --print-agents-snippet` prints AGENTS.md setup guidance without writing files.
 - `plugins/grape` provides a repo-local Codex plugin with Grape MCP config and a Grape skill.
 
-Cursor and Claude merge `mcpServers.grape`. Codex merges `[mcp_servers.grape]`. The installers preserve unrelated entries, refuse invalid JSON or malformed Codex table headers, and require `--force` before replacing a conflicting existing Grape entry.
+Cursor, Claude, and generic JSON installs merge `mcpServers.grape`. Codex merges `[mcp_servers.grape]`. The installers preserve unrelated entries, refuse invalid JSON or malformed Codex table headers, and require `--force` before replacing a conflicting existing Grape entry.
 
 The current implementation includes the first stdio MCP server:
 
@@ -200,7 +202,7 @@ The public artifact includes `retrievalConfidence` when task retrieval runs. `sa
 
 The default MCP `outputMode` is `agent_pack`. It returns compact preview `contextPackItems` and an `artifactRef` pointing at the stored full artifact. The default compact response omits inline `contextPackMarkdown` and experimental `agentGraph` data so agents do not pay for duplicated navigation or unproven graph structure by default.
 
-To reduce duplicated agent-facing transport tokens, default `agent_pack` omits full item bodies from `contextPackItems` and returns `contentPreview`, `contentOmitted: true`, `contentHash`, and `tokenCount` instead. `contextPackItems[].inputRefs[].scope` is compacted to local routing keys such as branch, commit, worktree hash, dirty-worktree status, environment, package/service root, feature-flag count/hash, source scope, path, symbol, route, and test. It still omits repo, task, and session identifiers from compact refs. The full item bodies and full dependency scope remain in the stored public artifact JSON written under `artifactFiles.json`; callers can use `artifactRef.fullArtifactTool` (`grape_get_artifact` with `outputMode: "full"`) or request `grape_get_context` with `outputMode: "full"` when exact bodies are needed inline. Full artifact Markdown remains available at `artifactFiles.markdown`, and full inspection output may include inline `contextPackMarkdown` plus an `agentGraph` adjacency cut over the returned pack items. This graph cut is a transport aid: `contextPackItems` are nodes, `agentGraph.edges` express section/input/restore/invalidation relationships, and full dependency metadata stays in the stored artifact. It is not a new durable graph-memory product. `INVALIDATE_PREVIOUS` rows may be grouped in that Markdown summary, but every structured pack item still carries its own `invalidatesSentItemId`.
+To reduce duplicated agent-facing transport tokens, default `agent_pack` omits full item bodies from `contextPackItems` and returns `contentPreview`, `contentOmitted: true`, `contentHash`, and `tokenCount` instead. `contextPackItems[].inputRefs[].scope` is compacted to local routing keys such as branch, commit, worktree hash, dirty-worktree status, environment, package/service root, feature-flag count/hash, source scope, path, symbol, route, and test. It still omits repo, task, and session identifiers from compact refs. The full item bodies and full dependency scope remain in the stored public artifact JSON written under `artifactFiles.json`; callers can use `artifactRef.fullArtifactTool` (`grape_get_artifact` with `outputMode: "full"`) or request `grape_get_context` with `outputMode: "full"` when exact bodies are needed inline. Full artifact Markdown remains available at `artifactFiles.markdown`, and full inspection output may include inline `contextPackMarkdown` plus an `agentGraph` over the returned pack items. This inspection graph is a transport aid: `contextPackItems` are nodes, `agentGraph.edges` express section/input/restore/invalidation relationships, and full dependency metadata stays in the stored artifact. It is not a new durable graph-memory product. `INVALIDATE_PREVIOUS` rows may be grouped in that Markdown summary, but every structured pack item still carries its own `invalidatesSentItemId`.
 
 When `outputMode: "full"` is requested, MCP embeds the full `contextArtifact` object and full `ContextPackItem.content` payloads in the response. Use this for inspection or compatibility, not as the default agent transport path. MCP tool `content[0].text` is a short result summary; large structured payloads are not duplicated as pretty JSON text.
 

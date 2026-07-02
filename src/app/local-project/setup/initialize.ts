@@ -18,7 +18,46 @@ import { mcpConnectionGuide } from "./mcp-guide.js";
 import { defaultProjectId } from "./project-id.js";
 import { scanDiagnosticsForSnapshot } from "./scan-diagnostics.js";
 import { withRepairableMigratedLocalDatabase } from "./storage.js";
-import type { InitializeLocalProjectInput, InitializeLocalProjectResult } from "./setup-types.js";
+import type {
+  InitializeLocalProjectInput,
+  InitializeLocalProjectPreview,
+  InitializeLocalProjectResult
+} from "./setup-types.js";
+
+const plannedInitWrites = [
+  ".git/info/exclude",
+  ".grape/config.json",
+  ".grape/grape.db",
+  ".grape/artifacts/"
+] as const;
+
+export function previewInitializeLocalProject(
+  input: InitializeLocalProjectInput
+): InitializeLocalProjectPreview {
+  const now = input.now ?? new Date().toISOString();
+  const snapshot = createGitRepoSnapshot({
+    rootPath: path.resolve(input.rootPath),
+    createdAt: now,
+    gitBinary: input.gitBinary
+  });
+  const rootPath = snapshot.rootPath;
+
+  return {
+    rootPath,
+    grapeDirPath: path.join(rootPath, ".grape"),
+    configPath: path.join(rootPath, ".grape", "config.json"),
+    databasePath: path.join(rootPath, ".grape", "grape.db"),
+    projectId: defaultProjectId(snapshot.repoId),
+    repoId: snapshot.repoId,
+    branch: snapshot.branch,
+    headCommit: snapshot.commit,
+    dirtyWorktree: snapshot.worktreeStatus !== "clean",
+    bootstrap: detectLocalBootstrap(rootPath),
+    scan: scanDiagnosticsForSnapshot(snapshot),
+    mcp: mcpConnectionGuide(rootPath),
+    plannedWrites: plannedInitWrites
+  };
+}
 
 export function initializeLocalProject(
   input: InitializeLocalProjectInput
