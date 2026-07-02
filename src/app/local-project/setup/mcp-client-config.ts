@@ -67,7 +67,6 @@ export interface McpClientConfigInstallResult {
   readonly finalConfigText?: string;
   readonly configFormat: "json" | "toml";
   readonly fallbackCommand?: string;
-  readonly targetExisted: boolean;
   readonly dryRun: boolean;
   readonly wrote: boolean;
   readonly status: McpInstallStatus;
@@ -127,7 +126,6 @@ export function installMcpClientConfig(
     serverConfig,
     finalConfig: merged.finalConfig,
     configFormat: "json",
-    targetExisted: existing.existed,
     dryRun,
     wrote: !dryRun && merged.change !== "none",
     status: dryRun ? "dry_run" : merged.change === "none" ? "already_configured" : existing.existed ? "updated" : "created",
@@ -303,7 +301,6 @@ function genericManualConfig(input: {
     serverConfig: input.serverConfig,
     finalConfig: { mcpServers: { grape: input.serverConfig } },
     configFormat: "json",
-    targetExisted: false,
     dryRun: input.dryRun,
     wrote: false,
     status: input.dryRun ? "dry_run" : "manual",
@@ -345,7 +342,6 @@ function installCodexClientConfig(input: InstallCodexInput): McpClientConfigInst
     finalConfigText: merged.finalText,
     configFormat: "toml",
     fallbackCommand: codexMcpAddCommand(input.serverConfig),
-    targetExisted,
     dryRun: input.dryRun,
     wrote: !input.dryRun && merged.change !== "none",
     status: input.dryRun ? "dry_run" : merged.change === "none" ? "already_configured" : targetExisted ? "updated" : "created",
