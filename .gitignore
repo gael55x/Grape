@@ -4,7 +4,8 @@ do-not-commit-docs/
 node_modules/
 dist/
 *.tgz
-/graphify-out/
+graphify-out/
+.cursor/
 benchmarks/results/*.json
 benchmarks/results/latest-summary.md
 !benchmarks/results/
