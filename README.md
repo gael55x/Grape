@@ -280,6 +280,23 @@ Use `grape sessions` after repeated MCP or CLI turns to see local continuity evi
 
 See [Getting started](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/getting-started.md), the full [CLI reference](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/cli.md), and [MCP tools](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/mcp-tools.md).
 
+## How Grape differs from graph and memory tools
+
+Grape is a proof-carrying context layer, not a knowledge graph.
+
+Different tool families answer different questions:
+
+* Repo graph and index tools answer: what is connected to what.
+* Semantic search and memory platforms answer: what stored text looks related to this query.
+* Repo maps and plain file reads answer: what does the repo contain right now.
+* Grape answers: what context is still valid, what changed since this session last saw it, what evidence supports it, and what can the next turn safely reuse.
+
+Grape does not replace those tools. A graph index, repo map, or search tool can still find structure and candidates. Grape adds the context lifecycle on top: session ledgers, freshness checks against branch, commit, and dependency hashes, explicit invalidation, and proof-backed excerpts.
+
+Claims in Grape carry proofs. A proof records the source hash and excerpt hash it came from, so the excerpt can be checked against current repo state instead of trusted on faith.
+
+See section 2 of the [V1 specification](https://github.com/gael55x/Grape/blob/main/docs/v1/SPEC.md) for the detailed comparison.
+
 ## Why this matters
 
 Most agent workflows still treat context as disposable text.
