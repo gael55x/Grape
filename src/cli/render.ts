@@ -103,7 +103,7 @@ export function helpText(): string {
     "  grape status                Inspect local project/bootstrap state",
     "  grape doctor                Run setup and privacy diagnostics",
     "  grape doctor --privacy      Run privacy-focused diagnostics",
-    "  grape sync                  Refresh local snapshot, evidence, and file index",
+    "  grape sync                  Refresh the local repo snapshot and index, no network, no context pack",
     "  grape compact               Preview local retention cleanup",
     "  grape compact --confirm     Apply eligible local retention cleanup",
     "  grape export                Export a local data inventory without raw bodies",
@@ -221,7 +221,7 @@ const COMMAND_HELP: Readonly<Record<string, string>> = {
     "Usage:",
     "  grape sync [--repo <path>] [--json]",
     "",
-    "Refreshes local snapshot, evidence, and lightweight index without sending a context pack."
+    "Refreshes the local repo snapshot, evidence, and lightweight index. Local only, no network. Does not compile or send a context pack."
   ].join("\n"),
   compact: [
     "Usage:",
