@@ -487,11 +487,11 @@ See [Benchmarks](https://github.com/gael55x/Grape/blob/main/docs/v1/quality/benc
 
 ## Project status
 
-Grape is preparing for 1.0.
+Grape 1.0.0 is the first stable release of the local context transport layer.
 
 The 1.0 scope is local context transport, session-aware diffs, restore behavior, stale context invalidation, proof separation, MCP integration, client config helpers, and privacy-safe local storage.
 
-Implemented today:
+Included in 1.0.0:
 
 * global npm install through `grape-context`
 * `grape init --connect`
@@ -521,7 +521,7 @@ Experimental or not promised in 1.0:
 * benchmark superiority claims
 * guaranteed behavior in every IDE MCP client without a human client trial
 
-The package should not be published as stable 1.0 until the release checklist passes on the intended commit. See [1.0 readiness](https://github.com/gael55x/Grape/blob/main/docs/v1/planning/1-0-readiness.md).
+The stable release gate is documented in [1.0 readiness](https://github.com/gael55x/Grape/blob/main/docs/v1/planning/1-0-readiness.md).
 
 ## Development
 
