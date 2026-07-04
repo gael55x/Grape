@@ -21,7 +21,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 ## Done
 
 - `grape-context@0.1.0-alpha.2` and `0.1.0-alpha.3` are published on npm with GitHub releases (historical alpha milestones).
-- `grape-context@1.0.0-beta.6` is published on npm under the `latest` and `beta` dist-tags. `1.0.0-beta.0` remains the first beta tag and the version tied to the first committed post-beta benchmark baseline.
+- `grape-context@1.0.0` is the stable release. `1.0.0-beta.9` remains the final beta, and `1.0.0-beta.0` remains the version tied to the first committed post-beta benchmark baseline.
 - The context transport wedge is proven through CLI and MCP `grape_get_context`.
 - MCP stdio smoke exists, including framed JSON-RPC transport.
 - Same-session two-turn omission works when task/session identity is stable.
@@ -33,7 +33,7 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - The session reset fixture benchmark proves reset invalidation, safe full resend, and zero reset-turn omissions.
 - Restore-path golden tests lock `RESTORE_AVAILABLE` restore IDs, session binding, restored body shape, and MCP no-root-path output.
 - Task/session mismatch now has a dedicated CLI exit classification instead of falling through the storage/schema bucket.
-- Package-lock metadata is aligned with the current beta version/runtime.
+- Package-lock metadata is aligned with the stable version/runtime.
 - Global install smoke passed against historical `grape-context@0.1.0-alpha.3`.
 - Published-package smoke passed against registry-installed alpha.3 in the external benchmark workspace during the alpha-to-beta path.
 - The external benchmark workspace reports scripted transport scenarios passing under its documented methodology and stable task/session contract. Those are local fixture results, not production performance evidence or superiority proof.
@@ -73,22 +73,21 @@ Any MCP-capable agent on any git repo can call `grape_get_context`, receive a st
 - Full graph extraction and richer code-intelligence integrations.
 - Memory-platform features outside the V1 transport wedge.
 - IDE plugins and deeper agent-client integrations.
-- Stable `1.0.0`.
 
-## Beta Install Check
+## Install Check
 
-**Published beta:**
+**Published package:**
 
 ```bash
-npm install -g grape-context@beta
+npm install -g grape-context
 grape init --connect
 ```
 
 Then an MCP client calls `grape_get_context` twice with the same task/session identity. The second response should omit unchanged non-pinned context safely, and a depended file, branch change, or explicit reset should invalidate prior sends instead of silently reusing stale context.
 
-## Beta Readiness Bar
+## 1.0 Readiness Bar
 
-Beta readiness is not a bigger feature list. It means the current transport slice is boring to install, connect, inspect, and recover from:
+1.0 readiness is not a bigger feature list. It means the current transport slice is boring to install, connect, inspect, and recover from:
 
 - setup docs match the published package and Node runtime
 - agent session/task identity is explicit and testable

@@ -4,7 +4,9 @@ All notable user-facing changes to Grape will be documented here.
 
 This file tracks released package behavior. V1 implementation-internal changes belong in `docs/v1/planning/changelog.md`. Spec-only changes belong in `docs/v1/planning/spec-changelog.md`.
 
-## Unreleased
+## 1.0.0 - 2026-07-04
+
+First stable release. The scope is the 1.0 checklist in `docs/v1/planning/1-0-readiness.md`: repo context scan, context pack generation, change detection and stale-context invalidation, proof-backed excerpts, MCP stdio server, client install helpers, privacy filtering, and status and debug commands.
 
 ### Added
 
@@ -34,6 +36,12 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - `grape bench --fixture stale-source-typescript-app` now reports a `bench_changed_file_invalidation_time` sub-gate for one tracked source edit, including full turn 2 compile duration and source-specific invalidation evidence.
 - `grape bench --fixture dirty-worktree-typescript-app` now covers an uncommitted tracked source edit and fails if turn 2 does not report dirty worktree, source-specific invalidation, zero unchanged omission, zero unsafe omission, and zero stale sends.
 - `grape purge` refuses symlinked local state, Git-tracked files under `.grape`, mismatched config roots, and locked or contended context sessions. It does not delete source files, Git history, editor config, or MCP config.
+
+## 1.0.0-beta.9 - 2026-06-17
+
+### Fixed
+
+- Toned down CLI help styling so help output stays readable in plain terminals.
 
 ## 1.0.0-beta.8 - 2026-06-17
 

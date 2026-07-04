@@ -4,7 +4,7 @@
 **Canonical source of truth:** This file, `grape_v1_final_framework_spec.md`, is the final V1 implementation contract. If another V1 spec conflicts with this file, this file wins.  
 **Product:** Grape, local-first context compiler and context transport layer for AI coding agents on git repositories
 
-**Implementation status (1.0 beta transport slice):**
+**Implementation status (1.0 transport slice):**
 
 | Area | Status |
 |---|---|
@@ -21,8 +21,8 @@
 | Daemon or autonomous background observation without MCP calls | **Not implemented** |
 **Primary goal:** reduce repeated context transport by compiling safe repository context once per task/session and shipping only the next session-safe context pack diff  
 **Safety model:** proof-backed, branch-aware, task-specific context artifacts with explicit uncertainty  
-**Runtime:** TypeScript on Node.js 22.13+ for the published package (`grape-context@beta` on npm; `alpha` remains historical)  
-**Distribution:** `npm install -g grape-context@beta`  
+**Runtime:** TypeScript on Node.js 22.13+ for the published package (`grape-context` on npm; `alpha` and `beta` remain historical dist-tags)
+**Distribution:** `npm install -g grape-context`
 **Storage:** SQLite + WAL + portable lexical source index
 **Integration:** MCP server + CLI  
 **Default mode:** local-first, no cloud dependency, no remote embeddings by default  
@@ -664,7 +664,7 @@ sequenceDiagram
 
 | Parameter | V1 value |
 |---|---|
-| Runtime | Node.js 22.13+ for the published package (`grape-context@beta` on npm) |
+| Runtime | Node.js 22.13+ for the published package (`grape-context` on npm) |
 | Language | TypeScript |
 | Package | `grape-context` |
 | CLI binary | `grape` |
@@ -2981,7 +2981,7 @@ See `docs/v1/interfaces/mcp-tools.md` for adapter-level tool details and `docs/v
 
 ### 28.7 CLI command status
 
-The current beta transport surface must document executable commands separately from deferred V1 command ideas. Do not place deferred commands in runnable example blocks.
+The current transport surface must document executable commands separately from deferred V1 command ideas. Do not place deferred commands in runnable example blocks.
 
 Everyday:
 
@@ -3039,7 +3039,7 @@ grape omitted
 grape bench --fixture <name>
 ```
 
-Still part of V1.0, but not implemented in the current beta transport slice:
+Still part of V1.0, but not implemented in the current transport slice:
 
 - `grape add-decision "Use thin route handlers for auth routes"`: records a directly confirmed developer decision candidate for Trust Kernel promotion.
 - `grape decisions review`: reviews confirmed and candidate decisions with scope, proof, stale, and contradiction metadata.
