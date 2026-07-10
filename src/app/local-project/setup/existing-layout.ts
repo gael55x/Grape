@@ -11,10 +11,10 @@ const knownLocalStateFiles = [
   { key: "databaseShmPath", relativePath: ".grape/grape.db-shm" }
 ] as const;
 
-export function resolveExistingGitRoot(rootPathInput: string): string {
+export function resolveExistingGitRoot(rootPathInput: string, gitBinary = "git"): string {
   const rootPath = path.resolve(rootPathInput);
   try {
-    const output = execFileSync("git", ["-C", rootPath, "rev-parse", "--show-toplevel"], {
+    const output = execFileSync(gitBinary, ["-C", rootPath, "rev-parse", "--show-toplevel"], {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"]
     }).trim();
