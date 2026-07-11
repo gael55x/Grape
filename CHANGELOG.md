@@ -4,6 +4,17 @@ All notable user-facing changes to Grape will be documented here.
 
 This file tracks released package behavior. V1 implementation-internal changes belong in `docs/v1/planning/changelog.md`. Spec-only changes belong in `docs/v1/planning/spec-changelog.md`.
 
+## Unreleased
+
+### Fixed
+
+- Fixed repeated same-session compiles on an unchanged repository so they no longer emit an `INVALIDATE_PREVIOUS` item every turn. The per-turn `context_pack_summary` compression record is now a storage-only cache row instead of a rendered artifact section, so session ledger growth alone cannot invalidate prior sent context. The compression-orientation section now omits unchanged on repeat turns instead of resending each turn.
+- Fixed repository snapshots on large worktrees. Git subprocess output buffers are now bounded at 64 MiB, so `grape init`, `grape compile`, and MCP tools no longer fail against repositories whose `git ls-files` output exceeds the previous 1 MiB limit.
+
+### Changed
+
+- Local compile now builds one context artifact per turn instead of compiling twice to embed a prior-pack summary, which reduces compile work on every turn.
+
 ## 1.0.0 - 2026-07-04
 
 First stable release. The scope is the 1.0 checklist in `docs/v1/planning/1-0-readiness.md`: repo context scan, context pack generation, change detection and stale-context invalidation, proof-backed excerpts, MCP stdio server, client install helpers, privacy filtering, and status and debug commands.

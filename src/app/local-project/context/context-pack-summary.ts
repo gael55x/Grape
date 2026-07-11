@@ -3,19 +3,12 @@ import type {
   StorageRepositories
 } from "../../../core/storage/index.js";
 import type { ContextPackSummarySentItemInput } from "../../../core/compression/index.js";
-import type { InMemoryContextArtifactShape } from "../../../shared/index.js";
-import { partitionPriorContextByStaleness } from "../../durable-context-staleness.js";
 
 export interface ListContextPackSummarySentItemsInput {
   readonly repositories: StorageRepositories;
   readonly sessionId: string;
   readonly branch: string;
   readonly commit: string;
-}
-
-export interface ListCurrentContextPackSummarySentItemsInput
-  extends ListContextPackSummarySentItemsInput {
-  readonly artifact: InMemoryContextArtifactShape;
 }
 
 export function listContextPackSummarySentItems(
@@ -29,24 +22,6 @@ export function listContextPackSummarySentItems(
       excludedKind: "compression_artifact"
     })
   );
-}
-
-export function listCurrentContextPackSummarySentItems(
-  input: ListCurrentContextPackSummarySentItemsInput
-): readonly ContextPackSummarySentItemInput[] {
-  const sentPackItems = input.repositories.contextPackItems.listActiveSentPayloadsBySession(input.sessionId);
-  const activePriorItems = input.repositories.contextSentItems.listActiveBySession(input.sessionId)
-    .filter((item) => item.itemKind !== "compression_artifact");
-  const { currentPriorItems } = partitionPriorContextByStaleness({
-    activePriorItems,
-    packItems: sentPackItems,
-    artifact: input.artifact,
-    listDependenciesByArtifact: (artifactId) =>
-      input.repositories.contextDependencies.listByArtifact(artifactId),
-    forceStale: false
-  });
-
-  return latestContextPackSummarySentItems(currentPriorItems);
 }
 
 function latestContextPackSummarySentItems(

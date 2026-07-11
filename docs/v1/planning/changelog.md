@@ -8,6 +8,9 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- Stopped rendering the per-turn `context_pack_summary` into the compiled artifact. The summary is still rebuilt and persisted after each durable pack as a storage-only cache row, but it no longer joins the compression-orientation section or its dependency refs. This removes the guaranteed per-turn `INVALIDATE_PREVIOUS` churn on unchanged repositories and removes the second full artifact compile per turn.
+- Bounded git subprocess output buffers in repo snapshots at 64 MiB so large worktrees can list files and check ignores without ENOBUFS failures.
+- Local project bootstrap now resolves the repository root with `git rev-parse --show-toplevel` instead of building a full repo snapshot before the compile snapshot is built.
 - Added bounded TypeScript checker-backed direct call-target resolution to TS/JS indexing. Call edges now prefer checker-resolved declarations inside admitted snapshot files and fall back to the existing AST heuristic when the checker cannot resolve safely.
 - Added current-session observed failure-span links to task retrieval. Later compiles can use current-valid `observed_test_failure_span_link` claims to select linked candidate source/test refs, while rendering the link as selection evidence only.
 - Added retrieval confidence reporting to task source retrieval, repository artifacts, public context artifacts, MCP `grape_get_context` output, CLI compile output, and Markdown renderers. The state is `safe`, `partial`, or `missing_likely_files`, and `missing_likely_files` also adds `missing:task_retrieval_missing_likely_files` to public `missingContext`.
