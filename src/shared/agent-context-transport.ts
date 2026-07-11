@@ -102,6 +102,8 @@ export function buildAgentContextArtifactRef(
   };
 }
 
+const markerDiffStates = new Set(["OMIT_UNCHANGED", "RESTORE_AVAILABLE", "INVALIDATE_PREVIOUS"]);
+
 export function compactAgentContextPackItems(
   items: readonly ContextPackItemShape[]
 ): readonly AgentContextPackItemShape[] {
@@ -109,10 +111,12 @@ export function compactAgentContextPackItems(
     ...item,
     contentPreview: compactContentPreview(content),
     contentOmitted: true,
-    inputRefs: item.inputRefs.map((ref) => ({
-      ...ref,
-      scope: compactPackScope(ref.scope)
-    }))
+    inputRefs: markerDiffStates.has(item.state)
+      ? []
+      : item.inputRefs.map((ref) => ({
+          ...ref,
+          scope: compactPackScope(ref.scope)
+        }))
   }));
 }
 

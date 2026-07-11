@@ -14,6 +14,8 @@ This file tracks released package behavior. V1 implementation-internal changes b
 ### Changed
 
 - Local compile now builds one context artifact per turn instead of compiling twice to embed a prior-pack summary, which reduces compile work on every turn.
+- MCP `agent_pack` marker items with states `OMIT_UNCHANGED`, `RESTORE_AVAILABLE`, and `INVALIDATE_PREVIOUS` no longer carry per-item dependency ref payloads. Their dependency detail duplicated the sent section's refs and stays available in the stored artifact JSON and `outputMode: "full"`. On the demo repositories this keeps the second same-session MCP response smaller than the first instead of nearly double.
+- `OMIT_UNCHANGED` and `RESTORE_AVAILABLE` items now report the omitted section's token estimate in `tokenCount` instead of `0`, so agents can weigh a restore before requesting it.
 
 ## 1.0.0 - 2026-07-04
 
