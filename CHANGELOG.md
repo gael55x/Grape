@@ -11,6 +11,10 @@ This file tracks released package behavior. V1 implementation-internal changes b
 - Corrected the Codex plugin version and replaced unrelated homepage links with the Grape repository homepage.
 - Updated active onboarding to install the stable package and identified source-only Codex plugin commands as contributor workflows.
 
+### Changed
+
+- Clarified the README and npm package metadata around local repository context continuity.
+
 ## 1.0.0 - 2026-07-04
 
 First stable release. The scope is the 1.0 checklist in `docs/v1/planning/1-0-readiness.md`: repo context scan, context pack generation, change detection and stale-context invalidation, proof-backed excerpts, MCP stdio server, client install helpers, privacy filtering, and status and debug commands.

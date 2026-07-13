@@ -1,7 +1,15 @@
 {
   "name": "grape-context",
   "version": "1.0.0",
-  "description": "The context infrastructure layer between a repository and an AI coding agent.",
+  "description": "Local, repository-backed context continuity for AI coding agents.",
+  "keywords": [
+    "ai-coding-agents",
+    "mcp",
+    "repository-context",
+    "context-continuity",
+    "developer-tools",
+    "local-first"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

@@ -5,7 +5,7 @@
 <h1 align="center">Grape</h1>
 
 <p align="center">
-   Better context transport for AI coding agents.
+   Local, repository-backed context continuity for AI coding agents.
 </p>
 
 <p align="center">
