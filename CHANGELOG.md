@@ -13,7 +13,7 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ### Changed
 
-- Clarified the README and npm package metadata around local repository context continuity.
+- Clarified the npm package metadata around local repository context continuity.
 
 ## 1.0.0 - 2026-07-04
 
