@@ -921,6 +921,55 @@ test("mcp grape_get_context compiles and returns structured context pack output"
   });
 });
 
+test("mcp grape_get_context second turn stays smaller than the first on an unchanged repo", () => {
+  withGitRepo((repoPath) => {
+    const callGetContext = () =>
+      runMcp(repoPath, [
+        {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: {
+            name: "grape_get_context",
+            arguments: {
+              query: "Explain the repository entry points",
+              sessionId: "mcp-second-turn-size"
+            }
+          }
+        }
+      ])[0].result.structuredContent;
+
+    const first = callGetContext();
+    const second = callGetContext();
+
+    assert.equal(
+      second.contextPackItems.filter((item) => item.state === "INVALIDATE_PREVIOUS").length,
+      0,
+      "an unchanged repository must not invalidate prior sent context over MCP"
+    );
+
+    const markers = second.contextPackItems.filter(
+      (item) => item.state === "OMIT_UNCHANGED" || item.state === "RESTORE_AVAILABLE"
+    );
+    assert.ok(markers.length > 0, "second turn should omit unchanged sections");
+    for (const marker of markers) {
+      assert.deepEqual(marker.inputRefs, [], `marker ${marker.id} must not carry dependency refs in agent_pack`);
+      assert.ok(marker.tokenCount > 0, `marker ${marker.id} should report the omitted section token estimate`);
+    }
+    const sentItems = second.contextPackItems.filter(
+      (item) => item.state === "NEW" || item.state === "CHANGED" || item.state === "PINNED"
+    );
+    assert.ok(sentItems.every((item) => item.inputRefs.length > 0), "sent items keep compact input refs");
+
+    const firstBytes = JSON.stringify(first.contextPackItems).length;
+    const secondBytes = JSON.stringify(second.contextPackItems).length;
+    assert.ok(
+      secondBytes < firstBytes,
+      `second-turn pack payload (${secondBytes}B) should be smaller than the first turn (${firstBytes}B)`
+    );
+  });
+});
+
 test("mcp grape_get_context applies caller environment scope to compiled artifacts", () => {
   withGitRepo((repoPath) => {
     const responses = runMcp(repoPath, [

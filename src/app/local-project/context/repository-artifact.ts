@@ -3,7 +3,6 @@ import {
 } from "../../../core/compiler/index.js";
 import type {
   RepositoryArtifactActiveClaimInput,
-  RepositoryArtifactCompressionInput,
   RepositoryArtifactSourceExcerptInput,
   RepositoryArtifactSourceInput,
   RepositoryArtifactSymbolEdgeInput,
@@ -21,11 +20,7 @@ import type {
   RiskOverlay,
   TaskType
 } from "../../../shared/index.js";
-import {
-  prepareLocalCompressionArtifacts,
-  prepareLocalContextPackSummaryCompressionArtifact
-} from "./compression.js";
-import { listCurrentContextPackSummarySentItems } from "./context-pack-summary.js";
+import { prepareLocalCompressionArtifacts } from "./compression.js";
 
 export interface CompileLocalRepositoryArtifactInput {
   readonly repositories: StorageRepositories;
@@ -63,33 +58,7 @@ export function compileLocalRepositoryArtifact(
     symbolEdges: input.symbolEdges,
     now: input.now
   });
-  const baseArtifact = compileArtifact(input, orientationArtifacts);
-  const contextPackSummary = prepareLocalContextPackSummaryCompressionArtifact({
-    repositories: input.compressionRepositories,
-    projectId: input.projectId,
-    snapshotId: input.snapshot.snapshotId,
-    worktreeStateId: input.worktreeStateId,
-    snapshot: input.snapshot,
-    sessionId: input.sessionId,
-    sentItems: listCurrentContextPackSummarySentItems({
-      repositories: input.repositories,
-      sessionId: input.sessionId,
-      branch: input.snapshot.branch,
-      commit: input.snapshot.commit,
-      artifact: baseArtifact
-    }),
-    now: input.now
-  });
-  return compileArtifact(input, [
-    ...orientationArtifacts,
-    ...(contextPackSummary ? [contextPackSummary] : [])
-  ]);
-}
 
-function compileArtifact(
-  input: CompileLocalRepositoryArtifactInput,
-  compressionArtifacts: readonly RepositoryArtifactCompressionInput[]
-): InMemoryContextArtifactShape {
   return compileRepositoryContextArtifact({
     projectId: input.projectId,
     sessionId: input.sessionId,
@@ -104,7 +73,7 @@ function compileArtifact(
     symbolNodes: input.symbolNodes,
     symbolEdges: input.symbolEdges,
     activeClaims: input.activeClaims,
-    compressionArtifacts,
+    compressionArtifacts: orientationArtifacts,
     taskRetrieval: input.taskRetrieval,
     currentScope: input.currentScope,
     currentScopeWarnings: input.currentScopeWarnings,

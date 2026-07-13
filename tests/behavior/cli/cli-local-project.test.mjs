@@ -1244,9 +1244,20 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     ]);
 
     assert.equal(second.sessionId, "session-test");
-    assert.equal(second.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), true);
+    assert.equal(
+      second.contextPackItems.filter((item) => item.state === "INVALIDATE_PREVIOUS").length,
+      0,
+      "an unchanged repository must not invalidate prior sent context"
+    );
     assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE"), true);
+    assert.equal(
+      second.contextPackItems.some(
+        (item) => item.sectionId === "compression-orientation" && item.state === "OMIT_UNCHANGED"
+      ),
+      true,
+      "compression orientation must omit unchanged instead of resending each turn"
+    );
     assert.equal(localContextArtifactCount(repoPath), 2);
     assert.deepEqual(localCompressionArtifactTypes(repoPath), [
       "context_pack_summary",
@@ -1257,26 +1268,41 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     const secondCompressionOrientation = secondArtifactJson.contextArtifact.outputSections.find(
       (section) => section.id === "compression-orientation"
     );
-    assert.match(secondCompressionOrientation?.text ?? "", /Type: context_pack_summary/);
-    assert.match(secondCompressionOrientation?.text ?? "", /Prior sent items:/);
+    assert.doesNotMatch(secondCompressionOrientation?.text ?? "", /Type: context_pack_summary/);
+    assert.match(secondCompressionOrientation?.text ?? "", /Type: symbol_outline/);
     assert.equal(
       secondArtifactJson.contextArtifact.compressionArtifactRefs.some((ref) =>
         ref.startsWith("compression:context_pack_summary:")
       ),
-      true
+      false,
+      "the per-turn context pack summary stays in local storage, not in the artifact"
     );
+
+    const third = runCliJson(repoPath, [
+      "compile",
+      "--task",
+      "Explain the repository entry points",
+      "--session",
+      "session-test"
+    ]);
+    assert.equal(
+      third.contextPackItems.filter((item) => item.state === "INVALIDATE_PREVIOUS").length,
+      0,
+      "repeat unchanged compiles must stay free of invalidation churn"
+    );
+    assert.equal(localContextArtifactCount(repoPath), 3);
 
     const restoreToken = second.contextPackItems.find((item) => item.state === "RESTORE_AVAILABLE").restoreId;
     const continuity = runCliJson(repoPath, ["sessions"]);
     assert.equal(continuity.continuity.omittedItemCount > 0, true);
     assert.equal(continuity.continuity.restorableOmittedItemCount > 0, true);
     assert.equal(continuity.continuity.omittedTokenCount > 0, true);
-    assert.equal(continuity.continuity.invalidatedSentItemCount > 0, true);
+    assert.equal(continuity.continuity.invalidatedSentItemCount, 0);
     const sessionContinuity = continuity.sessions.find((session) => session.sessionId === "session-test");
     assert.equal(sessionContinuity?.omittedItemCount > 0, true);
     assert.equal(sessionContinuity?.restorableOmittedItemCount > 0, true);
     assert.equal(sessionContinuity?.omittedTokenCount > 0, true);
-    assert.equal(sessionContinuity?.invalidatedSentItemCount > 0, true);
+    assert.equal(sessionContinuity?.invalidatedSentItemCount, 0);
 
     const omitted = runCliJson(repoPath, ["omitted", "--session", "session-test"]);
     assert.equal(omitted.omittedItems.some((item) => item.restoreId === restoreToken), true);
@@ -1287,7 +1313,7 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.match(restored.body, /Task type/);
 
     const artifactList = runCliJson(repoPath, ["artifacts", "--session", "session-test"]);
-    assert.equal(artifactList.artifacts.length, 2);
+    assert.equal(artifactList.artifacts.length, 3);
     assert.equal(artifactList.artifacts.some((artifact) => artifact.artifactId === second.artifactId), true);
 
     const artifactDetail = runCliJson(repoPath, ["artifacts", "--artifact", second.artifactId]);
@@ -1311,7 +1337,7 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(reset.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), true);
     assert.equal(reset.contextPackItems.some((item) => item.state === "NEW"), true);
     assert.equal(reset.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), false);
-    assert.equal(localContextArtifactCount(repoPath), 3);
+    assert.equal(localContextArtifactCount(repoPath), 4);
   });
 });
 
@@ -1351,14 +1377,14 @@ test("cli compile human output shows restore and invalidation counts", () => {
     assert.equal(second.status, 0, second.stderr);
     assert.match(second.stdout, /Omitted unchanged: [1-9]\d*/);
     assert.match(second.stdout, /Restore available: [1-9]\d*/);
-    assert.match(second.stdout, /Invalidated previous: [1-9]\d*/);
+    assert.match(second.stdout, /Invalidated previous: 0/);
 
     const sessions = runCli(repoPath, ["sessions"]);
     assert.equal(sessions.status, 0, sessions.stderr);
     assert.match(sessions.stdout, /Continuity:/);
     assert.match(sessions.stdout, /Omitted\/restorable items: [1-9]\d*\/[1-9]\d*/);
     assert.match(sessions.stdout, /Restorable omitted tokens: [1-9]\d*/);
-    assert.match(sessions.stdout, /Stale invalidations: [1-9]\d*/);
+    assert.match(sessions.stdout, /Stale invalidations: 0/);
     assert.match(sessions.stdout, /omitted rows show context Grape did not resend/);
   });
 });

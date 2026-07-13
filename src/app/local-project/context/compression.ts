@@ -102,12 +102,6 @@ export function prepareLocalCompressionArtifacts(
 export function persistLocalContextPackSummaryCompressionArtifact(
   input: PersistLocalContextPackSummaryCompressionInput
 ): void {
-  prepareLocalContextPackSummaryCompressionArtifact(input);
-}
-
-export function prepareLocalContextPackSummaryCompressionArtifact(
-  input: PersistLocalContextPackSummaryCompressionInput
-): RepositoryArtifactCompressionInput | undefined {
   const contextPackSummary = buildContextPackSummaryCompressionArtifact({
     projectId: input.projectId,
     repoId: input.snapshot.repoId,
@@ -121,19 +115,8 @@ export function prepareLocalContextPackSummaryCompressionArtifact(
     createdAt: input.now
   });
 
-  if (!contextPackSummary) return undefined;
+  if (!contextPackSummary) return;
   persistCompressionArtifact(input.repositories, contextPackSummary, input.now);
-  return {
-    compressionId: contextPackSummary.compressionId,
-    type: contextPackSummary.type,
-    summaryText: contextPackSummary.summaryText,
-    inputRefs: contextPackSummary.inputRefs.map((ref) => ref.ref),
-    inputHashes: contextPackSummary.inputHashes,
-    inputHash: contextPackSummary.inputHash,
-    policyHash: contextPackSummary.policyHash,
-    scopeHash: contextPackSummary.scopeHash,
-    outputHash: contextPackSummary.outputHash
-  };
 }
 
 function persistCompressionArtifact(
