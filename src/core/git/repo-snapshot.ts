@@ -11,6 +11,8 @@ import {
 
 export type WorktreeStatus = "clean" | "dirty" | "unknown";
 
+const gitOutputMaxBufferBytes = 64 * 1024 * 1024;
+
 export interface RepoSnapshot {
   snapshotId: string;
   repoId: string;
@@ -219,7 +221,8 @@ function readGitIgnoredPaths(rootPath: string, gitBinary: string, repoPaths: rea
   const result = spawnSync(gitBinary, ["-C", rootPath, "check-ignore", "--no-index", "-z", "--stdin"], {
     input: `${repoPaths.join("\0")}\0`,
     encoding: "utf8",
-    stdio: ["pipe", "pipe", "pipe"]
+    stdio: ["pipe", "pipe", "pipe"],
+    maxBuffer: gitOutputMaxBufferBytes
   });
 
   if (result.status !== 0 && result.status !== 1) {
@@ -244,7 +247,8 @@ function rejectedFileHashPart(file: SnapshotFileRejection): string {
 function runGit(rootPath: string, gitBinary: string, args: readonly string[]): string {
   return execFileSync(gitBinary, ["-C", rootPath, ...args], {
     encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"]
+    stdio: ["ignore", "pipe", "pipe"],
+    maxBuffer: gitOutputMaxBufferBytes
   }).trimEnd();
 }
 

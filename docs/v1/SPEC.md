@@ -1781,7 +1781,7 @@ For V1, keep compression conservative:
 |---|---:|---|
 | `symbol_outline` | required | deterministic from symbol index |
 | `rule_digest` | required | deterministic from active rules |
-| `context_pack_summary` | required | derived from previously sent artifact items |
+| `context_pack_summary` | required | derived from previously sent artifact items; storage-only cache, never rendered into the artifact |
 | `decision_digest` | optional | only from user-confirmed decisions |
 | `failure_timeline` | optional | only from test/command evidence and confirmed bug/fix claims |
 | `module_outline` | optional | deterministic outline only; no model summary in V1 |
@@ -1843,7 +1843,8 @@ Summaries must be listed in the artifact dependency manifest when used.
 If an input hash changes, the summary becomes stale.
 If stale compression was previously sent, the next diff must emit `INVALIDATE_PREVIOUS`.
 `context_pack_summary` must be a deterministic ledger of sent item IDs, labels, hashes, and states, not a freeform model summary.
-`context_pack_summary` must be rebuilt from current active sent-ledger rows before it is rendered, and it must exclude invalidated rows, compression rows, and rows from other branch/head scopes.
+`context_pack_summary` must be rebuilt from current active sent-ledger rows after the durable pack is persisted, and it must exclude invalidated rows, compression rows, and rows from other branch/head scopes.
+`context_pack_summary` is a storage-only cache row. It must not be rendered into the compiled artifact or join section dependency refs, because its digest changes with every ledger update and would invalidate prior sent context on unchanged repositories.
 Summary-as-proof is a critical violation.
 ```
 

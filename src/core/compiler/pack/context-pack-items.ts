@@ -30,7 +30,7 @@ function toContextPackItem(
     title: item.title,
     content: item.body,
     contentHash: item.contentHash,
-    tokenCount: estimateTextTokens(item.body),
+    tokenCount: packItemTokenCount(item, section),
     pinned: item.pinned,
     safetyCritical: item.pinned || Boolean(section?.exactRequired) || item.state === "INVALIDATE_PREVIOUS",
     invalidatesSentItemId: item.state === "INVALIDATE_PREVIOUS" ? item.previousItemId : undefined,
@@ -93,6 +93,16 @@ function inputRefsForItem(
     .map((dependencyRef) => dependenciesById.get(dependencyRef))
     .filter((dependency): dependency is InMemoryContextDependencyShape => dependency !== undefined)
     .map((dependency) => toContextInputRef(artifact, dependency));
+}
+
+function packItemTokenCount(
+  item: InMemoryContextPackItemShape,
+  section: InMemoryContextSectionShape | undefined
+): number {
+  if ((item.state === "OMIT_UNCHANGED" || item.state === "RESTORE_AVAILABLE") && section) {
+    return estimateTextTokens(section.body);
+  }
+  return estimateTextTokens(item.body);
 }
 
 function estimateTextTokens(text: string): number {
