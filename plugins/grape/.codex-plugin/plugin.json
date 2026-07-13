@@ -1,11 +1,11 @@
 {
   "name": "grape",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Use Grape MCP from Codex for repository context continuity.",
   "author": {
     "name": "Grape"
   },
-  "homepage": "https://graperoot.dev/",
+  "homepage": "https://github.com/gael55x/Grape#readme",
   "repository": "https://github.com/gael55x/Grape",
   "license": "MIT",
   "keywords": [
@@ -27,7 +27,7 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://graperoot.dev/",
+    "websiteURL": "https://github.com/gael55x/Grape#readme",
     "defaultPrompt": [
       "Use Grape context before editing this repo",
       "Check what changed since my last Codex turn",
