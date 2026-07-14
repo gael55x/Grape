@@ -103,14 +103,14 @@ grape mcp --print-agents-snippet
 
 Review the snippet before adding it to your repository rules. Grape does not edit AGENTS.md automatically.
 
-Codex plugin setup is also available from this repo:
+Contributor-only Codex plugin setup is available from a Grape source checkout:
 
 ```bash
 codex plugin marketplace add .
 codex plugin add grape@grape-local
 ```
 
-Run those commands from the repository root. The plugin lives in `plugins/grape`. It exposes `grape mcp --stdio` and a Grape skill. It assumes `grape` is on `PATH`. Use `grape mcp --install --client codex` when you need `.codex/config.toml` with an exact working directory. The plugin does not ship hooks.
+Run those commands from the Grape source repository root, not from an application repository. The plugin lives in `plugins/grape`. It exposes `grape mcp --stdio` and a Grape skill. It assumes `grape` is on `PATH`. Normal users should use `grape mcp --install --client codex` to create `.codex/config.toml` with an exact working directory. The plugin does not ship hooks.
 
 Run `npm run build` and `npm run codex:check` to verify the local Codex path. The check uses temp repositories and an isolated Codex home.
 

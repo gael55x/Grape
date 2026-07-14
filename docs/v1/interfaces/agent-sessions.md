@@ -29,24 +29,24 @@ Grape does **not** run as a daemon that observes every agent turn automatically.
 - Branch switches, source edits, and dependency manifest changes may emit `INVALIDATE_PREVIOUS` for prior sends.
 - Grape does not claim guaranteed background execution or agent enforcement; stale/unknown status from `grape_get_status` is advisory.
 
-## Beta Install Baseline
+## Stable Install Baseline
 
-The beta transport slice requires Node.js 22.13 or newer.
+Grape 1.0 requires Node.js 22.13 or newer.
 
-**Published beta package:**
+**Published stable package:**
 
 ```bash
-npm install -g grape-context@beta
+npm install -g grape-context
 grape --version
 grape help
 grape init --connect
 ```
 
-If a machine keeps resolving an older package after install, clear the npm cache and reinstall the beta package:
+If a machine keeps resolving an older package after install, clear the npm cache and reinstall the stable package:
 
 ```bash
 npm cache clean --force
-npm install -g grape-context@beta
+npm install -g grape-context
 ```
 
 Run `grape doctor --privacy` after setup to review local storage, ignored paths, and scanner coverage.
@@ -67,16 +67,16 @@ Cursor writes project-local `.cursor/mcp.json`. Claude Desktop writes `claude_de
 
 To add repository guidance for agents, run `grape mcp --print-agents-snippet` and review the printed AGENTS.md block before adding it to your rules. Grape does not edit AGENTS.md automatically.
 
-For Codex plugin setup, this repo ships `plugins/grape` and `.agents/plugins/marketplace.json`:
+For contributors testing Grape from a source checkout, this repository ships `plugins/grape` and `.agents/plugins/marketplace.json`:
 
 ```bash
 codex plugin marketplace add .
 codex plugin add grape@grape-local
 ```
 
-Run those commands from the repository root. The plugin exposes `grape mcp --stdio` and a Grape skill. It assumes `grape` is on `PATH`. Use the direct Codex installer when you need `.codex/config.toml` to pin the repository working directory.
+Run those commands from the Grape source repository root, not from an application repository. The plugin exposes `grape mcp --stdio` and a Grape skill. It assumes `grape` is on `PATH`. Normal users should use the direct Codex installer when they need `.codex/config.toml` to pin the repository working directory.
 
-Manual fallback for other MCP clients, or for published beta builds that do not recognize `grape mcp --install`:
+Manual fallback for other MCP clients, or for older builds that do not recognize `grape mcp --install`:
 
 ```bash
 grape mcp --print-config
@@ -100,8 +100,6 @@ The `cwd` and `--repo` path must point at the same repository root. See [`gettin
 
 Put this JSON in the MCP server configuration for your coding agent or editor. Grape's automated trial verifies stdio JSON-RPC behavior and installed-package dry-runs, not every editor's UI placement. Treat client-specific UI steps as verified only when a human client trial records them.
 
-The auto-install commands are separate from the 1.0.0-beta.7 MCP stdio framing fix. Beta.7 made the stdio server connect correctly; it did not write Cursor or Claude Desktop config.
-
 Copy-ready agent instruction:
 
 ```text
@@ -113,7 +111,7 @@ At the start of each repo task turn, call grape_get_context with a stable sessio
 The short version: same task, same session. New task, new session.
 
 - A Grape session is scoped to one local project, repo, task id, and task type.
-- Prefer explicit `sessionId` for beta clients.
+- Prefer explicit `sessionId` for MCP clients.
 - The task id is derived from the exact task text, task type, and risk overlays.
 - Reusing an explicit session with different task wording is a task mismatch, not a follow-up turn.
 - CLI calls without `--session` derive the session from repo id, branch, and task id; use an explicit `--session` when one logical agent session must continue across a branch switch.
@@ -226,7 +224,7 @@ Grape writes each response as one compact JSON object followed by `\n` and accep
 | Restore returns `stale` | Call `grape_get_context` again for current context; do not reuse the old omitted body. |
 | Prior context is invalidated | Treat `INVALIDATE_PREVIOUS` entries as higher priority than prior notes, summaries, or chat memory. |
 | MCP client hangs or parse fails | Verify the client sends one compact JSON-RPC object per line over stdio, with no `Content-Length` headers and no extra stdout text. |
-| Installed CLI appears to be an older package | Run `grape --version`, clear the npm cache if needed, reinstall `grape-context@beta`, and check `grape help` from the active shell path. |
+| Installed CLI appears to be an older package | Run `grape --version`, clear the npm cache if needed, reinstall `grape-context`, and check `grape help` from the active shell path. |
 
 ## Related Contracts
 

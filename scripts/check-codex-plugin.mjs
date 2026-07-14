@@ -7,6 +7,7 @@ const marketplacePath = path.join(root, ".agents", "plugins", "marketplace.json"
 const manifestPath = path.join(pluginRoot, ".codex-plugin", "plugin.json");
 const mcpPath = path.join(pluginRoot, ".mcp.json");
 const skillPath = path.join(pluginRoot, "skills", "grape", "SKILL.md");
+const packageManifest = readJson(path.join(root, "package.json"));
 
 for (const file of [marketplacePath, manifestPath, mcpPath, skillPath]) {
   assert(existsSync(file), `missing Codex plugin file: ${path.relative(root, file)}`);
@@ -25,12 +26,15 @@ assert(entry.category === "Productivity", "marketplace grape category must be Pr
 
 const manifest = readJson(manifestPath);
 assert(manifest.name === "grape", "plugin manifest name must be grape");
-assert(manifest.version === "0.1.0", "plugin manifest version must be 0.1.0");
+assert(manifest.version === packageManifest.version, "plugin manifest version must match package version");
+assert(manifest.homepage === packageManifest.homepage, "plugin homepage must match package homepage");
+assert(manifest.repository === "https://github.com/gael55x/Grape", "plugin repository must be the Grape repository");
 assert(manifest.skills === "./skills/", "plugin manifest must point at skills directory");
 assert(manifest.mcpServers === "./.mcp.json", "plugin manifest must point at .mcp.json");
 assert(!Object.hasOwn(manifest, "hooks"), "plugin manifest must not declare unsupported hooks");
 assert(manifest.interface?.displayName === "Grape", "plugin display name must be Grape");
 assert(manifest.interface?.category === "Engineering", "plugin interface category must be Engineering");
+assert(manifest.interface?.websiteURL === manifest.homepage, "plugin website must match plugin homepage");
 assert(Array.isArray(manifest.interface?.defaultPrompt), "plugin defaultPrompt must be an array");
 assert(manifest.interface.defaultPrompt.length <= 3, "plugin defaultPrompt must have at most 3 entries");
 

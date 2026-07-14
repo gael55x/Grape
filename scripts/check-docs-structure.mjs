@@ -22,6 +22,13 @@ const stalePathPattern =
   /docs\/v1\/(ARCHITECTURE|STATE_MACHINE|INVARIANTS|TRUST_MODEL|CONTEXT_ARTIFACT|CONTEXT_DIFF|COMPRESSION|MCP_TOOLS|CLI|STORAGE|TESTING|BENCHMARKS|SECURITY|IMPLEMENTATION_PHASES|IMPLEMENTATION_LOG|SPEC_CHANGELOG|DECISIONS|EXAMPLES|FIXTURES)(\.md|\/)/;
 
 const errors = [];
+const activeReleaseDocs = [
+  join(root, "README.md"),
+  join(root, "docs", "README.md"),
+  join(root, "docs", "v1", "interfaces", "getting-started.md"),
+  join(root, "docs", "v1", "interfaces", "agent-sessions.md")
+];
+const staleReleasePattern = /grape-context@beta|preparing for a stable 1\.0 release/;
 
 for (const entry of readdirSync(docsV1, { withFileTypes: true })) {
   if (entry.isFile() && !allowedV1RootFiles.has(entry.name)) {
@@ -54,6 +61,13 @@ function walk(dir) {
 }
 
 walk(join(root, "docs"));
+
+for (const path of activeReleaseDocs) {
+  const body = readFileSync(path, "utf8");
+  if (staleReleasePattern.test(body)) {
+    errors.push(`Active release doc contains beta install guidance: ${relative(root, path)}`);
+  }
+}
 
 for (const path of [
   join(root, "docs", "README.md"),
