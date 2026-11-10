@@ -4,7 +4,9 @@ All notable user-facing changes to Grape will be documented here.
 
 This file tracks released package behavior. V1 implementation-internal changes belong in `docs/v1/planning/changelog.md`. Spec-only changes belong in `docs/v1/planning/spec-changelog.md`.
 
-## Unreleased
+## 1.1.0 - 2026-11-10
+
+Agents now receive usable context in the default MCP response, follow-up turns can reword the task, and the documentation is rewritten for people and agents. Read the first entry under Changed before upgrading an integration that parses `agent_pack` output.
 
 ### Fixed
 

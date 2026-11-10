@@ -113,6 +113,8 @@ The stability boundary is enforced through TypeScript types, this document, and 
 
 ### `AgentContextPackItem` (`agent_pack` shape)
 
+> Changed in 1.1.0: items carry `content` and no longer carry `contentPreview`, `contentOmitted`, or `inputRefs`. Integrations written against 1.0.0 must read `content`, and request `outputMode: "full"` when they need dependency refs.
+
 | Field | Status | Notes |
 |-------|--------|-------|
 | `id` | **Stable** | String. |
