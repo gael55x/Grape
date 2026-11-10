@@ -1271,46 +1271,36 @@ test("mcp grape_get_context requires a session identity", () => {
   });
 });
 
-test("mcp task mismatch errors include recovery guidance", () => {
+test("mcp grape_get_context treats reworded task text as a follow-up turn in the same session", () => {
   withGitRepo((repoPath) => {
-    const responses = runMcp(repoPath, [
-      {
-        jsonrpc: "2.0",
-        id: 1,
-        method: "tools/call",
-        params: {
-          name: "grape_get_context",
-          arguments: {
-            query: "Explain the repository",
-            sessionId: "mcp-mismatch-session"
-          }
+    const callGetContext = (query) =>
+      runMcp(repoPath, [
+        {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: { name: "grape_get_context", arguments: { query, sessionId: "mcp-reworded-session" } }
         }
-      },
-      {
-        jsonrpc: "2.0",
-        id: 2,
-        method: "tools/call",
-        params: {
-          name: "grape_get_context",
-          arguments: {
-            query: "Explain a different repository task",
-            sessionId: "mcp-mismatch-session"
-          }
-        }
-      }
-    ]);
+      ])[0].result;
 
-    const toolResult = responses[1].result;
-    assert.equal(toolResult.isError, true);
-    assert.match(toolResult.structuredContent.error, /task mismatch/);
-    assert.ok(Array.isArray(toolResult.structuredContent.recoveryGuidance));
-    assert.ok(
-      toolResult.structuredContent.recoveryGuidance.some((item) =>
-        item.includes("Reuse the exact original")
-      )
+    const first = callGetContext("Explain the repository");
+    const second = callGetContext("Explain a different repository task");
+
+    assert.equal(second.isError, false);
+    assert.equal(second.structuredContent.sessionId, "mcp-reworded-session");
+    const sentHashes = new Set(
+      first.structuredContent.contextPackItems
+        .filter((item) => ["NEW", "CHANGED", "PINNED"].includes(item.state))
+        .map((item) => item.contentHash)
     );
-    assert.match(toolResult.content[0].text, /Recovery:/);
-    assert.match(toolResult.content[0].text, /resetSession/);
+    for (const item of second.structuredContent.contextPackItems.filter((entry) => entry.state === "OMIT_UNCHANGED")) {
+      assert.ok(sentHashes.has(item.contentHash), `omitted ${item.sectionId} must be content this session already received`);
+    }
+    const taskItems = second.structuredContent.contextPackItems.filter((item) => item.sectionId === "task");
+    assert.ok(
+      taskItems.some((item) => ["NEW", "CHANGED"].includes(item.state) && item.content.length > 0),
+      "the reworded task must be sent, not omitted"
+    );
   });
 });
 

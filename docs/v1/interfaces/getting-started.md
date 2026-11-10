@@ -279,7 +279,7 @@ grape init --connect
 | `No Git repository found.` | Run Grape from a Git worktree, or pass `--repo <repo-root>`. |
 | `This Git repository has no commits yet.` | Create an initial commit, then rerun `grape init --connect`. |
 | `Grape config is missing` | Run `grape init --connect` from the repository root. |
-| `context session task mismatch` | Reuse the same `--task` and `--task-type`, or choose a new `--session`. |
+| `context session project mismatch` or `repo mismatch` | The session id belongs to another repository. Choose a new `--session`. |
 | Context session not found (run/test) | Run `grape compile --task "<task>" --session <id>` first, or list sessions with `grape sessions`. |
 | Stale context session | Rerun `grape compile` for the same task and session, or start a new `--session`. |
 | `benchmark fixture not found` | Use `grape bench --fixture <name>` with a fixture under `tests/fixtures/`, or pass `--fixture-path`. |

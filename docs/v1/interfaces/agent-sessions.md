@@ -13,7 +13,7 @@ This page is the practical contract for agents, MCP clients, and CLI users that 
 | Setting up Cursor, Claude Desktop, or Codex | Use `grape mcp --install --client cursor`, `grape mcp --install --client claude`, or `grape mcp --install --client codex`; keep `cwd` plus `--repo` on the same repository root. |
 | Setting up another MCP client | Use `grape mcp --print-config` and paste the manual config. |
 | Building or debugging stdio transport | Send one compact JSON-RPC object per line. Do not send `Content-Length` headers. |
-| Calling `grape_get_context` | Pass a stable `sessionId` and stable `query` for continued turns on the same task. |
+| Calling `grape_get_context` | Pass a stable `sessionId` every turn. The `query` can change as the task evolves. |
 | Starting a new task | Use a new `sessionId`, or change the task text intentionally. |
 | Continuing after the agent lost context | Keep the same `sessionId` and `query`, then pass `resetSession: true`. |
 | Seeing `INVALIDATE_PREVIOUS` | Stop using the prior context item. Ask Grape for current context again if needed. |
@@ -108,22 +108,22 @@ At the start of each repo task turn, call grape_get_context with a stable sessio
 
 ## Stable Identity Rules
 
-The short version: same task, same session. New task, new session.
+The short version: one conversation, one session. The task wording can change between turns.
 
-- A Grape session is scoped to one local project, repo, task id, and task type.
+- A Grape session is scoped to one local project and repo. Reusing a session id from another project or repo is an error.
 - Prefer explicit `sessionId` for MCP clients.
-- The task id is derived from the exact task text, task type, and risk overlays.
-- Reusing an explicit session with different task wording is a task mismatch, not a follow-up turn.
+- The task id is derived from the task text, task type, and risk overlays. When an explicit session gets new task text or a new task type, the session follows the latest task.
+- Omission stays safe when the task changes: Grape compares each section's content and dependencies with what this session was sent. Sections the new task selects differently are invalidated and resent; unchanged sections the session already received can still be omitted.
 - CLI calls without `--session` derive the session from repo id, branch, and task id; use an explicit `--session` when one logical agent session must continue across a branch switch.
 - Reusing a session after a Git branch switch for the same task is allowed, but Grape emits `INVALIDATE_PREVIOUS` for stale branch-scoped context.
 - `--reset-session` or `resetSession: true` invalidates active prior sent items and forces a full resend for that session.
 - A session ledger from one agent or client cannot justify `OMIT_UNCHANGED` for another agent or client.
 
-Current limitation: Grape does not infer that two differently worded prompts are the same task. Clients should keep a stable task/query string for a continued turn, or use a new session for a new task.
+A reworded task usually selects different files, so expect `INVALIDATE_PREVIOUS` items and a larger resend on that turn. Start a new session when the conversation moves to unrelated work.
 
 ## CLI Contract
 
-Use the same `--task` and `--session` for a continued task:
+Use the same `--session` for a continued task:
 
 ```bash
 grape compile --task "Explain checkout discount behavior and related tests" --session checkout-discount-review --json
@@ -138,16 +138,16 @@ If the agent lost prior context but the task is still the same, reset that sessi
 grape compile --task "Explain checkout discount behavior and related tests" --session checkout-discount-review --reset-session --json
 ```
 
-If the task wording changes, create a different session:
+If the task wording changes, keep the session:
 
 ```bash
-grape compile --task "Plan a safe refactor of checkout discount behavior" --session checkout-discount-refactor --json
+grape compile --task "Plan a safe refactor of checkout discount behavior" --task-type refactor --session checkout-discount-review --json
 ```
 
-Reusing a session with a different task fails with a message like:
+Reusing a session id from a different project or repository fails with a message like:
 
 ```text
-context session checkout-discount-review task mismatch: reuse the same --task and --task-type, or choose a new --session.
+context session checkout-discount-review repo mismatch: this session belongs to another repo; choose a new --session.
 ```
 
 The CLI returns exit code `6` for this mismatch. Exit code `2` remains the unsafe compile bucket for cases such as missing high-risk exact context or token budgets below required context.
@@ -167,7 +167,7 @@ Preferred call shape:
 }
 ```
 
-Repeat later turns with the same `query` and `sessionId` when the task is unchanged. If the agent lost context, keep both stable and add:
+Repeat later turns with the same `sessionId`; the `query` can describe the current request. If the agent lost context, keep the `sessionId` and add:
 
 ```json
 {
@@ -218,9 +218,9 @@ Grape writes each response as one compact JSON object followed by `\n` and accep
 
 | Symptom | Recovery |
 |---|---|
-| `context session task mismatch` | Reuse the original task text, or choose a new `--session` / `sessionId` for the new task. |
-| Agent lost earlier context | Reuse the same task/session and pass `--reset-session` or `resetSession: true`. |
-| Second turn sends a full pack unexpectedly | Confirm the exact task/query, task type, risk overlays, branch, and explicit `sessionId` are stable. |
+| `context session project mismatch` or `repo mismatch` | The session id belongs to another repository. Choose a new `--session` / `sessionId`. |
+| Agent lost earlier context | Reuse the same session and pass `--reset-session` or `resetSession: true`. |
+| Second turn sends a full pack unexpectedly | Confirm the explicit `sessionId` and branch are stable. A reworded task that selects different files also resends those sections. |
 | Restore returns `stale` | Call `grape_get_context` again for current context; do not reuse the old omitted body. |
 | Prior context is invalidated | Treat `INVALIDATE_PREVIOUS` entries as higher priority than prior notes, summaries, or chat memory. |
 | MCP client hangs or parse fails | Verify the client sends one compact JSON-RPC object per line over stdio, with no `Content-Length` headers and no extra stdout text. |

@@ -28,8 +28,8 @@ export function ensureCompileSession(input: EnsureCompileSessionInput): EnsuredC
   if (input.existing) {
     assertSessionMatch("project", input.existing.projectId, input.projectId, input.sessionId);
     assertSessionMatch("repo", input.existing.repoId, input.repoId, input.sessionId);
-    assertSessionMatch("task", input.existing.taskId, input.taskId, input.sessionId);
-    assertSessionMatch("task type", input.existing.taskType, input.taskType, input.sessionId);
+    // A session follows its task as the wording changes. Omission stays safe because diffing compares
+    // section content and dependencies against what this session was sent, not the task text.
     if (input.existing.lockStatus === "locked" && input.existing.lockToken !== input.lockToken) {
       throw new Error(`context session is locked: ${input.sessionId}`);
     }
@@ -41,6 +41,8 @@ export function ensureCompileSession(input: EnsureCompileSessionInput): EnsuredC
       previousHeadCommit: branchChanged ? input.existing.headCommitSha : undefined,
       record: {
         ...input.existing,
+        taskId: input.taskId,
+        taskType: input.taskType,
         repoSnapshotId: input.snapshotId,
         worktreeStateId: input.worktreeStateId,
         branchName: input.branch,
@@ -83,6 +85,6 @@ export function ensureCompileSession(input: EnsureCompileSessionInput): EnsuredC
 function assertSessionMatch(label: string, existing: string | undefined, next: string, sessionId: string): void {
   if (existing === next) return;
   throw new Error(
-    `context session ${sessionId} ${label} mismatch: reuse the same --task and --task-type, or choose a new --session.`
+    `context session ${sessionId} ${label} mismatch: this session belongs to another ${label}; choose a new --session.`
   );
 }

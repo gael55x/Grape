@@ -2097,30 +2097,34 @@ test("cli compile reports contended session locks", () => {
   });
 });
 
-test("cli compile gives recovery guidance for task and session mismatches", () => {
+test("cli compile continues a session when the task is reworded", () => {
   withGitRepo((repoPath) => {
     runCliJson(repoPath, [
       "compile",
       "--task",
       "Explain the repository entry points",
       "--session",
-      "mismatch-session"
+      "reworded-session"
     ]);
 
-    const mismatch = runCli(repoPath, [
+    const reworded = runCli(repoPath, [
       "compile",
       "--task",
       "Plan a refactor of repository entry points",
+      "--task-type",
+      "refactor",
       "--session",
-      "mismatch-session"
+      "reworded-session",
+      "--json"
     ]);
 
-    assert.equal(mismatch.status, 6);
-    assert.equal(mismatch.stdout, "");
-    assert.match(mismatch.stderr, /task mismatch/);
-    assert.match(mismatch.stderr, /Recovery:/);
-    assert.match(mismatch.stderr, /Reuse the exact original --task\/query/);
-    assert.match(mismatch.stderr, /does not rebind a session to different task text/);
+    assert.equal(reworded.status, 0, reworded.stderr);
+    const result = JSON.parse(reworded.stdout);
+    assert.equal(result.sessionId, "reworded-session");
+    assert.ok(
+      result.contextPackItems.some((item) => item.sectionId === "task" && ["NEW", "CHANGED"].includes(item.state)),
+      "the reworded task must be sent"
+    );
   });
 });
 

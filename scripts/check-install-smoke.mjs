@@ -136,7 +136,7 @@ try {
   assert(restoredCliJson.status === "restored", "CLI omitted restore must return restored status");
   assert(typeof restoredCliJson.body === "string" && restoredCliJson.body.length > 0, "CLI omitted restore must return a body");
 
-  const mismatch = spawnGrape([
+  const reworded = spawnGrape([
     "compile",
     "--task",
     "different install smoke",
@@ -144,10 +144,8 @@ try {
     "install-smoke-cli",
     "--json"
   ]);
-  assert(mismatch.status === 6, `task/session mismatch must exit 6, got ${mismatch.status}`);
-  assert(mismatch.stdout === "", "task/session mismatch must not emit JSON stdout");
-  assert(mismatch.stderr.includes("task mismatch"), "task/session mismatch must explain the mismatch");
-  assert(mismatch.stderr.includes("Recovery:"), "task/session mismatch must include recovery guidance");
+  assert(reworded.status === 0, `reworded task must continue the session: ${reworded.stderr.trim()}`);
+  assert(JSON.parse(reworded.stdout).sessionId === "install-smoke-cli", "reworded task must keep the session");
 
   const reset = spawnGrape([...compileArgs, "--reset-session"]);
   assert(reset.status === 0, `reset compile failed: ${reset.stderr.trim() || reset.error?.message}`);

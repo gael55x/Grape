@@ -14,7 +14,7 @@ Tool schemas and safety rules are derived from `docs/v1/SPEC.md`.
 
 For the beta transport/schema stability boundary, including stable, experimental, and debug fields, warning taxonomy, and compatibility rules, see [`docs/v1/contracts/transport-stability.md`](../contracts/transport-stability.md).
 
-For stable agent session identity, task mismatch recovery, JSON-RPC framing examples, and published-package install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
+For stable agent session identity, session recovery, JSON-RPC framing examples, and published-package install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
 
 ## Start Here For Integration
 
@@ -91,7 +91,7 @@ Core agent rules:
 - Read `NEW`, `CHANGED`, and `PINNED` context for the current turn.
 - Treat `INVALIDATE_PREVIOUS` as stale context that must not be reused.
 - Use `grape_get_omitted_item` only when a `RESTORE_AVAILABLE` body is needed.
-- Keep the same `sessionId` and `query` for continued turns on the same task.
+- Keep the same `sessionId` for continued turns. The `query` can change as the task evolves.
 - Use `resetSession: true` only when the agent lost prior context for the same task.
 
 The rest of this file is the detailed tool contract for implementers and reviewers.
@@ -697,7 +697,7 @@ npm run beta:check
 - `grape_get_omitted_item` restore
 - source edit invalidation with `INVALIDATE_PREVIOUS`
 - stale restore rejection after the source edit
-- task/session mismatch error with `recoveryGuidance`
+- reworded task text continuing the same session
 - `resetSession: true` invalidation and current resend
 - branch switch invalidation
 - rejection of ignored `.env`, private, and ignore-listed secret-looking files in output

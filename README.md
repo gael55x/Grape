@@ -97,7 +97,7 @@ grape init --dry-run
 1. Install: `npm install -g grape-context`
 2. Initialize: `grape init --connect` (from your repository root)
 3. Connect MCP: `grape mcp --install --client cursor`, `grape mcp --install --client claude`, `grape mcp --install --client codex`, or `grape mcp --install --client generic`
-4. Agent loop: the agent calls `grape_get_context` each turn with a stable `sessionId` and stable task text
+4. Agent loop: the agent calls `grape_get_context` each turn with a stable `sessionId` and the current task
 
 Full walkthrough: [Getting started](https://github.com/gael55x/Grape/blob/main/docs/v1/interfaces/getting-started.md).
 

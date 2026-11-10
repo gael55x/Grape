@@ -53,7 +53,7 @@ try {
   assert(restored.status === 0, `omitted restore failed: ${restored.stderr.trim()}`);
   assert(JSON.parse(restored.stdout).status === "restored", "omitted restore must return restored status");
 
-  const mismatch = runGrape([
+  const reworded = runGrape([
     "compile",
     "--task",
     "different global install smoke",
@@ -61,8 +61,7 @@ try {
     "global-smoke-cli",
     "--json"
   ]);
-  assert(mismatch.status === 6, `task/session mismatch must exit 6, got ${mismatch.status}`);
-  assert(mismatch.stderr.includes("Recovery:"), "task/session mismatch must include recovery guidance");
+  assert(reworded.status === 0, `reworded task must continue the session: ${reworded.stderr.trim()}`);
 
   const reset = runGrape([...compileArgs, "--reset-session"]);
   assert(reset.status === 0, `reset compile failed: ${reset.stderr.trim() || reset.error?.message}`);

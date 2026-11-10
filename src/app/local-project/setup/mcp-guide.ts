@@ -7,7 +7,7 @@ export const grapeMcpInstructions = [
   "Read NEW, CHANGED, and PINNED items before acting.",
   "Treat INVALIDATE_PREVIOUS items as stale context that must not be reused.",
   "Use grape_get_omitted_item only when a RESTORE_AVAILABLE item body is needed.",
-  "Keep the same sessionId and query for continued turns on the same task.",
+  "Keep the same sessionId for continued turns; the query may change as the task evolves.",
   "Use resetSession only when prior agent context was lost."
 ].join("\n");
 
@@ -18,7 +18,7 @@ export function agentsSetupSnippet(): string {
     "Use Grape MCP for coding-agent context continuity in this repository.",
     "",
     "- At the start of each task turn, call `grape_get_context` with the current task and a stable `sessionId`.",
-    "- Keep the same `sessionId` and task wording for continued turns on the same task.",
+    "- Keep the same `sessionId` for continued turns; task wording may change between turns.",
     "- Read `NEW`, `CHANGED`, and `PINNED` context before editing.",
     "- Treat `INVALIDATE_PREVIOUS` as stale context that must not be reused.",
     "- Use `grape_get_omitted_item` only when a `RESTORE_AVAILABLE` body is needed.",
