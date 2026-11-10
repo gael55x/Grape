@@ -1,128 +1,91 @@
 # Getting Started with Grape
 
-Grape is for the moment when an agent is deep in a repo and starts losing the thread.
+This guide takes you from install to a coding agent that calls Grape on every turn. It takes about five minutes.
 
-Agents can already read files. The product problem is that they keep doing it again after every chat reset, client switch, handoff, or long-running task turn. That repeated rereading burns tool calls, context window, and time, and it can leave the agent working from stale assumptions.
+Grape compiles repository context for the current request, remembers what each agent session has already received, and tells the agent when something it read earlier has gone stale. It runs locally and does not send your repository to any Grape service.
 
-Instead of pasting the same files and rules into every prompt, you let the agent ask Grape for the current task context. Grape reads the local repo, remembers what that same agent session already received, and sends the next safe delta. If a file, branch, dependency, or task changes, Grape marks the old context stale instead of pretending it is still useful.
+## When to use Grape
 
-Grape is local-first. It is not a chatbot, and it does not send your repository to a remote Grape service by default.
+Grape helps most when an agent works on the same repository across many turns, files, branches, or handoffs. It gives the agent:
 
-## When Grape Helps
+- context compiled from the current Git state, with the source and rules it came from
+- a diff against what this session already received, so unchanged context is not resent
+- explicit invalidation when a file, branch, or dependency changes under an earlier read
 
-Use Grape when an AI coding agent works across many turns on the same repository and you want:
-
-- dependency-tracked context artifacts instead of rereading the same files every turn
-- session-scoped diffs (`NEW`, `CHANGED`, `PINNED`, `OMIT_UNCHANGED`, `RESTORE_AVAILABLE`, `INVALIDATE_PREVIOUS`)
-- local privacy controls and proof-backed excerpts
-
-Skip Grape for a one-line edit where the agent already has the whole file in view. It is most useful when the task spans files, sessions, branches, or repeated turns.
+For a one-line edit where the agent already has the whole file in view, Grape adds little.
 
 ## Requirements
 
 - Node.js 22.13 or newer
 - npm
-- Git
+- Git, and a repository with at least one commit
 
-## Install
+## 1. Install
 
 ```bash
 npm install -g grape-context
 grape --version
-grape help
-grape init --dry-run
 ```
 
-If install resolves an older package, clear the npm cache and reinstall:
+If the install resolves an older version, clear the npm cache and install again:
 
 ```bash
 npm cache clean --force
 npm install -g grape-context
 ```
 
-## Initialize a repository
+## 2. Initialize a repository
 
-From your repository root:
+From the repository root:
 
 ```bash
 grape init --connect
 ```
 
-This creates local state under `.grape/`, captures the first Git snapshot, and prints MCP setup guidance.
+This creates local state in `.grape/`, captures the first Git snapshot, and prints the next setup steps. Grape adds `.grape/` to `.git/info/exclude`, so its state never enters Git.
 
-Run setup diagnostics after initialization:
+To preview initialization without writing anything, run `grape init --dry-run`.
+
+Check the result:
 
 ```bash
 grape doctor
-```
-
-Review local privacy settings:
-
-```bash
 grape doctor --privacy
 ```
 
-Grape adds `.grape/` to `.git/info/exclude` so local runtime state stays out of Git.
+`grape doctor --privacy` shows which files Grape can read and which it rejects.
 
-## Connect Your Coding Agent With MCP
+## 3. Connect your coding agent
 
-MCP is the normal path. After this step, the agent can call Grape during the task instead of asking you to paste context.
+MCP is the standard way to use Grape. Once connected, the agent calls Grape itself instead of asking you to paste context.
 
-Choose the client you actually use:
+Run the command for the client you use, from the repository root:
 
-- Cursor: run `grape mcp --install --client cursor` from the repository root.
-- Claude Desktop: run `grape mcp --install --client claude` from the repository root.
-- Codex: run `grape mcp --install --client codex` from the repository root.
-- Generic JSON MCP client: run `grape mcp --install --client generic` to print JSON, or add `--config-path <path>` to merge a specific JSON config file.
+| Client | Command | Config written |
+| --- | --- | --- |
+| Cursor | `grape mcp --install --client cursor` | `.cursor/mcp.json` in the repository |
+| Claude Desktop | `grape mcp --install --client claude` | `claude_desktop_config.json`, when Grape can resolve its path safely |
+| Codex | `grape mcp --install --client codex` | `.codex/config.toml` in the repository, for trusted projects |
+| Any JSON MCP client | `grape mcp --install --client generic --config-path <file>` | The file you name. Without `--config-path`, Grape prints the JSON and writes nothing. |
 
-Then restart or reload the MCP client if it does not pick up config changes automatically. Ask the agent to call `grape_get_context` at the start of each repo task. Keep the same `sessionId` and task text for continued turns on the same task.
+Then restart or reload the client if it does not pick up the change on its own.
 
-Grape only writes known MCP config files:
+How install behaves:
 
-- Cursor auto-install writes project-local `.cursor/mcp.json`.
-- Claude Desktop auto-install writes `claude_desktop_config.json` when Grape can resolve the platform path safely.
-- Codex auto-install writes project-local `.codex/config.toml` for trusted Codex projects.
-- Generic install writes nothing unless `--config-path` names a JSON MCP config file.
+- `--dry-run` shows the target file and the final config without writing.
+- `--config-path <path>` overrides the target file.
+- Grape keeps every other MCP server in the file.
+- If a different Grape entry already exists, Grape stops unless you pass `--force`, and then replaces only that entry.
 
-Preview the config without writing:
+### Manual configuration
 
-```bash
-grape mcp --install --client cursor --dry-run
-grape mcp --install --client claude --dry-run
-grape mcp --install --client codex --dry-run
-grape mcp --install --client generic --dry-run
-```
-
-Use `--config-path <path>` to override the target config file. If an existing Grape MCP entry differs, Grape refuses to replace it unless you pass `--force`. It preserves unrelated MCP server entries.
-
-Print a path-neutral AGENTS.md snippet when you want checked-in agent guidance:
-
-```bash
-grape mcp --print-agents-snippet
-```
-
-Review the snippet before adding it to your repository rules. Grape does not edit AGENTS.md automatically.
-
-Contributor-only Codex plugin setup is available from a Grape source checkout:
-
-```bash
-codex plugin marketplace add .
-codex plugin add grape@grape-local
-```
-
-Run those commands from the Grape source repository root, not from an application repository. The plugin lives in `plugins/grape`. It exposes `grape mcp --stdio` and a Grape skill. It assumes `grape` is on `PATH`. Normal users should use `grape mcp --install --client codex` to create `.codex/config.toml` with an exact working directory. The plugin does not ship hooks.
-
-Run `npm run build` and `npm run codex:check` to verify the local Codex path. The check uses temp repositories and an isolated Codex home.
-
-Other clients should use `grape mcp --install --client generic` with an explicit `--config-path` only when you know the correct JSON config file. Grape should not guess where to write global editor config. If an older build does not recognize `grape mcp --install`, use the manual fallback until you upgrade.
-
-Manual fallback:
+For any other client, print the server entry and add it yourself:
 
 ```bash
 grape mcp --print-config
 ```
 
-Typical stdio MCP entry:
+A typical entry looks like this:
 
 ```json
 {
@@ -136,161 +99,145 @@ Typical stdio MCP entry:
 }
 ```
 
-The `cwd` and `--repo` path must point at the same repository root.
+`cwd` and `--repo` must point at the same repository root. The client and Grape exchange one JSON-RPC message per line over stdio; do not configure `Content-Length` framing.
 
-The auto-install commands write config only. The configured MCP server still runs `grape mcp --stdio --repo <repo-root>` and exchanges newline-delimited JSON-RPC over stdio.
+## 4. Tell the agent to use Grape
 
-What the client runs:
+Print a ready-made block for `AGENTS.md` or your client's rules file:
 
-- The MCP client starts `grape mcp --stdio --repo <repo-root>`.
-- The client and Grape exchange one JSON-RPC object per line over stdio.
-- The agent calls `grape_get_context` to get task-specific context.
-- Grape tracks what that same session already received.
-- Later calls send only new, changed, pinned, invalidated, or restorable context.
-
-Do not configure `Content-Length` framing. MCP stdio uses newline-delimited JSON messages.
-
-Primary tool: `grape_get_context`. See [`mcp-tools.md`](mcp-tools.md) for the full tool reference.
-
-Copy-ready instruction for the agent:
-
-```text
-At the start of each repo task turn, call grape_get_context with a stable sessionId and the current task. Treat INVALIDATE_PREVIOUS entries as stale and unsafe. If context is omitted, restore it by token only when needed. For security, auth, payments, data deletion, or deployment tasks, rely on exact proof-backed excerpts rather than summaries.
+```bash
+grape mcp --print-agents-snippet
 ```
 
-Quick checks if a client does not connect:
+Review it before you commit it. Grape never edits your rules files itself.
 
-- Run `grape --version` in the same shell or environment the client uses.
-- For Cursor, confirm `.cursor/mcp.json` contains `mcpServers.grape`.
-- For Claude Desktop, confirm `claude_desktop_config.json` contains `mcpServers.grape`.
-- Confirm `grape mcp --print-config` points at the intended repo.
-- Confirm `cwd` and `--repo` are the same repository root.
-- Confirm the client sends one JSON-RPC object per line over stdio.
-- Confirm no wrapper script prints banners, logs, or prompts to stdout.
-- Run `grape doctor` and `grape doctor --privacy` from the repository root.
+If you prefer a single instruction, use this:
 
-Grape's automated packaged client trial verifies installed CLI and stdio MCP behavior. A specific editor UI is verified only when a human client trial records it.
+```text
+At the start of each turn on a repository task, call grape_get_context with the current request and a stable sessionId. Use one sessionId for the whole conversation. Read NEW, CHANGED, and PINNED items before acting, and treat INVALIDATE_PREVIOUS items as stale. Restore omitted items by restoreId only when needed. For security, auth, payments, data deletion, or deployment work, rely on exact excerpts rather than summaries.
+```
 
-## Normal Agent Loop
+## How a session works
 
-The useful loop is simple:
+1. You give the agent a repository task.
+2. The agent calls `grape_get_context` with the request as `query` and a `sessionId`.
+3. Grape returns the context for that request, with a diff state on every item.
+4. The agent reads the context and works on the task.
+5. On the next turn, the agent calls `grape_get_context` again with the same `sessionId`. The request wording can change.
 
-1. The user gives the agent a repo task.
-2. The agent calls `grape_get_context`.
-3. Grape returns current task context and diff state.
-4. The agent edits or investigates.
-5. On the next turn, the agent calls `grape_get_context` again with the same `sessionId` and task text.
+On later turns, Grape sends only what is new, changed, pinned, stale, or restorable:
 
-On each call, the agent sends:
+| State | Meaning |
+| --- | --- |
+| `NEW` | Context this session has not received. |
+| `CHANGED` | A newer version of context the session received earlier. |
+| `PINNED` | Project rules and repository state, resent every turn. |
+| `OMIT_UNCHANGED` | The session already has this item and it is still current. |
+| `RESTORE_AVAILABLE` | An omitted item the agent can fetch by `restoreId` if it no longer has it. |
+| `INVALIDATE_PREVIOUS` | Earlier context whose inputs changed. The agent should stop relying on it. |
 
-- `query`: the current task text (keep wording stable for continued turns)
-- `sessionId`: a stable ID for this agent session, or `agentName` plus `agentSessionId`
-- `outputMode`: `agent_pack` (default) for compact transport deltas
+For security, authentication, payments, data deletion, and deployment tasks, Grape requires exact source, configuration, or rule excerpts rather than summaries.
 
-Read `NEW` and `PINNED` items first. Handle `OMIT_UNCHANGED`, `RESTORE_AVAILABLE`, and `INVALIDATE_PREVIOUS` before trusting prior context.
+Use `resetSession: true` only when the agent has lost earlier context, for example after compaction. Start a new `sessionId` when the conversation moves to unrelated work. Session rules and recovery steps are in [Agent sessions](agent-sessions.md).
 
-Session rules and recovery paths: [`agent-sessions.md`](agent-sessions.md).
+## Using the CLI
 
-Reset a session only when the agent lost prior context for the same task. Start a new session when the task changes.
-
-## CLI fallback workflow
-
-Use the CLI for debugging, scripts, or agents without MCP.
-
-Typical sequence:
+Use the CLI for debugging, scripts, or agents without MCP support.
 
 ```bash
 grape status
-grape doctor
-grape sync
 grape compile --task "Explain checkout discount behavior" --session my-session --json
-grape diff-context --task "Explain checkout discount behavior" --session my-session
+grape diff-context --task "Explain checkout discount behavior" --session my-session --explain
 grape run --session my-session -- npm test
 grape sessions
 grape stale
 grape omitted --session my-session
 ```
 
-`grape compile` and `grape diff-context` accept the same task and session flags. `grape diff-context --explain` shows per-item diff reasons without full bodies.
+- `grape compile` returns the same context an agent receives over MCP.
+- `grape diff-context --explain` shows why each item has its diff state, without item bodies.
+- `grape run` and `grape test` record a command's result as observed evidence. They need a session created by `grape compile` or MCP first.
 
-Observed runs require an existing session from compile or MCP:
+All commands and exit codes are in the [CLI reference](cli.md).
 
-```bash
-grape test --session my-session -- pnpm test
-```
+## What Grape stores
 
-## What to expect
+Everything lives in `.grape/` in your repository:
 
-After `grape init --connect`:
+| Path | Contents |
+| --- | --- |
+| `.grape/config.json` | Project setup and retention limits. |
+| `.grape/grape.db` | SQLite database with sessions, ledgers, proofs, source metadata, and scan diagnostics. |
+| `.grape/artifacts/` | Generated JSON and Markdown context artifacts. |
 
-- `.grape/config.json` and `.grape/grape.db` hold local project state
-- scan diagnostics report visible and rejected files
+Observed command and test results are stored as hashes and metadata, not as raw output.
 
-After `grape compile --task <text>`:
+Grape sends no repository content, artifacts, proofs, or telemetry to a remote service. Your MCP client may still forward the context Grape returns to its model provider.
 
-- JSON and Markdown artifacts under `.grape/artifacts/`
-- a `sessionId` and `contextPackItems` with diff states
+### Cleaning up
 
-After MCP `grape_get_context`:
-
-- compact pack items for agent transport
-- `recoveryGuidance` when Grape cannot compile safely
-
-## What happens on the second turn
-
-On the first turn, Grape sends the context needed for the task and records what the agent saw.
-
-On later turns in the same session, Grape sends only what is new, changed, pinned, stale, or restorable. If a file, rule, dependency, branch, or worktree state changes, Grape tells the agent which previous context must stop being trusted.
-
-- `OMIT_UNCHANGED` means this exact session already received unchanged, safe-to-omit context.
-- `RESTORE_AVAILABLE` gives the agent a token to fetch omitted context only if needed.
-- `INVALIDATE_PREVIOUS` means prior context is stale and unsafe to keep using.
-- high-risk tasks require exact source, config, or rule evidence instead of summaries.
-
-## What Grape stores locally
-
-Grape stores local runtime state under `.grape/`:
-
-- `.grape/config.json` for project setup
-- `.grape/grape.db` for SQLite state, sessions, ledgers, proofs, source metadata, and scan diagnostics
-- `.grape/artifacts/` for generated JSON and Markdown context artifacts
-- restore metadata for omitted context
-- proof and excerpt metadata for exact source or rule spans
-- observed command and test evidence from `grape run` and `grape test`, stored as hashes and metadata instead of raw stdout or stderr bodies
-
-Grape does not send repository content, artifacts, proofs, summaries, embeddings, or telemetry to a remote Grape service by default. Your MCP client or coding agent may still forward returned context to its model provider.
-
-New `.grape/config.json` files include retention defaults: 30 days or 500 rows for context artifacts, 30 days or 200 rows for snapshots, 30 days or 250000 rows for FTS rows, compression inputs, and derived metadata, and 14 days or 50000 rows for invalidated records. `grape compact` previews context artifact, compression cache, FTS, derived metadata, orphan snapshot, and invalidated ledger cleanup by default. Run `grape compact --confirm` only when you want it to delete eligible old artifact rows, regular artifact files, unreferenced compression cache rows, old searchable text rows, old symbol metadata rows, old orphan snapshot rows, and old closed invalidation pairs. FTS and symbol cleanup delete whole snapshot groups from their own tables. Snapshot cleanup deletes only `repo_snapshots` that have no source rows, context, indexes, compression rows, or dependencies; SQLite deletes their matching `worktree_states`. Invalidated ledger cleanup deletes a stale sent row only with the marker that kept it inactive and that stale row's original pack row. Compact does not delete source files, source records, claims, or proofs.
-
-To remove local Grape state for this repository, preview first and then confirm:
+New configurations keep context artifacts for 30 days or 500 rows, snapshots for 30 days or 200 rows, search and symbol data for 30 days or 250,000 rows, and invalidated records for 14 days or 50,000 rows.
 
 ```bash
-grape purge
-grape purge --confirm
-grape init --connect
+grape compact            # preview what would be removed
+grape compact --confirm  # remove it
 ```
 
-`grape purge --confirm` deletes only `.grape/` after safety checks. It does not change source files, Git history, editor config, or MCP config.
+`grape compact` never deletes source files, source records, claims, or proofs.
 
-## Common errors
+To remove all Grape state for this repository:
 
-| Symptom | What to do |
-|---|---|
-| `No Git repository found.` | Run Grape from a Git worktree, or pass `--repo <repo-root>`. |
-| `This Git repository has no commits yet.` | Create an initial commit, then rerun `grape init --connect`. |
+```bash
+grape purge            # preview
+grape purge --confirm  # delete .grape/
+grape init --connect   # start again
+```
+
+`grape purge --confirm` deletes only `.grape/`, after safety checks. It does not touch source files, Git history, or client configuration.
+
+## Troubleshooting
+
+If the client does not connect:
+
+- Run `grape --version` in the same environment the client uses.
+- Check the client's config file for an `mcpServers.grape` entry.
+- Run `grape mcp --print-config` and confirm it points at the intended repository.
+- Confirm `cwd` and `--repo` are the same repository root.
+- Make sure no wrapper script prints banners or logs to stdout.
+- Run `grape doctor` from the repository root.
+
+Common errors:
+
+| Message | What to do |
+| --- | --- |
+| `No Git repository found.` | Run Grape inside a Git worktree, or pass `--repo <repo-root>`. |
+| `This Git repository has no commits yet.` | Make an initial commit, then run `grape init --connect` again. |
 | `Grape config is missing` | Run `grape init --connect` from the repository root. |
-| `context session project mismatch` or `repo mismatch` | The session id belongs to another repository. Choose a new `--session`. |
-| Context session not found (run/test) | Run `grape compile --task "<task>" --session <id>` first, or list sessions with `grape sessions`. |
-| Stale context session | Rerun `grape compile` for the same task and session, or start a new `--session`. |
+| `context session project mismatch` or `repo mismatch` | The session id belongs to another repository. Choose a new `--session` or `sessionId`. |
+| Context session not found (`run` or `test`) | Run `grape compile --task "<task>" --session <id>` first, or list sessions with `grape sessions`. |
+| Stale context session | Run `grape compile` again for the same session, or start a new one. |
 | `benchmark fixture not found` | Use `grape bench --fixture <name>` with a fixture under `tests/fixtures/`, or pass `--fixture-path`. |
-| Feature flags not allowlisted | Add flag names to the scope allowlist in `.grape/config.json`, or omit `--feature-flags`. |
+| Feature flags not allowlisted | Add the flag names to the scope allowlist in `.grape/config.json`, or omit `--feature-flags`. |
 
-## 1.0 scope
+The automated client trial verifies the installed CLI and stdio MCP behavior. A specific editor's interface counts as verified only when a person records a trial in it.
 
-Grape 1.0 focuses on local context transport, session continuity, stale-context invalidation, proof-backed excerpts, MCP setup, and privacy-safe local storage. It does not promise cloud memory, embeddings search, or production-grade multi-tenant hosting. See the root [`README.md`](../../../README.md) for the current "not promised yet" list and [`1-0-readiness.md`](../planning/1-0-readiness.md) for the release checklist.
+## Contributor setup for the Codex plugin
 
-## Related docs
+This applies only when you work on Grape itself. From a Grape source checkout, at the repository root:
 
-- Session identity and recovery: [`agent-sessions.md`](agent-sessions.md)
-- CLI commands and exit codes: [`cli.md`](cli.md)
-- MCP tool schemas: [`mcp-tools.md`](mcp-tools.md)
+```bash
+codex plugin marketplace add .
+codex plugin add grape@grape-local
+```
+
+The plugin in `plugins/grape` exposes `grape mcp --stdio` and a Grape skill, and assumes `grape` is on `PATH`. It ships no hooks. To verify it, run `npm run build` and `npm run codex:check`. Application repositories should use `grape mcp --install --client codex` instead.
+
+## Scope of this release
+
+Grape 1.1 covers local context transport, session continuity, stale-context invalidation, exact excerpts, MCP setup, and private local storage. It does not include cloud memory, embedding search, or hosted multi-user service. The project [README](../../../README.md) lists what is not included yet, and [1.0 readiness](../planning/1-0-readiness.md) records the original release checklist.
+
+## Related documents
+
+- [Agent sessions](agent-sessions.md): session identity and recovery
+- [CLI reference](cli.md): commands and exit codes
+- [MCP tools](mcp-tools.md): tool inputs and outputs
