@@ -921,6 +921,42 @@ test("mcp grape_get_context compiles and returns structured context pack output"
   });
 });
 
+test("mcp grape_get_context keeps orientation-only sections in the stored artifact, not the pack", () => {
+  withGitRepo((repoPath) => {
+    const orientationSections = ["source-manifest", "compression-orientation", "symbol-summary"];
+    const callGetContext = () =>
+      runMcp(repoPath, [
+        {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: {
+            name: "grape_get_context",
+            arguments: { query: "Explain the repository entry points", sessionId: "mcp-orientation" }
+          }
+        }
+      ])[0].result.structuredContent;
+
+    const first = callGetContext();
+    const artifactJson = JSON.parse(readFileSync(path.join(repoPath, first.artifactFiles.json), "utf8"));
+    const storedSectionIds = artifactJson.contextArtifact.outputSections.map((section) => section.id);
+    assert.ok(
+      orientationSections.some((sectionId) => storedSectionIds.includes(sectionId)),
+      "stored artifact must keep orientation sections for inspection"
+    );
+
+    const second = callGetContext();
+    for (const turn of [first, second]) {
+      const packed = turn.contextPackItems.filter((item) => orientationSections.includes(item.sectionId));
+      assert.deepEqual(packed.map((item) => item.id), [], "orientation-only sections must not be sent or marked");
+    }
+    assert.ok(
+      first.contextPackItems.some((item) => item.sectionId === "index-blind-spots"),
+      "the index-confidence stale warning stays in the pack"
+    );
+  });
+});
+
 test("mcp grape_get_context second turn stays smaller than the first on an unchanged repo", () => {
   withGitRepo((repoPath) => {
     // Omission only pays off when section bodies outweigh their markers, so the repo needs real source.

@@ -109,6 +109,7 @@ interface OmittedContextItem {
 - `PINNED` context is resent when safety-critical, when policy requires it, or when the session was reset.
 - `OMIT_UNCHANGED` is allowed only for unchanged, non-pinned items with a safe omission reason.
 - `RESTORE_AVAILABLE` requires a restore token that can retrieve the omitted item from local storage.
+- Orientation-only sections (`source-manifest`, `compression-orientation`, `symbol-summary`) are not sent as `NEW` context unless they are pinned or required. They remain in the stored artifact for inspection. The filter runs before the sent ledger is written, so a session ledger never records them as sent. Markers, changes, and invalidations for items a session already received keep the normal lifecycle.
 - When `canRestore` is true, `restoreId` and `restoreCommand` are required.
 - Stored sent, omitted, and pack items must reference an artifact owned by the same session.
 - `INVALIDATE_PREVIOUS` must include the prior item ID or prior section ID being invalidated.
