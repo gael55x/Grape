@@ -1177,7 +1177,8 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(compressionOrientation?.requiresExactCode, false);
     assert.equal(compressionOrientation?.itemRefs.some((ref) => ref.kind === "compression_artifact"), true);
     assert.equal(artifactJson.contextArtifact.compressionArtifactRefs.length > 0, true);
-    assert.equal(first.contextPackItems.some((item) => item.itemKind === "compression_artifact"), true);
+    // Orientation-only compression sections stay in the stored artifact and are not sent as new context.
+    assert.equal(first.contextPackItems.some((item) => item.itemKind === "compression_artifact"), false);
     assert.equal(existsSync(repositoryArtifactJsonPath), true);
     const repositoryArtifactJson = JSON.parse(readFileSync(repositoryArtifactJsonPath, "utf8"));
     assert.equal(repositoryArtifactJson.artifact.artifactId, first.artifactId);
@@ -1252,11 +1253,9 @@ test("cli compile auto-bootstraps and writes inspectable context artifact files"
     assert.equal(second.contextPackItems.some((item) => item.state === "OMIT_UNCHANGED"), true);
     assert.equal(second.contextPackItems.some((item) => item.state === "RESTORE_AVAILABLE"), true);
     assert.equal(
-      second.contextPackItems.some(
-        (item) => item.sectionId === "compression-orientation" && item.state === "OMIT_UNCHANGED"
-      ),
-      true,
-      "compression orientation must omit unchanged instead of resending each turn"
+      second.contextPackItems.some((item) => item.sectionId === "compression-orientation"),
+      false,
+      "compression orientation stays in the stored artifact and is never resent"
     );
     assert.equal(localContextArtifactCount(repoPath), 2);
     assert.deepEqual(localCompressionArtifactTypes(repoPath), [
@@ -1785,10 +1784,23 @@ test("cli compile reports unsafe output when token budget cannot fit required co
 
 test("cli compile prunes optional context when token budget fits required context", () => {
   withGitRepo((repoPath) => {
+    // Source gives the pack optional task context to prune; orientation-only sections are never sent.
+    mkdirSync(path.join(repoPath, "src"));
+    writeFileSync(path.join(repoPath, "src", "repository.ts"), "export function explainRepository() { return 'repo'; }\n");
+    execGit(repoPath, ["add", "src/repository.ts"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add repository source"
+    ]);
     const baseline = runCliJson(repoPath, [
       "compile",
       "--task",
-      "Explain the repository",
+      "Explain explainRepository in src/repository.ts",
       "--session",
       "budget-baseline-session"
     ]);
@@ -1796,7 +1808,7 @@ test("cli compile prunes optional context when token budget fits required contex
     const result = runCliJson(repoPath, [
       "compile",
       "--task",
-      "Explain the repository",
+      "Explain explainRepository in src/repository.ts",
       "--session",
       "budget-pruned-session",
       "--token-budget",
@@ -2085,30 +2097,34 @@ test("cli compile reports contended session locks", () => {
   });
 });
 
-test("cli compile gives recovery guidance for task and session mismatches", () => {
+test("cli compile continues a session when the task is reworded", () => {
   withGitRepo((repoPath) => {
     runCliJson(repoPath, [
       "compile",
       "--task",
       "Explain the repository entry points",
       "--session",
-      "mismatch-session"
+      "reworded-session"
     ]);
 
-    const mismatch = runCli(repoPath, [
+    const reworded = runCli(repoPath, [
       "compile",
       "--task",
       "Plan a refactor of repository entry points",
+      "--task-type",
+      "refactor",
       "--session",
-      "mismatch-session"
+      "reworded-session",
+      "--json"
     ]);
 
-    assert.equal(mismatch.status, 6);
-    assert.equal(mismatch.stdout, "");
-    assert.match(mismatch.stderr, /task mismatch/);
-    assert.match(mismatch.stderr, /Recovery:/);
-    assert.match(mismatch.stderr, /Reuse the exact original --task\/query/);
-    assert.match(mismatch.stderr, /does not rebind a session to different task text/);
+    assert.equal(reworded.status, 0, reworded.stderr);
+    const result = JSON.parse(reworded.stdout);
+    assert.equal(result.sessionId, "reworded-session");
+    assert.ok(
+      result.contextPackItems.some((item) => item.sectionId === "task" && ["NEW", "CHANGED"].includes(item.state)),
+      "the reworded task must be sent"
+    );
   });
 });
 

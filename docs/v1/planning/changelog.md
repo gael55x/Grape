@@ -8,6 +8,9 @@ User-facing release notes belong in the root `CHANGELOG.md`. Spec-contract chang
 
 ### Changed
 
+- `ensureCompileSession` no longer rejects a changed task id or task type for an existing session; the session record takes the latest task. Project and repo mismatches still throw, now with a message that only suggests a new session. CLI exit classification maps any `context session ... mismatch:` error to exit code 6. MCP instructions, the AGENTS snippet, the Codex skill, and recovery guidance no longer ask for identical task wording.
+- Added `excludeOrientationOnlyContext` before budget pruning in the durable context build. It drops `NEW` items for `source-manifest`, `compression-orientation`, and `symbol-summary` unless pinned or required, so the sent ledger never records them. These were already the lowest budget keep priorities (20 to 30).
+- Default MCP `agent_pack` items are now `ContextPackItem` without `inputRefs`: `compactAgentContextPackItems` keeps `content` and drops dependency refs, and the preview truncation, compact scope filter, and unused Markdown preview mode are removed.
 - Stopped rendering the per-turn `context_pack_summary` into the compiled artifact. The summary is still rebuilt and persisted after each durable pack as a storage-only cache row, but it no longer joins the compression-orientation section or its dependency refs. This removes the guaranteed per-turn `INVALIDATE_PREVIOUS` churn on unchanged repositories and removes the second full artifact compile per turn.
 - Bounded git subprocess output buffers in repo snapshots at 64 MiB so large worktrees can list files and check ignores without ENOBUFS failures.
 - Local project bootstrap now resolves the repository root with `git rev-parse --show-toplevel` instead of building a full repo snapshot before the compile snapshot is built.

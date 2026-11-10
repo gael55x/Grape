@@ -331,9 +331,10 @@ test("durable context build does not invalidate unchanged sections for unrelated
     }), 2);
 
     assert.equal(result.contextPackItems.some((item) => item.state === "INVALIDATE_PREVIOUS"), false);
+    // The new compression-orientation section is orientation-only, so it is not sent as NEW context.
     assert.deepEqual(
       result.contextPackItems.map((item) => item.state),
-      ["PINNED", "OMIT_UNCHANGED", "RESTORE_AVAILABLE", "NEW"]
+      ["PINNED", "OMIT_UNCHANGED", "RESTORE_AVAILABLE"]
     );
     assert.equal(result.omittedItems.length, 1);
   });

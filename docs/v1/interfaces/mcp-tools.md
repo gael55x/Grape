@@ -6,7 +6,7 @@ Define MCP tool contracts and safety boundaries.
 
 ## Reviewer Note: Artifact Vs Durable Truth
 
-`grape_get_context` returns compact preview-shaped `contextPackItems` plus compact `agent_pack` transport by default. The stored artifact and optional `outputMode: "full"` response use the V1 `contextArtifact` contract. Compression orientation, lexical retrieval, and narrow source/symbol claims do not replace proof-backed durable truth for the full repository. See `docs/v1/contracts/context-artifact.md`.
+`grape_get_context` returns `contextPackItems` with item bodies and no per-item dependency refs in the default `agent_pack` transport. The stored artifact and optional `outputMode: "full"` response use the V1 `contextArtifact` contract. Compression orientation, lexical retrieval, and narrow source/symbol claims do not replace proof-backed durable truth for the full repository. See `docs/v1/contracts/context-artifact.md`.
 
 ## Source Of Truth
 
@@ -14,7 +14,7 @@ Tool schemas and safety rules are derived from `docs/v1/SPEC.md`.
 
 For the beta transport/schema stability boundary, including stable, experimental, and debug fields, warning taxonomy, and compatibility rules, see [`docs/v1/contracts/transport-stability.md`](../contracts/transport-stability.md).
 
-For stable agent session identity, task mismatch recovery, JSON-RPC framing examples, and published-package install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
+For stable agent session identity, session recovery, JSON-RPC framing examples, and published-package install troubleshooting, see [`agent-sessions.md`](agent-sessions.md).
 
 ## Start Here For Integration
 
@@ -62,7 +62,7 @@ Use `--dry-run` to preview the target path and final JSON without writing. Use `
 
 This auto-install behavior writes client config only. The configured MCP server still runs `grape mcp --stdio --repo <repo-root>` and uses newline-delimited JSON-RPC over stdio.
 
-The default response mode is `agent_pack`. It is the normal mode for coding agents because it returns compact previews, diff state, restore IDs, invalidation IDs, artifact refs, warnings, and recovery guidance. Use `outputMode: "full"` only for inspection or compatibility.
+The default response mode is `agent_pack`. It is the normal mode for coding agents because it returns item bodies, diff state, restore IDs, invalidation IDs, artifact refs, warnings, and recovery guidance. Use `outputMode: "full"` only for inspection or compatibility.
 
 In normal use, the agent should not ask you to paste a fresh repo summary every turn. It should call Grape, read the returned diff states, and keep going with the current task.
 
@@ -91,7 +91,7 @@ Core agent rules:
 - Read `NEW`, `CHANGED`, and `PINNED` context for the current turn.
 - Treat `INVALIDATE_PREVIOUS` as stale context that must not be reused.
 - Use `grape_get_omitted_item` only when a `RESTORE_AVAILABLE` body is needed.
-- Keep the same `sessionId` and `query` for continued turns on the same task.
+- Keep the same `sessionId` for continued turns. The `query` can change as the task evolves.
 - Use `resetSession: true` only when the agent lost prior context for the same task.
 
 The rest of this file is the detailed tool contract for implementers and reviewers.
@@ -200,9 +200,9 @@ The current implementation includes the first stdio MCP server:
 
 The public artifact includes `retrievalConfidence` when task retrieval runs. `safe` means current sources were selected from direct task evidence with no retrieval warnings. `partial` means selected context exists but evidence is weaker or warnings remain. `missing_likely_files` means missing seeds, no source matches, or caps suggest useful files were not included. MCP clients should treat that state as source-selection guidance, not proof of behavior, test coverage, root cause, or fix validity.
 
-The default MCP `outputMode` is `agent_pack`. It returns compact preview `contextPackItems` and an `artifactRef` pointing at the stored full artifact. The default compact response omits inline `contextPackMarkdown` and experimental `agentGraph` data so agents do not pay for duplicated navigation or unproven graph structure by default.
+The default MCP `outputMode` is `agent_pack`. It returns `contextPackItems` with their `content` bodies and an `artifactRef` pointing at the stored full artifact. The default compact response omits inline `contextPackMarkdown` and experimental `agentGraph` data so agents do not pay for duplicated navigation or unproven graph structure by default.
 
-To reduce duplicated agent-facing transport tokens, default `agent_pack` omits full item bodies from `contextPackItems` and returns `contentPreview`, `contentOmitted: true`, `contentHash`, and `tokenCount` instead. On `OMIT_UNCHANGED` and `RESTORE_AVAILABLE` items, `tokenCount` reports the token estimate of the omitted section body, so agents can weigh a restore before requesting it. Marker items with states `OMIT_UNCHANGED`, `RESTORE_AVAILABLE`, and `INVALIDATE_PREVIOUS` return empty `inputRefs` in `agent_pack` mode because their dependency detail duplicates the sent section's refs and stays inspectable in the stored artifact JSON and `outputMode: "full"`. For sent items, `contextPackItems[].inputRefs[].scope` is compacted to local routing keys such as branch, commit, worktree hash, dirty-worktree status, environment, package/service root, feature-flag count/hash, source scope, path, symbol, route, and test. It still omits repo, task, and session identifiers from compact refs. The full item bodies and full dependency scope remain in the stored public artifact JSON written under `artifactFiles.json`; callers can use `artifactRef.fullArtifactTool` (`grape_get_artifact` with `outputMode: "full"`) or request `grape_get_context` with `outputMode: "full"` when exact bodies are needed inline. Full artifact Markdown remains available at `artifactFiles.markdown`, and full inspection output may include inline `contextPackMarkdown` plus an `agentGraph` over the returned pack items. This inspection graph is a transport aid: `contextPackItems` are nodes, `agentGraph.edges` express section/input/restore/invalidation relationships, and full dependency metadata stays in the stored artifact. It is not a new durable graph-memory product. `INVALIDATE_PREVIOUS` rows may be grouped in that Markdown summary, but every structured pack item still carries its own `invalidatesSentItemId`.
+Default `agent_pack` returns each sent item body in `contextPackItems[].content`, so an agent can act on the response without a second call. On `OMIT_UNCHANGED` and `RESTORE_AVAILABLE` items, `content` is empty and `tokenCount` reports the token estimate of the omitted section body, so agents can weigh a restore before requesting it. `agent_pack` items do not carry `inputRefs`: dependency refs are hashes and scope for inspection, and on a real repository they were most of the response. They stay in the stored public artifact JSON written under `artifactFiles.json`; callers can use `artifactRef.fullArtifactTool` (`grape_get_artifact` with `outputMode: "full"`) or request `grape_get_context` with `outputMode: "full"` when dependency refs are needed inline. Full artifact Markdown remains available at `artifactFiles.markdown`, and full inspection output may include inline `contextPackMarkdown` plus an `agentGraph` over the returned pack items. This inspection graph is a transport aid: `contextPackItems` are nodes, `agentGraph.edges` express section/input/restore/invalidation relationships, and full dependency metadata stays in the stored artifact. It is not a new durable graph-memory product. `INVALIDATE_PREVIOUS` rows may be grouped in that Markdown summary, but every structured pack item still carries its own `invalidatesSentItemId`.
 
 When `outputMode: "full"` is requested, MCP embeds the full `contextArtifact` object and full `ContextPackItem.content` payloads in the response. Use this for inspection or compatibility, not as the default agent transport path. MCP tool `content[0].text` is a short result summary; large structured payloads are not duplicated as pretty JSON text.
 
@@ -357,10 +357,7 @@ interface GrapeGetContextOutput {
   };
 }
 
-interface AgentContextPackItem extends Omit<ContextPackItem, "content"> {
-  contentPreview: string;
-  contentOmitted: true;
-}
+type AgentContextPackItem = Omit<ContextPackItem, "inputRefs">;
 ```
 
 ```ts
@@ -700,7 +697,7 @@ npm run beta:check
 - `grape_get_omitted_item` restore
 - source edit invalidation with `INVALIDATE_PREVIOUS`
 - stale restore rejection after the source edit
-- task/session mismatch error with `recoveryGuidance`
+- reworded task text continuing the same session
 - `resetSession: true` invalidation and current resend
 - branch switch invalidation
 - rejection of ignored `.env`, private, and ignore-listed secret-looking files in output

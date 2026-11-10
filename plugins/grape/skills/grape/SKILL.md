@@ -9,7 +9,7 @@ Use this skill when Grape MCP tools are available in a coding repository.
 
 Grape is the context continuity and safety layer for coding agents. It is not a code graph replacement. Use code search, language servers, and graph tools to find code. Use Grape to ask what the agent has already seen, what changed, what can be omitted, what can be restored, what remains trusted, and what must be invalidated.
 
-At the start of a coding task, call `grape_get_context` with the current task and a stable `sessionId`. Reuse the same `sessionId` and task wording for follow-up turns on the same task.
+At the start of a coding task, call `grape_get_context` with the current task and a stable `sessionId`. Use one `sessionId` for the whole conversation and describe the current request each turn; the wording may change.
 
 Read `NEW`, `CHANGED`, and `PINNED` context before editing. Treat `INVALIDATE_PREVIOUS` as stale context that must not be reused. Use `grape_get_omitted_item` only when a `RESTORE_AVAILABLE` body is needed.
 

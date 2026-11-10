@@ -16,7 +16,8 @@ import { artifactFileBaseName } from "../../../.tmp/build/src/app/local-project/
 
 const cliPath = path.join(process.cwd(), ".tmp/build/src/cli/index.js");
 const oldTime = "2026-04-01T00:00:00.000Z";
-const newTime = "2026-06-19T00:00:00.000Z";
+// "New" must stay inside the retention window, which compact measures from the real clock.
+const newTime = new Date().toISOString();
 
 function withGitRepo(fn) {
   const dir = mkdtempSync(path.join(tmpdir(), "grape-cli-compact-"));

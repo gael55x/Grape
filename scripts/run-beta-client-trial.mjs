@@ -442,16 +442,12 @@ async function runMcpBetaTrial(input) {
     assert(staleRestore.structuredContent.status === "stale", "stale restore must return stale status");
     assert(!("body" in staleRestore.structuredContent), "stale restore must not return a body");
 
-    const mismatch = await client.callTool("grape_get_context", {
+    const reworded = await client.callTool("grape_get_context", {
       query: "Explain a different billing task",
       sessionId
     });
-    assert(mismatch.isError === true, "task mismatch must return an MCP error result");
-    assert(Array.isArray(mismatch.structuredContent.recoveryGuidance), "task mismatch must include recovery guidance");
-    assert(
-      mismatch.structuredContent.recoveryGuidance.some((item) => item.includes("Reuse the exact original")),
-      "task mismatch guidance must tell the agent how to recover"
-    );
+    assert(reworded.isError === false, "reworded task text must continue the session");
+    assert(reworded.structuredContent.sessionId === sessionId, "reworded task must keep the session");
 
     const reset = await client.callTool("grape_get_context", {
       query,

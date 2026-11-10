@@ -4,7 +4,9 @@ All notable user-facing changes to Grape will be documented here.
 
 This file tracks released package behavior. V1 implementation-internal changes belong in `docs/v1/planning/changelog.md`. Spec-only changes belong in `docs/v1/planning/spec-changelog.md`.
 
-## Unreleased
+## 1.1.0 - 2026-11-10
+
+Agents now receive usable context in the default MCP response, follow-up turns can reword the task, and the documentation is rewritten for people and agents. Read the first entry under Changed before upgrading an integration that parses `agent_pack` output.
 
 ### Fixed
 
@@ -15,6 +17,9 @@ This file tracks released package behavior. V1 implementation-internal changes b
 
 ### Changed
 
+- **Sessions follow reworded tasks.** Calling `grape_get_context` or `grape compile` with an existing session id and different task text or task type now continues the session instead of failing with `task mismatch` (CLI exit code 6). Agents reword prompts every turn, so the old rule made a normal conversation fail on its second turn. Omission stays safe: Grape compares section content and dependencies with what the session was sent, so sections the new task selects differently are invalidated and resent. Reusing a session id from another project or repository is still an error with exit code 6.
+- Context packs no longer send the orientation-only Allowed Source Manifest, Deterministic Compression Cache, and File Relationship Index sections as new context. They describe the index rather than the task and stay in the stored artifact. Pinned, required, and safety-critical sections, including Index Confidence, are unchanged. A session ledger never records the dropped sections as sent.
+- **Breaking for `agent_pack` consumers:** MCP `grape_get_context` now returns each item body in `contextPackItems[].content` by default and no longer returns `contentPreview`, `contentOmitted`, or per-item `inputRefs`. Agents previously received 280-character previews plus dependency hashes and needed a second full-artifact call to read any context. On Grape's own repository the first-turn response dropped from about 94 KB to about 57 KB while the context it carries rose from about 2 KB of previews to about 49 KB of item bodies. Dependency refs stay in the stored artifact JSON and `outputMode: "full"`. Clients that read `contentPreview` or `inputRefs` from `agent_pack` must switch to `content` or request `outputMode: "full"`.
 - Local compile now builds one context artifact per turn instead of compiling twice to embed a prior-pack summary, which reduces compile work on every turn.
 - MCP `agent_pack` marker items with states `OMIT_UNCHANGED`, `RESTORE_AVAILABLE`, and `INVALIDATE_PREVIOUS` no longer carry per-item dependency ref payloads. Their dependency detail duplicated the sent section's refs and stays available in the stored artifact JSON and `outputMode: "full"`. On the demo repositories this keeps the second same-session MCP response smaller than the first instead of nearly double.
 - `OMIT_UNCHANGED` and `RESTORE_AVAILABLE` items now report the omitted section's token estimate in `tokenCount` instead of `0`, so agents can weigh a restore before requesting it.

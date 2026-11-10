@@ -196,7 +196,7 @@ Current benchmark thresholds:
 - second turn must include at least one `OMIT_UNCHANGED`
 - second turn must include at least one `RESTORE_AVAILABLE`
 
-Benchmark output also reports serialized context-pack token estimates, serialized default agent-output token estimates, and token breakdowns by diff state and section. These are transport diagnostics: body-token counts explain logical context savings, serialized-pack counts show JSON overhead from metadata, restore hints, and dependency references, and serialized-agent-output counts estimate the default MCP `agent_pack` frame including compact text summary and compact preview structured content.
+Benchmark output also reports serialized context-pack token estimates, serialized default agent-output token estimates, and token breakdowns by diff state and section. These are transport diagnostics: body-token counts explain logical context savings, serialized-pack counts show JSON overhead from metadata, restore hints, and dependency references, and serialized-agent-output counts estimate the default MCP `agent_pack` frame including compact text summary and structured content with item bodies and no per-item dependency refs.
 
 Benchmark output also reports storage footprint diagnostics per turn. Storage bytes are measured from the temporary fixture workspace after each compile. The repeated-turn growth threshold catches obvious fixture regressions, but it is not a general production storage claim.
 

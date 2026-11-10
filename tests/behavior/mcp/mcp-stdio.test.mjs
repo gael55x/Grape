@@ -899,12 +899,8 @@ test("mcp grape_get_context compiles and returns structured context pack output"
     assert.equal(toolResult.structuredContent.contextPackItems.some((item) => item.state === "NEW"), true);
     const packItem = toolResult.structuredContent.contextPackItems[0];
     assert.equal(typeof packItem.id, "string");
-    assert.equal("content" in packItem, false);
-    assert.equal(typeof packItem.contentPreview, "string");
-    assert.equal(packItem.contentOmitted, true);
-    assert.equal(Array.isArray(packItem.inputRefs), true);
-    assert.equal(packItem.inputRefs.some((ref) => Object.hasOwn(ref.scope, "repoId")), false);
-    assert.equal(packItem.inputRefs.some((ref) => Object.hasOwn(ref.scope, "taskId")), false);
+    assert.equal("inputRefs" in packItem, false);
+    assert.equal("contentPreview" in packItem, false);
     assert.equal("body" in packItem, false);
     assert.equal(Object.hasOwn(toolResult.structuredContent, "contextPackMarkdown"), false);
     assert.match(toolResult.structuredContent.artifactFiles.json, /^\.grape\//);
@@ -913,6 +909,10 @@ test("mcp grape_get_context compiles and returns structured context pack output"
       readFileSync(path.join(repoPath, toolResult.structuredContent.artifactFiles.json), "utf8")
     );
     assert.equal(artifactJson.contextArtifact.id, toolResult.structuredContent.artifactId);
+    for (const item of toolResult.structuredContent.contextPackItems) {
+      const stored = artifactJson.contextPackItems.find((candidate) => candidate.id === item.id);
+      assert.equal(item.content, stored.content, `agent_pack item ${item.id} must carry the stored item body`);
+    }
     assert.deepEqual(
       toolResult.structuredContent.retrievalConfidence,
       artifactJson.contextArtifact.retrievalConfidence
@@ -921,8 +921,64 @@ test("mcp grape_get_context compiles and returns structured context pack output"
   });
 });
 
+test("mcp grape_get_context keeps orientation-only sections in the stored artifact, not the pack", () => {
+  withGitRepo((repoPath) => {
+    const orientationSections = ["source-manifest", "compression-orientation", "symbol-summary"];
+    const callGetContext = () =>
+      runMcp(repoPath, [
+        {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: {
+            name: "grape_get_context",
+            arguments: { query: "Explain the repository entry points", sessionId: "mcp-orientation" }
+          }
+        }
+      ])[0].result.structuredContent;
+
+    const first = callGetContext();
+    const artifactJson = JSON.parse(readFileSync(path.join(repoPath, first.artifactFiles.json), "utf8"));
+    const storedSectionIds = artifactJson.contextArtifact.outputSections.map((section) => section.id);
+    assert.ok(
+      orientationSections.some((sectionId) => storedSectionIds.includes(sectionId)),
+      "stored artifact must keep orientation sections for inspection"
+    );
+
+    const second = callGetContext();
+    for (const turn of [first, second]) {
+      const packed = turn.contextPackItems.filter((item) => orientationSections.includes(item.sectionId));
+      assert.deepEqual(packed.map((item) => item.id), [], "orientation-only sections must not be sent or marked");
+    }
+    assert.ok(
+      first.contextPackItems.some((item) => item.sectionId === "index-blind-spots"),
+      "the index-confidence stale warning stays in the pack"
+    );
+  });
+});
+
 test("mcp grape_get_context second turn stays smaller than the first on an unchanged repo", () => {
   withGitRepo((repoPath) => {
+    // Omission only pays off when section bodies outweigh their markers, so the repo needs real source.
+    mkdirSync(path.join(repoPath, "src"));
+    writeFileSync(
+      path.join(repoPath, "src", "entry.ts"),
+      Array.from(
+        { length: 80 },
+        (_, index) => `export function entryPoint${index}(input: string): string {\n  return \`entry ${index}: \${input}\`;\n}\n`
+      ).join("\n")
+    );
+    execGit(repoPath, ["add", "src/entry.ts"]);
+    execGit(repoPath, [
+      "-c",
+      "user.name=Grape Test",
+      "-c",
+      "user.email=grape@example.test",
+      "commit",
+      "-m",
+      "add entry source"
+    ]);
+
     const callGetContext = () =>
       runMcp(repoPath, [
         {
@@ -953,13 +1009,16 @@ test("mcp grape_get_context second turn stays smaller than the first on an uncha
     );
     assert.ok(markers.length > 0, "second turn should omit unchanged sections");
     for (const marker of markers) {
-      assert.deepEqual(marker.inputRefs, [], `marker ${marker.id} must not carry dependency refs in agent_pack`);
       assert.ok(marker.tokenCount > 0, `marker ${marker.id} should report the omitted section token estimate`);
+      assert.ok(
+        Math.ceil(marker.content.length / 4) < marker.tokenCount,
+        `marker ${marker.id} must not resend the omitted section body`
+      );
     }
-    const sentItems = second.contextPackItems.filter(
-      (item) => item.state === "NEW" || item.state === "CHANGED" || item.state === "PINNED"
+    assert.ok(
+      second.contextPackItems.every((item) => !Object.hasOwn(item, "inputRefs")),
+      "agent_pack items must not carry dependency refs"
     );
-    assert.ok(sentItems.every((item) => item.inputRefs.length > 0), "sent items keep compact input refs");
 
     const firstBytes = JSON.stringify(first.contextPackItems).length;
     const secondBytes = JSON.stringify(second.contextPackItems).length;
@@ -1212,46 +1271,36 @@ test("mcp grape_get_context requires a session identity", () => {
   });
 });
 
-test("mcp task mismatch errors include recovery guidance", () => {
+test("mcp grape_get_context treats reworded task text as a follow-up turn in the same session", () => {
   withGitRepo((repoPath) => {
-    const responses = runMcp(repoPath, [
-      {
-        jsonrpc: "2.0",
-        id: 1,
-        method: "tools/call",
-        params: {
-          name: "grape_get_context",
-          arguments: {
-            query: "Explain the repository",
-            sessionId: "mcp-mismatch-session"
-          }
+    const callGetContext = (query) =>
+      runMcp(repoPath, [
+        {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: { name: "grape_get_context", arguments: { query, sessionId: "mcp-reworded-session" } }
         }
-      },
-      {
-        jsonrpc: "2.0",
-        id: 2,
-        method: "tools/call",
-        params: {
-          name: "grape_get_context",
-          arguments: {
-            query: "Explain a different repository task",
-            sessionId: "mcp-mismatch-session"
-          }
-        }
-      }
-    ]);
+      ])[0].result;
 
-    const toolResult = responses[1].result;
-    assert.equal(toolResult.isError, true);
-    assert.match(toolResult.structuredContent.error, /task mismatch/);
-    assert.ok(Array.isArray(toolResult.structuredContent.recoveryGuidance));
-    assert.ok(
-      toolResult.structuredContent.recoveryGuidance.some((item) =>
-        item.includes("Reuse the exact original")
-      )
+    const first = callGetContext("Explain the repository");
+    const second = callGetContext("Explain a different repository task");
+
+    assert.equal(second.isError, false);
+    assert.equal(second.structuredContent.sessionId, "mcp-reworded-session");
+    const sentHashes = new Set(
+      first.structuredContent.contextPackItems
+        .filter((item) => ["NEW", "CHANGED", "PINNED"].includes(item.state))
+        .map((item) => item.contentHash)
     );
-    assert.match(toolResult.content[0].text, /Recovery:/);
-    assert.match(toolResult.content[0].text, /resetSession/);
+    for (const item of second.structuredContent.contextPackItems.filter((entry) => entry.state === "OMIT_UNCHANGED")) {
+      assert.ok(sentHashes.has(item.contentHash), `omitted ${item.sectionId} must be content this session already received`);
+    }
+    const taskItems = second.structuredContent.contextPackItems.filter((item) => item.sectionId === "task");
+    assert.ok(
+      taskItems.some((item) => ["NEW", "CHANGED"].includes(item.state) && item.content.length > 0),
+      "the reworded task must be sent, not omitted"
+    );
   });
 });
 

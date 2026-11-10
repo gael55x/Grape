@@ -59,13 +59,11 @@
       "itemRef": "repo-state",
       "sectionId": "repo-state",
       "title": "Repository State",
-      "contentPreview": "Branch: main",
-      "contentOmitted": true,
+      "content": "Branch: main",
       "contentHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
       "tokenCount": 12,
       "pinned": false,
       "safetyCritical": false,
-      "inputRefs": [],
       "warnings": []
     }
   ],

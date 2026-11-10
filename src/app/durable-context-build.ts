@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 
-import { applyInMemoryContextPackBudget } from "../core/compiler/index.js";
+import { applyInMemoryContextPackBudget, excludeOrientationOnlyContext } from "../core/compiler/index.js";
 import type { ContextPackBudgetResult } from "../core/compiler/index.js";
 import { calculateInMemoryTokenSavings, createInMemoryContextDiff } from "../core/diff/index.js";
 import type { InMemoryTokenSavingsMetric } from "../core/diff/index.js";
@@ -153,7 +153,10 @@ export function buildDurableContext(input: DurableContextBuildInput): DurableCon
     const budgetedPack = applyInMemoryContextPackBudget({
       tokenBudget: input.tokenBudget,
       artifact: input.artifact,
-      contextPackItems: [...invalidationItems, ...diff.contextPackItems]
+      contextPackItems: excludeOrientationOnlyContext({
+        artifact: input.artifact,
+        contextPackItems: [...invalidationItems, ...diff.contextPackItems]
+      })
     });
     const contextPackItems = budgetedPack.contextPackItems;
     const sentItems = contextPackItems

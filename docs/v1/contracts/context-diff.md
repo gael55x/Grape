@@ -38,7 +38,7 @@ Public stored artifact JSON and CLI compile responses that include a context pac
 - `contextPackItems`: array of pack items (see below)
 - `contextArtifact`: nested V1 artifact (`context-artifact.md`)
 
-MCP `grape_get_context` defaults to `outputMode: "agent_pack"` and returns compact preview `contextPackItems` plus `artifactRef`. It does not embed full item bodies, the full `contextArtifact`, inline `contextPackMarkdown`, or experimental `agentGraph` in this default response because the stored artifact file and full inspection output can inspect them on demand. MCP callers may request `outputMode: "full"` when they need the embedded artifact, full `ContextPackItem.content` payloads, inline inspection Markdown, and the inspection graph.
+MCP `grape_get_context` defaults to `outputMode: "agent_pack"` and returns `contextPackItems` with their `content` bodies plus `artifactRef`. It does not embed per-item `inputRefs`, the full `contextArtifact`, inline `contextPackMarkdown`, or experimental `agentGraph` in this default response because the stored artifact file and full inspection output can inspect them on demand. MCP callers may request `outputMode: "full"` when they need the embedded artifact, per-item dependency refs, inline inspection Markdown, and the inspection graph.
 
 Pack items must use the canonical `state` values below. `INVALIDATE_PREVIOUS` items must include `invalidatesSentItemId`. Restorable omissions must surface as `RESTORE_AVAILABLE` with `restoreId` when policy allows restore.
 
@@ -109,6 +109,7 @@ interface OmittedContextItem {
 - `PINNED` context is resent when safety-critical, when policy requires it, or when the session was reset.
 - `OMIT_UNCHANGED` is allowed only for unchanged, non-pinned items with a safe omission reason.
 - `RESTORE_AVAILABLE` requires a restore token that can retrieve the omitted item from local storage.
+- Orientation-only sections (`source-manifest`, `compression-orientation`, `symbol-summary`) are not sent as `NEW` context unless they are pinned or required. They remain in the stored artifact for inspection. The filter runs before the sent ledger is written, so a session ledger never records them as sent. Markers, changes, and invalidations for items a session already received keep the normal lifecycle.
 - When `canRestore` is true, `restoreId` and `restoreCommand` are required.
 - Stored sent, omitted, and pack items must reference an artifact owned by the same session.
 - `INVALIDATE_PREVIOUS` must include the prior item ID or prior section ID being invalidated.

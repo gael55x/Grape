@@ -84,7 +84,7 @@ The stability boundary is enforced through TypeScript types, this document, and 
 | `retrievalConfidence` | **Stable** | Object with `state` and `reasons`. State is `safe`, `partial`, or `missing_likely_files`. It describes source selection only and does not prove behavior or test coverage. |
 | `outputMode` | **Stable** | `agent_pack` or `full`. Defaults to `agent_pack`. |
 | `artifactRef` | **Stable** | Object. See `AgentContextArtifactRef` below. |
-| `contextPackItems` | **Stable** | Array of compact `AgentContextPackItem` objects in `agent_pack` mode. |
+| `contextPackItems` | **Stable** | Array of `AgentContextPackItem` objects in `agent_pack` mode. |
 | `contextPackMarkdown` | Inspection-oriented / optional | Not included in default `agent_pack`. String when present in inspection output. Compact navigation summary for CLI parity and human inspection. Agents should prefer `contextPackItems` and `artifactRef`. |
 | `diffSummary` | **Stable** | Object with counts for all diff states (`NEW`, `CHANGED`, `PINNED`, `OMIT_UNCHANGED`, `INVALIDATE_PREVIOUS`, `RESTORE_AVAILABLE`). |
 | `warnings` | **Stable (array shape)** | Array of strings; may be empty. Machine-readable only for codes listed in the warning taxonomy below. Default `agent_pack` filters debug-only warning strings. Full inspection output may include them. |
@@ -111,7 +111,9 @@ The stability boundary is enforced through TypeScript types, this document, and 
 | `fullArtifactTool.arguments.artifactId` | **Stable** |
 | `fullArtifactTool.arguments.outputMode` | **Stable**: `full` |
 
-### `AgentContextPackItem` (compact `agent_pack` shape)
+### `AgentContextPackItem` (`agent_pack` shape)
+
+> Changed in 1.1.0: items carry `content` and no longer carry `contentPreview`, `contentOmitted`, or `inputRefs`. Integrations written against 1.0.0 must read `content`, and request `outputMode: "full"` when they need dependency refs.
 
 | Field | Status | Notes |
 |-------|--------|-------|
@@ -120,14 +122,12 @@ The stability boundary is enforced through TypeScript types, this document, and 
 | `itemKind` | **Stable** | Documented item kind string. |
 | `itemRef` | **Stable** | String. |
 | `title` | **Stable** | String. |
-| `contentPreview` | **Stable** | String. Whitespace-normalized excerpt, max 280 chars. |
-| `contentOmitted` | **Stable** | Always `true` in `agent_pack` mode. |
+| `content` | **Stable** | String. The item body. Empty on `OMIT_UNCHANGED` and `RESTORE_AVAILABLE` items. |
 | `contentHash` | **Stable** | String. |
 | `tokenCount` | **Stable** | Number. |
 | `pinned` | **Stable** | Boolean. |
 | `safetyCritical` | **Stable** | Boolean. |
-| `content` | **Not present in `agent_pack`** | Omitted. Available only in `outputMode: "full"`. |
-| `inputRefs` | **Stable** | Array of compact input ref objects with local routing keys only (no `repoId`, `taskId`, `sessionId`). |
+| `inputRefs` | **Not present in `agent_pack`** | Omitted. Available in the stored artifact JSON and `outputMode: "full"`. |
 | `warnings` | **Stable (array shape)** | Array; may be empty. |
 | `sectionId` | **Stable (optional)** | String when present. |
 | `invalidatesSentItemId` | **Stable (optional)** | String for `INVALIDATE_PREVIOUS` items. |

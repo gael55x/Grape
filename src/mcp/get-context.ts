@@ -151,13 +151,12 @@ export function runGrapeGetContextTool(input: unknown, rootPath: string): GrapeG
         artifactId: result.artifactId,
         artifactHash: result.artifactHash,
         dependencyManifestHash: result.dependencyManifestHash,
-        contextPackItems
+        contextPackItems: result.contextPackItems
       }),
       contextPackMarkdown: renderAgentContextPackMarkdown({
         artifactId: result.artifactId,
         contextArtifact: result.contextArtifact,
         contextPackItems,
-        packItemContentMode: "full",
         diffSummary,
         warnings,
         unsafeReasons: result.unsafeReasons,

@@ -4,7 +4,7 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
       {
         name: "grape_get_context",
         description:
-          "Get compact, current repo context for one coding task and session.",
+          "Call at the start of every turn on a repository task. Returns the context this session needs now: bodies for new, changed, and pinned items; markers for unchanged items this session already received; and invalidations for earlier context that is now stale. Reuse one sessionId for the whole conversation.",
         inputSchema: {
           type: "object",
           required: ["query"],
@@ -14,15 +14,28 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
             query: {
               type: "string",
               minLength: 1,
-              description: "Current coding task or question."
+              description: "The current request in plain language. It may change between turns."
             },
             taskType: {
               type: "string",
-              enum: ["bug_fix", "security_fix", "refactor", "migration", "feature", "test_repair", "analysis"]
+              enum: ["bug_fix", "security_fix", "refactor", "migration", "feature", "test_repair", "analysis"],
+              description: "Optional task category. security_fix, refactor, and migration add stricter evidence and pinning."
             },
-            files: { type: "array", items: { type: "string", minLength: 1 } },
-            symbols: { type: "array", items: { type: "string", minLength: 1 } },
-            tests: { type: "array", items: { type: "string", minLength: 1 } },
+            files: {
+              type: "array",
+              items: { type: "string", minLength: 1 },
+              description: "Repository paths you already know are relevant. They seed retrieval."
+            },
+            symbols: {
+              type: "array",
+              items: { type: "string", minLength: 1 },
+              description: "Function, class, or type names you already know are relevant."
+            },
+            tests: {
+              type: "array",
+              items: { type: "string", minLength: 1 },
+              description: "Test files or test names related to the task."
+            },
             environmentScope: {
               type: "string",
               enum: ["local", "test", "ci", "staging", "production", "unknown"]
@@ -36,19 +49,35 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
                 ]
               }
             },
-            tokenBudget: { type: "integer", minimum: 1 },
-            sessionId: { type: "string", minLength: 1 },
-            agentName: { type: "string", minLength: 1 },
-            agentSessionId: { type: "string", minLength: 1 },
+            tokenBudget: {
+              type: "integer",
+              minimum: 1,
+              description: "Optional token cap for the pack. Optional context is pruned first; required safety context is never pruned."
+            },
+            sessionId: {
+              type: "string",
+              minLength: 1,
+              description: "Stable id for this conversation. Reuse it every turn: Grape only omits context it already sent to this session."
+            },
+            agentName: {
+              type: "string",
+              minLength: 1,
+              description: "Client name, used with agentSessionId instead of sessionId."
+            },
+            agentSessionId: {
+              type: "string",
+              minLength: 1,
+              description: "The client's own conversation id, used with agentName instead of sessionId."
+            },
             resetSession: {
               type: "boolean",
-              description: "Force full resend for this session because the agent lost prior context."
+              description: "Set true when you lost earlier context, for example after compaction. Grape invalidates everything it sent this session and resends it."
             },
             outputMode: {
               type: "string",
               enum: ["agent_pack", "full"],
               description:
-                "agent_pack returns compact context; full also embeds the full artifact and item bodies."
+                "agent_pack (default) returns item bodies for acting on. full also embeds the stored artifact, dependency refs, and graph for inspection."
             }
           }
         }
@@ -69,7 +98,7 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
         sourceId: { type: "string", minLength: 1 }
       }),
       readTool("grape_get_rules", "Inspect current Git-visible project rule excerpts after safety checks.", {}),
-      readTool("grape_get_omitted_item", "Restore an omitted context item after dependency checks.", {
+      readTool("grape_get_omitted_item", "Fetch the body of an item Grape omitted as unchanged. Pass the restoreId from a RESTORE_AVAILABLE item. Returns stale instead of a body if the item changed since.", {
         sessionId: { type: "string", minLength: 1 },
         restoreToken: { type: "string", minLength: 1 }
       }, ["sessionId", "restoreToken"]),

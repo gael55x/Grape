@@ -2888,10 +2888,7 @@ type AgentContextArtifactRef = {
   };
 };
 
-type AgentContextPackItem = Omit<ContextPackItem, "content"> & {
-  contentPreview: string;
-  contentOmitted: true;
-};
+type AgentContextPackItem = Omit<ContextPackItem, "inputRefs">;
 
 type ContextPackBudgetResult = {
   status: "not_requested" | "within_budget" | "over_budget" | "required_context_exceeds_budget";
@@ -2951,7 +2948,7 @@ type GrapeGetContextOutput = {
 
   // Compact agent surface - stable
   artifactRef: AgentContextArtifactRef;
-  contextPackItems: AgentContextPackItem[]; // compact preview shape in agent_pack mode
+  contextPackItems: AgentContextPackItem[]; // item bodies without inputRefs in agent_pack mode
   contextPackMarkdown?: string; // inspection-oriented navigation summary; omitted from default agent_pack
   diffSummary: {
     newItems: number;

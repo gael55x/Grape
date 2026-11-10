@@ -181,7 +181,7 @@ test("beta transport: artifactRef has required stable fields", () => {
 
 // --- contextPackItems compact shape ---
 
-test("beta transport: agent_pack items have contentPreview and contentOmitted, no content", () => {
+test("beta transport: agent_pack items carry content and no dependency refs", () => {
   withGitRepo((repoPath) => {
     const sc = getContextResponse(repoPath);
 
@@ -191,30 +191,16 @@ test("beta transport: agent_pack items have contentPreview and contentOmitted, n
       assert.equal(typeof item.state, "string");
       assert.equal(typeof item.itemKind, "string");
       assert.equal(typeof item.title, "string");
-      assert.equal(typeof item.contentPreview, "string");
-      assert.equal(item.contentOmitted, true);
+      assert.equal(typeof item.content, "string");
       assert.equal(typeof item.contentHash, "string");
       assert.equal(typeof item.tokenCount, "number");
       assert.equal(typeof item.pinned, "boolean");
       assert.equal(typeof item.safetyCritical, "boolean");
-      assert.ok(Array.isArray(item.inputRefs));
       assert.ok(Array.isArray(item.warnings));
-      // content field must not be present in agent_pack
-      assert.equal(Object.hasOwn(item, "content"), false);
-    }
-  });
-});
-
-test("beta transport: compact inputRefs do not expose repoId, taskId, or sessionId", () => {
-  withGitRepo((repoPath) => {
-    const sc = getContextResponse(repoPath);
-
-    for (const item of sc.contextPackItems) {
-      for (const ref of item.inputRefs) {
-        assert.equal(Object.hasOwn(ref.scope ?? {}, "repoId"), false);
-        assert.equal(Object.hasOwn(ref.scope ?? {}, "taskId"), false);
-        assert.equal(Object.hasOwn(ref.scope ?? {}, "sessionId"), false);
-      }
+      // dependency refs and preview fields stay out of agent_pack
+      assert.equal(Object.hasOwn(item, "inputRefs"), false);
+      assert.equal(Object.hasOwn(item, "contentPreview"), false);
+      assert.equal(Object.hasOwn(item, "contentOmitted"), false);
     }
   });
 });

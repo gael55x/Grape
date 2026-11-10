@@ -18,6 +18,25 @@ export interface InMemoryContextPackBudgetResult {
   readonly budget: ContextPackBudgetResult;
 }
 
+// Orientation-only sections describe the index (file lists, symbol outlines), not the task.
+// They stay in the stored artifact for inspection and are not sent as new context.
+const orientationOnlySectionIds = new Set(["source-manifest", "compression-orientation", "symbol-summary"]);
+
+// Runs before the session ledger is written, so dropped items are never recorded as sent.
+// Only NEW items are dropped: markers and changes to context a session already holds keep their lifecycle.
+export function excludeOrientationOnlyContext(input: {
+  readonly artifact: InMemoryContextArtifactShape;
+  readonly contextPackItems: readonly InMemoryContextPackItemShape[];
+}): readonly InMemoryContextPackItemShape[] {
+  const sectionsById = new Map(input.artifact.sections.map((section) => [section.id, section]));
+  return input.contextPackItems.filter(
+    (item) =>
+      item.state !== "NEW" ||
+      !orientationOnlySectionIds.has(item.sectionId) ||
+      isRequiredInMemoryContext(item, sectionsById.get(item.sectionId))
+  );
+}
+
 export function applyInMemoryContextPackBudget(
   input: InMemoryContextPackBudgetInput
 ): InMemoryContextPackBudgetResult {
