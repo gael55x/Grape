@@ -48,7 +48,7 @@ export function listMcpTools(): { readonly tools: readonly unknown[] } {
               type: "string",
               enum: ["agent_pack", "full"],
               description:
-                "agent_pack returns compact context; full also embeds the full artifact and item bodies."
+                "agent_pack returns item bodies without dependency refs; full also embeds the full artifact, dependency refs, and graph."
             }
           }
         }

@@ -130,7 +130,7 @@ interface InMemoryContextArtifactShape {
 }
 ```
 
-Current CLI, artifact JSON, and MCP `outputMode: "full"` output map internal diff rows to the V1 `ContextPackItem` output shape before returning them to agents. The emitted item fields are `id`, `state`, `itemKind`, `itemRef`, optional `sectionId`, `title`, `content`, `contentHash`, `tokenCount`, `pinned`, `safetyCritical`, optional `invalidatesSentItemId`, optional `restoreId`, `inputRefs`, and `warnings`. Default MCP `outputMode: "agent_pack"` returns compact preview items instead: it omits `content`, includes `contentPreview` and `contentOmitted: true`, and keeps `contentHash`/`tokenCount` pointing at the full stored body.
+Current CLI, artifact JSON, and MCP `outputMode: "full"` output map internal diff rows to the V1 `ContextPackItem` output shape before returning them to agents. The emitted item fields are `id`, `state`, `itemKind`, `itemRef`, optional `sectionId`, `title`, `content`, `contentHash`, `tokenCount`, `pinned`, `safetyCritical`, optional `invalidatesSentItemId`, optional `restoreId`, `inputRefs`, and `warnings`. Default MCP `outputMode: "agent_pack"` returns the same items without `inputRefs`: `content` carries the item body, and dependency refs stay in the stored artifact JSON and `outputMode: "full"`.
 
 Public `.grape/artifacts/ctx_<id>.json` files now include:
 
@@ -215,7 +215,7 @@ This is still narrower than the final broad durable-claim retrieval system. It u
 
 - JSON is the canonical machine contract.
 - Markdown is a rendering of the structured artifact or context pack. It must expose enough metadata for a coding agent to inspect why context was sent, which dependencies support it, what was omitted or restorable, and what safety warnings remain.
-- MCP `agent_pack` must return structured compact preview `contextPackItems` and artifact refs without duplicating full bodies, navigation Markdown, or experimental graph data. `outputMode: "full"` may return full `ContextPackItem.content`, inline rendered Markdown, and the graph cut for inspection.
+- MCP `agent_pack` must return structured `contextPackItems` with item bodies and artifact refs without per-item dependency refs, navigation Markdown, or experimental graph data. `outputMode: "full"` may return per-item `inputRefs`, inline rendered Markdown, and the graph cut for inspection.
 - CLI snapshot tests must validate rendered Markdown, but golden contract tests must validate JSON.
 
 ## Required Golden Tests

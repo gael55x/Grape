@@ -26,7 +26,6 @@ export interface AgentContextMarkdownInput {
   readonly artifactId: string;
   readonly contextArtifact: ContextArtifactShape;
   readonly contextPackItems: readonly AgentContextMarkdownPackItem[];
-  readonly packItemContentMode: "preview" | "full";
   readonly diffSummary: AgentContextDiffSummary;
   readonly warnings: readonly string[];
   readonly unsafeReasons: readonly string[];
@@ -41,7 +40,7 @@ export function renderAgentContextPackMarkdown(input: AgentContextMarkdownInput)
     "",
     ...renderArtifactSummary(input),
     ...renderDiffSummary(input),
-    ...renderContextPackItems(input.contextPackItems, input.packItemContentMode),
+    ...renderContextPackItems(input.contextPackItems),
     ...renderArtifactSections(input.contextArtifact.outputSections),
     ...renderTokenBudget(input.budget),
     ...renderWarningsAndSafety(input),
@@ -85,14 +84,8 @@ function renderDiffSummary(input: AgentContextMarkdownInput): string[] {
   ]);
 }
 
-function renderContextPackItems(
-  items: readonly AgentContextMarkdownPackItem[],
-  contentMode: AgentContextMarkdownInput["packItemContentMode"]
-): string[] {
+function renderContextPackItems(items: readonly AgentContextMarkdownPackItem[]): string[] {
   const invalidationSummary = summarizeInvalidations(items);
-  const contentMessage = contentMode === "full"
-    ? "Exact item payloads are in contextPackItems[].content; relationships are in agentGraph."
-    : "Compact item previews are in contextPackItems[].contentPreview; full item payloads require artifactRef.fullArtifactTool, grape_get_artifact outputMode=full, or grape_get_context outputMode=full.";
 
   return [
     "## Context Pack Items",
@@ -100,7 +93,7 @@ function renderContextPackItems(
     ...(invalidationSummary.length > 0 ? invalidationSummary : []),
     items.length === 0
       ? "_No context pack items emitted._"
-      : contentMessage,
+      : "Exact item payloads are in contextPackItems[].content; relationships are in agentGraph.",
     ""
   ];
 }

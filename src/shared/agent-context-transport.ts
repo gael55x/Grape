@@ -44,10 +44,7 @@ export interface AgentContextGraphEdge {
   readonly kind: "renders_section" | "depends_on" | "invalidates" | "restores";
 }
 
-export interface AgentContextPackItemShape extends Omit<ContextPackItemShape, "content"> {
-  readonly contentPreview: string;
-  readonly contentOmitted: true;
-}
+export type AgentContextPackItemShape = Omit<ContextPackItemShape, "inputRefs">;
 
 export interface AgentContextGraphCut {
   readonly graphFormat: "grape.agent-context-graph.v1";
@@ -64,25 +61,6 @@ export interface AgentContextGraphCut {
   readonly nodes: readonly AgentContextGraphNode[];
   readonly edges: readonly AgentContextGraphEdge[];
 }
-
-const compactScopeKeys = [
-  "branch",
-  "commit",
-  "worktreeHash",
-  "dirtyWorktree",
-  "sourceScope",
-  "environment",
-  "featureFlagCount",
-  "featureFlagScopeHash",
-  "packageRoot",
-  "serviceRoot",
-  "path",
-  "symbol",
-  "route",
-  "test"
-] as const;
-
-const maxContentPreviewChars = 280;
 
 export function buildAgentContextArtifactRef(
   input: Omit<AgentContextArtifactRef, "fullArtifactTool">
@@ -102,22 +80,12 @@ export function buildAgentContextArtifactRef(
   };
 }
 
-const markerDiffStates = new Set(["OMIT_UNCHANGED", "RESTORE_AVAILABLE", "INVALIDATE_PREVIOUS"]);
-
+// Dependency refs are hashes and scope for inspection, not context an agent can act on.
+// They stay in the stored artifact JSON and in outputMode "full".
 export function compactAgentContextPackItems(
   items: readonly ContextPackItemShape[]
 ): readonly AgentContextPackItemShape[] {
-  return items.map(({ content, ...item }) => ({
-    ...item,
-    contentPreview: compactContentPreview(content),
-    contentOmitted: true,
-    inputRefs: markerDiffStates.has(item.state)
-      ? []
-      : item.inputRefs.map((ref) => ({
-          ...ref,
-          scope: compactPackScope(ref.scope)
-        }))
-  }));
+  return items.map(({ inputRefs, ...item }) => item);
 }
 
 export function buildAgentContextGraphCut(input: {
@@ -183,25 +151,6 @@ type AgentContextGraphPackItem = Pick<
   ContextPackItemShape,
   "id" | "sectionId" | "inputRefs" | "invalidatesSentItemId" | "restoreId"
 >;
-
-function compactContentPreview(content: string): string {
-  const normalized = content.replace(/\s+/g, " ").trim();
-  if (normalized.length <= maxContentPreviewChars) return normalized;
-  return `${normalized.slice(0, maxContentPreviewChars - 3)}...`;
-}
-
-function compactPackScope(scope: Record<string, unknown>): Record<string, unknown> {
-  const compacted: Record<string, unknown> = {};
-  for (const key of compactScopeKeys) {
-    const value = scope[key];
-    if (isCompactScopeValue(value)) compacted[key] = value;
-  }
-  return compacted;
-}
-
-function isCompactScopeValue(value: unknown): value is string | number | boolean {
-  return typeof value === "string" || typeof value === "number" || typeof value === "boolean";
-}
 
 function sectionGraphNodeId(sectionId: string): string {
   return `section:${sectionId}`;
