@@ -188,6 +188,10 @@ npm ci
 npm run check
 ```
 
+## More from the author
+
+- **[Codemm](https://github.com/iignaite/Codemm)** turns your own coding agent into a step-by-step coding tutor. Every exercise is checked against deliberately broken solutions before you see it, and your code is graded in a network-off sandbox.
+
 ## License
 
 [MIT](LICENSE)
