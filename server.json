@@ -1,0 +1,42 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.gael55x/grape",
+  "title": "Grape",
+  "description": "Session-aware repository context for coding agents. Sends only new or changed context each turn.",
+  "repository": {
+    "url": "https://github.com/gael55x/Grape",
+    "source": "github"
+  },
+  "version": "1.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "grape-context",
+      "version": "1.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        },
+        {
+          "type": "positional",
+          "value": "--stdio"
+        },
+        {
+          "type": "positional",
+          "value": "--repo"
+        },
+        {
+          "type": "positional",
+          "valueHint": "repo_root",
+          "description": "Absolute path to the Git repository Grape should serve",
+          "isRequired": true,
+          "format": "filepath"
+        }
+      ]
+    }
+  ]
+}

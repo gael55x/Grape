@@ -1,6 +1,7 @@
 {
   "name": "grape-context",
   "version": "1.1.0",
+  "mcpName": "io.github.gael55x/grape",
   "description": "Session-aware repository context for AI coding agents.",
   "keywords": [
     "ai-coding-agents",
